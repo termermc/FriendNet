@@ -1,0 +1,7 @@
+[*.proto]
+indent_size = 4
+
+[*.yaml]
+indent_size = 4
+[*.yml]
+indent_size = 4

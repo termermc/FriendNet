@@ -1,0 +1,274 @@
+syntax = "proto3";
+
+option go_package = "friendnet.org/protocol";
+
+package pb.v1;
+
+// Types of protocol messages
+enum MsgType {
+    // Do not use.
+    MSG_TYPE_UNSPECIFIED = 0;
+
+    // [BOTH] A ping message.
+    // May be sent by either the client or server, but the other must respond with MSG_TYPE_PONG.
+    // Must be responded to with MSG_TYPE_PONG, or the connection will be terminated.
+    // Either side may have its own arbitrary timeout which may cause disconnection if not met.
+    // Expected: Message MSG_TYPE_PONG.
+    MSG_TYPE_PING = 1;
+
+    // [BOTH] Response to MSG_TYPE_PING.
+    MSG_TYPE_PONG = 2;
+
+    // [BOTH] Acknowledgement of success.
+    // Sent as a reply to other messages.
+    MSG_TYPE_ACKNOWLEDGED = 3;
+
+    // [BOTH] An error message.
+    // Sent as a reply to other messages.
+    MSG_TYPE_ERROR = 4;
+
+    // [CLIENT] Initial client version negotiation.
+    MSG_TYPE_VERSION = 5;
+
+    // [SERVER] Indicates that the server accepted the client's protocol version.
+    MSG_TYPE_VERSION_ACCEPTED = 6;
+
+    // [SERVER] Indicates that the server rejected the client's protocol version.
+    MSG_TYPE_VERSION_REJECTED = 7;
+
+    // [CLIENT] Initial client authentication with the server.
+    MSG_TYPE_AUTHENTICATE = 8;
+
+    // [SERVER] Indicates that client authentication was accepted.
+    MSG_TYPE_AUTH_ACCEPTED = 9;
+
+    // [SERVER] Indicates that client authentication was denied.
+    MSG_TYPE_AUTH_REJECTED = 10;
+
+    // [BOTH] Request to get files inside a directory within a share.
+    // Expected: Repeated message MSG_TYPE_DIR_FILES until stream is closed by receiver.
+    MSG_TYPE_GET_DIR_FILES = 11;
+
+    // [BOTH] A possibly non-exhaustive list of files in a directory.
+    MSG_TYPE_DIR_FILES = 12;
+
+    // [BOTH] Request to get metadata about a file without reading it.
+    // Expected: Either:
+    //  - Message MSG_TYPE_FILE_META.
+    //  - Message MSG_TYPE_ERROR of ERR_TYPE_FILE_NOT_EXIST.
+    MSG_TYPE_GET_FILE_META = 13;
+
+    // [BOTH] Metadata about a file, including its size.
+    MSG_TYPE_FILE_META = 14;
+
+    // [BOTH] Request to get a file's metadata and contents.
+    // Expected: Either:
+    //  - Message MSG_TYPE_FILE_META then the file's requested binary content until the stream is closed by receiver.
+    //  - Message MSG_TYPE_ERROR of ERR_TYPE_FILE_NOT_EXIST.
+    MSG_TYPE_GET_FILE = 15;
+}
+
+// Ping message.
+message MsgPing {
+    // The epoch millisecond timestamp when the message was sent.
+    // Used to measure latency.
+    int64 sent_ts = 1;
+}
+
+// Pong message.
+message MsgPong {
+    // The epoch millisecond timestamp when the message was sent.
+    // Used to measure latency.
+    int64 sent_ts = 1;
+}
+
+// Acknowledgement message.
+// Empty.
+message MsgAcknowledged {
+}
+
+// Types of errors that can be returned in protocol error messages.
+enum ErrType {
+    // Do not use.
+    ERR_TYPE_UNSPECIFIED = 0;
+
+    // An internal error occurred.
+    ERR_TYPE_INTERNAL = 1;
+
+    // An invalid message was received.
+    ERR_TYPE_MALFORMED_MESSAGE = 2;
+
+    // The message's payload exceeded the size limit.
+    ERR_TYPE_PAYLOAD_TOO_LARGE = 3;
+
+    // A required field was missing.
+    ERR_TYPE_MISSING_FIELDS = 4;
+
+    // An invalid field was received.
+    ERR_TYPE_INVALID_FIELDS = 5;
+
+    // A reply was received, but its type of content was unexpected.
+    ERR_TYPE_UNEXPECTED_REPLY = 6;
+
+    // Requests were sent too quickly and the request was rate limited.
+    ERR_TYPE_RATE_LIMITED = 7;
+
+    // The file did not exist.
+    ERR_TYPE_FILE_NOT_EXIST = 8;
+}
+
+// An error, usually sent by the server.
+message MsgError {
+    // The error type.
+    ErrType type = 1;
+
+    // The error message (optional).
+    optional string message = 2;
+}
+
+// A protocol version.
+message ProtoVersion {
+    // The minor protocol version.
+    // Major protocol versions can be considered complete overhauls or changes to the underlying message header format.
+    uint32 major = 1;
+
+    // The minor protocol version.
+    // Minor protocol versions include breaking changes, but many parts of the protocol will remain the same between versions.
+    uint32 minor = 2;
+
+    // The patch protocol version.
+    // Patch protocol versions may include some trivial small additions, but nothing breaking.
+    uint32 patch = 3;
+}
+
+// Client protocol negotiation.
+message MsgVersion {
+    // The client's protocol version.
+    ProtoVersion version = 1;
+}
+
+// Message sent by the server as a reply to PROTO_VERSION.
+// If a client receives this message, it may continue the handshake process.
+message MsgVersionAccepted {
+    // The server's protocol version.
+    ProtoVersion version = 1;
+}
+
+// Reasons for a client's version being rejected
+enum VersionRejectionReason {
+    // No reason specified.
+    // More details may be in the rejection message.
+    VERSION_REJECTION_REASON_UNSPECIFIED = 0;
+
+    // The client's version is too old.
+    VERSION_REJECTION_REASON_TOO_OLD = 2;
+
+    // The client's version is too new.
+    VERSION_REJECTION_REASON_TOO_NEW = 3;
+}
+
+// Message sent by the server as a reply to PROTO_VERSION.
+// If a client receives this message, it will be disconnected and must connect with a suitable version.
+message MsgVersionRejected {
+    // The server's protocol version.
+    ProtoVersion version = 1;
+
+    // The reason the client's version was rejected.
+    VersionRejectionReason reason = 2;
+
+    // A message accompanying the rejection (optional).
+    optional string message = 3;
+}
+
+// Client authentication.
+// Should be the first message sent to the server immediately upon connection.
+// It will be replied to with either PROTO_AUTH_ACCEPTED or PROTO_AUTH_REJECTED.
+message MsgAuthenticate {
+    // The room the user is trying to authenticate with.
+    string room = 1;
+
+    // The user's username.
+    string username = 2;
+
+    // The user's password.
+    string password = 3;
+}
+
+// Message sent by the server as a reply to PROTO_AUTHENTICATE.
+// If a client receives this message, it is considered to be authenticated and connected, and a session has been established.
+message MsgAuthAccepted {
+}
+
+// Reasons for a client's authentication request being rejected.
+enum AuthRejectionReason {
+    // No reason specified.
+    // More details may be in the rejection message.
+    AUTH_REJECTION_REASON_UNSPECIFIED = 0;
+
+    // The client provided invalid credentials (e.g. invalid token).
+    AUTH_REJECTION_REASON_INVALID_CREDENTIALS = 2;
+
+    // The user is banned and therefore not allowed to connect.
+    AUTH_REJECTION_REASON_BANNED = 3;
+}
+
+// Message sent by the server as a reply to PROTO_AUTHENTICATE.
+// The client will be disconnected after receiving this message.
+message MsgAuthRejected {
+    // The reason the client's authentication request was rejected.
+    AuthRejectionReason reason = 1;
+
+    // A message accompanying the rejection (optional).
+    optional string message = 2;
+}
+
+// See MSG_TYPE_GET_DIR_FILES.
+message MsgGetDirFiles {
+    // The user sending the request by proxy.
+    // Irrelevant and should be ignored if sent by the client.
+    string from_user = 1;
+
+    // The path of the directory within the share.
+    // The path must begin with a `/`.
+    string path = 2;
+}
+
+// See MSG_TYPE_DIR_FILES.
+message MsgDirFiles {
+    // A non-exhaustive list of filenames (including folder names) within a directory.
+    repeated string filenames = 1;
+}
+
+// See MSG_TYPE_GET_FILE_META.
+message MsgGetFileMeta {
+    // The user sending the request by proxy.
+    // Irrelevant and should be ignored if sent by the client.
+    string from_user = 1;
+
+    // The path to the file.
+    string path = 2;
+}
+
+// See MSG_TYPE_FILE_META.
+message MsgFileMeta {
+    // The file's size, in bytes.
+    uint64 size = 1;
+}
+
+// See MSG_TYPE_GET_FILE.
+message MsgGetFile {
+    // The user sending the request by proxy.
+    // Irrelevant and should be ignored if sent by the client.
+    string from_user = 1;
+
+    // The path to the file.
+    string path = 3;
+
+    // The offset into the file to read, in bytes.
+    // Values above the file size will just result in no data being returned.
+    uint64 offset = 4;
+
+    // The limit of the file to read, in bytes.
+    // Specify 0 for no limit.
+    uint64 limit = 5;
+}
