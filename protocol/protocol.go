@@ -71,15 +71,29 @@ func NewProtoStreamReader(stream io.Reader) *ProtoStreamReader {
 // ReadRaw tries to read a protocol message from the stream.
 // It does not do any special handling for error types.
 func (r *ProtoStreamReader) ReadRaw() (*UntypedProtoMsg, error) {
+	var (
+		n   int
+		err error
+	)
+
 	// Read header.
 	// A tiny read like this is fine because QUIC streams are buffered.
 	var header [msgHeaderSize]byte
-	n, err := r.stream.Read(header[:])
-	if err != nil {
-		return nil, fmt.Errorf(`failed to read protocol message header: %w`, err)
+	headerRead := 0
+	for headerRead < len(header) {
+		n, err = r.stream.Read(header[headerRead:])
+		if n > 0 {
+			headerRead += n
+		}
+		if err != nil {
+			if err == io.EOF && headerRead == len(header) {
+				break
+			}
+			return nil, fmt.Errorf(`failed to read protocol message header: %w`, err)
+		}
 	}
-	if n < len(header) {
-		return nil, fmt.Errorf(`was only able to read %d bytes of %d byte protocol message header`, n, len(header))
+	if headerRead < len(header) {
+		return nil, fmt.Errorf(`was only able to read %d bytes of %d byte protocol message header`, headerRead, len(header))
 	}
 
 	typ := pb.MsgType(binary.LittleEndian.Uint32(header[:4]))
@@ -92,7 +106,13 @@ func (r *ProtoStreamReader) ReadRaw() (*UntypedProtoMsg, error) {
 	payload := make([]byte, payloadLen)
 	for readSize < len(payload) {
 		n, err = r.stream.Read(payload[readSize:])
+		if n > 0 {
+			readSize += n
+		}
 		if err != nil {
+			if err == io.EOF && readSize == len(payload) {
+				break
+			}
 			return nil, fmt.Errorf(`got protocol message header with type %s and length %d, but failed reading payload at %d bytes: %w`,
 				typ.String(),
 				payloadLen,
@@ -100,7 +120,6 @@ func (r *ProtoStreamReader) ReadRaw() (*UntypedProtoMsg, error) {
 				err,
 			)
 		}
-		readSize += n
 	}
 
 	// Decode message.
@@ -205,7 +224,7 @@ func (w *ProtoStreamWriter) Write(typ pb.MsgType, msg proto.Message) error {
 	// Write message.
 	written := 0
 	for written < len(msgBuf) {
-		n, err := w.stream.Write(msgBuf)
+		n, err := w.stream.Write(msgBuf[written:])
 		if err != nil {
 			return fmt.Errorf(`failed to write payload for message type %s while %d bytes in: %w`,
 				typ.String(),
