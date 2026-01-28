@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"net"
+	"strings"
 	"time"
 
 	pb "friendnet.org/protocol/pb/v1"
@@ -41,10 +42,14 @@ type ClientCertStore interface {
 
 // ConnectTofu connects to the QUIC server at the specified address, using Trust On First Use
 // to verify the server's TLS certificate.
+// If there was already a certificate for the host and it did not match the new one, returns a CertMismatchError.
 func ConnectTofu(addr string, certStore ClientCertStore) (*quic.Conn, error) {
 	if certStore == nil {
-		return nil, fmt.Errorf("cert store is required")
+		return nil, ErrCertStoreRequired
 	}
+
+	// Make sure the address is always lowercase.
+	addr = strings.ToLower(addr)
 
 	host, _, err := net.SplitHostPort(addr)
 	if err != nil {
@@ -60,18 +65,18 @@ func ConnectTofu(addr string, certStore ClientCertStore) (*quic.Conn, error) {
 
 	tlsCfg.VerifyPeerCertificate = func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
 		if len(rawCerts) == 0 {
-			return fmt.Errorf("no server certificates presented")
+			return ErrNoServerCerts
 		}
 
-		leafDER := rawCerts[0]
-		leaf, err := x509.ParseCertificate(leafDER)
+		leafDer := rawCerts[0]
+		leaf, err := x509.ParseCertificate(leafDer)
 		if err != nil {
 			return fmt.Errorf("failed to parse server certificate: %w", err)
 		}
 
 		now := time.Now()
 		if now.Before(leaf.NotBefore) || now.After(leaf.NotAfter) {
-			return fmt.Errorf("server certificate is not valid at the current time")
+			return ErrServerCertNotValidNow
 		}
 
 		storedDer, err := certStore.Get(host)
@@ -80,14 +85,14 @@ func ConnectTofu(addr string, certStore ClientCertStore) (*quic.Conn, error) {
 		}
 
 		if len(storedDer) == 0 {
-			if err := certStore.Put(host, leafDER); err != nil {
+			if err := certStore.Put(host, leafDer); err != nil {
 				return fmt.Errorf("failed to store certificate for %q: %w", host, err)
 			}
 			return nil
 		}
 
-		if !bytes.Equal(storedDer, leafDER) {
-			return fmt.Errorf("server certificate mismatch for %q", host)
+		if !bytes.Equal(storedDer, leafDer) {
+			return CertMismatchError{Host: host}
 		}
 
 		return nil
@@ -98,9 +103,10 @@ func ConnectTofu(addr string, certStore ClientCertStore) (*quic.Conn, error) {
 
 // negotiateVersion negotiates the protocol version with the server.
 // Returns the server's protocol version if successful.
+// If the client's version was rejected, returns a VersionRejectedError.
 func negotiateVersion(conn *quic.Conn, version *pb.ProtoVersion) (*pb.ProtoVersion, error) {
 	if version == nil {
-		return nil, fmt.Errorf("protocol version is required")
+		return nil, ErrProtocolVersionRequired
 	}
 
 	bidi, err := OpenBidiWithMsg(conn, pb.MsgType_MSG_TYPE_VERSION, &pb.MsgVersion{
@@ -126,14 +132,19 @@ func negotiateVersion(conn *quic.Conn, version *pb.ProtoVersion) (*pb.ProtoVersi
 		rejected := ToTyped[*pb.MsgVersionRejected](msg)
 		msgText := ""
 		if rejected.Payload.Message != nil {
-			msgText = ": " + *rejected.Payload.Message
+			msgText = *rejected.Payload.Message
 		}
-		return nil, fmt.Errorf("protocol version rejected: %s%s", rejected.Payload.Reason.String(), msgText)
+		return nil, VersionRejectedError{
+			Reason:  rejected.Payload.Reason,
+			Message: msgText,
+		}
 	default:
 		return nil, NewUnexpectedMsgTypeError(pb.MsgType_MSG_TYPE_VERSION_ACCEPTED, msg.Type)
 	}
 }
 
+// authenticate performs the authentication step on a client connection.
+// If the server rejected the credentials, returns a AuthRejectedError.
 func authenticate(conn *quic.Conn, creds ClientCredentials) error {
 	bidi, err := OpenBidiWithMsg(conn, pb.MsgType_MSG_TYPE_AUTHENTICATE, &pb.MsgAuthenticate{
 		Room:     creds.Room,
@@ -160,9 +171,12 @@ func authenticate(conn *quic.Conn, creds ClientCredentials) error {
 		rejected := ToTyped[*pb.MsgAuthRejected](msg)
 		msgText := ""
 		if rejected.Payload.Message != nil {
-			msgText = ": " + *rejected.Payload.Message
+			msgText = *rejected.Payload.Message
 		}
-		return fmt.Errorf("authentication rejected: %s%s", rejected.Payload.Reason.String(), msgText)
+		return AuthRejectedError{
+			Reason:  rejected.Payload.Reason,
+			Message: msgText,
+		}
 	default:
 		return NewUnexpectedMsgTypeError(pb.MsgType_MSG_TYPE_AUTH_ACCEPTED, msg.Type)
 	}
@@ -170,6 +184,10 @@ func authenticate(conn *quic.Conn, creds ClientCredentials) error {
 
 // NewClient establishes a QUIC connection, negotiates the protocol version, and authenticates.
 // If authentication is successful, it returns a new, fully authenticated client.
+//
+// If the client's certificate did not match an existing entry in the cert store, returns a CertMismatchError.
+// If the server rejected the client's protocol version, returns a VersionRejectedError.
+// If the server rejected the client's credentials, returns a AuthRejectedError.
 func NewClient(addr string, creds ClientCredentials, certStore ClientCertStore) (*ProtoClient, error) {
 	conn, err := ConnectTofu(addr, certStore)
 	if err != nil {
