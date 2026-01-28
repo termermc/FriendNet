@@ -45,7 +45,7 @@ enum MsgType {
     // [SERVER] Indicates that client authentication was denied.
     MSG_TYPE_AUTH_REJECTED = 10;
 
-    // [BOTH] Request to get files inside a directory within a share.
+    // [BOTH] Request to get files inside a user's directory.
     // Expected: Repeated message MSG_TYPE_DIR_FILES until stream is closed by receiver.
     MSG_TYPE_GET_DIR_FILES = 11;
 
@@ -226,11 +226,15 @@ message MsgAuthRejected {
 message MsgGetDirFiles {
     // The user sending the request by proxy.
     // Irrelevant and should be ignored if sent by the client.
-    string from_user = 1;
+    string request_from_user = 1;
+
+    // The user who hosts the directory.
+    // Irrelevant and should be ignored if sent by the server.
+    string user = 2;
 
     // The path of the directory within the share.
     // The path must begin with a `/`.
-    string path = 2;
+    string path = 3;
 }
 
 // See MSG_TYPE_DIR_FILES.
@@ -243,10 +247,14 @@ message MsgDirFiles {
 message MsgGetFileMeta {
     // The user sending the request by proxy.
     // Irrelevant and should be ignored if sent by the client.
-    string from_user = 1;
+    string request_from_user = 1;
+
+    // The user who hosts the file.
+    // Irrelevant and should be ignored if sent by the server.
+    string user = 2;
 
     // The path to the file.
-    string path = 2;
+    string path = 3;
 }
 
 // See MSG_TYPE_FILE_META.
@@ -259,7 +267,11 @@ message MsgFileMeta {
 message MsgGetFile {
     // The user sending the request by proxy.
     // Irrelevant and should be ignored if sent by the client.
-    string from_user = 1;
+    string request_from_user = 1;
+
+    // The user who hosts the file.
+    // Irrelevant and should be ignored if sent by the server.
+    string user = 2;
 
     // The path to the file.
     string path = 3;

@@ -5,7 +5,9 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
+	"io"
 	"net"
 	"strings"
 	"time"
@@ -206,4 +208,105 @@ func NewClient(addr string, creds ClientCredentials, certStore ClientCertStore) 
 	}
 
 	return &ProtoClient{conn: conn}, nil
+}
+
+// Close closes the underlying connection to the server.
+func (c *ProtoClient) Close() error {
+	if c == nil || c.conn == nil {
+		return nil
+	}
+
+	return c.conn.CloseWithError(0, "client closed")
+}
+
+// Ping sends a ping to the server and waits for a pong response.
+func (c *ProtoClient) Ping() (*pb.MsgPong, error) {
+	bidi, err := OpenBidiWithMsg(c.conn, pb.MsgType_MSG_TYPE_PING, &pb.MsgPing{
+		SentTs: time.Now().UnixMilli(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = bidi.Stream.Close()
+	}()
+
+	pong, err := ReadExpect[*pb.MsgPong](bidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_PONG)
+	if err != nil {
+		return nil, err
+	}
+
+	return pong, nil
+}
+
+// GetDirFiles requests all filenames inside a directory.
+func (c *ProtoClient) GetDirFiles(user string, path string) ([]string, error) {
+	bidi, err := OpenBidiWithMsg(c.conn, pb.MsgType_MSG_TYPE_GET_DIR_FILES, &pb.MsgGetDirFiles{
+		User: user,
+		Path: path,
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = bidi.Stream.Close()
+	}()
+
+	var filenames []string
+	for {
+		dirFiles, err := ReadExpect[*pb.MsgDirFiles](bidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_DIR_FILES)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return nil, err
+		}
+
+		filenames = append(filenames, dirFiles.Filenames...)
+	}
+
+	return filenames, nil
+}
+
+// GetFileMeta requests metadata about a file without reading it.
+func (c *ProtoClient) GetFileMeta(user string, path string) (*pb.MsgFileMeta, error) {
+	bidi, err := OpenBidiWithMsg(c.conn, pb.MsgType_MSG_TYPE_GET_FILE_META, &pb.MsgGetFileMeta{
+		User: user,
+		Path: path,
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = bidi.Stream.Close()
+	}()
+
+	meta, err := ReadExpect[*pb.MsgFileMeta](bidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_FILE_META)
+	if err != nil {
+		return nil, err
+	}
+
+	return meta, nil
+}
+
+// GetFile requests file metadata and returns a stream for reading the file contents.
+// If limit is 0, the entire file is read.
+func (c *ProtoClient) GetFile(user string, path string, offset uint64, limit uint64) (*pb.MsgFileMeta, io.ReadCloser, error) {
+	bidi, err := OpenBidiWithMsg(c.conn, pb.MsgType_MSG_TYPE_GET_FILE, &pb.MsgGetFile{
+		User:   user,
+		Path:   path,
+		Offset: offset,
+		Limit:  limit,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	meta, err := ReadExpect[*pb.MsgFileMeta](bidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_FILE_META)
+	if err != nil {
+		_ = bidi.Stream.Close()
+		return nil, nil, err
+	}
+
+	return meta, bidi.Stream, nil
 }

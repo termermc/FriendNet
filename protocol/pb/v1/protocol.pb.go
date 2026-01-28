@@ -53,7 +53,7 @@ const (
 	MsgType_MSG_TYPE_AUTH_ACCEPTED MsgType = 9
 	// [SERVER] Indicates that client authentication was denied.
 	MsgType_MSG_TYPE_AUTH_REJECTED MsgType = 10
-	// [BOTH] Request to get files inside a directory within a share.
+	// [BOTH] Request to get files inside a user's directory.
 	// Expected: Repeated message MSG_TYPE_DIR_FILES until stream is closed by receiver.
 	MsgType_MSG_TYPE_GET_DIR_FILES MsgType = 11
 	// [BOTH] A possibly non-exhaustive list of files in a directory.
@@ -901,10 +901,13 @@ type MsgGetDirFiles struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The user sending the request by proxy.
 	// Irrelevant and should be ignored if sent by the client.
-	FromUser string `protobuf:"bytes,1,opt,name=from_user,json=fromUser,proto3" json:"from_user,omitempty"`
+	RequestFromUser string `protobuf:"bytes,1,opt,name=request_from_user,json=requestFromUser,proto3" json:"request_from_user,omitempty"`
+	// The user who hosts the directory.
+	// Irrelevant and should be ignored if sent by the server.
+	User string `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
 	// The path of the directory within the share.
 	// The path must begin with a `/`.
-	Path          string `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
+	Path          string `protobuf:"bytes,3,opt,name=path,proto3" json:"path,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -939,9 +942,16 @@ func (*MsgGetDirFiles) Descriptor() ([]byte, []int) {
 	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *MsgGetDirFiles) GetFromUser() string {
+func (x *MsgGetDirFiles) GetRequestFromUser() string {
 	if x != nil {
-		return x.FromUser
+		return x.RequestFromUser
+	}
+	return ""
+}
+
+func (x *MsgGetDirFiles) GetUser() string {
+	if x != nil {
+		return x.User
 	}
 	return ""
 }
@@ -1004,9 +1014,12 @@ type MsgGetFileMeta struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The user sending the request by proxy.
 	// Irrelevant and should be ignored if sent by the client.
-	FromUser string `protobuf:"bytes,1,opt,name=from_user,json=fromUser,proto3" json:"from_user,omitempty"`
+	RequestFromUser string `protobuf:"bytes,1,opt,name=request_from_user,json=requestFromUser,proto3" json:"request_from_user,omitempty"`
+	// The user who hosts the file.
+	// Irrelevant and should be ignored if sent by the server.
+	User string `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
 	// The path to the file.
-	Path          string `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
+	Path          string `protobuf:"bytes,3,opt,name=path,proto3" json:"path,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1041,9 +1054,16 @@ func (*MsgGetFileMeta) Descriptor() ([]byte, []int) {
 	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *MsgGetFileMeta) GetFromUser() string {
+func (x *MsgGetFileMeta) GetRequestFromUser() string {
 	if x != nil {
-		return x.FromUser
+		return x.RequestFromUser
+	}
+	return ""
+}
+
+func (x *MsgGetFileMeta) GetUser() string {
+	if x != nil {
+		return x.User
 	}
 	return ""
 }
@@ -1106,7 +1126,10 @@ type MsgGetFile struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The user sending the request by proxy.
 	// Irrelevant and should be ignored if sent by the client.
-	FromUser string `protobuf:"bytes,1,opt,name=from_user,json=fromUser,proto3" json:"from_user,omitempty"`
+	RequestFromUser string `protobuf:"bytes,1,opt,name=request_from_user,json=requestFromUser,proto3" json:"request_from_user,omitempty"`
+	// The user who hosts the file.
+	// Irrelevant and should be ignored if sent by the server.
+	User string `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
 	// The path to the file.
 	Path string `protobuf:"bytes,3,opt,name=path,proto3" json:"path,omitempty"`
 	// The offset into the file to read, in bytes.
@@ -1149,9 +1172,16 @@ func (*MsgGetFile) Descriptor() ([]byte, []int) {
 	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{15}
 }
 
-func (x *MsgGetFile) GetFromUser() string {
+func (x *MsgGetFile) GetRequestFromUser() string {
 	if x != nil {
-		return x.FromUser
+		return x.RequestFromUser
+	}
+	return ""
+}
+
+func (x *MsgGetFile) GetUser() string {
+	if x != nil {
+		return x.User
 	}
 	return ""
 }
@@ -1216,20 +1246,23 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x06reason\x18\x01 \x01(\x0e2\x1a.pb.v1.AuthRejectionReasonR\x06reason\x12\x1d\n" +
 	"\amessage\x18\x02 \x01(\tH\x00R\amessage\x88\x01\x01B\n" +
 	"\n" +
-	"\b_message\"A\n" +
-	"\x0eMsgGetDirFiles\x12\x1b\n" +
-	"\tfrom_user\x18\x01 \x01(\tR\bfromUser\x12\x12\n" +
-	"\x04path\x18\x02 \x01(\tR\x04path\"+\n" +
+	"\b_message\"d\n" +
+	"\x0eMsgGetDirFiles\x12*\n" +
+	"\x11request_from_user\x18\x01 \x01(\tR\x0frequestFromUser\x12\x12\n" +
+	"\x04user\x18\x02 \x01(\tR\x04user\x12\x12\n" +
+	"\x04path\x18\x03 \x01(\tR\x04path\"+\n" +
 	"\vMsgDirFiles\x12\x1c\n" +
-	"\tfilenames\x18\x01 \x03(\tR\tfilenames\"A\n" +
-	"\x0eMsgGetFileMeta\x12\x1b\n" +
-	"\tfrom_user\x18\x01 \x01(\tR\bfromUser\x12\x12\n" +
-	"\x04path\x18\x02 \x01(\tR\x04path\"!\n" +
+	"\tfilenames\x18\x01 \x03(\tR\tfilenames\"d\n" +
+	"\x0eMsgGetFileMeta\x12*\n" +
+	"\x11request_from_user\x18\x01 \x01(\tR\x0frequestFromUser\x12\x12\n" +
+	"\x04user\x18\x02 \x01(\tR\x04user\x12\x12\n" +
+	"\x04path\x18\x03 \x01(\tR\x04path\"!\n" +
 	"\vMsgFileMeta\x12\x12\n" +
-	"\x04size\x18\x01 \x01(\x04R\x04size\"k\n" +
+	"\x04size\x18\x01 \x01(\x04R\x04size\"\x8e\x01\n" +
 	"\n" +
-	"MsgGetFile\x12\x1b\n" +
-	"\tfrom_user\x18\x01 \x01(\tR\bfromUser\x12\x12\n" +
+	"MsgGetFile\x12*\n" +
+	"\x11request_from_user\x18\x01 \x01(\tR\x0frequestFromUser\x12\x12\n" +
+	"\x04user\x18\x02 \x01(\tR\x04user\x12\x12\n" +
 	"\x04path\x18\x03 \x01(\tR\x04path\x12\x16\n" +
 	"\x06offset\x18\x04 \x01(\x04R\x06offset\x12\x14\n" +
 	"\x05limit\x18\x05 \x01(\x04R\x05limit*\x9e\x03\n" +
