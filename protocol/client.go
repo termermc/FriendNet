@@ -18,7 +18,32 @@ import (
 
 type ProtoClient struct {
 	conn *quic.Conn
+
+	// OnPing handles incoming MSG_TYPE_PING messages.
+	OnPing PingHandler
+	// OnGetDirFiles handles incoming MSG_TYPE_GET_DIR_FILES messages.
+	OnGetDirFiles GetDirFilesHandler
+	// OnGetFileMeta handles incoming MSG_TYPE_GET_FILE_META messages.
+	OnGetFileMeta GetFileMetaHandler
+	// OnGetFile handles incoming MSG_TYPE_GET_FILE messages.
+	OnGetFile GetFileHandler
 }
+
+// PingHandler handles an incoming ping request.
+// Implementations should write a response (typically MSG_TYPE_PONG) before returning.
+type PingHandler func(ctx context.Context, client *ProtoClient, bidi ProtoBidi, msg *pb.MsgPing) error
+
+// GetDirFilesHandler handles an incoming directory listing request.
+// Implementations should write one or more MSG_TYPE_DIR_FILES messages before returning.
+type GetDirFilesHandler func(ctx context.Context, client *ProtoClient, bidi ProtoBidi, msg *pb.MsgGetDirFiles) error
+
+// GetFileMetaHandler handles an incoming file metadata request.
+// Implementations should write a MSG_TYPE_FILE_META or MSG_TYPE_ERROR message before returning.
+type GetFileMetaHandler func(ctx context.Context, client *ProtoClient, bidi ProtoBidi, msg *pb.MsgGetFileMeta) error
+
+// GetFileHandler handles an incoming file request.
+// Implementations should write MSG_TYPE_FILE_META then file bytes (or MSG_TYPE_ERROR) before returning.
+type GetFileHandler func(ctx context.Context, client *ProtoClient, bidi ProtoBidi, msg *pb.MsgGetFile) error
 
 // ClientCredentials are the credentials used for clients to authenticate with a server.
 type ClientCredentials struct {
@@ -309,4 +334,82 @@ func (c *ProtoClient) GetFile(user string, path string, offset uint64, limit uin
 	}
 
 	return meta, bidi.Stream, nil
+}
+
+// Listen waits for incoming requests and dispatches them to the configured handlers.
+func (c *ProtoClient) Listen(ctx context.Context, errorHandler func(error)) error {
+	if c == nil || c.conn == nil {
+		return fmt.Errorf("client connection is not initialized")
+	}
+	if errorHandler == nil {
+		errorHandler = func(error) {}
+	}
+
+	for {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+
+		err := HandleBidiRequest(ctx, c.conn, c.listenerHandlers(ctx), nil, errorHandler)
+		if err != nil {
+			return err
+		}
+	}
+}
+
+func (c *ProtoClient) listenerHandlers(ctx context.Context) map[pb.MsgType]BidiHandler {
+	return map[pb.MsgType]BidiHandler{
+		pb.MsgType_MSG_TYPE_PING: func(_ *quic.Conn, bidi ProtoBidi, msg *UntypedProtoMsg) error {
+			defer func() {
+				_ = bidi.Stream.Close()
+			}()
+
+			if c.OnPing == nil {
+				return writeUnimplementedError(bidi, msg.Type)
+			}
+
+			return c.OnPing(ctx, c, bidi, ToTyped[*pb.MsgPing](msg).Payload)
+		},
+		pb.MsgType_MSG_TYPE_GET_DIR_FILES: func(_ *quic.Conn, bidi ProtoBidi, msg *UntypedProtoMsg) error {
+			defer func() {
+				_ = bidi.Stream.Close()
+			}()
+
+			if c.OnGetDirFiles == nil {
+				return writeUnimplementedError(bidi, msg.Type)
+			}
+
+			return c.OnGetDirFiles(ctx, c, bidi, ToTyped[*pb.MsgGetDirFiles](msg).Payload)
+		},
+		pb.MsgType_MSG_TYPE_GET_FILE_META: func(_ *quic.Conn, bidi ProtoBidi, msg *UntypedProtoMsg) error {
+			defer func() {
+				_ = bidi.Stream.Close()
+			}()
+
+			if c.OnGetFileMeta == nil {
+				return writeUnimplementedError(bidi, msg.Type)
+			}
+
+			return c.OnGetFileMeta(ctx, c, bidi, ToTyped[*pb.MsgGetFileMeta](msg).Payload)
+		},
+		pb.MsgType_MSG_TYPE_GET_FILE: func(_ *quic.Conn, bidi ProtoBidi, msg *UntypedProtoMsg) error {
+			defer func() {
+				_ = bidi.Stream.Close()
+			}()
+
+			if c.OnGetFile == nil {
+				return writeUnimplementedError(bidi, msg.Type)
+			}
+
+			return c.OnGetFile(ctx, c, bidi, ToTyped[*pb.MsgGetFile](msg).Payload)
+		},
+	}
+}
+
+func writeUnimplementedError(bidi ProtoBidi, msgType pb.MsgType) error {
+	message := fmt.Sprintf("handler for %s is unimplemented", msgType.String())
+	return bidi.Write(pb.MsgType_MSG_TYPE_ERROR, &pb.MsgError{
+		Type:    pb.ErrType_ERR_TYPE_INTERNAL,
+		Message: &message,
+	})
 }
