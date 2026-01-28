@@ -70,6 +70,11 @@ const (
 	//   - Message MSG_TYPE_FILE_META then the file's requested binary content until the stream is closed by receiver.
 	//   - Message MSG_TYPE_ERROR of ERR_TYPE_FILE_NOT_EXIST.
 	MsgType_MSG_TYPE_GET_FILE MsgType = 15
+	// [CLIENT] Request to get a list of online users in the room.
+	// Expected: Repeated message MSG_TYPE_ONLINE_USERS until stream is closed by receiver.
+	MsgType_MSG_TYPE_GET_ONLINE_USERS MsgType = 16
+	// [SERVER] List of online users in the room.
+	MsgType_MSG_TYPE_ONLINE_USERS MsgType = 17
 )
 
 // Enum value maps for MsgType.
@@ -91,6 +96,8 @@ var (
 		13: "MSG_TYPE_GET_FILE_META",
 		14: "MSG_TYPE_FILE_META",
 		15: "MSG_TYPE_GET_FILE",
+		16: "MSG_TYPE_GET_ONLINE_USERS",
+		17: "MSG_TYPE_ONLINE_USERS",
 	}
 	MsgType_value = map[string]int32{
 		"MSG_TYPE_UNSPECIFIED":      0,
@@ -109,6 +116,8 @@ var (
 		"MSG_TYPE_GET_FILE_META":    13,
 		"MSG_TYPE_FILE_META":        14,
 		"MSG_TYPE_GET_FILE":         15,
+		"MSG_TYPE_GET_ONLINE_USERS": 16,
+		"MSG_TYPE_ONLINE_USERS":     17,
 	}
 )
 
@@ -1079,7 +1088,10 @@ func (x *MsgGetFileMeta) GetPath() string {
 type MsgFileMeta struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The file's size, in bytes.
-	Size          uint64 `protobuf:"varint,1,opt,name=size,proto3" json:"size,omitempty"`
+	// Always zero if the file is a folder.
+	Size uint64 `protobuf:"varint,1,opt,name=size,proto3" json:"size,omitempty"`
+	// True if the path points to a directory.
+	IsDir         bool `protobuf:"varint,2,opt,name=is_dir,json=isDir,proto3" json:"is_dir,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1119,6 +1131,13 @@ func (x *MsgFileMeta) GetSize() uint64 {
 		return x.Size
 	}
 	return 0
+}
+
+func (x *MsgFileMeta) GetIsDir() bool {
+	if x != nil {
+		return x.IsDir
+	}
+	return false
 }
 
 // See MSG_TYPE_GET_FILE.
@@ -1207,6 +1226,89 @@ func (x *MsgGetFile) GetLimit() uint64 {
 	return 0
 }
 
+// See MSG_TYPE_GET_ONLINE_USERS.
+type MsgGetOnlineUsers struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MsgGetOnlineUsers) Reset() {
+	*x = MsgGetOnlineUsers{}
+	mi := &file_pb_v1_protocol_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MsgGetOnlineUsers) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgGetOnlineUsers) ProtoMessage() {}
+
+func (x *MsgGetOnlineUsers) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_v1_protocol_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MsgGetOnlineUsers.ProtoReflect.Descriptor instead.
+func (*MsgGetOnlineUsers) Descriptor() ([]byte, []int) {
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{16}
+}
+
+// See MSG_TYPE_ONLINE_USERS.
+type MsgOnlineUsers struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// A list of online users in the room.
+	Users         []string `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MsgOnlineUsers) Reset() {
+	*x = MsgOnlineUsers{}
+	mi := &file_pb_v1_protocol_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MsgOnlineUsers) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgOnlineUsers) ProtoMessage() {}
+
+func (x *MsgOnlineUsers) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_v1_protocol_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MsgOnlineUsers.ProtoReflect.Descriptor instead.
+func (*MsgOnlineUsers) Descriptor() ([]byte, []int) {
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *MsgOnlineUsers) GetUsers() []string {
+	if x != nil {
+		return x.Users
+	}
+	return nil
+}
+
 var File_pb_v1_protocol_proto protoreflect.FileDescriptor
 
 const file_pb_v1_protocol_proto_rawDesc = "" +
@@ -1256,16 +1358,20 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x0eMsgGetFileMeta\x12*\n" +
 	"\x11request_from_user\x18\x01 \x01(\tR\x0frequestFromUser\x12\x12\n" +
 	"\x04user\x18\x02 \x01(\tR\x04user\x12\x12\n" +
-	"\x04path\x18\x03 \x01(\tR\x04path\"!\n" +
+	"\x04path\x18\x03 \x01(\tR\x04path\"8\n" +
 	"\vMsgFileMeta\x12\x12\n" +
-	"\x04size\x18\x01 \x01(\x04R\x04size\"\x8e\x01\n" +
+	"\x04size\x18\x01 \x01(\x04R\x04size\x12\x15\n" +
+	"\x06is_dir\x18\x02 \x01(\bR\x05isDir\"\x8e\x01\n" +
 	"\n" +
 	"MsgGetFile\x12*\n" +
 	"\x11request_from_user\x18\x01 \x01(\tR\x0frequestFromUser\x12\x12\n" +
 	"\x04user\x18\x02 \x01(\tR\x04user\x12\x12\n" +
 	"\x04path\x18\x03 \x01(\tR\x04path\x12\x16\n" +
 	"\x06offset\x18\x04 \x01(\x04R\x06offset\x12\x14\n" +
-	"\x05limit\x18\x05 \x01(\x04R\x05limit*\x9e\x03\n" +
+	"\x05limit\x18\x05 \x01(\x04R\x05limit\"\x13\n" +
+	"\x11MsgGetOnlineUsers\"&\n" +
+	"\x0eMsgOnlineUsers\x12\x14\n" +
+	"\x05users\x18\x01 \x03(\tR\x05users*\xd8\x03\n" +
 	"\aMsgType\x12\x18\n" +
 	"\x14MSG_TYPE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rMSG_TYPE_PING\x10\x01\x12\x11\n" +
@@ -1283,7 +1389,9 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x12MSG_TYPE_DIR_FILES\x10\f\x12\x1a\n" +
 	"\x16MSG_TYPE_GET_FILE_META\x10\r\x12\x16\n" +
 	"\x12MSG_TYPE_FILE_META\x10\x0e\x12\x15\n" +
-	"\x11MSG_TYPE_GET_FILE\x10\x0f*\x8b\x02\n" +
+	"\x11MSG_TYPE_GET_FILE\x10\x0f\x12\x1d\n" +
+	"\x19MSG_TYPE_GET_ONLINE_USERS\x10\x10\x12\x19\n" +
+	"\x15MSG_TYPE_ONLINE_USERS\x10\x11*\x8b\x02\n" +
 	"\aErrType\x12\x18\n" +
 	"\x14ERR_TYPE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11ERR_TYPE_INTERNAL\x10\x01\x12\x1e\n" +
@@ -1317,7 +1425,7 @@ func file_pb_v1_protocol_proto_rawDescGZIP() []byte {
 }
 
 var file_pb_v1_protocol_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_pb_v1_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_pb_v1_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_pb_v1_protocol_proto_goTypes = []any{
 	(MsgType)(0),                // 0: pb.v1.MsgType
 	(ErrType)(0),                // 1: pb.v1.ErrType
@@ -1339,6 +1447,8 @@ var file_pb_v1_protocol_proto_goTypes = []any{
 	(*MsgGetFileMeta)(nil),      // 17: pb.v1.MsgGetFileMeta
 	(*MsgFileMeta)(nil),         // 18: pb.v1.MsgFileMeta
 	(*MsgGetFile)(nil),          // 19: pb.v1.MsgGetFile
+	(*MsgGetOnlineUsers)(nil),   // 20: pb.v1.MsgGetOnlineUsers
+	(*MsgOnlineUsers)(nil),      // 21: pb.v1.MsgOnlineUsers
 }
 var file_pb_v1_protocol_proto_depIdxs = []int32{
 	1, // 0: pb.v1.MsgError.type:type_name -> pb.v1.ErrType
@@ -1368,7 +1478,7 @@ func file_pb_v1_protocol_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pb_v1_protocol_proto_rawDesc), len(file_pb_v1_protocol_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   16,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

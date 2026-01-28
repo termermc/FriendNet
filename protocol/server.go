@@ -80,6 +80,8 @@ type ProtoServerClient struct {
 	OnGetFileMeta ServerGetFileMetaHandler
 	// OnGetFile handles incoming MSG_TYPE_GET_FILE messages.
 	OnGetFile ServerGetFileHandler
+	// OnGetOnlineUsers handles incoming MSG_TYPE_GET_ONLINE_USERS messages.
+	OnGetOnlineUsers ServerGetOnlineUsersHandler
 }
 
 // ServerPingHandler handles an incoming ping request.
@@ -97,6 +99,10 @@ type ServerGetFileMetaHandler func(ctx context.Context, client *ProtoServerClien
 // ServerGetFileHandler handles an incoming file request.
 // Implementations should write MSG_TYPE_FILE_META then file bytes (or MSG_TYPE_ERROR) before returning.
 type ServerGetFileHandler func(ctx context.Context, client *ProtoServerClient, bidi ProtoBidi, msg *pb.MsgGetFile) error
+
+// ServerGetOnlineUsersHandler handles an incoming online users request.
+// Implementations should write a MSG_TYPE_ONLINE_USERS before returning.
+type ServerGetOnlineUsersHandler func(ctx context.Context, client *ProtoServerClient, bidi ProtoBidi, msg *pb.MsgGetOnlineUsers) error
 
 // Close closes the underlying connection to the client.
 func (c *ProtoServerClient) Close() error {
@@ -116,7 +122,7 @@ func (c *ProtoServerClient) Ping() (*pb.MsgPong, error) {
 		return nil, err
 	}
 	defer func() {
-		_ = bidi.Stream.Close()
+		CloseBidi(&bidi)
 	}()
 
 	pong, err := ReadExpect[*pb.MsgPong](bidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_PONG)
@@ -137,7 +143,7 @@ func (c *ProtoServerClient) GetDirFiles(user string, path string) ([]string, err
 		return nil, err
 	}
 	defer func() {
-		_ = bidi.Stream.Close()
+		CloseBidi(&bidi)
 	}()
 
 	var filenames []string
@@ -166,7 +172,7 @@ func (c *ProtoServerClient) GetFileMeta(user string, path string) (*pb.MsgFileMe
 		return nil, err
 	}
 	defer func() {
-		_ = bidi.Stream.Close()
+		CloseBidi(&bidi)
 	}()
 
 	meta, err := ReadExpect[*pb.MsgFileMeta](bidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_FILE_META)
@@ -224,7 +230,7 @@ func (c *ProtoServerClient) listenerHandlers(ctx context.Context) map[pb.MsgType
 	return map[pb.MsgType]BidiHandler{
 		pb.MsgType_MSG_TYPE_PING: func(_ *quic.Conn, bidi ProtoBidi, msg *UntypedProtoMsg) error {
 			defer func() {
-				_ = bidi.Stream.Close()
+				CloseBidi(&bidi)
 			}()
 
 			if c.OnPing == nil {
@@ -235,7 +241,7 @@ func (c *ProtoServerClient) listenerHandlers(ctx context.Context) map[pb.MsgType
 		},
 		pb.MsgType_MSG_TYPE_GET_DIR_FILES: func(_ *quic.Conn, bidi ProtoBidi, msg *UntypedProtoMsg) error {
 			defer func() {
-				_ = bidi.Stream.Close()
+				CloseBidi(&bidi)
 			}()
 
 			if c.OnGetDirFiles == nil {
@@ -246,7 +252,7 @@ func (c *ProtoServerClient) listenerHandlers(ctx context.Context) map[pb.MsgType
 		},
 		pb.MsgType_MSG_TYPE_GET_FILE_META: func(_ *quic.Conn, bidi ProtoBidi, msg *UntypedProtoMsg) error {
 			defer func() {
-				_ = bidi.Stream.Close()
+				CloseBidi(&bidi)
 			}()
 
 			if c.OnGetFileMeta == nil {
@@ -257,7 +263,7 @@ func (c *ProtoServerClient) listenerHandlers(ctx context.Context) map[pb.MsgType
 		},
 		pb.MsgType_MSG_TYPE_GET_FILE: func(_ *quic.Conn, bidi ProtoBidi, msg *UntypedProtoMsg) error {
 			defer func() {
-				_ = bidi.Stream.Close()
+				CloseBidi(&bidi)
 			}()
 
 			if c.OnGetFile == nil {
@@ -265,6 +271,17 @@ func (c *ProtoServerClient) listenerHandlers(ctx context.Context) map[pb.MsgType
 			}
 
 			return c.OnGetFile(ctx, c, bidi, ToTyped[*pb.MsgGetFile](msg).Payload)
+		},
+		pb.MsgType_MSG_TYPE_GET_ONLINE_USERS: func(_ *quic.Conn, bidi ProtoBidi, msg *UntypedProtoMsg) error {
+			defer func() {
+				CloseBidi(&bidi)
+			}()
+
+			if c.OnGetOnlineUsers == nil {
+				return writeUnimplementedServerError(bidi, msg.Type)
+			}
+
+			return c.OnGetOnlineUsers(ctx, c, bidi, ToTyped[*pb.MsgGetOnlineUsers](msg).Payload)
 		},
 	}
 }
@@ -275,7 +292,7 @@ func (s *ProtoServer) negotiateVersion(ctx context.Context, client *ProtoServerC
 		return fmt.Errorf("failed to wait for version negotiation stream: %w", err)
 	}
 	defer func() {
-		_ = bidi.Stream.Close()
+		CloseBidi(&bidi)
 	}()
 
 	msg, err := bidi.Read()
@@ -333,7 +350,7 @@ func (s *ProtoServer) authenticate(ctx context.Context, client *ProtoServerClien
 		return fmt.Errorf("failed to wait for authentication stream: %w", err)
 	}
 	defer func() {
-		_ = bidi.Stream.Close()
+		CloseBidi(&bidi)
 	}()
 
 	msg, err := bidi.Read()

@@ -66,6 +66,13 @@ enum MsgType {
     //  - Message MSG_TYPE_FILE_META then the file's requested binary content until the stream is closed by receiver.
     //  - Message MSG_TYPE_ERROR of ERR_TYPE_FILE_NOT_EXIST.
     MSG_TYPE_GET_FILE = 15;
+
+    // [CLIENT] Request to get a list of online users in the room.
+    // Expected: Repeated message MSG_TYPE_ONLINE_USERS until stream is closed by receiver.
+    MSG_TYPE_GET_ONLINE_USERS = 16;
+
+    // [SERVER] List of online users in the room.
+    MSG_TYPE_ONLINE_USERS = 17;
 }
 
 // Ping message.
@@ -260,7 +267,11 @@ message MsgGetFileMeta {
 // See MSG_TYPE_FILE_META.
 message MsgFileMeta {
     // The file's size, in bytes.
+    // Always zero if the file is a folder.
     uint64 size = 1;
+
+    // True if the path points to a directory.
+    bool is_dir = 2;
 }
 
 // See MSG_TYPE_GET_FILE.
@@ -283,4 +294,14 @@ message MsgGetFile {
     // The limit of the file to read, in bytes.
     // Specify 0 for no limit.
     uint64 limit = 5;
+}
+
+// See MSG_TYPE_GET_ONLINE_USERS.
+message MsgGetOnlineUsers {
+}
+
+// See MSG_TYPE_ONLINE_USERS.
+message MsgOnlineUsers {
+    // A list of online users in the room.
+    repeated string users = 1;
 }

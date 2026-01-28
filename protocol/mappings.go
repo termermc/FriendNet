@@ -40,6 +40,10 @@ func MsgTypeToEmptyMsg(typ pb.MsgType) proto.Message {
 		return &pb.MsgFileMeta{}
 	case pb.MsgType_MSG_TYPE_GET_FILE:
 		return &pb.MsgGetFile{}
+	case pb.MsgType_MSG_TYPE_GET_ONLINE_USERS:
+		return &pb.MsgGetOnlineUsers{}
+	case pb.MsgType_MSG_TYPE_ONLINE_USERS:
+		return &pb.MsgOnlineUsers{}
 	default:
 		return nil
 	}

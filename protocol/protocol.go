@@ -124,6 +124,9 @@ func (r *ProtoStreamReader) ReadRaw() (*UntypedProtoMsg, error) {
 
 	// Decode message.
 	msg := MsgTypeToEmptyMsg(typ)
+
+	// TODO If msg is nil, return error
+
 	err = proto.Unmarshal(payload, msg)
 	if err != nil {
 		return nil, fmt.Errorf(`failed to decode protocol message payload with supposed type %s and length %d: %w`,
@@ -244,6 +247,15 @@ type ProtoBidi struct {
 	Stream *quic.Stream
 	*ProtoStreamReader
 	*ProtoStreamWriter
+}
+
+// CloseBidi closes the send side and cancels the read side to fully release the stream.
+func CloseBidi(bidi *ProtoBidi) {
+	if bidi == nil || bidi.Stream == nil {
+		return
+	}
+	_ = bidi.Stream.Close()
+	bidi.Stream.CancelRead(0)
 }
 
 func wrapBidi(stream *quic.Stream) ProtoBidi {

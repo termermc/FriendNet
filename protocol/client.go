@@ -143,7 +143,7 @@ func negotiateVersion(conn *quic.Conn, version *pb.ProtoVersion) (*pb.ProtoVersi
 		return nil, err
 	}
 	defer func() {
-		_ = bidi.Stream.Close()
+		CloseBidi(&bidi)
 	}()
 
 	msg, err := bidi.Read()
@@ -182,7 +182,7 @@ func authenticate(conn *quic.Conn, creds ClientCredentials) error {
 		return err
 	}
 	defer func() {
-		_ = bidi.Stream.Close()
+		CloseBidi(&bidi)
 	}()
 
 	msg, err := bidi.Read()
@@ -253,7 +253,7 @@ func (c *ProtoClient) Ping() (*pb.MsgPong, error) {
 		return nil, err
 	}
 	defer func() {
-		_ = bidi.Stream.Close()
+		CloseBidi(&bidi)
 	}()
 
 	pong, err := ReadExpect[*pb.MsgPong](bidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_PONG)
@@ -274,7 +274,7 @@ func (c *ProtoClient) GetDirFiles(user string, path string) ([]string, error) {
 		return nil, err
 	}
 	defer func() {
-		_ = bidi.Stream.Close()
+		CloseBidi(&bidi)
 	}()
 
 	var filenames []string
@@ -303,7 +303,7 @@ func (c *ProtoClient) GetFileMeta(user string, path string) (*pb.MsgFileMeta, er
 		return nil, err
 	}
 	defer func() {
-		_ = bidi.Stream.Close()
+		CloseBidi(&bidi)
 	}()
 
 	meta, err := ReadExpect[*pb.MsgFileMeta](bidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_FILE_META)
@@ -336,6 +336,31 @@ func (c *ProtoClient) GetFile(user string, path string, offset uint64, limit uin
 	return meta, bidi.Stream, nil
 }
 
+// GetOnlineUsers requests the list of users currently online in the room.
+func (c *ProtoClient) GetOnlineUsers() ([]string, error) {
+	bidi, err := OpenBidiWithMsg(c.conn, pb.MsgType_MSG_TYPE_GET_ONLINE_USERS, &pb.MsgGetOnlineUsers{})
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		CloseBidi(&bidi)
+	}()
+
+	var users []string
+	for {
+		resp, err := ReadExpect[*pb.MsgOnlineUsers](bidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_ONLINE_USERS)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return nil, err
+		}
+		users = append(users, resp.Users...)
+	}
+
+	return users, nil
+}
+
 // Listen waits for incoming requests and dispatches them to the configured handlers.
 func (c *ProtoClient) Listen(ctx context.Context, errorHandler func(error)) error {
 	if c == nil || c.conn == nil {
@@ -361,7 +386,7 @@ func (c *ProtoClient) listenerHandlers(ctx context.Context) map[pb.MsgType]BidiH
 	return map[pb.MsgType]BidiHandler{
 		pb.MsgType_MSG_TYPE_PING: func(_ *quic.Conn, bidi ProtoBidi, msg *UntypedProtoMsg) error {
 			defer func() {
-				_ = bidi.Stream.Close()
+				CloseBidi(&bidi)
 			}()
 
 			if c.OnPing == nil {
@@ -372,7 +397,7 @@ func (c *ProtoClient) listenerHandlers(ctx context.Context) map[pb.MsgType]BidiH
 		},
 		pb.MsgType_MSG_TYPE_GET_DIR_FILES: func(_ *quic.Conn, bidi ProtoBidi, msg *UntypedProtoMsg) error {
 			defer func() {
-				_ = bidi.Stream.Close()
+				CloseBidi(&bidi)
 			}()
 
 			if c.OnGetDirFiles == nil {
@@ -383,7 +408,7 @@ func (c *ProtoClient) listenerHandlers(ctx context.Context) map[pb.MsgType]BidiH
 		},
 		pb.MsgType_MSG_TYPE_GET_FILE_META: func(_ *quic.Conn, bidi ProtoBidi, msg *UntypedProtoMsg) error {
 			defer func() {
-				_ = bidi.Stream.Close()
+				CloseBidi(&bidi)
 			}()
 
 			if c.OnGetFileMeta == nil {
@@ -394,7 +419,7 @@ func (c *ProtoClient) listenerHandlers(ctx context.Context) map[pb.MsgType]BidiH
 		},
 		pb.MsgType_MSG_TYPE_GET_FILE: func(_ *quic.Conn, bidi ProtoBidi, msg *UntypedProtoMsg) error {
 			defer func() {
-				_ = bidi.Stream.Close()
+				CloseBidi(&bidi)
 			}()
 
 			if c.OnGetFile == nil {
