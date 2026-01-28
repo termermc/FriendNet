@@ -12,6 +12,18 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// TODO Include extra headers?
+// I'm thinking of having a header enum for different headers that can be included, and the value for each is a byte string.
+
+const msgHeaderSize = 8
+
+// CurrentProtocolVersion is the current protocol version used by the client and server modules in this codebase.
+var CurrentProtocolVersion = &pb.ProtoVersion{
+	Major: 0,
+	Minor: 0,
+	Patch: 0,
+}
+
 type UntypedProtoMsg struct {
 	Type    pb.MsgType
 	Payload proto.Message
@@ -42,8 +54,6 @@ func ToTyped[T proto.Message](msg *UntypedProtoMsg) *TypedProtoMsg[T] {
 }
 
 type BidiHandler func(conn *quic.Conn, bidi ProtoBidi, msg *UntypedProtoMsg) error
-
-const msgHeaderSize = 8
 
 // ProtoStreamReader wraps a QUIC receive stream to read protocol messages.
 // It does not manage the stream lifecycle or hijack it in any way;
@@ -176,7 +186,7 @@ func NewProtoStreamWriter(stream io.Writer) *ProtoStreamWriter {
 // Write tries to write a protocol message to the stream.
 func (w *ProtoStreamWriter) Write(typ pb.MsgType, msg proto.Message) error {
 	msgSize := proto.Size(msg)
-	msgBuf := make([]byte, 0, msgHeaderSize+msgSize)
+	msgBuf := make([]byte, msgHeaderSize, msgHeaderSize+msgSize)
 
 	// Write header.
 	binary.LittleEndian.PutUint32(msgBuf[:4], uint32(typ))
@@ -184,7 +194,7 @@ func (w *ProtoStreamWriter) Write(typ pb.MsgType, msg proto.Message) error {
 
 	// Marshal and append payload.
 	var err error
-	msgBuf, err = proto.MarshalOptions{}.MarshalAppend(msgBuf[msgHeaderSize:], msg)
+	msgBuf, err = proto.MarshalOptions{}.MarshalAppend(msgBuf, msg)
 	if err != nil {
 		return fmt.Errorf(`failed to marshal payload for message with type %s: %w`,
 			typ.String(),
@@ -236,6 +246,7 @@ func OpenBidiWithMsg(conn *quic.Conn, typ pb.MsgType, msg proto.Message) (bidi P
 
 	err = bidi.Write(typ, msg)
 	if err != nil {
+		_ = bidi.Stream.Close()
 		return ProtoBidi{}, err
 	}
 
