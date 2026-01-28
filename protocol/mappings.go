@@ -21,7 +21,7 @@ func MsgTypeToEmptyMsg(typ pb.MsgType) proto.Message {
 	case pb.MsgType_MSG_TYPE_VERSION:
 		return &pb.MsgVersion{}
 	case pb.MsgType_MSG_TYPE_VERSION_ACCEPTED:
-		return &pb.MsgAuthAccepted{}
+		return &pb.MsgVersionAccepted{}
 	case pb.MsgType_MSG_TYPE_VERSION_REJECTED:
 		return &pb.MsgVersionRejected{}
 	case pb.MsgType_MSG_TYPE_AUTHENTICATE:
