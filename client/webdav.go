@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -60,7 +61,8 @@ func (s *WebDAVServer) Start(ctx context.Context) error {
 	}
 
 	server := &http.Server{
-		Handler: handler,
+		Handler:  handler,
+		ErrorLog: log.New(io.Discard, "", 0),
 	}
 
 	s.server = server
@@ -166,36 +168,19 @@ func (p *proxyFS) OpenFile(ctx context.Context, name string, flag int, perm os.F
 		return &dirFile{infos: infos}, nil
 	}
 
-	meta, reader, err := client.GetFile(user, subPath, 0, 0)
 	if err != nil {
 		return nil, err
 	}
 	if meta.IsDir {
-		_ = reader.Close()
 		return nil, os.ErrNotExist
 	}
 
-	tmp, err := os.CreateTemp("", "friendnet-webdav-*")
-	if err != nil {
-		_ = reader.Close()
-		return nil, err
-	}
-	if _, err := io.Copy(tmp, reader); err != nil {
-		_ = reader.Close()
-		_ = tmp.Close()
-		_ = os.Remove(tmp.Name())
-		return nil, err
-	}
-	_ = reader.Close()
-	if _, err := tmp.Seek(0, io.SeekStart); err != nil {
-		_ = tmp.Close()
-		_ = os.Remove(tmp.Name())
-		return nil, err
-	}
-
-	return &tempFile{
-		File: tmp,
-		info: fileInfo{name: path.Base(subPath), size: int64(meta.Size), mode: 0o644},
+	return &streamFile{
+		client: client,
+		user:   user,
+		path:   subPath,
+		size:   int64(meta.Size),
+		info:   fileInfo{name: path.Base(subPath), size: int64(meta.Size), mode: 0o644},
 	}, nil
 }
 
@@ -317,6 +302,73 @@ func (t *tempFile) Close() error {
 	_ = os.Remove(name)
 	return err
 }
+
+type streamFile struct {
+	client webdavClient
+	user   string
+	path   string
+	size   int64
+	info   os.FileInfo
+	reader io.ReadCloser
+	offset int64
+}
+
+func (s *streamFile) Close() error {
+	if s.reader != nil {
+		_ = s.reader.Close()
+		s.reader = nil
+	}
+	return nil
+}
+
+func (s *streamFile) Read(p []byte) (int, error) {
+	if s.reader == nil {
+		_, reader, err := s.client.GetFile(s.user, s.path, uint64(s.offset), 0)
+		if err != nil {
+			return 0, err
+		}
+		s.reader = reader
+	}
+
+	n, err := s.reader.Read(p)
+	if n > 0 {
+		s.offset += int64(n)
+	}
+	if errors.Is(err, io.EOF) {
+		_ = s.reader.Close()
+		s.reader = nil
+	}
+	return n, err
+}
+
+func (s *streamFile) Seek(offset int64, whence int) (int64, error) {
+	var next int64
+	switch whence {
+	case io.SeekStart:
+		next = offset
+	case io.SeekCurrent:
+		next = s.offset + offset
+	case io.SeekEnd:
+		next = s.size + offset
+	default:
+		return 0, errors.New("invalid whence")
+	}
+	if next < 0 {
+		return 0, errors.New("negative position")
+	}
+	s.offset = next
+	if s.reader != nil {
+		_ = s.reader.Close()
+		s.reader = nil
+	}
+	return s.offset, nil
+}
+
+func (s *streamFile) Write([]byte) (int, error) { return 0, os.ErrPermission }
+
+func (s *streamFile) Readdir(int) ([]os.FileInfo, error) { return nil, errors.New("not a directory") }
+
+func (s *streamFile) Stat() (os.FileInfo, error) { return s.info, nil }
 
 type fileInfo struct {
 	name  string
