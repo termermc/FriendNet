@@ -97,9 +97,6 @@ func (p *proxyFS) getFileMeta(user string, path string) (*pb.MsgFileMeta, error)
 		return nil, protocol.ErrClientNotConnected
 	}
 
-	// TODO REMOVE THIS
-	println("UNCACHED " + path)
-
 	meta, err := client.GetFileMeta(user, path)
 	if err != nil {
 		return nil, err
@@ -202,9 +199,6 @@ type proxyFS struct {
 }
 
 func (p *proxyFS) OpenFile(ctx context.Context, name string, flag int, perm os.FileMode) (webdav.File, error) {
-	// TODO REMOVE THIS
-	println("OpenFile " + name)
-
 	if flag&(os.O_WRONLY|os.O_RDWR|os.O_APPEND|os.O_CREATE|os.O_TRUNC) != 0 {
 		return nil, os.ErrPermission
 	}
@@ -300,9 +294,6 @@ func (p *proxyFS) Rename(ctx context.Context, oldName, newName string) error {
 }
 
 func (p *proxyFS) Stat(ctx context.Context, name string) (os.FileInfo, error) {
-	// TODO REMOVE THIS
-	println("Stat " + name)
-
 	client := p.getClient()
 	if client == nil {
 		return nil, errors.New("not connected")
@@ -428,9 +419,6 @@ func (s *streamFile) Close() error {
 }
 
 func (s *streamFile) Read(p []byte) (int, error) {
-	// TODO REMOVE THIS
-	println("READ " + s.path)
-
 	if s.reader == nil {
 		_, reader, err := s.client.GetFile(s.user, s.path, uint64(s.offset), 0)
 		if err != nil {
