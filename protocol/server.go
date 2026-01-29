@@ -134,7 +134,7 @@ func (c *ProtoServerClient) Ping() (*pb.MsgPong, error) {
 }
 
 // GetDirFiles requests all filenames inside a directory on the client.
-func (c *ProtoServerClient) GetDirFiles(user string, path string) ([]string, error) {
+func (c *ProtoServerClient) GetDirFiles(user string, path string) ([]*pb.MsgFileMeta, error) {
 	bidi, err := OpenBidiWithMsg(c.conn, pb.MsgType_MSG_TYPE_GET_DIR_FILES, &pb.MsgGetDirFiles{
 		User: user,
 		Path: path,
@@ -146,7 +146,7 @@ func (c *ProtoServerClient) GetDirFiles(user string, path string) ([]string, err
 		CloseBidi(&bidi)
 	}()
 
-	var filenames []string
+	var files []*pb.MsgFileMeta
 	for {
 		dirFiles, err := ReadExpect[*pb.MsgDirFiles](bidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_DIR_FILES)
 		if err != nil {
@@ -156,10 +156,10 @@ func (c *ProtoServerClient) GetDirFiles(user string, path string) ([]string, err
 			return nil, err
 		}
 
-		filenames = append(filenames, dirFiles.Filenames...)
+		files = append(files, dirFiles.Files...)
 	}
 
-	return filenames, nil
+	return files, nil
 }
 
 // GetFileMeta requests metadata about a file without reading it.

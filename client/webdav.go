@@ -14,15 +14,47 @@ import (
 	"sync"
 	"time"
 
+	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
+	"github.com/puzpuzpuz/xsync/v4"
 	"golang.org/x/net/webdav"
 )
 
 type webdavClient interface {
 	GetOnlineUsers() ([]string, error)
-	GetDirFiles(user string, path string) ([]string, error)
+	GetDirFiles(user string, path string) ([]*pb.MsgFileMeta, error)
 	GetFileMeta(user string, path string) (*pb.MsgFileMeta, error)
 	GetFile(user string, path string, offset uint64, limit uint64) (*pb.MsgFileMeta, io.ReadCloser, error)
+}
+
+type metaCacheEntry struct {
+	meta    *pb.MsgFileMeta
+	expires time.Time
+}
+
+const metaCacheTtl = 10 * time.Second
+
+type MetaCache struct {
+	m        *xsync.Map[string, metaCacheEntry]
+	isClosed bool
+}
+
+func (c *MetaCache) Close() error {
+	c.isClosed = true
+	return nil
+}
+
+func NewMetaCache() *MetaCache {
+	m := xsync.NewMap[string, metaCacheEntry]()
+
+	go func() {
+		ticker := time.NewTicker(10 * time.Second)
+		for range ticker.C {
+
+		}
+	}()
+
+	return &MetaCache{m: m}
 }
 
 type WebDAVServer struct {
@@ -31,13 +63,81 @@ type WebDAVServer struct {
 	mu     sync.Mutex
 	server *http.Server
 	ln     net.Listener
+
+	isRunning bool
+	metaCache *MetaCache
+}
+
+func (c *MetaCache) putEntryCache(user string, path string, meta *pb.MsgFileMeta) {
+	c.m.Store(
+		joinDirPath(user, path),
+		metaCacheEntry{
+			meta:    meta,
+			expires: time.Now().Add(metaCacheTtl),
+		},
+	)
+}
+
+func (c *MetaCache) getEntryCache(user string, path string) *pb.MsgFileMeta {
+	entry, ok := c.m.Load(joinDirPath(user, path))
+	if !ok || entry.expires.Before(time.Now()) {
+		return nil
+	}
+	return entry.meta
+}
+
+func (p *proxyFS) getFileMeta(user string, path string) (*pb.MsgFileMeta, error) {
+	meta := p.metaCache.getEntryCache(user, path)
+	if meta != nil {
+		return meta, nil
+	}
+
+	client := p.getClient()
+	if client == nil {
+		return nil, protocol.ErrClientNotConnected
+	}
+
+	// TODO REMOVE THIS
+	println("UNCACHED " + path)
+
+	meta, err := client.GetFileMeta(user, path)
+	if err != nil {
+		return nil, err
+	}
+
+	p.metaCache.putEntryCache(user, path, meta)
+
+	return meta, nil
+}
+
+func (p *proxyFS) getDirFiles(user string, path string) ([]*pb.MsgFileMeta, error) {
+	client := p.getClient()
+	if client == nil {
+		return nil, protocol.ErrClientNotConnected
+	}
+
+	files, err := client.GetDirFiles(user, path)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, file := range files {
+		p.metaCache.putEntryCache(user, joinDirPath(path, file.Name), file)
+	}
+
+	return files, nil
 }
 
 func NewWebDAVServer(port int, getter func() webdavClient) *WebDAVServer {
-	return &WebDAVServer{
+	server := &WebDAVServer{
 		port:   port,
 		getter: getter,
+
+		isRunning: true,
+		metaCache: NewMetaCache(),
 	}
+
+	return server
 }
 
 func (s *WebDAVServer) Start(ctx context.Context) error {
@@ -53,7 +153,10 @@ func (s *WebDAVServer) Start(ctx context.Context) error {
 		return err
 	}
 
-	fs := &proxyFS{getClient: s.getter}
+	fs := &proxyFS{
+		getClient: s.getter,
+		metaCache: s.metaCache,
+	}
 	handler := &webdav.Handler{
 		Prefix:     "/",
 		FileSystem: fs,
@@ -87,24 +190,33 @@ func (s *WebDAVServer) Stop(ctx context.Context) error {
 		_ = s.ln.Close()
 		s.ln = nil
 	}
+
+	_ = s.metaCache.Close()
+
 	return err
 }
 
 type proxyFS struct {
 	getClient func() webdavClient
+	metaCache *MetaCache
 }
 
 func (p *proxyFS) OpenFile(ctx context.Context, name string, flag int, perm os.FileMode) (webdav.File, error) {
+	// TODO REMOVE THIS
+	println("OpenFile " + name)
+
 	if flag&(os.O_WRONLY|os.O_RDWR|os.O_APPEND|os.O_CREATE|os.O_TRUNC) != 0 {
 		return nil, os.ErrPermission
 	}
 
 	client := p.getClient()
 	if client == nil {
-		return nil, errors.New("not connected")
+		return nil, protocol.ErrClientNotConnected
 	}
 
 	clean := path.Clean("/" + strings.TrimPrefix(name, "/"))
+
+	// Root, list online users.
 	if clean == "/" {
 		users, err := client.GetOnlineUsers()
 		if err != nil {
@@ -122,47 +234,38 @@ func (p *proxyFS) OpenFile(ctx context.Context, name string, flag int, perm os.F
 		return nil, os.ErrNotExist
 	}
 
+	// If the root of the user path, list files.
 	if subPath == "" || subPath == "/" {
 		subPath = "/"
-		files, err := client.GetDirFiles(user, subPath)
+		files, err := p.getDirFiles(user, subPath)
 		if err != nil {
 			return nil, err
 		}
 		infos := make([]os.FileInfo, 0, len(files))
-		for _, name := range files {
-			entryPath := joinDirPath(subPath, name)
-			entryMeta, err := client.GetFileMeta(user, entryPath)
-			if err != nil {
-				infos = append(infos, fileInfo{name: name, mode: 0o644})
-				continue
-			}
-			if entryMeta.IsDir {
-				infos = append(infos, fileInfo{name: name, mode: os.ModeDir | 0o755, isDir: true})
+		for _, entry := range files {
+			if entry.IsDir {
+				infos = append(infos, fileInfo{name: entry.Name, mode: os.ModeDir | 0o755, isDir: true})
 			} else {
-				infos = append(infos, fileInfo{name: name, size: int64(entryMeta.Size), mode: 0o644})
+				infos = append(infos, fileInfo{name: entry.Name, size: int64(entry.Size), mode: 0o644})
 			}
 		}
 		return &dirFile{infos: infos}, nil
 	}
 
-	meta, err := client.GetFileMeta(user, subPath)
+	// TODO Make a new message that can either read or list depending on whether a path is a file.
+
+	meta, err := p.getFileMeta(user, subPath)
 	if err == nil && meta.IsDir {
-		files, err := client.GetDirFiles(user, subPath)
+		files, err := p.getDirFiles(user, subPath)
 		if err != nil {
 			return nil, err
 		}
 		infos := make([]os.FileInfo, 0, len(files))
-		for _, name := range files {
-			entryPath := joinDirPath(subPath, name)
-			entryMeta, err := client.GetFileMeta(user, entryPath)
-			if err != nil {
-				infos = append(infos, fileInfo{name: name, mode: 0o644})
-				continue
-			}
-			if entryMeta.IsDir {
-				infos = append(infos, fileInfo{name: name, mode: os.ModeDir | 0o755, isDir: true})
+		for _, file := range files {
+			if file.IsDir {
+				infos = append(infos, fileInfo{name: file.Name, mode: os.ModeDir | 0o755, isDir: true})
 			} else {
-				infos = append(infos, fileInfo{name: name, size: int64(entryMeta.Size), mode: 0o644})
+				infos = append(infos, fileInfo{name: file.Name, size: int64(file.Size), mode: 0o644})
 			}
 		}
 		return &dirFile{infos: infos}, nil
@@ -197,6 +300,9 @@ func (p *proxyFS) Rename(ctx context.Context, oldName, newName string) error {
 }
 
 func (p *proxyFS) Stat(ctx context.Context, name string) (os.FileInfo, error) {
+	// TODO REMOVE THIS
+	println("Stat " + name)
+
 	client := p.getClient()
 	if client == nil {
 		return nil, errors.New("not connected")
@@ -215,7 +321,7 @@ func (p *proxyFS) Stat(ctx context.Context, name string) (os.FileInfo, error) {
 		return fileInfo{name: user, mode: os.ModeDir | 0o755, isDir: true}, nil
 	}
 
-	meta, err := client.GetFileMeta(user, subPath)
+	meta, err := p.getFileMeta(user, subPath)
 	if err != nil {
 		return nil, err
 	}
@@ -322,6 +428,9 @@ func (s *streamFile) Close() error {
 }
 
 func (s *streamFile) Read(p []byte) (int, error) {
+	// TODO REMOVE THIS
+	println("READ " + s.path)
+
 	if s.reader == nil {
 		_, reader, err := s.client.GetFile(s.user, s.path, uint64(s.offset), 0)
 		if err != nil {

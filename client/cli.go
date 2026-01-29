@@ -69,7 +69,7 @@ func (c *CLI) Run(ctx context.Context) error {
 		}
 
 		if err := c.handleCommand(ctx, line); err != nil {
-			fmt.Fprintf(c.out, "error: %v\n", err)
+			_, _ = fmt.Fprintf(c.out, "error: %v\n", err)
 		}
 	}
 }
@@ -115,33 +115,33 @@ func (c *CLI) handleCommand(ctx context.Context, line string) error {
 }
 
 func (c *CLI) printHelp() {
-	fmt.Fprintln(c.out, "Commands:")
-	fmt.Fprintln(c.out, "  help                         Show this help")
-	fmt.Fprintln(c.out, "  config                       Show current config")
-	fmt.Fprintln(c.out, "  set <key> <value>             Set config key (server_addr, room, username, password)")
-	fmt.Fprintln(c.out, "  connect [addr room user pass] Connect using args or config")
-	fmt.Fprintln(c.out, "  share list                    List configured shares")
-	fmt.Fprintln(c.out, "  share add <name> <path>        Add a share (name may be '-')")
-	fmt.Fprintln(c.out, "  share remove <name>            Remove a share")
-	fmt.Fprintln(c.out, "  webdav start                   Start WebDAV server")
-	fmt.Fprintln(c.out, "  webdav stop                    Stop WebDAV server")
-	fmt.Fprintln(c.out, "  disconnect                   Close the connection")
-	fmt.Fprintln(c.out, "  ping                         Send a ping")
-	fmt.Fprintln(c.out, "  get-dir <user> <path>         List files in a directory")
-	fmt.Fprintln(c.out, "  get-meta <user> <path>        Fetch file metadata")
-	fmt.Fprintln(c.out, "  get-file <user> <path> <out> [offset] [limit]  Download a file")
-	fmt.Fprintln(c.out, "  users                        List online users in the room")
-	fmt.Fprintln(c.out, "  quit                          Exit")
+	_, _ = fmt.Fprintln(c.out, "Commands:")
+	_, _ = fmt.Fprintln(c.out, "  help                          Show this help")
+	_, _ = fmt.Fprintln(c.out, "  config                        Show current config")
+	_, _ = fmt.Fprintln(c.out, "  set <key> <value>             Set config key (server_addr, room, username, password)")
+	_, _ = fmt.Fprintln(c.out, "  connect [addr room user pass] Connect using args or config")
+	_, _ = fmt.Fprintln(c.out, "  share list                    List configured shares")
+	_, _ = fmt.Fprintln(c.out, "  share add <name> <path>       Add a share (name may be '-')")
+	_, _ = fmt.Fprintln(c.out, "  share remove <name>           Remove a share")
+	_, _ = fmt.Fprintln(c.out, "  webdav start                  Start WebDAV server")
+	_, _ = fmt.Fprintln(c.out, "  webdav stop                   Stop WebDAV server")
+	_, _ = fmt.Fprintln(c.out, "  disconnect                    Close the connection")
+	_, _ = fmt.Fprintln(c.out, "  ping                          Send a ping")
+	_, _ = fmt.Fprintln(c.out, "  get-dir <user> <path>         List files in a directory")
+	_, _ = fmt.Fprintln(c.out, "  get-meta <user> <path>        Fetch file metadata")
+	_, _ = fmt.Fprintln(c.out, "  get-file <user> <path> <out>  [offset] [limit]  Download a file")
+	_, _ = fmt.Fprintln(c.out, "  users                         List online users in the room")
+	_, _ = fmt.Fprintln(c.out, "  quit                          Exit")
 }
 
 func (c *CLI) printConfig() {
-	fmt.Fprintf(c.out, "server_addr=%s\n", c.config.ServerAddr)
-	fmt.Fprintf(c.out, "room=%s\n", c.config.Room)
-	fmt.Fprintf(c.out, "username=%s\n", c.config.Username)
+	_, _ = fmt.Fprintf(c.out, "server_addr=%s\n", c.config.ServerAddr)
+	_, _ = fmt.Fprintf(c.out, "room=%s\n", c.config.Room)
+	_, _ = fmt.Fprintf(c.out, "username=%s\n", c.config.Username)
 	if c.config.Password != "" {
-		fmt.Fprintln(c.out, "password=(set)")
+		_, _ = fmt.Fprintln(c.out, "password=(set)")
 	} else {
-		fmt.Fprintln(c.out, "password=(empty)")
+		_, _ = fmt.Fprintln(c.out, "password=(empty)")
 	}
 }
 
@@ -186,7 +186,7 @@ func (c *CLI) handleShare(args []string) error {
 	switch strings.ToLower(args[0]) {
 	case "list":
 		if len(c.config.Shares) == 0 {
-			fmt.Fprintln(c.out, "no shares configured")
+			_, _ = fmt.Fprintln(c.out, "no shares configured")
 			return nil
 		}
 		for _, share := range c.config.Shares {
@@ -194,7 +194,7 @@ func (c *CLI) handleShare(args []string) error {
 			if name == "" {
 				name = filepath.Base(share.Path)
 			}
-			fmt.Fprintf(c.out, "%s -> %s\n", name, share.Path)
+			_, _ = fmt.Fprintf(c.out, "%s -> %s\n", name, share.Path)
 		}
 		return nil
 	case "add":
@@ -262,7 +262,7 @@ func (c *CLI) handleWebDAV(ctx context.Context, args []string) error {
 			return err
 		}
 		c.webdavServer = server
-		fmt.Fprintf(c.out, "webdav listening on http://127.0.0.1:%d/\n", port)
+		_, _ = fmt.Fprintf(c.out, "webdav listening on http://127.0.0.1:%d/\n", port)
 		return nil
 	case "stop":
 		if c.webdavServer == nil {
@@ -272,7 +272,7 @@ func (c *CLI) handleWebDAV(ctx context.Context, args []string) error {
 			return err
 		}
 		c.webdavServer = nil
-		fmt.Fprintln(c.out, "webdav stopped")
+		_, _ = fmt.Fprintln(c.out, "webdav stopped")
 		return nil
 	default:
 		return fmt.Errorf("unknown webdav subcommand %q", args[0])
@@ -438,7 +438,7 @@ func (c *CLI) ping() error {
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(c.out, "pong at %d\n", pong.SentTs)
+	_, _ = fmt.Fprintf(c.out, "pong at %d\n", pong.SentTs)
 	return nil
 }
 
@@ -458,22 +458,17 @@ func (c *CLI) getDir(args []string) error {
 	if basePath == "" {
 		basePath = "/"
 	}
-	for _, name := range files {
+	for _, file := range files {
 		fullPath := basePath
 		if fullPath != "/" {
 			fullPath += "/"
 		}
-		fullPath += name
+		fullPath += file.Name
 
-		meta, err := client.GetFileMeta(args[0], fullPath)
-		if err != nil {
-			fmt.Fprintln(c.out, name)
-			continue
-		}
-		if meta.IsDir {
-			fmt.Fprintf(c.out, "%s/\n", name)
+		if file.IsDir {
+			_, _ = fmt.Fprintf(c.out, "%s/\n", file.Name)
 		} else {
-			fmt.Fprintln(c.out, name)
+			_, _ = fmt.Fprintln(c.out, file.Name)
 		}
 	}
 	return nil
@@ -491,7 +486,7 @@ func (c *CLI) getMeta(args []string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(c.out, "size=%d\n", meta.Size)
+	_, _ = fmt.Fprintf(c.out, "size=%d\n", meta.Size)
 	return nil
 }
 

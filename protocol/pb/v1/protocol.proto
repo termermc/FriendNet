@@ -246,8 +246,8 @@ message MsgGetDirFiles {
 
 // See MSG_TYPE_DIR_FILES.
 message MsgDirFiles {
-    // A non-exhaustive list of filenames (including folder names) within a directory.
-    repeated string filenames = 1;
+    // A non-exhaustive list of files within a directory.
+    repeated MsgFileMeta files = 1;
 }
 
 // See MSG_TYPE_GET_FILE_META.
@@ -266,12 +266,15 @@ message MsgGetFileMeta {
 
 // See MSG_TYPE_FILE_META.
 message MsgFileMeta {
+    // The file's name.
+    string name = 1;
+
+    // Whether the file is a directory.
+    bool is_dir = 2;
+
     // The file's size, in bytes.
     // Always zero if the file is a folder.
-    uint64 size = 1;
-
-    // True if the path points to a directory.
-    bool is_dir = 2;
+    uint64 size = 3;
 }
 
 // See MSG_TYPE_GET_FILE.

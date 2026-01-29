@@ -975,8 +975,8 @@ func (x *MsgGetDirFiles) GetPath() string {
 // See MSG_TYPE_DIR_FILES.
 type MsgDirFiles struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// A non-exhaustive list of filenames (including folder names) within a directory.
-	Filenames     []string `protobuf:"bytes,1,rep,name=filenames,proto3" json:"filenames,omitempty"`
+	// A non-exhaustive list of files within a directory.
+	Files         []*MsgFileMeta `protobuf:"bytes,1,rep,name=files,proto3" json:"files,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1011,9 +1011,9 @@ func (*MsgDirFiles) Descriptor() ([]byte, []int) {
 	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *MsgDirFiles) GetFilenames() []string {
+func (x *MsgDirFiles) GetFiles() []*MsgFileMeta {
 	if x != nil {
-		return x.Filenames
+		return x.Files
 	}
 	return nil
 }
@@ -1087,11 +1087,13 @@ func (x *MsgGetFileMeta) GetPath() string {
 // See MSG_TYPE_FILE_META.
 type MsgFileMeta struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// The file's name.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Whether the file is a directory.
+	IsDir bool `protobuf:"varint,2,opt,name=is_dir,json=isDir,proto3" json:"is_dir,omitempty"`
 	// The file's size, in bytes.
 	// Always zero if the file is a folder.
-	Size uint64 `protobuf:"varint,1,opt,name=size,proto3" json:"size,omitempty"`
-	// True if the path points to a directory.
-	IsDir         bool `protobuf:"varint,2,opt,name=is_dir,json=isDir,proto3" json:"is_dir,omitempty"`
+	Size          uint64 `protobuf:"varint,3,opt,name=size,proto3" json:"size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1126,11 +1128,11 @@ func (*MsgFileMeta) Descriptor() ([]byte, []int) {
 	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{14}
 }
 
-func (x *MsgFileMeta) GetSize() uint64 {
+func (x *MsgFileMeta) GetName() string {
 	if x != nil {
-		return x.Size
+		return x.Name
 	}
-	return 0
+	return ""
 }
 
 func (x *MsgFileMeta) GetIsDir() bool {
@@ -1138,6 +1140,13 @@ func (x *MsgFileMeta) GetIsDir() bool {
 		return x.IsDir
 	}
 	return false
+}
+
+func (x *MsgFileMeta) GetSize() uint64 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
 }
 
 // See MSG_TYPE_GET_FILE.
@@ -1352,16 +1361,17 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x0eMsgGetDirFiles\x12*\n" +
 	"\x11request_from_user\x18\x01 \x01(\tR\x0frequestFromUser\x12\x12\n" +
 	"\x04user\x18\x02 \x01(\tR\x04user\x12\x12\n" +
-	"\x04path\x18\x03 \x01(\tR\x04path\"+\n" +
-	"\vMsgDirFiles\x12\x1c\n" +
-	"\tfilenames\x18\x01 \x03(\tR\tfilenames\"d\n" +
+	"\x04path\x18\x03 \x01(\tR\x04path\"7\n" +
+	"\vMsgDirFiles\x12(\n" +
+	"\x05files\x18\x01 \x03(\v2\x12.pb.v1.MsgFileMetaR\x05files\"d\n" +
 	"\x0eMsgGetFileMeta\x12*\n" +
 	"\x11request_from_user\x18\x01 \x01(\tR\x0frequestFromUser\x12\x12\n" +
 	"\x04user\x18\x02 \x01(\tR\x04user\x12\x12\n" +
-	"\x04path\x18\x03 \x01(\tR\x04path\"8\n" +
+	"\x04path\x18\x03 \x01(\tR\x04path\"L\n" +
 	"\vMsgFileMeta\x12\x12\n" +
-	"\x04size\x18\x01 \x01(\x04R\x04size\x12\x15\n" +
-	"\x06is_dir\x18\x02 \x01(\bR\x05isDir\"\x8e\x01\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x15\n" +
+	"\x06is_dir\x18\x02 \x01(\bR\x05isDir\x12\x12\n" +
+	"\x04size\x18\x03 \x01(\x04R\x04size\"\x8e\x01\n" +
 	"\n" +
 	"MsgGetFile\x12*\n" +
 	"\x11request_from_user\x18\x01 \x01(\tR\x0frequestFromUser\x12\x12\n" +
@@ -1451,17 +1461,18 @@ var file_pb_v1_protocol_proto_goTypes = []any{
 	(*MsgOnlineUsers)(nil),      // 21: pb.v1.MsgOnlineUsers
 }
 var file_pb_v1_protocol_proto_depIdxs = []int32{
-	1, // 0: pb.v1.MsgError.type:type_name -> pb.v1.ErrType
-	8, // 1: pb.v1.MsgVersion.version:type_name -> pb.v1.ProtoVersion
-	8, // 2: pb.v1.MsgVersionAccepted.version:type_name -> pb.v1.ProtoVersion
-	8, // 3: pb.v1.MsgVersionRejected.version:type_name -> pb.v1.ProtoVersion
-	2, // 4: pb.v1.MsgVersionRejected.reason:type_name -> pb.v1.VersionRejectionReason
-	3, // 5: pb.v1.MsgAuthRejected.reason:type_name -> pb.v1.AuthRejectionReason
-	6, // [6:6] is the sub-list for method output_type
-	6, // [6:6] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	1,  // 0: pb.v1.MsgError.type:type_name -> pb.v1.ErrType
+	8,  // 1: pb.v1.MsgVersion.version:type_name -> pb.v1.ProtoVersion
+	8,  // 2: pb.v1.MsgVersionAccepted.version:type_name -> pb.v1.ProtoVersion
+	8,  // 3: pb.v1.MsgVersionRejected.version:type_name -> pb.v1.ProtoVersion
+	2,  // 4: pb.v1.MsgVersionRejected.reason:type_name -> pb.v1.VersionRejectionReason
+	3,  // 5: pb.v1.MsgAuthRejected.reason:type_name -> pb.v1.AuthRejectionReason
+	18, // 6: pb.v1.MsgDirFiles.files:type_name -> pb.v1.MsgFileMeta
+	7,  // [7:7] is the sub-list for method output_type
+	7,  // [7:7] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_pb_v1_protocol_proto_init() }

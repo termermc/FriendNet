@@ -78,9 +78,16 @@ func (s *ShareManager) ResolvePath(requestPath string) (string, error) {
 
 func (s *ShareManager) ListDir(requestPath string) (*pb.MsgDirFiles, error) {
 	if requestPath == "/" {
-		names := make([]string, 0, len(s.shareNames))
-		names = append(names, s.shareNames...)
-		return &pb.MsgDirFiles{Filenames: names}, nil
+		files := make([]*pb.MsgFileMeta, len(s.shareNames))
+		for i, shareName := range s.shareNames {
+			files[i] = &pb.MsgFileMeta{
+				Name:  shareName,
+				IsDir: true,
+				Size:  0,
+			}
+		}
+
+		return &pb.MsgDirFiles{Files: files}, nil
 	}
 
 	realPath, err := s.ResolvePath(requestPath)
@@ -93,12 +100,21 @@ func (s *ShareManager) ListDir(requestPath string) (*pb.MsgDirFiles, error) {
 		return nil, err
 	}
 
-	names := make([]string, 0, len(entries))
-	for _, entry := range entries {
-		names = append(names, entry.Name())
+	files := make([]*pb.MsgFileMeta, len(entries))
+	for i, entry := range entries {
+		info, err := entry.Info()
+		if err != nil {
+			return nil, fmt.Errorf("failed to read entry info while getting files in request path %q: %w", requestPath, err)
+		}
+
+		files[i] = &pb.MsgFileMeta{
+			Name:  info.Name(),
+			IsDir: info.IsDir(),
+			Size:  uint64(info.Size()),
+		}
 	}
 
-	return &pb.MsgDirFiles{Filenames: names}, nil
+	return &pb.MsgDirFiles{Files: files}, nil
 }
 
 func (s *ShareManager) FileMeta(requestPath string) (*pb.MsgFileMeta, *os.File, error) {

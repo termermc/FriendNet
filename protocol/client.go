@@ -16,6 +16,9 @@ import (
 	"github.com/quic-go/quic-go"
 )
 
+// ErrClientNotConnected is returned from functions when the client it depends on is not connected.
+var ErrClientNotConnected = errors.New("client not connected")
+
 type ProtoClient struct {
 	conn *quic.Conn
 
@@ -265,7 +268,7 @@ func (c *ProtoClient) Ping() (*pb.MsgPong, error) {
 }
 
 // GetDirFiles requests all filenames inside a directory.
-func (c *ProtoClient) GetDirFiles(user string, path string) ([]string, error) {
+func (c *ProtoClient) GetDirFiles(user string, path string) ([]*pb.MsgFileMeta, error) {
 	bidi, err := OpenBidiWithMsg(c.conn, pb.MsgType_MSG_TYPE_GET_DIR_FILES, &pb.MsgGetDirFiles{
 		User: user,
 		Path: path,
@@ -277,7 +280,7 @@ func (c *ProtoClient) GetDirFiles(user string, path string) ([]string, error) {
 		CloseBidi(&bidi)
 	}()
 
-	var filenames []string
+	var files []*pb.MsgFileMeta
 	for {
 		dirFiles, err := ReadExpect[*pb.MsgDirFiles](bidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_DIR_FILES)
 		if err != nil {
@@ -287,10 +290,10 @@ func (c *ProtoClient) GetDirFiles(user string, path string) ([]string, error) {
 			return nil, err
 		}
 
-		filenames = append(filenames, dirFiles.Filenames...)
+		files = append(files, dirFiles.Files...)
 	}
 
-	return filenames, nil
+	return files, nil
 }
 
 // GetFileMeta requests metadata about a file without reading it.

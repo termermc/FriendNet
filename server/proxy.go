@@ -30,7 +30,7 @@ func proxyDirFiles(registry *ClientRegistry) protocol.ServerGetDirFilesHandler {
 			return writeProxyErrorFromErr(bidi, err)
 		}
 
-		return bidi.Write(pb.MsgType_MSG_TYPE_DIR_FILES, &pb.MsgDirFiles{Filenames: files})
+		return bidi.Write(pb.MsgType_MSG_TYPE_DIR_FILES, &pb.MsgDirFiles{Files: files})
 	}
 }
 
