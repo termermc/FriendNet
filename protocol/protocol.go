@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"time"
 
 	pb "friendnet.org/protocol/pb/v1"
 	"github.com/quic-go/quic-go"
@@ -23,6 +24,9 @@ var CurrentProtocolVersion = &pb.ProtoVersion{
 	Minor: 0,
 	Patch: 0,
 }
+
+// DefaultKeepAlivePeriod is the default keepalive period for QUIC connections.
+const DefaultKeepAlivePeriod = 10 * time.Second
 
 type UntypedProtoMsg struct {
 	Type    pb.MsgType

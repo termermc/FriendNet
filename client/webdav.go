@@ -282,21 +282,30 @@ func (p *proxyFS) OpenFile(ctx context.Context, name string, flag int, perm os.F
 }
 
 func (p *proxyFS) Mkdir(ctx context.Context, name string, perm os.FileMode) error {
+	// TODO REMOVE THIS
+	println("MKDIR " + name)
+
 	return os.ErrPermission
 }
 
 func (p *proxyFS) RemoveAll(ctx context.Context, name string) error {
+	// TODO REMOVE THIS
+	println("REMOVEALL " + name)
+
 	return os.ErrPermission
 }
 
-func (p *proxyFS) Rename(ctx context.Context, oldName, newName string) error {
+func (p *proxyFS) Rename(ctx context.Context, oldName string, newName string) error {
+	// TODO REMOVE THIS
+	println("RENAME " + oldName + " " + newName)
+
 	return os.ErrPermission
 }
 
 func (p *proxyFS) Stat(ctx context.Context, name string) (os.FileInfo, error) {
 	client := p.getClient()
 	if client == nil {
-		return nil, errors.New("not connected")
+		return nil, protocol.ErrClientNotConnected
 	}
 
 	clean := path.Clean("/" + strings.TrimPrefix(name, "/"))

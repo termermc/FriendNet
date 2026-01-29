@@ -432,7 +432,7 @@ func (c *CLI) disconnectLocked() error {
 func (c *CLI) ping() error {
 	client := c.getClient()
 	if client == nil {
-		return fmt.Errorf("not connected")
+		return protocol.ErrClientNotConnected
 	}
 	pong, err := client.Ping()
 	if err != nil {
@@ -448,7 +448,7 @@ func (c *CLI) getDir(args []string) error {
 	}
 	client := c.getClient()
 	if client == nil {
-		return fmt.Errorf("not connected")
+		return protocol.ErrClientNotConnected
 	}
 	files, err := client.GetDirFiles(args[0], args[1])
 	if err != nil {
@@ -480,7 +480,7 @@ func (c *CLI) getMeta(args []string) error {
 	}
 	client := c.getClient()
 	if client == nil {
-		return fmt.Errorf("not connected")
+		return protocol.ErrClientNotConnected
 	}
 	meta, err := client.GetFileMeta(args[0], args[1])
 	if err != nil {
@@ -514,7 +514,7 @@ func (c *CLI) getFile(args []string) error {
 
 	client := c.getClient()
 	if client == nil {
-		return fmt.Errorf("not connected")
+		return protocol.ErrClientNotConnected
 	}
 
 	meta, stream, err := client.GetFile(user, path, offset, limit)
@@ -553,7 +553,7 @@ func (c *CLI) getFile(args []string) error {
 func (c *CLI) getOnlineUsers() error {
 	client := c.getClient()
 	if client == nil {
-		return fmt.Errorf("not connected")
+		return protocol.ErrClientNotConnected
 	}
 	users, err := client.GetOnlineUsers()
 	if err != nil {
@@ -581,7 +581,7 @@ func (c *CLI) pingLoop(ctx context.Context, client *protocol.ProtoClient) {
 			return
 		case <-ticker.C:
 			if _, err := client.Ping(); err != nil {
-				fmt.Fprintf(c.out, "ping error: %v\n", err)
+				_, _ = fmt.Fprintf(c.out, "ping error: %v\n", err)
 				return
 			}
 		}

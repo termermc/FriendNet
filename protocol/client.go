@@ -128,7 +128,9 @@ func ConnectTofu(addr string, certStore ClientCertStore) (*quic.Conn, error) {
 		return nil
 	}
 
-	return quic.DialAddr(context.Background(), addr, tlsCfg, &quic.Config{})
+	return quic.DialAddr(context.Background(), addr, tlsCfg, &quic.Config{
+		KeepAlivePeriod: DefaultKeepAlivePeriod,
+	})
 }
 
 // negotiateVersion negotiates the protocol version with the server.

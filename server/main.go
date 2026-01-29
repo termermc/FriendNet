@@ -112,7 +112,9 @@ func listenQUIC(listenAddr string, tlsCfg *tls.Config) (*quic.Listener, error) {
 	}
 
 	trans := quic.Transport{Conn: udpConn}
-	return trans.Listen(tlsCfg, &quic.Config{})
+	return trans.Listen(tlsCfg, &quic.Config{
+		KeepAlivePeriod: protocol.DefaultKeepAlivePeriod,
+	})
 }
 
 func acceptLoop(ctx context.Context, listenAddr string, server *protocol.ProtoServer, registry *ClientRegistry) {
