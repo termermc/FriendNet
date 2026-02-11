@@ -16,6 +16,10 @@ import (
 // TODO Include extra headers?
 // I'm thinking of having a header enum for different headers that can be included, and the value for each is a byte string.
 
+// TODO Create a ProtoConn type that handles most reading.
+// Make sure it exposes an appropriate close method that sends a closure message before closing.
+// It should be an interface with an impl type, for testing.
+
 const msgHeaderSize = 8
 
 // CurrentProtocolVersion is the current protocol version used by the client and server modules in this codebase.
@@ -95,9 +99,6 @@ func (r *ProtoStreamReader) ReadRaw() (*UntypedProtoMsg, error) {
 			}
 			return nil, fmt.Errorf(`failed to read protocol message header: %w`, err)
 		}
-	}
-	if headerRead < len(header) {
-		return nil, fmt.Errorf(`was only able to read %d bytes of %d byte protocol message header`, headerRead, len(header))
 	}
 
 	typ := pb.MsgType(binary.LittleEndian.Uint32(header[:4]))
@@ -253,13 +254,20 @@ type ProtoBidi struct {
 	*ProtoStreamWriter
 }
 
+// Close closes the send side and cancels the read side to fully release the stream.
+func (bidi ProtoBidi) Close() error {
+	_ = bidi.Stream.Close()
+	bidi.Stream.CancelRead(0)
+	return nil
+}
+
 // CloseBidi closes the send side and cancels the read side to fully release the stream.
+// Deprecated: Why does this exist? It should just be a normal method on ProtoBidi.
 func CloseBidi(bidi *ProtoBidi) {
 	if bidi == nil || bidi.Stream == nil {
 		return
 	}
-	_ = bidi.Stream.Close()
-	bidi.Stream.CancelRead(0)
+	_ = bidi.Close()
 }
 
 func wrapBidi(stream *quic.Stream) ProtoBidi {
@@ -336,4 +344,70 @@ func HandleBidiRequest(ctx context.Context, conn *quic.Conn, handlers map[pb.Msg
 	}()
 
 	return nil
+}
+
+// WriteUnexpectedReplyError writes an ERR_TYPE_UNEXPECTED_REPLY error to the provided bidi stream,
+// based on the specified expected and actual message types.
+func WriteUnexpectedReplyError(bidi ProtoBidi, expected pb.MsgType, actual pb.MsgType) error {
+	message := fmt.Sprintf("expected %s but got %s", expected.String(), actual.String())
+	return bidi.Write(pb.MsgType_MSG_TYPE_ERROR, &pb.MsgError{
+		Type:    pb.ErrType_ERR_TYPE_UNEXPECTED_REPLY,
+		Message: &message,
+	})
+}
+
+// WriteInternalError writes an ERR_TYPE_INTERNAL error to the provided bidi stream.
+func WriteInternalError(bidi ProtoBidi, err error) error {
+	message := err.Error()
+	return bidi.Write(pb.MsgType_MSG_TYPE_ERROR, &pb.MsgError{
+		Type:    pb.ErrType_ERR_TYPE_INTERNAL,
+		Message: &message,
+	})
+}
+
+// WriteUnimplementedError writes an ERR_TYPE_UNIMPLEMENTED error to the provided bidi stream,
+// based on the specified message type.
+func WriteUnimplementedError(bidi ProtoBidi, msgType pb.MsgType) error {
+	message := fmt.Sprintf("handler for %q is unimplemented", msgType.String())
+	return bidi.Write(pb.MsgType_MSG_TYPE_ERROR, &pb.MsgError{
+		Type:    pb.ErrType_ERR_TYPE_UNIMPLEMENTED,
+		Message: &message,
+	})
+}
+
+// CompareProtoVersions compares two protocol versions.
+// If the two versions are identical, returns 0.
+// If version `a` is newer, returns 1.
+// If version `b` is newer, returns -1.
+func CompareProtoVersions(a *pb.ProtoVersion, b *pb.ProtoVersion) int {
+	if a == nil && b == nil {
+		return 0
+	}
+	if a == nil {
+		return -1
+	}
+	if b == nil {
+		return 1
+	}
+
+	if a.Major != b.Major {
+		if a.Major < b.Major {
+			return -1
+		}
+		return 1
+	}
+	if a.Minor != b.Minor {
+		if a.Minor < b.Minor {
+			return -1
+		}
+		return 1
+	}
+	if a.Patch != b.Patch {
+		if a.Patch < b.Patch {
+			return -1
+		}
+		return 1
+	}
+
+	return 0
 }

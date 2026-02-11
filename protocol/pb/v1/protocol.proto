@@ -122,6 +122,9 @@ enum ErrType {
 
     // The file did not exist.
     ERR_TYPE_FILE_NOT_EXIST = 8;
+
+    // Unimplemented functionality.
+    ERR_TYPE_UNIMPLEMENTED = 9;
 }
 
 // An error, usually sent by the server.

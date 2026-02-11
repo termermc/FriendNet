@@ -1,9 +1,10 @@
+//go:build old
+
 package main
 
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -15,8 +16,6 @@ import (
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
 	"friendnet.org/server/cert"
-	"friendnet.org/server/room"
-	"friendnet.org/server/storage"
 	"github.com/quic-go/quic-go"
 )
 
@@ -31,6 +30,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
 	}
+
+	authStore, err := NewAuthStore(cfg)
+	if err != nil {
+		log.Fatalf("failed to load rooms: %v", err)
+	}
+	registry := NewClientRegistry()
 
 	pemFile, err := readOrCreatePem(*pemPath)
 	if err != nil {
@@ -50,12 +55,15 @@ func main() {
 
 	ctx := context.Background()
 	for _, listenAddr := range cfg.Listen {
-		listener, err := listenQuic(listenAddr, tlsCfg)
+		listener, err := listenQUIC(listenAddr, tlsCfg)
 		if err != nil {
 			log.Fatalf("failed to listen on %s: %v", listenAddr, err)
 		}
 
-		go acceptLoop(ctx, listener, listenAddr)
+		server := protocol.NewProtoServer(listener)
+		server.AuthHandler = authStore.HandlerWithRegistry(registry)
+
+		go acceptLoop(ctx, listenAddr, server, registry)
 		log.Printf("listening on %s", listenAddr)
 	}
 
@@ -82,7 +90,7 @@ func readOrCreatePem(path string) ([]byte, error) {
 	return pemFile, nil
 }
 
-func listenQuic(listenAddr string, tlsCfg *tls.Config) (*quic.Listener, error) {
+func listenQUIC(listenAddr string, tlsCfg *tls.Config) (*quic.Listener, error) {
 	addrPort, err := netip.ParseAddrPort(listenAddr)
 	if err != nil {
 		return nil, fmt.Errorf(`failed to parse listen address %q: %w`, listenAddr, err)
@@ -111,54 +119,35 @@ func listenQuic(listenAddr string, tlsCfg *tls.Config) (*quic.Listener, error) {
 	})
 }
 
-func acceptLoop(
-	ctx context.Context,
-	listener *quic.Listener,
-	listenAddr string,
-	storage *storage.Storage,
-	roomMgr *room.Manager,
-) {
+func acceptLoop(ctx context.Context, listenAddr string, server *protocol.ProtoServer, registry *ClientRegistry) {
 	for {
-		conn, err := listener.Accept(ctx)
+		client, err := server.Accept(ctx)
 		if err != nil {
 			log.Printf("accept error on %s: %v", listenAddr, err)
 			continue
 		}
 
+		client.OnPing = func(_ context.Context, _ *protocol.ProtoServerClient, bidi protocol.ProtoBidi, _ *pb.MsgPing) error {
+			return bidi.Write(pb.MsgType_MSG_TYPE_PONG, &pb.MsgPong{
+				SentTs: time.Now().UnixMilli(),
+			})
+		}
+		client.OnGetDirFiles = proxyDirFiles(registry)
+		client.OnGetFileMeta = proxyFileMeta(registry)
+		client.OnGetFile = proxyFile(registry)
+		client.OnGetOnlineUsers = onlineUsersHandler(registry)
+
+		clientCtx, cancel := context.WithCancel(ctx)
 		go func() {
-			lobbyCtx, lobbyCancel := context.WithTimeout(context.Background(), LobbyTimeout)
-			defer lobbyCancel()
-
-			clientVer, err := NegotiateClientVersion(lobbyCtx, conn, protocol.CurrentProtocolVersion)
-			if err != nil {
-				_ = conn.CloseWithError(0, err.Error())
-				return
-			}
-
-			authRoom, authUsername, err := AuthenticateClient(
-				lobbyCtx,
-				conn,
-				storage,
-			)
-			if err != nil {
-				_ = conn.CloseWithError(0, err.Error())
-				return
-			}
-
-			// Get room instance from the manager.
-			roomInst, has := roomMgr.GetRoomByName(authRoom)
-			if !has {
-				_ = conn.CloseWithError(0, "room not found")
-				return
-			}
-
-			// Pass ownership of connection to the room instance.
-			err = roomInst.Onboard(conn, clientVer, authUsername)
-			if err != nil {
-				_ = conn.CloseWithError(0, err.Error())
-				return
+			defer cancel()
+			defer registry.Unregister(client)
+			if err := client.Listen(clientCtx, func(err error) {
+				log.Printf("client listener error: %v", err)
+			}); err != nil {
+				log.Printf("client listen failed: %v", err)
 			}
 		}()
+		go serverPingLoop(clientCtx, client)
 	}
 }
 

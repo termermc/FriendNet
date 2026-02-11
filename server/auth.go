@@ -9,6 +9,31 @@ import (
 	pb "friendnet.org/protocol/pb/v1"
 )
 
+// ErrAccountExists is returned when trying to create a duplicate account.
+var ErrAccountExists = fmt.Errorf("account already exists")
+
+// AuthStore stores credentials and	checks them.
+type AuthStore interface {
+	// CheckCredentials returns true if the specified credentials are valid.
+	// Returns false if not.
+	// Returns an error if it could not check for some reason.
+	CheckCredentials(
+		ctx context.Context,
+		room string,
+		username string,
+		password string,
+	) (bool, error)
+
+	// AddAccount adds a new account to the store.
+	// Returns ErrAccountExists if an account with the same room and username already exists.
+	AddAccount(
+		ctx context.Context,
+		room string,
+		username string,
+		password string,
+	)
+}
+
 type AuthStore struct {
 	rooms map[string]map[string]string
 }

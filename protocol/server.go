@@ -234,7 +234,7 @@ func (c *ProtoServerClient) listenerHandlers(ctx context.Context) map[pb.MsgType
 			}()
 
 			if c.OnPing == nil {
-				return writeUnimplementedServerError(bidi, msg.Type)
+				return WriteUnimplementedError(bidi, msg.Type)
 			}
 
 			return c.OnPing(ctx, c, bidi, ToTyped[*pb.MsgPing](msg).Payload)
@@ -245,7 +245,7 @@ func (c *ProtoServerClient) listenerHandlers(ctx context.Context) map[pb.MsgType
 			}()
 
 			if c.OnGetDirFiles == nil {
-				return writeUnimplementedServerError(bidi, msg.Type)
+				return WriteUnimplementedError(bidi, msg.Type)
 			}
 
 			return c.OnGetDirFiles(ctx, c, bidi, ToTyped[*pb.MsgGetDirFiles](msg).Payload)
@@ -256,7 +256,7 @@ func (c *ProtoServerClient) listenerHandlers(ctx context.Context) map[pb.MsgType
 			}()
 
 			if c.OnGetFileMeta == nil {
-				return writeUnimplementedServerError(bidi, msg.Type)
+				return WriteUnimplementedError(bidi, msg.Type)
 			}
 
 			return c.OnGetFileMeta(ctx, c, bidi, ToTyped[*pb.MsgGetFileMeta](msg).Payload)
@@ -267,7 +267,7 @@ func (c *ProtoServerClient) listenerHandlers(ctx context.Context) map[pb.MsgType
 			}()
 
 			if c.OnGetFile == nil {
-				return writeUnimplementedServerError(bidi, msg.Type)
+				return WriteUnimplementedError(bidi, msg.Type)
 			}
 
 			return c.OnGetFile(ctx, c, bidi, ToTyped[*pb.MsgGetFile](msg).Payload)
@@ -278,7 +278,7 @@ func (c *ProtoServerClient) listenerHandlers(ctx context.Context) map[pb.MsgType
 			}()
 
 			if c.OnGetOnlineUsers == nil {
-				return writeUnimplementedServerError(bidi, msg.Type)
+				return WriteUnimplementedError(bidi, msg.Type)
 			}
 
 			return c.OnGetOnlineUsers(ctx, c, bidi, ToTyped[*pb.MsgGetOnlineUsers](msg).Payload)
@@ -301,7 +301,7 @@ func (s *ProtoServer) negotiateVersion(ctx context.Context, client *ProtoServerC
 	}
 
 	if msg.Type != pb.MsgType_MSG_TYPE_VERSION {
-		if writeErr := writeUnexpectedReplyError(bidi, pb.MsgType_MSG_TYPE_VERSION, msg.Type); writeErr != nil {
+		if writeErr := WriteUnexpectedReplyError(bidi, pb.MsgType_MSG_TYPE_VERSION, msg.Type); writeErr != nil {
 			return writeErr
 		}
 		return NewUnexpectedMsgTypeError(pb.MsgType_MSG_TYPE_VERSION, msg.Type)
@@ -316,7 +316,7 @@ func (s *ProtoServer) negotiateVersion(ctx context.Context, client *ProtoServerC
 
 	accepted, rejected, err := handler(ctx, client, version)
 	if err != nil {
-		if writeErr := writeInternalError(bidi, err); writeErr != nil {
+		if writeErr := WriteInternalError(bidi, err); writeErr != nil {
 			return writeErr
 		}
 		return err
@@ -359,7 +359,7 @@ func (s *ProtoServer) authenticate(ctx context.Context, client *ProtoServerClien
 	}
 
 	if msg.Type != pb.MsgType_MSG_TYPE_AUTHENTICATE {
-		if writeErr := writeUnexpectedReplyError(bidi, pb.MsgType_MSG_TYPE_AUTHENTICATE, msg.Type); writeErr != nil {
+		if writeErr := WriteUnexpectedReplyError(bidi, pb.MsgType_MSG_TYPE_AUTHENTICATE, msg.Type); writeErr != nil {
 			return writeErr
 		}
 		return NewUnexpectedMsgTypeError(pb.MsgType_MSG_TYPE_AUTHENTICATE, msg.Type)
@@ -374,7 +374,7 @@ func (s *ProtoServer) authenticate(ctx context.Context, client *ProtoServerClien
 
 	accepted, rejected, err := handler(ctx, client, authMsg)
 	if err != nil {
-		if writeErr := writeInternalError(bidi, err); writeErr != nil {
+		if writeErr := WriteInternalError(bidi, err); writeErr != nil {
 			return writeErr
 		}
 		return err
@@ -397,30 +397,6 @@ func (s *ProtoServer) authenticate(ctx context.Context, client *ProtoServerClien
 	return bidi.Write(pb.MsgType_MSG_TYPE_AUTH_ACCEPTED, accepted)
 }
 
-func writeUnimplementedServerError(bidi ProtoBidi, msgType pb.MsgType) error {
-	message := fmt.Sprintf("handler for %s is unimplemented", msgType.String())
-	return bidi.Write(pb.MsgType_MSG_TYPE_ERROR, &pb.MsgError{
-		Type:    pb.ErrType_ERR_TYPE_INTERNAL,
-		Message: &message,
-	})
-}
-
-func writeUnexpectedReplyError(bidi ProtoBidi, expected pb.MsgType, actual pb.MsgType) error {
-	message := fmt.Sprintf("expected %s but got %s", expected.String(), actual.String())
-	return bidi.Write(pb.MsgType_MSG_TYPE_ERROR, &pb.MsgError{
-		Type:    pb.ErrType_ERR_TYPE_UNEXPECTED_REPLY,
-		Message: &message,
-	})
-}
-
-func writeInternalError(bidi ProtoBidi, err error) error {
-	message := err.Error()
-	return bidi.Write(pb.MsgType_MSG_TYPE_ERROR, &pb.MsgError{
-		Type:    pb.ErrType_ERR_TYPE_INTERNAL,
-		Message: &message,
-	})
-}
-
 // DefaultServerVersionHandler accepts only the current protocol version.
 func DefaultServerVersionHandler(_ context.Context, _ *ProtoServerClient, version *pb.ProtoVersion) (*pb.ProtoVersion, *pb.MsgVersionRejected, error) {
 	if version == nil {
@@ -432,14 +408,16 @@ func DefaultServerVersionHandler(_ context.Context, _ *ProtoServerClient, versio
 		}, nil
 	}
 
-	cmp := compareProtoVersion(version, CurrentProtocolVersion)
+	cmp := CompareProtoVersions(version, CurrentProtocolVersion)
 	if cmp == 0 {
 		return CurrentProtocolVersion, nil, nil
 	}
 
-	reason := pb.VersionRejectionReason_VERSION_REJECTION_REASON_TOO_OLD
+	var reason pb.VersionRejectionReason
 	if cmp > 0 {
 		reason = pb.VersionRejectionReason_VERSION_REJECTION_REASON_TOO_NEW
+	} else {
+		reason = pb.VersionRejectionReason_VERSION_REJECTION_REASON_TOO_OLD
 	}
 	message := "unsupported protocol version"
 
@@ -457,37 +435,4 @@ func DefaultServerAuthHandler(_ context.Context, _ *ProtoServerClient, _ *pb.Msg
 		Reason:  pb.AuthRejectionReason_AUTH_REJECTION_REASON_INVALID_CREDENTIALS,
 		Message: &message,
 	}, nil
-}
-
-func compareProtoVersion(a *pb.ProtoVersion, b *pb.ProtoVersion) int {
-	if a == nil && b == nil {
-		return 0
-	}
-	if a == nil {
-		return -1
-	}
-	if b == nil {
-		return 1
-	}
-
-	if a.Major != b.Major {
-		if a.Major < b.Major {
-			return -1
-		}
-		return 1
-	}
-	if a.Minor != b.Minor {
-		if a.Minor < b.Minor {
-			return -1
-		}
-		return 1
-	}
-	if a.Patch != b.Patch {
-		if a.Patch < b.Patch {
-			return -1
-		}
-		return 1
-	}
-
-	return 0
 }

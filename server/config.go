@@ -7,18 +7,7 @@ import (
 )
 
 type ServerConfig struct {
-	Listen []string     `json:"listen"`
-	Rooms  []RoomConfig `json:"rooms"`
-}
-
-type RoomConfig struct {
-	Name  string       `json:"name"`
-	Users []UserConfig `json:"users"`
-}
-
-type UserConfig struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Listen []string `json:"listen"`
 }
 
 func DefaultServerConfig() ServerConfig {

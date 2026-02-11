@@ -72,6 +72,8 @@ A client's PROTO_PING messages shall not be rate limited if sent at a rate of 1 
 Clients are not required to send PROTO_PING messages, but may do so for their own purposes.
 Regardless of which party is sending the ping, the timestamp sent along with it must be an accurate UNIX epoch millisecond for when the message was sent.
 
+Note that all of the above only apply to authenticated clients. The server has no responsibility to respond to ping requests sent while a client is unauthenticated.
+
 # Versioning
 The protocol uses semantic versioning (MAJOR.MINOR.PATCH).
 The patch version may introduce new features that are fully backwards compatible with the previous version.
