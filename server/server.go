@@ -29,8 +29,11 @@ type Server struct {
 
 	logger  *slog.Logger
 	storage *storage.Storage
-	roomMgr *room.Manager
 	lobby   *lobby.Lobby
+
+	// The server's room.Manager instance.
+	// Do not update or close it.
+	RoomManager *room.Manager
 }
 
 // NewServer creates a new FriendNet server.
@@ -67,8 +70,9 @@ func NewServer(
 
 		logger:  logger,
 		storage: storage,
-		roomMgr: roomMgr,
 		lobby:   l,
+
+		RoomManager: roomMgr,
 	}
 
 	return s, nil
@@ -83,7 +87,7 @@ func (s *Server) Close() error {
 		return nil
 	}
 
-	_ = s.roomMgr.Close()
+	_ = s.RoomManager.Close()
 
 	s.ctxCancel()
 
