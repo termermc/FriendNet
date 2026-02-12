@@ -113,18 +113,17 @@ func (l *Lobby) Onboard(conn protocol.ProtoConn) {
 func (l *Lobby) negotiateClientVersion(
 	ctx context.Context,
 	conn protocol.ProtoConn,
-) (clientVer *pb.ProtoVersion, err error) {
+) (clientVer *pb.ProtoVersion, finalErr error) {
 	bidi, bidiErr := conn.WaitForBidi(ctx)
 	if bidiErr != nil {
-		return nil, fmt.Errorf("failed to wait for version negotiation stream: %w", err)
+		return nil, fmt.Errorf("failed to wait for version negotiation stream: %w", bidiErr)
 	}
 	defer func() {
 		_ = bidi.Close()
 	}()
 
-	finalErr := func() error {
-		var msg *protocol.TypedProtoMsg[*pb.MsgVersion]
-		msg, err = protocol.ReadExpect[*pb.MsgVersion](bidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_VERSION)
+	finalErr = func() error {
+		msg, err := protocol.ReadExpect[*pb.MsgVersion](bidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_VERSION)
 		if err != nil {
 			return err
 		}
@@ -160,15 +159,15 @@ func (l *Lobby) negotiateClientVersion(
 		// Write appropriate error reply to bidi before closure.
 		var rejErr protocol.VersionRejectedError
 		var unexpectedErr protocol.UnexpectedMsgTypeError
-		if errors.As(err, &rejErr) {
+		if errors.As(finalErr, &rejErr) {
 			_ = bidi.Write(pb.MsgType_MSG_TYPE_VERSION_REJECTED, &pb.MsgVersionRejected{
 				Reason:  rejErr.Reason,
 				Message: &rejErr.Message,
 			})
-		} else if errors.As(err, &unexpectedErr) {
+		} else if errors.As(finalErr, &unexpectedErr) {
 			_ = bidi.WriteUnexpectedMsgTypeError(unexpectedErr.Expected, unexpectedErr.Actual)
 		} else {
-			_ = bidi.WriteInternalError(err)
+			_ = bidi.WriteInternalError(finalErr)
 		}
 
 		clientVer = nil
@@ -185,7 +184,7 @@ func (l *Lobby) negotiateClientVersion(
 func (l *Lobby) authenticateClient(
 	ctx context.Context,
 	conn protocol.ProtoConn,
-) (room common.NormalizedRoomName, username common.NormalizedUsername, err error) {
+) (room common.NormalizedRoomName, username common.NormalizedUsername, finalErr error) {
 	bidi, bidiErr := conn.WaitForBidi(ctx)
 	if bidiErr != nil {
 		return room, username, fmt.Errorf("failed to wait for authentication stream: %w", bidiErr)
@@ -194,9 +193,8 @@ func (l *Lobby) authenticateClient(
 		_ = bidi.Close()
 	}()
 
-	finalErr := func() error {
-		var msg *protocol.TypedProtoMsg[*pb.MsgAuthenticate]
-		msg, err = protocol.ReadExpect[*pb.MsgAuthenticate](bidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_AUTHENTICATE)
+	finalErr = func() error {
+		msg, err := protocol.ReadExpect[*pb.MsgAuthenticate](bidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_AUTHENTICATE)
 		authMsg := msg.Payload
 
 		invalidCreds := func() error {
@@ -272,15 +270,15 @@ func (l *Lobby) authenticateClient(
 		// Write appropriate error reply to bidi before closure.
 		var rejErr protocol.AuthRejectedError
 		var unexpectedErr protocol.UnexpectedMsgTypeError
-		if errors.As(err, &rejErr) {
+		if errors.As(finalErr, &rejErr) {
 			_ = bidi.Write(pb.MsgType_MSG_TYPE_AUTH_REJECTED, &pb.MsgAuthRejected{
 				Reason:  rejErr.Reason,
 				Message: &rejErr.Message,
 			})
-		} else if errors.As(err, &unexpectedErr) {
+		} else if errors.As(finalErr, &unexpectedErr) {
 			_ = bidi.WriteUnexpectedMsgTypeError(unexpectedErr.Expected, unexpectedErr.Actual)
 		} else {
-			_ = bidi.WriteInternalError(err)
+			_ = bidi.WriteInternalError(finalErr)
 		}
 
 		room = common.ZeroNormalizedRoomName
