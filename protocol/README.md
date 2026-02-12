@@ -7,7 +7,13 @@ with a protocol message written immediately to it by the opener.
 
 After the initial stream message has been received, it is up to the receiver to either send back a reply, read extra data (if applicable), or close the stream.
 
+There are 3 message classes:
+ - C2S (Client to Server) messages are sent by the client to the server.
+ - S2C (Server to Client) messages are sent by the server to the client.
+ - C2C (Client to Client) messages are sent by a client to another client (either directly or by proxy of the server).
+
 # Message Layout
+
 Protocol messages are encoded with the following layout (ranges are bytes, inclusive):
 0-3: The message type (uint32, little endian)
 4-7: The payload length, in bytes (uint32, little endian)
@@ -20,6 +26,7 @@ For example, for the type PROTO_ERROR, the payload will be of type ProtoMessageE
 Message layout shall not change between versions, although the data following the message is protocol-defined and may change.
 
 # Version Negotiation
+
 The protocol negotiation stage must occur immediately after a connection is opened.
 Steps are as follows:
 1. Client opens a BiDi stream.
@@ -44,6 +51,7 @@ Note that the client will not receive any PROTO_PING messages during version neg
 The protocol version negotiation process shall not change between versions.
 
 # Handshake and Authentication
+
 The handshake stage must occur immediately after the protocol version is negotiated.
 Steps are as follows:
 1. Client opens a BiDi stream.
@@ -62,6 +70,7 @@ If the client received PROTO_AUTH_ACCEPTED, the connection is now authenticated 
 Note that the client will not receive any PROTO_PING messages during the handshake, and it should also not send any itself.
 
 # Ping
+
 Both the client and server are expected to reply to new Bidi steams of PROTO_PING with PROTO_PONG.
 The server at its discretion may reply to PROTO_PING with an error of type PROTO_ERROR_RATE_LIMITED, which shall not be reason for the client
 to terminate the connection. The client, however, must not reply to PROTO_PING with any error.
@@ -75,6 +84,7 @@ Regardless of which party is sending the ping, the timestamp sent along with it 
 Note that all of the above only apply to authenticated clients. The server has no responsibility to respond to ping requests sent while a client is unauthenticated.
 
 # Versioning
+
 The protocol uses semantic versioning (MAJOR.MINOR.PATCH).
 The patch version may introduce new features that are fully backwards compatible with the previous version.
 Changes introduced in patch versions must not be required for clients to continue to work normally.
@@ -94,10 +104,23 @@ v1.1.0-v2.0.0:
  - Removes unpaginated file fetching
 
 ## Compatibility Expectations
+
 If the server accepts a client's version, it can be safely assumed that the client's version is fully supported.
 If the client's version differs from the server's but the server accepts it, the client must be prepared to ignore unrecognized messages and fields.
 If the client's version matches the server's, unrecognized messages and fields should be treated as erroneous behavior on the part of the server.
 In the case that the client's version is greater than the server's, the client must be prepared to handle cases where messages are unrecognized by the server.
+
+# Proxy Streams
+
+When a direct connection is not possible or desired, a client may send a proxy request on a new BiDi to the server specifying the client it wishes
+to connect to. Upon receipt of the request, the server will open a BiDi stream to the client with a proxy message indicating the client on the other end.
+
+The server will not read any messages past the initial proxy messages on either side; it will proxy all further stream data transparently. If either side
+cancels their stream, the server will close the other side's stream and end the proxy stream.
+
+In cases where the server is unable to connect to the desired destination, it will cancel the stream without sending any data.
+It does not send any failure message because there would be no way for the client that requested the proxy to know whether the message was sent by the server
+or sent by the destination client.
 
 # About Paths
 
