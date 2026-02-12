@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"path/filepath"
 
 	"friendnet.org/common"
 	"friendnet.org/server/storage/migration"
@@ -26,6 +27,17 @@ func (s *Storage) Close() error {
 //
 //goland:noinspection SqlNoDataSourceInspection
 func NewStorage(path string) (*Storage, error) {
+	if path == "" {
+		panic("path is required for storage")
+	}
+
+	// Resolve full path.
+	var err error
+	path, err = filepath.Abs(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve storage path: %w", err)
+	}
+
 	db, err := sql.Open("sqlite", path)
 	if err != nil {
 		return nil, err
@@ -76,6 +88,8 @@ func NewStorage(path string) (*Storage, error) {
 // CreateRoom creates a new room record.
 // If the room already exists, returns ErrRecordExists.
 func (s *Storage) CreateRoom(ctx context.Context, room common.NormalizedRoomName) error {
+	// TODO Return ErrRecordExists if applicable
+
 	_, err := s.db.ExecContext(ctx, `insert into room (name) values (?)`, room.String())
 	if err != nil {
 		return fmt.Errorf(`failed to create room %q: %w`, room.String(), err)
@@ -136,6 +150,8 @@ func (s *Storage) CreateAccount(
 	username common.NormalizedUsername,
 	passwordHash string,
 ) error {
+	// TODO Return ErrRecordExists if applicable
+
 	_, err := s.db.ExecContext(ctx, `insert into account (room, username, password_hash) values (?, ?, ?)`,
 		room.String(),
 		username.String(),
