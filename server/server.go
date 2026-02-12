@@ -94,6 +94,8 @@ func (s *Server) Close() error {
 // This function can be called concurrently with other listeners to listen on multiple interfaces.
 // Returns nil when Server.Close is called.
 //
+// Does not close the listener.
+//
 // Use Listen instead if you want to use the default listener.
 func (s *Server) ListenWith(listener protocol.ProtoListener) error {
 	for {
@@ -119,6 +121,9 @@ func (s *Server) Listen(address string, tlsCfg *tls.Config) error {
 	if err != nil {
 		return fmt.Errorf("failed to create listener: %w", err)
 	}
+	defer func() {
+		_ = listener.Close()
+	}()
 
 	return s.ListenWith(listener)
 }

@@ -519,6 +519,8 @@ func CompareProtoVersions(a *pb.ProtoVersion, b *pb.ProtoVersion) int {
 
 // ProtoListener represents a listener that can accept protocol connections.
 type ProtoListener interface {
+	io.Closer
+
 	// Accept accepts a new protocol connection.
 	Accept(context.Context) (ProtoConn, error)
 }
@@ -526,6 +528,10 @@ type ProtoListener interface {
 // QuicProtoListener implements ProtoListener using QUIC.
 type QuicProtoListener struct {
 	*quic.Listener
+}
+
+func (l *QuicProtoListener) Close() error {
+	return l.Listener.Close()
 }
 
 func (l *QuicProtoListener) Accept(ctx context.Context) (ProtoConn, error) {

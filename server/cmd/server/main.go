@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"flag"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"friendnet.org/protocol"
 	"friendnet.org/server"
@@ -54,6 +57,15 @@ func main() {
 		os.Exit(1)
 	}
 	defer func() {
+		_ = srv.Close()
+	}()
+
+	// Close server on SIGTERM.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	go func() {
+		<-ctx.Done()
+		logger.Info("shutdown signal received, closing server")
 		_ = srv.Close()
 	}()
 
