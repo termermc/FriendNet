@@ -1,3 +1,5 @@
+//go:build old
+
 package main
 
 import (

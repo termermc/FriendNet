@@ -59,7 +59,7 @@ func main() {
 	}
 
 	//goland:noinspection GoResourceLeak
-	roomMgr, err := room.NewManager(ctx, logger, storageInst)
+	roomMgr, err := room.NewManager(ctx, logger, storageInst, room.ClientMessageHandlersImpl)
 
 	lobby := NewLobby(logger, storageInst, roomMgr, DefaultLobbyTimeout, protocol.CurrentProtocolVersion)
 

@@ -20,7 +20,8 @@ type Manager struct {
 	mu       sync.RWMutex
 	isClosed bool
 
-	storage *storage.Storage
+	storage               *storage.Storage
+	clientMessageHandlers ClientMessageHandlers
 
 	// Key is the string value of a common.NormalizedRoomName.
 	rooms map[string]*Room
@@ -28,11 +29,17 @@ type Manager struct {
 
 // NewManager creates a new room manager.
 // It loads all rooms from storage.
-func NewManager(ctx context.Context, logger *slog.Logger, storage *storage.Storage) (*Manager, error) {
+func NewManager(
+	ctx context.Context,
+	logger *slog.Logger,
+	storage *storage.Storage,
+	clientMessageHandlers ClientMessageHandlers,
+) (*Manager, error) {
 	m := &Manager{
-		logger:  logger,
-		storage: storage,
-		rooms:   make(map[string]*Room),
+		logger:                logger,
+		storage:               storage,
+		clientMessageHandlers: clientMessageHandlers,
+		rooms:                 make(map[string]*Room),
 	}
 
 	// Load rooms from storage.
@@ -41,7 +48,7 @@ func NewManager(ctx context.Context, logger *slog.Logger, storage *storage.Stora
 		return nil, fmt.Errorf(`failed to get all rooms while creating new room manager: %w`, err)
 	}
 	for _, room := range rooms {
-		m.rooms[room.Name.String()] = NewRoom(logger, room.Name)
+		m.rooms[room.Name.String()] = NewRoom(logger, room.Name, clientMessageHandlers)
 	}
 
 	return m, nil
@@ -85,7 +92,7 @@ func (m *Manager) CreateRoom(ctx context.Context, name common.NormalizedRoomName
 	}
 
 	// Create room instance and add it to manager.
-	room := NewRoom(m.logger, name)
+	room := NewRoom(m.logger, name, m.clientMessageHandlers)
 	m.rooms[name.String()] = room
 
 	return room, nil

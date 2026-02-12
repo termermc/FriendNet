@@ -23,7 +23,7 @@ create table room
 		constraint room_pk
 			primary key,
 	created_ts integer default (strftime('%s', 'now')) not null
-)
+);
 
 create index room_created_ts_index
     on room (created_ts);
