@@ -8,6 +8,7 @@ import (
 
 type ServerConfig struct {
 	Listen []string `json:"listen"`
+	DbPath string   `json:"db_path"`
 }
 
 func DefaultServerConfig() ServerConfig {
@@ -16,6 +17,7 @@ func DefaultServerConfig() ServerConfig {
 			"127.0.0.1:20038",
 			"[::1]:20038",
 		},
+		DbPath: "server.db",
 	}
 }
 

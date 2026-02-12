@@ -13,12 +13,10 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// TODO Implement timeouts for all reads.
+
 // TODO Include extra headers?
 // I'm thinking of having a header enum for different headers that can be included, and the value for each is a byte string.
-
-// TODO Create a ProtoConn type that handles most reading.
-// Make sure it exposes an appropriate close method that sends a closure message before closing.
-// It should be an interface with an impl type, for testing.
 
 const msgHeaderSize = 8
 
@@ -32,16 +30,34 @@ var CurrentProtocolVersion = &pb.ProtoVersion{
 // DefaultKeepAlivePeriod is the default keepalive period for QUIC connections.
 const DefaultKeepAlivePeriod = 10 * time.Second
 
+// UntypedProtoMsg is a protocol message with an unknown payload type.
+// It can be converted to a TypedProtoMsg with ToTyped.
+// See documentation on ToTyped for details.
 type UntypedProtoMsg struct {
 	Type    pb.MsgType
 	Payload proto.Message
 }
 
+// TypedProtoMsg is a protocol message with a known payload type.
 type TypedProtoMsg[T proto.Message] struct {
 	Type    pb.MsgType
 	Payload T
 }
 
+// NewTypedProtoMsg creates a new TypedProtoMsg with the provided MsgType and payload.
+func NewTypedProtoMsg[T proto.Message](typ pb.MsgType, payload T) *TypedProtoMsg[T] {
+	return &TypedProtoMsg[T]{
+		Type:    typ,
+		Payload: payload,
+	}
+}
+
+// ToTyped casts an UntypedProtoMsg to a TypedProtoMsg of the specified type.
+// Panics if the type does not match the message's type.
+//
+// Assuming you got the UntypedProtoMsg from a ProtoBidi Read method, this method is safe to use as long as you checked the MsgType beforehand.
+// The Read methods deserialize the payload to the correct underlying type, so it is impossible for the MsgType to mismatch.
+// Still, use this function with caution.
 func ToTyped[T proto.Message](msg *UntypedProtoMsg) *TypedProtoMsg[T] {
 	casted, ok := msg.Payload.(T)
 	if !ok {
@@ -55,10 +71,118 @@ func ToTyped[T proto.Message](msg *UntypedProtoMsg) *TypedProtoMsg[T] {
 		))
 	}
 
-	return &TypedProtoMsg[T]{
-		Type:    msg.Type,
-		Payload: casted,
+	return NewTypedProtoMsg(msg.Type, casted)
+}
+
+// ProtoConn is a protocol connection.
+// You can send and receive bidi streams from it.
+type ProtoConn interface {
+	// CloseWithReason closes the connection with the specified reason.
+	// It will try to send a close message to the other side, but delivery is not guaranteed.
+	CloseWithReason(string) error
+
+	// OpenBidiWithMsg opens a new bidirectional stream and sends the specified protocol message on it.
+	// It is the responsibility of the caller to close the bidi after it is opened successfully.
+	OpenBidiWithMsg(typ pb.MsgType, msg proto.Message) (bidi ProtoBidi, err error)
+
+	// WaitForBidi waits for a new bidirectional stream and returns when one is received.
+	WaitForBidi(ctx context.Context) (ProtoBidi, error)
+
+	// SendAndReceive is like OpenBidiWithMsg but immediately receives a reply and closes the bidi afterward.
+	//
+	// If you know what type you are expecting, SendAndReceiveExpect is a better alternative.
+	SendAndReceive(typ pb.MsgType, msg proto.Message) (*UntypedProtoMsg, error)
+}
+
+// ProtoConnImpl wraps a QUIC connection to provide protocol-specific methods.
+type ProtoConnImpl struct {
+	// The underlying QUIC connection.
+	Inner *quic.Conn
+}
+
+var _ ProtoConn = &ProtoConnImpl{}
+
+// ToProtoConn wraps a QUIC connection to provide protocol-specific methods.
+func ToProtoConn(conn *quic.Conn) ProtoConn {
+	return &ProtoConnImpl{conn}
+}
+
+func (conn *ProtoConnImpl) CloseWithReason(reason string) error {
+	return conn.Inner.CloseWithError(0, reason)
+}
+
+func (conn *ProtoConnImpl) OpenBidiWithMsg(typ pb.MsgType, msg proto.Message) (bidi ProtoBidi, err error) {
+	stream, err := conn.Inner.OpenStream()
+	if err != nil {
+		return ProtoBidi{}, fmt.Errorf(`failed to open bidi before writing message of type %s: %w`, typ.String(), err)
 	}
+
+	bidi = wrapBidi(stream)
+
+	err = bidi.Write(typ, msg)
+	if err != nil {
+		_ = bidi.Close()
+		return ProtoBidi{}, err
+	}
+
+	return bidi, nil
+}
+
+func (conn *ProtoConnImpl) WaitForBidi(ctx context.Context) (ProtoBidi, error) {
+	stream, err := conn.Inner.AcceptStream(ctx)
+	if err != nil {
+		return ProtoBidi{}, fmt.Errorf(`failed to accept stream in WaitForBidi: %w`, err)
+	}
+
+	return wrapBidi(stream), nil
+}
+
+func (conn *ProtoConnImpl) SendAndReceive(typ pb.MsgType, msg proto.Message) (*UntypedProtoMsg, error) {
+	bidi, err := conn.OpenBidiWithMsg(typ, msg)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = bidi.Close()
+	}()
+
+	return bidi.Read()
+}
+
+// SendAndReceiveExpect is like SendAndReceive but also checks that the reply's type matches the expected type.
+// See ReadExpect for important details, as it works the same way.
+func SendAndReceiveExpect[T proto.Message](
+	conn ProtoConn,
+	typ pb.MsgType,
+	msg proto.Message,
+	expectType pb.MsgType,
+) (*TypedProtoMsg[T], error) {
+	reply, err := conn.SendAndReceive(typ, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	if reply.Type != expectType {
+		return nil, fmt.Errorf("unexpected reply type: got %v, expected %v", reply.Type, expectType)
+	}
+
+	casted, ok := reply.Payload.(T)
+	if !ok {
+		wantType := reflect.TypeFor[T]()
+		gotType := reflect.TypeOf(msg)
+
+		panic(fmt.Sprintf(`BUG: got message of type %s (struct %s) as reply to new bidi with message type %s but tried to cast it to struct %s`,
+			reply.Type.String(),
+			gotType.String(),
+			typ.String(),
+			wantType.String(),
+		))
+	}
+
+	return &TypedProtoMsg[T]{
+		Type:    reply.Type,
+		Payload: casted,
+	}, nil
 }
 
 type BidiHandler func(conn *quic.Conn, bidi ProtoBidi, msg *UntypedProtoMsg) error
@@ -149,6 +273,8 @@ func (r *ProtoStreamReader) ReadRaw() (*UntypedProtoMsg, error) {
 
 // ReadRaw tries to read a protocol message from the stream.
 // If the type was MSG_TYPE_ERROR, returns a ProtoMsgError.
+//
+// If you know what type you are expecting, ReadExpect is a better alternative.
 func (r *ProtoStreamReader) Read() (*UntypedProtoMsg, error) {
 	msg, err := r.ReadRaw()
 	if err != nil {
@@ -170,16 +296,14 @@ func (r *ProtoStreamReader) Read() (*UntypedProtoMsg, error) {
 //
 // It is extremely important that the generic type on this function is appropriate for the expected type.
 // If the generic type does not correspond to the expected type, the function will panic.
-func ReadExpect[T proto.Message](r *ProtoStreamReader, expectedType pb.MsgType) (T, error) {
-	var empty T
-
+func ReadExpect[T proto.Message](r *ProtoStreamReader, expectedType pb.MsgType) (*TypedProtoMsg[T], error) {
 	msg, err := r.Read()
 	if err != nil {
-		return empty, err
+		return nil, err
 	}
 
 	if msg.Type != expectedType {
-		return empty, NewUnexpectedMsgTypeError(expectedType, msg.Type)
+		return nil, NewUnexpectedMsgTypeError(expectedType, msg.Type)
 	}
 
 	casted, ok := msg.Payload.(T)
@@ -194,7 +318,10 @@ func ReadExpect[T proto.Message](r *ProtoStreamReader, expectedType pb.MsgType) 
 		))
 	}
 
-	return casted, nil
+	return &TypedProtoMsg[T]{
+		Type:    expectedType,
+		Payload: casted,
+	}, nil
 }
 
 // ProtoStreamWriter wraps a QUIC receive stream to write protocol messages.
@@ -261,15 +388,6 @@ func (bidi ProtoBidi) Close() error {
 	return nil
 }
 
-// CloseBidi closes the send side and cancels the read side to fully release the stream.
-// Deprecated: Why does this exist? It should just be a normal method on ProtoBidi.
-func CloseBidi(bidi *ProtoBidi) {
-	if bidi == nil || bidi.Stream == nil {
-		return
-	}
-	_ = bidi.Close()
-}
-
 func wrapBidi(stream *quic.Stream) ProtoBidi {
 	return ProtoBidi{
 		Stream:            stream,
@@ -279,31 +397,15 @@ func wrapBidi(stream *quic.Stream) ProtoBidi {
 }
 
 // OpenBidiWithMsg opens a new bidirectional stream and sends the specified protocol message on it.
+// Deprecated: Use method on ProtoConn.
 func OpenBidiWithMsg(conn *quic.Conn, typ pb.MsgType, msg proto.Message) (bidi ProtoBidi, err error) {
-	stream, err := conn.OpenStream()
-	if err != nil {
-		return ProtoBidi{}, fmt.Errorf(`failed to open bidi before writing message of type %s: %w`, typ.String(), err)
-	}
-
-	bidi = wrapBidi(stream)
-
-	err = bidi.Write(typ, msg)
-	if err != nil {
-		_ = bidi.Stream.Close()
-		return ProtoBidi{}, err
-	}
-
-	return bidi, nil
+	return ToProtoConn(conn).OpenBidiWithMsg(typ, msg)
 }
 
 // WaitForBidi waits for a new bidirectional stream and returns when one is received.
+// Deprecated: Use method on ProtoConn.
 func WaitForBidi(ctx context.Context, conn *quic.Conn) (ProtoBidi, error) {
-	stream, err := conn.AcceptStream(ctx)
-	if err != nil {
-		return ProtoBidi{}, fmt.Errorf(`failed to accept stream in WaitForBidi: %w`, err)
-	}
-
-	return wrapBidi(stream), nil
+	return ToProtoConn(conn).WaitForBidi(ctx)
 }
 
 // HandleBidiRequest waits for a new bidirectional stream, launches a goroutine to handle the stream, then returns immediately.
@@ -346,18 +448,18 @@ func HandleBidiRequest(ctx context.Context, conn *quic.Conn, handlers map[pb.Msg
 	return nil
 }
 
-// WriteUnexpectedReplyError writes an ERR_TYPE_UNEXPECTED_REPLY error to the provided bidi stream,
+// WriteUnexpectedMsgTypeError writes an ERR_TYPE_UNEXPECTED_MSG_TYPE error to the provided bidi stream,
 // based on the specified expected and actual message types.
-func WriteUnexpectedReplyError(bidi ProtoBidi, expected pb.MsgType, actual pb.MsgType) error {
+func (bidi ProtoBidi) WriteUnexpectedMsgTypeError(expected pb.MsgType, actual pb.MsgType) error {
 	message := fmt.Sprintf("expected %s but got %s", expected.String(), actual.String())
 	return bidi.Write(pb.MsgType_MSG_TYPE_ERROR, &pb.MsgError{
-		Type:    pb.ErrType_ERR_TYPE_UNEXPECTED_REPLY,
+		Type:    pb.ErrType_ERR_TYPE_UNEXPECTED_MSG_TYPE,
 		Message: &message,
 	})
 }
 
 // WriteInternalError writes an ERR_TYPE_INTERNAL error to the provided bidi stream.
-func WriteInternalError(bidi ProtoBidi, err error) error {
+func (bidi ProtoBidi) WriteInternalError(err error) error {
 	message := err.Error()
 	return bidi.Write(pb.MsgType_MSG_TYPE_ERROR, &pb.MsgError{
 		Type:    pb.ErrType_ERR_TYPE_INTERNAL,

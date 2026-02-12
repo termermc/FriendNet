@@ -148,7 +148,7 @@ func negotiateVersion(conn *quic.Conn, version *pb.ProtoVersion) (*pb.ProtoVersi
 		return nil, err
 	}
 	defer func() {
-		CloseBidi(&bidi)
+		_ = bidi.Close()
 	}()
 
 	msg, err := bidi.Read()
@@ -187,7 +187,7 @@ func authenticate(conn *quic.Conn, creds ClientCredentials) error {
 		return err
 	}
 	defer func() {
-		CloseBidi(&bidi)
+		_ = bidi.Close()
 	}()
 
 	msg, err := bidi.Read()
@@ -258,7 +258,7 @@ func (c *ProtoClient) Ping() (*pb.MsgPong, error) {
 		return nil, err
 	}
 	defer func() {
-		CloseBidi(&bidi)
+		_ = bidi.Close()
 	}()
 
 	pong, err := ReadExpect[*pb.MsgPong](bidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_PONG)
@@ -266,7 +266,7 @@ func (c *ProtoClient) Ping() (*pb.MsgPong, error) {
 		return nil, err
 	}
 
-	return pong, nil
+	return pong.Payload, nil
 }
 
 // GetDirFiles requests all filenames inside a directory.
@@ -279,7 +279,7 @@ func (c *ProtoClient) GetDirFiles(user string, path string) ([]*pb.MsgFileMeta, 
 		return nil, err
 	}
 	defer func() {
-		CloseBidi(&bidi)
+		_ = bidi.Close()
 	}()
 
 	var files []*pb.MsgFileMeta
@@ -292,7 +292,7 @@ func (c *ProtoClient) GetDirFiles(user string, path string) ([]*pb.MsgFileMeta, 
 			return nil, err
 		}
 
-		files = append(files, dirFiles.Files...)
+		files = append(files, dirFiles.Payload.Files...)
 	}
 
 	return files, nil
@@ -308,7 +308,7 @@ func (c *ProtoClient) GetFileMeta(user string, path string) (*pb.MsgFileMeta, er
 		return nil, err
 	}
 	defer func() {
-		CloseBidi(&bidi)
+		_ = bidi.Close()
 	}()
 
 	meta, err := ReadExpect[*pb.MsgFileMeta](bidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_FILE_META)
@@ -316,7 +316,7 @@ func (c *ProtoClient) GetFileMeta(user string, path string) (*pb.MsgFileMeta, er
 		return nil, err
 	}
 
-	return meta, nil
+	return meta.Payload, nil
 }
 
 // GetFile requests file metadata and returns a stream for reading the file contents.
@@ -338,7 +338,7 @@ func (c *ProtoClient) GetFile(user string, path string, offset uint64, limit uin
 		return nil, nil, err
 	}
 
-	return meta, bidi.Stream, nil
+	return meta.Payload, bidi.Stream, nil
 }
 
 // GetOnlineUsers requests the list of users currently online in the room.
@@ -348,7 +348,7 @@ func (c *ProtoClient) GetOnlineUsers() ([]string, error) {
 		return nil, err
 	}
 	defer func() {
-		CloseBidi(&bidi)
+		_ = bidi.Close()
 	}()
 
 	var users []string
@@ -360,7 +360,7 @@ func (c *ProtoClient) GetOnlineUsers() ([]string, error) {
 			}
 			return nil, err
 		}
-		users = append(users, resp.Users...)
+		users = append(users, resp.Payload.Users...)
 	}
 
 	return users, nil
@@ -391,7 +391,7 @@ func (c *ProtoClient) listenerHandlers(ctx context.Context) map[pb.MsgType]BidiH
 	return map[pb.MsgType]BidiHandler{
 		pb.MsgType_MSG_TYPE_PING: func(_ *quic.Conn, bidi ProtoBidi, msg *UntypedProtoMsg) error {
 			defer func() {
-				CloseBidi(&bidi)
+				_ = bidi.Close()
 			}()
 
 			if c.OnPing == nil {
@@ -402,7 +402,7 @@ func (c *ProtoClient) listenerHandlers(ctx context.Context) map[pb.MsgType]BidiH
 		},
 		pb.MsgType_MSG_TYPE_GET_DIR_FILES: func(_ *quic.Conn, bidi ProtoBidi, msg *UntypedProtoMsg) error {
 			defer func() {
-				CloseBidi(&bidi)
+				_ = bidi.Close()
 			}()
 
 			if c.OnGetDirFiles == nil {
@@ -413,7 +413,7 @@ func (c *ProtoClient) listenerHandlers(ctx context.Context) map[pb.MsgType]BidiH
 		},
 		pb.MsgType_MSG_TYPE_GET_FILE_META: func(_ *quic.Conn, bidi ProtoBidi, msg *UntypedProtoMsg) error {
 			defer func() {
-				CloseBidi(&bidi)
+				_ = bidi.Close()
 			}()
 
 			if c.OnGetFileMeta == nil {
@@ -424,7 +424,7 @@ func (c *ProtoClient) listenerHandlers(ctx context.Context) map[pb.MsgType]BidiH
 		},
 		pb.MsgType_MSG_TYPE_GET_FILE: func(_ *quic.Conn, bidi ProtoBidi, msg *UntypedProtoMsg) error {
 			defer func() {
-				CloseBidi(&bidi)
+				_ = bidi.Close()
 			}()
 
 			if c.OnGetFile == nil {

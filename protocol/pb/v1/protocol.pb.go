@@ -164,8 +164,8 @@ const (
 	ErrType_ERR_TYPE_MISSING_FIELDS ErrType = 4
 	// An invalid field was received.
 	ErrType_ERR_TYPE_INVALID_FIELDS ErrType = 5
-	// A reply was received, but its type of content was unexpected.
-	ErrType_ERR_TYPE_UNEXPECTED_REPLY ErrType = 6
+	// A message was received, but its type was unexpected.
+	ErrType_ERR_TYPE_UNEXPECTED_MSG_TYPE ErrType = 6
 	// Requests were sent too quickly and the request was rate limited.
 	ErrType_ERR_TYPE_RATE_LIMITED ErrType = 7
 	// The file did not exist.
@@ -183,22 +183,22 @@ var (
 		3: "ERR_TYPE_PAYLOAD_TOO_LARGE",
 		4: "ERR_TYPE_MISSING_FIELDS",
 		5: "ERR_TYPE_INVALID_FIELDS",
-		6: "ERR_TYPE_UNEXPECTED_REPLY",
+		6: "ERR_TYPE_UNEXPECTED_MSG_TYPE",
 		7: "ERR_TYPE_RATE_LIMITED",
 		8: "ERR_TYPE_FILE_NOT_EXIST",
 		9: "ERR_TYPE_UNIMPLEMENTED",
 	}
 	ErrType_value = map[string]int32{
-		"ERR_TYPE_UNSPECIFIED":       0,
-		"ERR_TYPE_INTERNAL":          1,
-		"ERR_TYPE_MALFORMED_MESSAGE": 2,
-		"ERR_TYPE_PAYLOAD_TOO_LARGE": 3,
-		"ERR_TYPE_MISSING_FIELDS":    4,
-		"ERR_TYPE_INVALID_FIELDS":    5,
-		"ERR_TYPE_UNEXPECTED_REPLY":  6,
-		"ERR_TYPE_RATE_LIMITED":      7,
-		"ERR_TYPE_FILE_NOT_EXIST":    8,
-		"ERR_TYPE_UNIMPLEMENTED":     9,
+		"ERR_TYPE_UNSPECIFIED":         0,
+		"ERR_TYPE_INTERNAL":            1,
+		"ERR_TYPE_MALFORMED_MESSAGE":   2,
+		"ERR_TYPE_PAYLOAD_TOO_LARGE":   3,
+		"ERR_TYPE_MISSING_FIELDS":      4,
+		"ERR_TYPE_INVALID_FIELDS":      5,
+		"ERR_TYPE_UNEXPECTED_MSG_TYPE": 6,
+		"ERR_TYPE_RATE_LIMITED":        7,
+		"ERR_TYPE_FILE_NOT_EXIST":      8,
+		"ERR_TYPE_UNIMPLEMENTED":       9,
 	}
 )
 
@@ -1405,15 +1405,15 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x12MSG_TYPE_FILE_META\x10\x0e\x12\x15\n" +
 	"\x11MSG_TYPE_GET_FILE\x10\x0f\x12\x1d\n" +
 	"\x19MSG_TYPE_GET_ONLINE_USERS\x10\x10\x12\x19\n" +
-	"\x15MSG_TYPE_ONLINE_USERS\x10\x11*\xa7\x02\n" +
+	"\x15MSG_TYPE_ONLINE_USERS\x10\x11*\xaa\x02\n" +
 	"\aErrType\x12\x18\n" +
 	"\x14ERR_TYPE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11ERR_TYPE_INTERNAL\x10\x01\x12\x1e\n" +
 	"\x1aERR_TYPE_MALFORMED_MESSAGE\x10\x02\x12\x1e\n" +
 	"\x1aERR_TYPE_PAYLOAD_TOO_LARGE\x10\x03\x12\x1b\n" +
 	"\x17ERR_TYPE_MISSING_FIELDS\x10\x04\x12\x1b\n" +
-	"\x17ERR_TYPE_INVALID_FIELDS\x10\x05\x12\x1d\n" +
-	"\x19ERR_TYPE_UNEXPECTED_REPLY\x10\x06\x12\x19\n" +
+	"\x17ERR_TYPE_INVALID_FIELDS\x10\x05\x12 \n" +
+	"\x1cERR_TYPE_UNEXPECTED_MSG_TYPE\x10\x06\x12\x19\n" +
 	"\x15ERR_TYPE_RATE_LIMITED\x10\a\x12\x1b\n" +
 	"\x17ERR_TYPE_FILE_NOT_EXIST\x10\b\x12\x1a\n" +
 	"\x16ERR_TYPE_UNIMPLEMENTED\x10\t*\x8e\x01\n" +

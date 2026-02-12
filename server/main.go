@@ -3,17 +3,15 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"flag"
 	"fmt"
 	"log"
+	"log/slog"
 	"net"
 	"net/netip"
 	"os"
-	"time"
 
 	"friendnet.org/protocol"
-	pb "friendnet.org/protocol/pb/v1"
 	"friendnet.org/server/cert"
 	"friendnet.org/server/room"
 	"friendnet.org/server/storage"
@@ -49,13 +47,30 @@ func main() {
 	}
 
 	ctx := context.Background()
+
+	logger := slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
+
+	//goland:noinspection GoResourceLeak
+	storageInst, err := storage.NewStorage(cfg.DbPath)
+	if err != nil {
+		log.Fatalf("failed to create storage: %v", err)
+	}
+
+	//goland:noinspection GoResourceLeak
+	roomMgr, err := room.NewManager(ctx, logger, storageInst)
+
+	lobby := NewLobby(logger, storageInst, roomMgr, DefaultLobbyTimeout, protocol.CurrentProtocolVersion)
+
 	for _, listenAddr := range cfg.Listen {
+		//goland:noinspection GoResourceLeak
 		listener, err := listenQuic(listenAddr, tlsCfg)
 		if err != nil {
 			log.Fatalf("failed to listen on %s: %v", listenAddr, err)
 		}
 
-		go acceptLoop(ctx, listener, listenAddr)
+		go acceptLoop(ctx, listener, listenAddr, lobby)
 		log.Printf("listening on %s", listenAddr)
 	}
 
@@ -115,92 +130,19 @@ func acceptLoop(
 	ctx context.Context,
 	listener *quic.Listener,
 	listenAddr string,
-	storage *storage.Storage,
-	roomMgr *room.Manager,
+	lobby *Lobby,
 ) {
 	for {
-		conn, err := listener.Accept(ctx)
+		rawConn, err := listener.Accept(ctx)
 		if err != nil {
 			log.Printf("accept error on %s: %v", listenAddr, err)
 			continue
 		}
 
-		go func() {
-			lobbyCtx, lobbyCancel := context.WithTimeout(context.Background(), LobbyTimeout)
-			defer lobbyCancel()
+		// Wrap connection.
+		conn := protocol.ToProtoConn(rawConn)
 
-			clientVer, err := NegotiateClientVersion(lobbyCtx, conn, protocol.CurrentProtocolVersion)
-			if err != nil {
-				_ = conn.CloseWithError(0, err.Error())
-				return
-			}
-
-			authRoom, authUsername, err := AuthenticateClient(
-				lobbyCtx,
-				conn,
-				storage,
-			)
-			if err != nil {
-				_ = conn.CloseWithError(0, err.Error())
-				return
-			}
-
-			// Get room instance from the manager.
-			roomInst, has := roomMgr.GetRoomByName(authRoom)
-			if !has {
-				_ = conn.CloseWithError(0, "room not found")
-				return
-			}
-
-			// Pass ownership of connection to the room instance.
-			err = roomInst.Onboard(conn, clientVer, authUsername)
-			if err != nil {
-				_ = conn.CloseWithError(0, err.Error())
-				return
-			}
-		}()
-	}
-}
-
-func serverPingLoop(ctx context.Context, client *protocol.ProtoServerClient) {
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			if _, err := client.Ping(); err != nil {
-				log.Printf("ping error: %v", err)
-				return
-			}
-		}
-	}
-}
-
-func onlineUsersHandler(registry *ClientRegistry) protocol.ServerGetOnlineUsersHandler {
-	return func(_ context.Context, client *protocol.ProtoServerClient, bidi protocol.ProtoBidi, _ *pb.MsgGetOnlineUsers) error {
-		info, ok := registry.Info(client)
-		if !ok {
-			message := "missing client info"
-			return bidi.Write(pb.MsgType_MSG_TYPE_ERROR, &pb.MsgError{
-				Type:    pb.ErrType_ERR_TYPE_INTERNAL,
-				Message: &message,
-			})
-		}
-
-		users := registry.ListUsers(info.Room)
-		const chunkSize = 100
-		for start := 0; start < len(users); start += chunkSize {
-			end := start + chunkSize
-			if end > len(users) {
-				end = len(users)
-			}
-			if err := bidi.Write(pb.MsgType_MSG_TYPE_ONLINE_USERS, &pb.MsgOnlineUsers{Users: users[start:end]}); err != nil {
-				return err
-			}
-		}
-		return nil
+		// Pass it to the lobby.
+		lobby.Onboard(conn)
 	}
 }

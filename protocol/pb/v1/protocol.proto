@@ -114,8 +114,8 @@ enum ErrType {
     // An invalid field was received.
     ERR_TYPE_INVALID_FIELDS = 5;
 
-    // A reply was received, but its type of content was unexpected.
-    ERR_TYPE_UNEXPECTED_REPLY = 6;
+    // A message was received, but its type was unexpected.
+    ERR_TYPE_UNEXPECTED_MSG_TYPE = 6;
 
     // Requests were sent too quickly and the request was rate limited.
     ERR_TYPE_RATE_LIMITED = 7;
