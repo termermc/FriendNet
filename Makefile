@@ -9,7 +9,7 @@ pb:
 	cd protocol && buf generate
 
 server:
-	cd server && go build -o friendnet-server friendnet.org/server
+	cd server && go build -o friendnet-server friendnet.org/server/cmd/server
 
 client:
 	cd client && go build -o friendnet-client friendnet.org/client

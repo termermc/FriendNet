@@ -10,6 +10,9 @@ import (
 	"time"
 )
 
+// ServerCommonName is the common name to use for server certificates.
+const ServerCommonName = "friendnet-server"
+
 // GenSelfSignedPem generates a self-signed certificate with an Ed25519 key
 // and returns both the certificate and PKCS#8 private key as a single PEM
 // file's bytes.

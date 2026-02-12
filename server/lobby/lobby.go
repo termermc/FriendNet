@@ -1,4 +1,4 @@
-package main
+package lobby
 
 import (
 	"context"
@@ -15,8 +15,8 @@ import (
 	mcfpassword "github.com/termermc/go-mcf-password"
 )
 
-// DefaultLobbyTimeout is the default timeout for connections in the lobby (unauthenticated).
-const DefaultLobbyTimeout = 10 * time.Second
+// DefaultTimeout is the default timeout for connections in the lobby (unauthenticated).
+const DefaultTimeout = 10 * time.Second
 
 // Lobby is where clients go when they first connect.
 // It accepts new connections and handles authentication.

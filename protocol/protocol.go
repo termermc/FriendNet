@@ -2,9 +2,12 @@ package protocol
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/binary"
 	"fmt"
 	"io"
+	"net"
+	"net/netip"
 	"reflect"
 	"time"
 
@@ -512,4 +515,59 @@ func CompareProtoVersions(a *pb.ProtoVersion, b *pb.ProtoVersion) int {
 	}
 
 	return 0
+}
+
+// ProtoListener represents a listener that can accept protocol connections.
+type ProtoListener interface {
+	// Accept accepts a new protocol connection.
+	Accept(context.Context) (ProtoConn, error)
+}
+
+// QuicProtoListener implements ProtoListener using QUIC.
+type QuicProtoListener struct {
+	*quic.Listener
+}
+
+func (l *QuicProtoListener) Accept(ctx context.Context) (ProtoConn, error) {
+	conn, err := l.Listener.Accept(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return ToProtoConn(conn), nil
+}
+
+// NewQuicProtoListener creates a ProtoListener on the specified address and with the specified TLS config.
+func NewQuicProtoListener(listenAddr string, tlsCfg *tls.Config) (ProtoListener, error) {
+	addrPort, err := netip.ParseAddrPort(listenAddr)
+	if err != nil {
+		return nil, fmt.Errorf(`failed to parse listen address %q: %w`, listenAddr, err)
+	}
+
+	var udpConn *net.UDPConn
+	addr := addrPort.Addr()
+	if addr.Is6() {
+		udpConn, err = net.ListenUDP("udp6", &net.UDPAddr{
+			IP:   addr.AsSlice(),
+			Port: int(addrPort.Port()),
+		})
+	} else {
+		udpConn, err = net.ListenUDP("udp4", &net.UDPAddr{
+			IP:   addr.AsSlice(),
+			Port: int(addrPort.Port()),
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	trans := quic.Transport{Conn: udpConn}
+	listener, err := trans.Listen(tlsCfg, &quic.Config{
+		KeepAlivePeriod: DefaultKeepAlivePeriod,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &QuicProtoListener{listener}, nil
 }
