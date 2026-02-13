@@ -27,54 +27,62 @@ type MsgType int32
 const (
 	// Do not use.
 	MsgType_MSG_TYPE_UNSPECIFIED MsgType = 0
-	// [BOTH] A ping message.
+	// [C2S, S2C, C2C] A ping message.
 	// May be sent by either the client or server, but the other must respond with MSG_TYPE_PONG.
 	// Must be responded to with MSG_TYPE_PONG, or the connection will be terminated.
 	// Either side may have its own arbitrary timeout which may cause disconnection if not met.
 	// Expected: Message MSG_TYPE_PONG.
 	MsgType_MSG_TYPE_PING MsgType = 1
-	// [BOTH] Response to MSG_TYPE_PING.
+	// [C2S, S2C, C2C] Response to MSG_TYPE_PING.
 	MsgType_MSG_TYPE_PONG MsgType = 2
-	// [BOTH] Acknowledgement of success.
+	// [C2S, S2C, C2C] Acknowledgement of success.
 	// Sent as a reply to other messages.
 	MsgType_MSG_TYPE_ACKNOWLEDGED MsgType = 3
-	// [BOTH] An error message.
+	// [C2S, S2C, C2C] An error message.
 	// Sent as a reply to other messages.
 	MsgType_MSG_TYPE_ERROR MsgType = 4
-	// [CLIENT] Initial client version negotiation.
+	// [C2S] Initial client version negotiation.
 	MsgType_MSG_TYPE_VERSION MsgType = 5
-	// [SERVER] Indicates that the server accepted the client's protocol version.
+	// [S2C] Indicates that the server accepted the client's protocol version.
 	MsgType_MSG_TYPE_VERSION_ACCEPTED MsgType = 6
-	// [SERVER] Indicates that the server rejected the client's protocol version.
+	// [S2C] Indicates that the server rejected the client's protocol version.
 	MsgType_MSG_TYPE_VERSION_REJECTED MsgType = 7
-	// [CLIENT] Initial client authentication with the server.
+	// [C2S] Initial client authentication with the server.
 	MsgType_MSG_TYPE_AUTHENTICATE MsgType = 8
-	// [SERVER] Indicates that client authentication was accepted.
+	// [S2C] Indicates that client authentication was accepted.
 	MsgType_MSG_TYPE_AUTH_ACCEPTED MsgType = 9
-	// [SERVER] Indicates that client authentication was denied.
+	// [S2C] Indicates that client authentication was denied.
 	MsgType_MSG_TYPE_AUTH_REJECTED MsgType = 10
-	// [BOTH] Request to get files inside a user's directory.
+	// [C2S] Request to open an outbound proxy to a connected peer.
+	// The server will cancel the stream with an error if the target peer could not be contacted.
+	// If successful, the stream will be converted to a proxied stream to the target peer.
+	MsgType_MSG_TYPE_OPEN_OUTBOUND_PROXY MsgType = 11
+	// [S2C] Notification of a new inbound proxy stream from another peer.
+	// The client can choose to cancel the stream or send data on it.
+	// All data after the notification message comes from the origin peer.
+	MsgType_MSG_TYPE_INBOUND_PROXY MsgType = 12
+	// [C2C] Request to get files inside a user's directory.
 	// Expected: Repeated message MSG_TYPE_DIR_FILES until stream is closed by receiver.
-	MsgType_MSG_TYPE_GET_DIR_FILES MsgType = 11
-	// [BOTH] A possibly non-exhaustive list of files in a directory.
-	MsgType_MSG_TYPE_DIR_FILES MsgType = 12
-	// [BOTH] Request to get metadata about a file without reading it.
+	MsgType_MSG_TYPE_GET_DIR_FILES MsgType = 13
+	// [C2C] A possibly non-exhaustive list of files in a directory.
+	MsgType_MSG_TYPE_DIR_FILES MsgType = 14
+	// [C2C] Request to get metadata about a file without reading it.
 	// Expected: Either:
 	//   - Message MSG_TYPE_FILE_META.
 	//   - Message MSG_TYPE_ERROR of ERR_TYPE_FILE_NOT_EXIST.
-	MsgType_MSG_TYPE_GET_FILE_META MsgType = 13
-	// [BOTH] Metadata about a file, including its size.
-	MsgType_MSG_TYPE_FILE_META MsgType = 14
-	// [BOTH] Request to get a file's metadata and contents.
+	MsgType_MSG_TYPE_GET_FILE_META MsgType = 15
+	// [C2C] Metadata about a file, including its size.
+	MsgType_MSG_TYPE_FILE_META MsgType = 16
+	// [C2C] Request to get a file's metadata and contents.
 	// Expected: Either:
 	//   - Message MSG_TYPE_FILE_META then the file's requested binary content until the stream is closed by receiver.
 	//   - Message MSG_TYPE_ERROR of ERR_TYPE_FILE_NOT_EXIST.
-	MsgType_MSG_TYPE_GET_FILE MsgType = 15
-	// [CLIENT] Request to get a list of online users in the room.
+	MsgType_MSG_TYPE_GET_FILE MsgType = 17
+	// [C2S] Request to get a list of online users in the room.
 	// Expected: Repeated message MSG_TYPE_ONLINE_USERS until stream is closed by receiver.
-	MsgType_MSG_TYPE_GET_ONLINE_USERS MsgType = 16
-	// [SERVER] List of online users in the room.
-	MsgType_MSG_TYPE_ONLINE_USERS MsgType = 17
+	MsgType_MSG_TYPE_GET_ONLINE_USERS MsgType = 18
+	// [S2C] List of online users in the room.
+	MsgType_MSG_TYPE_ONLINE_USERS MsgType = 19
 )
 
 // Enum value maps for MsgType.
@@ -91,33 +99,37 @@ var (
 		8:  "MSG_TYPE_AUTHENTICATE",
 		9:  "MSG_TYPE_AUTH_ACCEPTED",
 		10: "MSG_TYPE_AUTH_REJECTED",
-		11: "MSG_TYPE_GET_DIR_FILES",
-		12: "MSG_TYPE_DIR_FILES",
-		13: "MSG_TYPE_GET_FILE_META",
-		14: "MSG_TYPE_FILE_META",
-		15: "MSG_TYPE_GET_FILE",
-		16: "MSG_TYPE_GET_ONLINE_USERS",
-		17: "MSG_TYPE_ONLINE_USERS",
+		11: "MSG_TYPE_OPEN_OUTBOUND_PROXY",
+		12: "MSG_TYPE_INBOUND_PROXY",
+		13: "MSG_TYPE_GET_DIR_FILES",
+		14: "MSG_TYPE_DIR_FILES",
+		15: "MSG_TYPE_GET_FILE_META",
+		16: "MSG_TYPE_FILE_META",
+		17: "MSG_TYPE_GET_FILE",
+		18: "MSG_TYPE_GET_ONLINE_USERS",
+		19: "MSG_TYPE_ONLINE_USERS",
 	}
 	MsgType_value = map[string]int32{
-		"MSG_TYPE_UNSPECIFIED":      0,
-		"MSG_TYPE_PING":             1,
-		"MSG_TYPE_PONG":             2,
-		"MSG_TYPE_ACKNOWLEDGED":     3,
-		"MSG_TYPE_ERROR":            4,
-		"MSG_TYPE_VERSION":          5,
-		"MSG_TYPE_VERSION_ACCEPTED": 6,
-		"MSG_TYPE_VERSION_REJECTED": 7,
-		"MSG_TYPE_AUTHENTICATE":     8,
-		"MSG_TYPE_AUTH_ACCEPTED":    9,
-		"MSG_TYPE_AUTH_REJECTED":    10,
-		"MSG_TYPE_GET_DIR_FILES":    11,
-		"MSG_TYPE_DIR_FILES":        12,
-		"MSG_TYPE_GET_FILE_META":    13,
-		"MSG_TYPE_FILE_META":        14,
-		"MSG_TYPE_GET_FILE":         15,
-		"MSG_TYPE_GET_ONLINE_USERS": 16,
-		"MSG_TYPE_ONLINE_USERS":     17,
+		"MSG_TYPE_UNSPECIFIED":         0,
+		"MSG_TYPE_PING":                1,
+		"MSG_TYPE_PONG":                2,
+		"MSG_TYPE_ACKNOWLEDGED":        3,
+		"MSG_TYPE_ERROR":               4,
+		"MSG_TYPE_VERSION":             5,
+		"MSG_TYPE_VERSION_ACCEPTED":    6,
+		"MSG_TYPE_VERSION_REJECTED":    7,
+		"MSG_TYPE_AUTHENTICATE":        8,
+		"MSG_TYPE_AUTH_ACCEPTED":       9,
+		"MSG_TYPE_AUTH_REJECTED":       10,
+		"MSG_TYPE_OPEN_OUTBOUND_PROXY": 11,
+		"MSG_TYPE_INBOUND_PROXY":       12,
+		"MSG_TYPE_GET_DIR_FILES":       13,
+		"MSG_TYPE_DIR_FILES":           14,
+		"MSG_TYPE_GET_FILE_META":       15,
+		"MSG_TYPE_FILE_META":           16,
+		"MSG_TYPE_GET_FILE":            17,
+		"MSG_TYPE_GET_ONLINE_USERS":    18,
+		"MSG_TYPE_ONLINE_USERS":        19,
 	}
 )
 
@@ -909,25 +921,111 @@ func (x *MsgAuthRejected) GetMessage() string {
 	return ""
 }
 
+// See MSG_TYPE_OPEN_OUTBOUND_PROXY.
+type MsgOpenOutboundProxy struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The target peer's username.
+	TargetUsername string `protobuf:"bytes,1,opt,name=target_username,json=targetUsername,proto3" json:"target_username,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *MsgOpenOutboundProxy) Reset() {
+	*x = MsgOpenOutboundProxy{}
+	mi := &file_pb_v1_protocol_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MsgOpenOutboundProxy) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgOpenOutboundProxy) ProtoMessage() {}
+
+func (x *MsgOpenOutboundProxy) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_v1_protocol_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MsgOpenOutboundProxy.ProtoReflect.Descriptor instead.
+func (*MsgOpenOutboundProxy) Descriptor() ([]byte, []int) {
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *MsgOpenOutboundProxy) GetTargetUsername() string {
+	if x != nil {
+		return x.TargetUsername
+	}
+	return ""
+}
+
+// See MSG_TYPE_INBOUND_PROXY.
+type MsgInboundProxy struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The origin peer's username.
+	OriginUsername string `protobuf:"bytes,1,opt,name=origin_username,json=originUsername,proto3" json:"origin_username,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *MsgInboundProxy) Reset() {
+	*x = MsgInboundProxy{}
+	mi := &file_pb_v1_protocol_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MsgInboundProxy) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgInboundProxy) ProtoMessage() {}
+
+func (x *MsgInboundProxy) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_v1_protocol_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MsgInboundProxy.ProtoReflect.Descriptor instead.
+func (*MsgInboundProxy) Descriptor() ([]byte, []int) {
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *MsgInboundProxy) GetOriginUsername() string {
+	if x != nil {
+		return x.OriginUsername
+	}
+	return ""
+}
+
 // See MSG_TYPE_GET_DIR_FILES.
 type MsgGetDirFiles struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The user sending the request by proxy.
-	// Irrelevant and should be ignored if sent by the client.
-	RequestFromUser string `protobuf:"bytes,1,opt,name=request_from_user,json=requestFromUser,proto3" json:"request_from_user,omitempty"`
-	// The user who hosts the directory.
-	// Irrelevant and should be ignored if sent by the server.
-	User string `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
 	// The path of the directory within the share.
 	// The path must begin with a `/`.
-	Path          string `protobuf:"bytes,3,opt,name=path,proto3" json:"path,omitempty"`
+	Path          string `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *MsgGetDirFiles) Reset() {
 	*x = MsgGetDirFiles{}
-	mi := &file_pb_v1_protocol_proto_msgTypes[11]
+	mi := &file_pb_v1_protocol_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -939,7 +1037,7 @@ func (x *MsgGetDirFiles) String() string {
 func (*MsgGetDirFiles) ProtoMessage() {}
 
 func (x *MsgGetDirFiles) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_v1_protocol_proto_msgTypes[11]
+	mi := &file_pb_v1_protocol_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -952,21 +1050,7 @@ func (x *MsgGetDirFiles) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MsgGetDirFiles.ProtoReflect.Descriptor instead.
 func (*MsgGetDirFiles) Descriptor() ([]byte, []int) {
-	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{11}
-}
-
-func (x *MsgGetDirFiles) GetRequestFromUser() string {
-	if x != nil {
-		return x.RequestFromUser
-	}
-	return ""
-}
-
-func (x *MsgGetDirFiles) GetUser() string {
-	if x != nil {
-		return x.User
-	}
-	return ""
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *MsgGetDirFiles) GetPath() string {
@@ -987,7 +1071,7 @@ type MsgDirFiles struct {
 
 func (x *MsgDirFiles) Reset() {
 	*x = MsgDirFiles{}
-	mi := &file_pb_v1_protocol_proto_msgTypes[12]
+	mi := &file_pb_v1_protocol_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -999,7 +1083,7 @@ func (x *MsgDirFiles) String() string {
 func (*MsgDirFiles) ProtoMessage() {}
 
 func (x *MsgDirFiles) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_v1_protocol_proto_msgTypes[12]
+	mi := &file_pb_v1_protocol_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1012,7 +1096,7 @@ func (x *MsgDirFiles) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MsgDirFiles.ProtoReflect.Descriptor instead.
 func (*MsgDirFiles) Descriptor() ([]byte, []int) {
-	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{12}
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *MsgDirFiles) GetFiles() []*MsgFileMeta {
@@ -1025,21 +1109,15 @@ func (x *MsgDirFiles) GetFiles() []*MsgFileMeta {
 // See MSG_TYPE_GET_FILE_META.
 type MsgGetFileMeta struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The user sending the request by proxy.
-	// Irrelevant and should be ignored if sent by the client.
-	RequestFromUser string `protobuf:"bytes,1,opt,name=request_from_user,json=requestFromUser,proto3" json:"request_from_user,omitempty"`
-	// The user who hosts the file.
-	// Irrelevant and should be ignored if sent by the server.
-	User string `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
 	// The path to the file.
-	Path          string `protobuf:"bytes,3,opt,name=path,proto3" json:"path,omitempty"`
+	Path          string `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *MsgGetFileMeta) Reset() {
 	*x = MsgGetFileMeta{}
-	mi := &file_pb_v1_protocol_proto_msgTypes[13]
+	mi := &file_pb_v1_protocol_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1051,7 +1129,7 @@ func (x *MsgGetFileMeta) String() string {
 func (*MsgGetFileMeta) ProtoMessage() {}
 
 func (x *MsgGetFileMeta) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_v1_protocol_proto_msgTypes[13]
+	mi := &file_pb_v1_protocol_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1064,21 +1142,7 @@ func (x *MsgGetFileMeta) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MsgGetFileMeta.ProtoReflect.Descriptor instead.
 func (*MsgGetFileMeta) Descriptor() ([]byte, []int) {
-	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{13}
-}
-
-func (x *MsgGetFileMeta) GetRequestFromUser() string {
-	if x != nil {
-		return x.RequestFromUser
-	}
-	return ""
-}
-
-func (x *MsgGetFileMeta) GetUser() string {
-	if x != nil {
-		return x.User
-	}
-	return ""
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *MsgGetFileMeta) GetPath() string {
@@ -1104,7 +1168,7 @@ type MsgFileMeta struct {
 
 func (x *MsgFileMeta) Reset() {
 	*x = MsgFileMeta{}
-	mi := &file_pb_v1_protocol_proto_msgTypes[14]
+	mi := &file_pb_v1_protocol_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1116,7 +1180,7 @@ func (x *MsgFileMeta) String() string {
 func (*MsgFileMeta) ProtoMessage() {}
 
 func (x *MsgFileMeta) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_v1_protocol_proto_msgTypes[14]
+	mi := &file_pb_v1_protocol_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1129,7 +1193,7 @@ func (x *MsgFileMeta) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MsgFileMeta.ProtoReflect.Descriptor instead.
 func (*MsgFileMeta) Descriptor() ([]byte, []int) {
-	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{14}
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *MsgFileMeta) GetName() string {
@@ -1156,27 +1220,21 @@ func (x *MsgFileMeta) GetSize() uint64 {
 // See MSG_TYPE_GET_FILE.
 type MsgGetFile struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The user sending the request by proxy.
-	// Irrelevant and should be ignored if sent by the client.
-	RequestFromUser string `protobuf:"bytes,1,opt,name=request_from_user,json=requestFromUser,proto3" json:"request_from_user,omitempty"`
-	// The user who hosts the file.
-	// Irrelevant and should be ignored if sent by the server.
-	User string `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
 	// The path to the file.
-	Path string `protobuf:"bytes,3,opt,name=path,proto3" json:"path,omitempty"`
+	Path string `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
 	// The offset into the file to read, in bytes.
 	// Values above the file size will just result in no data being returned.
-	Offset uint64 `protobuf:"varint,4,opt,name=offset,proto3" json:"offset,omitempty"`
+	Offset uint64 `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
 	// The limit of the file to read, in bytes.
 	// Specify 0 for no limit.
-	Limit         uint64 `protobuf:"varint,5,opt,name=limit,proto3" json:"limit,omitempty"`
+	Limit         uint64 `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *MsgGetFile) Reset() {
 	*x = MsgGetFile{}
-	mi := &file_pb_v1_protocol_proto_msgTypes[15]
+	mi := &file_pb_v1_protocol_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1188,7 +1246,7 @@ func (x *MsgGetFile) String() string {
 func (*MsgGetFile) ProtoMessage() {}
 
 func (x *MsgGetFile) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_v1_protocol_proto_msgTypes[15]
+	mi := &file_pb_v1_protocol_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1201,21 +1259,7 @@ func (x *MsgGetFile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MsgGetFile.ProtoReflect.Descriptor instead.
 func (*MsgGetFile) Descriptor() ([]byte, []int) {
-	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{15}
-}
-
-func (x *MsgGetFile) GetRequestFromUser() string {
-	if x != nil {
-		return x.RequestFromUser
-	}
-	return ""
-}
-
-func (x *MsgGetFile) GetUser() string {
-	if x != nil {
-		return x.User
-	}
-	return ""
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *MsgGetFile) GetPath() string {
@@ -1248,7 +1292,7 @@ type MsgGetOnlineUsers struct {
 
 func (x *MsgGetOnlineUsers) Reset() {
 	*x = MsgGetOnlineUsers{}
-	mi := &file_pb_v1_protocol_proto_msgTypes[16]
+	mi := &file_pb_v1_protocol_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1260,7 +1304,7 @@ func (x *MsgGetOnlineUsers) String() string {
 func (*MsgGetOnlineUsers) ProtoMessage() {}
 
 func (x *MsgGetOnlineUsers) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_v1_protocol_proto_msgTypes[16]
+	mi := &file_pb_v1_protocol_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1273,7 +1317,7 @@ func (x *MsgGetOnlineUsers) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MsgGetOnlineUsers.ProtoReflect.Descriptor instead.
 func (*MsgGetOnlineUsers) Descriptor() ([]byte, []int) {
-	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{16}
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{18}
 }
 
 // See MSG_TYPE_ONLINE_USERS.
@@ -1287,7 +1331,7 @@ type MsgOnlineUsers struct {
 
 func (x *MsgOnlineUsers) Reset() {
 	*x = MsgOnlineUsers{}
-	mi := &file_pb_v1_protocol_proto_msgTypes[17]
+	mi := &file_pb_v1_protocol_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1299,7 +1343,7 @@ func (x *MsgOnlineUsers) String() string {
 func (*MsgOnlineUsers) ProtoMessage() {}
 
 func (x *MsgOnlineUsers) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_v1_protocol_proto_msgTypes[17]
+	mi := &file_pb_v1_protocol_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1312,7 +1356,7 @@ func (x *MsgOnlineUsers) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MsgOnlineUsers.ProtoReflect.Descriptor instead.
 func (*MsgOnlineUsers) Descriptor() ([]byte, []int) {
-	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{17}
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *MsgOnlineUsers) GetUsers() []string {
@@ -1361,31 +1405,29 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x06reason\x18\x01 \x01(\x0e2\x1a.pb.v1.AuthRejectionReasonR\x06reason\x12\x1d\n" +
 	"\amessage\x18\x02 \x01(\tH\x00R\amessage\x88\x01\x01B\n" +
 	"\n" +
-	"\b_message\"d\n" +
-	"\x0eMsgGetDirFiles\x12*\n" +
-	"\x11request_from_user\x18\x01 \x01(\tR\x0frequestFromUser\x12\x12\n" +
-	"\x04user\x18\x02 \x01(\tR\x04user\x12\x12\n" +
-	"\x04path\x18\x03 \x01(\tR\x04path\"7\n" +
+	"\b_message\"?\n" +
+	"\x14MsgOpenOutboundProxy\x12'\n" +
+	"\x0ftarget_username\x18\x01 \x01(\tR\x0etargetUsername\":\n" +
+	"\x0fMsgInboundProxy\x12'\n" +
+	"\x0forigin_username\x18\x01 \x01(\tR\x0eoriginUsername\"$\n" +
+	"\x0eMsgGetDirFiles\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\"7\n" +
 	"\vMsgDirFiles\x12(\n" +
-	"\x05files\x18\x01 \x03(\v2\x12.pb.v1.MsgFileMetaR\x05files\"d\n" +
-	"\x0eMsgGetFileMeta\x12*\n" +
-	"\x11request_from_user\x18\x01 \x01(\tR\x0frequestFromUser\x12\x12\n" +
-	"\x04user\x18\x02 \x01(\tR\x04user\x12\x12\n" +
-	"\x04path\x18\x03 \x01(\tR\x04path\"L\n" +
+	"\x05files\x18\x01 \x03(\v2\x12.pb.v1.MsgFileMetaR\x05files\"$\n" +
+	"\x0eMsgGetFileMeta\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\"L\n" +
 	"\vMsgFileMeta\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x15\n" +
 	"\x06is_dir\x18\x02 \x01(\bR\x05isDir\x12\x12\n" +
-	"\x04size\x18\x03 \x01(\x04R\x04size\"\x8e\x01\n" +
+	"\x04size\x18\x03 \x01(\x04R\x04size\"N\n" +
 	"\n" +
-	"MsgGetFile\x12*\n" +
-	"\x11request_from_user\x18\x01 \x01(\tR\x0frequestFromUser\x12\x12\n" +
-	"\x04user\x18\x02 \x01(\tR\x04user\x12\x12\n" +
-	"\x04path\x18\x03 \x01(\tR\x04path\x12\x16\n" +
-	"\x06offset\x18\x04 \x01(\x04R\x06offset\x12\x14\n" +
-	"\x05limit\x18\x05 \x01(\x04R\x05limit\"\x13\n" +
+	"MsgGetFile\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x16\n" +
+	"\x06offset\x18\x02 \x01(\x04R\x06offset\x12\x14\n" +
+	"\x05limit\x18\x03 \x01(\x04R\x05limit\"\x13\n" +
 	"\x11MsgGetOnlineUsers\"&\n" +
 	"\x0eMsgOnlineUsers\x12\x14\n" +
-	"\x05users\x18\x01 \x03(\tR\x05users*\xd8\x03\n" +
+	"\x05users\x18\x01 \x03(\tR\x05users*\x96\x04\n" +
 	"\aMsgType\x12\x18\n" +
 	"\x14MSG_TYPE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rMSG_TYPE_PING\x10\x01\x12\x11\n" +
@@ -1398,14 +1440,16 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x15MSG_TYPE_AUTHENTICATE\x10\b\x12\x1a\n" +
 	"\x16MSG_TYPE_AUTH_ACCEPTED\x10\t\x12\x1a\n" +
 	"\x16MSG_TYPE_AUTH_REJECTED\x10\n" +
-	"\x12\x1a\n" +
-	"\x16MSG_TYPE_GET_DIR_FILES\x10\v\x12\x16\n" +
-	"\x12MSG_TYPE_DIR_FILES\x10\f\x12\x1a\n" +
-	"\x16MSG_TYPE_GET_FILE_META\x10\r\x12\x16\n" +
-	"\x12MSG_TYPE_FILE_META\x10\x0e\x12\x15\n" +
-	"\x11MSG_TYPE_GET_FILE\x10\x0f\x12\x1d\n" +
-	"\x19MSG_TYPE_GET_ONLINE_USERS\x10\x10\x12\x19\n" +
-	"\x15MSG_TYPE_ONLINE_USERS\x10\x11*\xaa\x02\n" +
+	"\x12 \n" +
+	"\x1cMSG_TYPE_OPEN_OUTBOUND_PROXY\x10\v\x12\x1a\n" +
+	"\x16MSG_TYPE_INBOUND_PROXY\x10\f\x12\x1a\n" +
+	"\x16MSG_TYPE_GET_DIR_FILES\x10\r\x12\x16\n" +
+	"\x12MSG_TYPE_DIR_FILES\x10\x0e\x12\x1a\n" +
+	"\x16MSG_TYPE_GET_FILE_META\x10\x0f\x12\x16\n" +
+	"\x12MSG_TYPE_FILE_META\x10\x10\x12\x15\n" +
+	"\x11MSG_TYPE_GET_FILE\x10\x11\x12\x1d\n" +
+	"\x19MSG_TYPE_GET_ONLINE_USERS\x10\x12\x12\x19\n" +
+	"\x15MSG_TYPE_ONLINE_USERS\x10\x13*\xaa\x02\n" +
 	"\aErrType\x12\x18\n" +
 	"\x14ERR_TYPE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11ERR_TYPE_INTERNAL\x10\x01\x12\x1e\n" +
@@ -1440,30 +1484,32 @@ func file_pb_v1_protocol_proto_rawDescGZIP() []byte {
 }
 
 var file_pb_v1_protocol_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_pb_v1_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_pb_v1_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_pb_v1_protocol_proto_goTypes = []any{
-	(MsgType)(0),                // 0: pb.v1.MsgType
-	(ErrType)(0),                // 1: pb.v1.ErrType
-	(VersionRejectionReason)(0), // 2: pb.v1.VersionRejectionReason
-	(AuthRejectionReason)(0),    // 3: pb.v1.AuthRejectionReason
-	(*MsgPing)(nil),             // 4: pb.v1.MsgPing
-	(*MsgPong)(nil),             // 5: pb.v1.MsgPong
-	(*MsgAcknowledged)(nil),     // 6: pb.v1.MsgAcknowledged
-	(*MsgError)(nil),            // 7: pb.v1.MsgError
-	(*ProtoVersion)(nil),        // 8: pb.v1.ProtoVersion
-	(*MsgVersion)(nil),          // 9: pb.v1.MsgVersion
-	(*MsgVersionAccepted)(nil),  // 10: pb.v1.MsgVersionAccepted
-	(*MsgVersionRejected)(nil),  // 11: pb.v1.MsgVersionRejected
-	(*MsgAuthenticate)(nil),     // 12: pb.v1.MsgAuthenticate
-	(*MsgAuthAccepted)(nil),     // 13: pb.v1.MsgAuthAccepted
-	(*MsgAuthRejected)(nil),     // 14: pb.v1.MsgAuthRejected
-	(*MsgGetDirFiles)(nil),      // 15: pb.v1.MsgGetDirFiles
-	(*MsgDirFiles)(nil),         // 16: pb.v1.MsgDirFiles
-	(*MsgGetFileMeta)(nil),      // 17: pb.v1.MsgGetFileMeta
-	(*MsgFileMeta)(nil),         // 18: pb.v1.MsgFileMeta
-	(*MsgGetFile)(nil),          // 19: pb.v1.MsgGetFile
-	(*MsgGetOnlineUsers)(nil),   // 20: pb.v1.MsgGetOnlineUsers
-	(*MsgOnlineUsers)(nil),      // 21: pb.v1.MsgOnlineUsers
+	(MsgType)(0),                 // 0: pb.v1.MsgType
+	(ErrType)(0),                 // 1: pb.v1.ErrType
+	(VersionRejectionReason)(0),  // 2: pb.v1.VersionRejectionReason
+	(AuthRejectionReason)(0),     // 3: pb.v1.AuthRejectionReason
+	(*MsgPing)(nil),              // 4: pb.v1.MsgPing
+	(*MsgPong)(nil),              // 5: pb.v1.MsgPong
+	(*MsgAcknowledged)(nil),      // 6: pb.v1.MsgAcknowledged
+	(*MsgError)(nil),             // 7: pb.v1.MsgError
+	(*ProtoVersion)(nil),         // 8: pb.v1.ProtoVersion
+	(*MsgVersion)(nil),           // 9: pb.v1.MsgVersion
+	(*MsgVersionAccepted)(nil),   // 10: pb.v1.MsgVersionAccepted
+	(*MsgVersionRejected)(nil),   // 11: pb.v1.MsgVersionRejected
+	(*MsgAuthenticate)(nil),      // 12: pb.v1.MsgAuthenticate
+	(*MsgAuthAccepted)(nil),      // 13: pb.v1.MsgAuthAccepted
+	(*MsgAuthRejected)(nil),      // 14: pb.v1.MsgAuthRejected
+	(*MsgOpenOutboundProxy)(nil), // 15: pb.v1.MsgOpenOutboundProxy
+	(*MsgInboundProxy)(nil),      // 16: pb.v1.MsgInboundProxy
+	(*MsgGetDirFiles)(nil),       // 17: pb.v1.MsgGetDirFiles
+	(*MsgDirFiles)(nil),          // 18: pb.v1.MsgDirFiles
+	(*MsgGetFileMeta)(nil),       // 19: pb.v1.MsgGetFileMeta
+	(*MsgFileMeta)(nil),          // 20: pb.v1.MsgFileMeta
+	(*MsgGetFile)(nil),           // 21: pb.v1.MsgGetFile
+	(*MsgGetOnlineUsers)(nil),    // 22: pb.v1.MsgGetOnlineUsers
+	(*MsgOnlineUsers)(nil),       // 23: pb.v1.MsgOnlineUsers
 }
 var file_pb_v1_protocol_proto_depIdxs = []int32{
 	1,  // 0: pb.v1.MsgError.type:type_name -> pb.v1.ErrType
@@ -1472,7 +1518,7 @@ var file_pb_v1_protocol_proto_depIdxs = []int32{
 	8,  // 3: pb.v1.MsgVersionRejected.version:type_name -> pb.v1.ProtoVersion
 	2,  // 4: pb.v1.MsgVersionRejected.reason:type_name -> pb.v1.VersionRejectionReason
 	3,  // 5: pb.v1.MsgAuthRejected.reason:type_name -> pb.v1.AuthRejectionReason
-	18, // 6: pb.v1.MsgDirFiles.files:type_name -> pb.v1.MsgFileMeta
+	20, // 6: pb.v1.MsgDirFiles.files:type_name -> pb.v1.MsgFileMeta
 	7,  // [7:7] is the sub-list for method output_type
 	7,  // [7:7] is the sub-list for method input_type
 	7,  // [7:7] is the sub-list for extension type_name
@@ -1494,7 +1540,7 @@ func file_pb_v1_protocol_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pb_v1_protocol_proto_rawDesc), len(file_pb_v1_protocol_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   18,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

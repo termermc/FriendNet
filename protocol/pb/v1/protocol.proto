@@ -9,70 +9,80 @@ enum MsgType {
     // Do not use.
     MSG_TYPE_UNSPECIFIED = 0;
 
-    // [BOTH] A ping message.
+    // [C2S, S2C, C2C] A ping message.
     // May be sent by either the client or server, but the other must respond with MSG_TYPE_PONG.
     // Must be responded to with MSG_TYPE_PONG, or the connection will be terminated.
     // Either side may have its own arbitrary timeout which may cause disconnection if not met.
     // Expected: Message MSG_TYPE_PONG.
     MSG_TYPE_PING = 1;
 
-    // [BOTH] Response to MSG_TYPE_PING.
+    // [C2S, S2C, C2C] Response to MSG_TYPE_PING.
     MSG_TYPE_PONG = 2;
 
-    // [BOTH] Acknowledgement of success.
+    // [C2S, S2C, C2C] Acknowledgement of success.
     // Sent as a reply to other messages.
     MSG_TYPE_ACKNOWLEDGED = 3;
 
-    // [BOTH] An error message.
+    // [C2S, S2C, C2C] An error message.
     // Sent as a reply to other messages.
     MSG_TYPE_ERROR = 4;
 
-    // [CLIENT] Initial client version negotiation.
+    // [C2S] Initial client version negotiation.
     MSG_TYPE_VERSION = 5;
 
-    // [SERVER] Indicates that the server accepted the client's protocol version.
+    // [S2C] Indicates that the server accepted the client's protocol version.
     MSG_TYPE_VERSION_ACCEPTED = 6;
 
-    // [SERVER] Indicates that the server rejected the client's protocol version.
+    // [S2C] Indicates that the server rejected the client's protocol version.
     MSG_TYPE_VERSION_REJECTED = 7;
 
-    // [CLIENT] Initial client authentication with the server.
+    // [C2S] Initial client authentication with the server.
     MSG_TYPE_AUTHENTICATE = 8;
 
-    // [SERVER] Indicates that client authentication was accepted.
+    // [S2C] Indicates that client authentication was accepted.
     MSG_TYPE_AUTH_ACCEPTED = 9;
 
-    // [SERVER] Indicates that client authentication was denied.
+    // [S2C] Indicates that client authentication was denied.
     MSG_TYPE_AUTH_REJECTED = 10;
 
-    // [BOTH] Request to get files inside a user's directory.
+    // [C2S] Request to open an outbound proxy to a connected peer.
+    // The server will cancel the stream with an error if the target peer could not be contacted.
+    // If successful, the stream will be converted to a proxied stream to the target peer.
+    MSG_TYPE_OPEN_OUTBOUND_PROXY = 11;
+
+    // [S2C] Notification of a new inbound proxy stream from another peer.
+    // The client can choose to cancel the stream or send data on it.
+    // All data after the notification message comes from the origin peer.
+    MSG_TYPE_INBOUND_PROXY = 12;
+
+    // [C2C] Request to get files inside a user's directory.
     // Expected: Repeated message MSG_TYPE_DIR_FILES until stream is closed by receiver.
-    MSG_TYPE_GET_DIR_FILES = 11;
+    MSG_TYPE_GET_DIR_FILES = 13;
 
-    // [BOTH] A possibly non-exhaustive list of files in a directory.
-    MSG_TYPE_DIR_FILES = 12;
+    // [C2C] A possibly non-exhaustive list of files in a directory.
+    MSG_TYPE_DIR_FILES = 14;
 
-    // [BOTH] Request to get metadata about a file without reading it.
+    // [C2C] Request to get metadata about a file without reading it.
     // Expected: Either:
     //  - Message MSG_TYPE_FILE_META.
     //  - Message MSG_TYPE_ERROR of ERR_TYPE_FILE_NOT_EXIST.
-    MSG_TYPE_GET_FILE_META = 13;
+    MSG_TYPE_GET_FILE_META = 15;
 
-    // [BOTH] Metadata about a file, including its size.
-    MSG_TYPE_FILE_META = 14;
+    // [C2C] Metadata about a file, including its size.
+    MSG_TYPE_FILE_META = 16;
 
-    // [BOTH] Request to get a file's metadata and contents.
+    // [C2C] Request to get a file's metadata and contents.
     // Expected: Either:
     //  - Message MSG_TYPE_FILE_META then the file's requested binary content until the stream is closed by receiver.
     //  - Message MSG_TYPE_ERROR of ERR_TYPE_FILE_NOT_EXIST.
-    MSG_TYPE_GET_FILE = 15;
+    MSG_TYPE_GET_FILE = 17;
 
-    // [CLIENT] Request to get a list of online users in the room.
+    // [C2S] Request to get a list of online users in the room.
     // Expected: Repeated message MSG_TYPE_ONLINE_USERS until stream is closed by receiver.
-    MSG_TYPE_GET_ONLINE_USERS = 16;
+    MSG_TYPE_GET_ONLINE_USERS = 18;
 
-    // [SERVER] List of online users in the room.
-    MSG_TYPE_ONLINE_USERS = 17;
+    // [S2C] List of online users in the room.
+    MSG_TYPE_ONLINE_USERS = 19;
 }
 
 // Ping message.
@@ -232,19 +242,23 @@ message MsgAuthRejected {
     optional string message = 2;
 }
 
+// See MSG_TYPE_OPEN_OUTBOUND_PROXY.
+message MsgOpenOutboundProxy {
+    // The target peer's username.
+    string target_username = 1;
+}
+
+// See MSG_TYPE_INBOUND_PROXY.
+message MsgInboundProxy {
+    // The origin peer's username.
+    string origin_username = 1;
+}
+
 // See MSG_TYPE_GET_DIR_FILES.
 message MsgGetDirFiles {
-    // The user sending the request by proxy.
-    // Irrelevant and should be ignored if sent by the client.
-    string request_from_user = 1;
-
-    // The user who hosts the directory.
-    // Irrelevant and should be ignored if sent by the server.
-    string user = 2;
-
     // The path of the directory within the share.
     // The path must begin with a `/`.
-    string path = 3;
+    string path = 1;
 }
 
 // See MSG_TYPE_DIR_FILES.
@@ -255,16 +269,8 @@ message MsgDirFiles {
 
 // See MSG_TYPE_GET_FILE_META.
 message MsgGetFileMeta {
-    // The user sending the request by proxy.
-    // Irrelevant and should be ignored if sent by the client.
-    string request_from_user = 1;
-
-    // The user who hosts the file.
-    // Irrelevant and should be ignored if sent by the server.
-    string user = 2;
-
     // The path to the file.
-    string path = 3;
+    string path = 1;
 }
 
 // See MSG_TYPE_FILE_META.
@@ -282,24 +288,16 @@ message MsgFileMeta {
 
 // See MSG_TYPE_GET_FILE.
 message MsgGetFile {
-    // The user sending the request by proxy.
-    // Irrelevant and should be ignored if sent by the client.
-    string request_from_user = 1;
-
-    // The user who hosts the file.
-    // Irrelevant and should be ignored if sent by the server.
-    string user = 2;
-
     // The path to the file.
-    string path = 3;
+    string path = 1;
 
     // The offset into the file to read, in bytes.
     // Values above the file size will just result in no data being returned.
-    uint64 offset = 4;
+    uint64 offset = 2;
 
     // The limit of the file to read, in bytes.
     // Specify 0 for no limit.
-    uint64 limit = 5;
+    uint64 limit = 3;
 }
 
 // See MSG_TYPE_GET_ONLINE_USERS.
