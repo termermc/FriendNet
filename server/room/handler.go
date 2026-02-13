@@ -11,17 +11,9 @@ import (
 // Implementations must write a MSG_TYPE_PONG before returning.
 type PingHandler func(ctx context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgPing]) error
 
-// GetDirFilesHandler handles an incoming directory listing request.
-// Implementations must write one or more MSG_TYPE_DIR_FILES messages before returning.
-type GetDirFilesHandler func(ctx context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgGetDirFiles]) error
-
-// GetFileMetaHandler handles an incoming file metadata request.
-// Implementations must write a MSG_TYPE_FILE_META or MSG_TYPE_ERROR message before returning.
-type GetFileMetaHandler func(ctx context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgGetFileMeta]) error
-
-// GetFileHandler handles an incoming file request.
-// Implementations must write MSG_TYPE_FILE_META then file bytes (or MSG_TYPE_ERROR) before returning.
-type GetFileHandler func(ctx context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgGetFile]) error
+// OpenOutboundProxyHandler handles an open outbound proxy request.
+// Implementations must follow the documentation on MSG_TYPE_OPEN_OUTBOUND_PROXY.
+type OpenOutboundProxyHandler func(ctx context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgOpenOutboundProxy]) error
 
 // GetOnlineUsersHandler handles an incoming get online users request.
 // Implementations must write one or more MSG_TYPE_ONLINE_USERS messages before returning.
@@ -33,9 +25,7 @@ type GetOnlineUsersHandler func(ctx context.Context, client *Client, bidi protoc
 // Important: Handlers must assume that the underlying bidi will be closed after the handler returns.
 // References to the bidi or client must not be held after the handler returns.
 type ClientMessageHandlers struct {
-	OnPing           PingHandler
-	OnGetDirFiles    GetDirFilesHandler
-	OnGetFileMeta    GetFileMetaHandler
-	OnGetFile        GetFileHandler
-	OnGetOnlineUsers GetOnlineUsersHandler
+	OnPing              PingHandler
+	OnOpenOutboundProxy OpenOutboundProxyHandler
+	OnGetOnlineUsers    GetOnlineUsersHandler
 }

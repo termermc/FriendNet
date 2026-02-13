@@ -1320,18 +1320,64 @@ func (*MsgGetOnlineUsers) Descriptor() ([]byte, []int) {
 	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{18}
 }
 
+// An online user's status.
+type OnlineUserStatus struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The user's username.
+	Username      string `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OnlineUserStatus) Reset() {
+	*x = OnlineUserStatus{}
+	mi := &file_pb_v1_protocol_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OnlineUserStatus) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OnlineUserStatus) ProtoMessage() {}
+
+func (x *OnlineUserStatus) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_v1_protocol_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OnlineUserStatus.ProtoReflect.Descriptor instead.
+func (*OnlineUserStatus) Descriptor() ([]byte, []int) {
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *OnlineUserStatus) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
 // See MSG_TYPE_ONLINE_USERS.
 type MsgOnlineUsers struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// A list of online users in the room.
-	Users         []string `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
+	// A list of online users in the room and their statuses.
+	Users         []*OnlineUserStatus `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *MsgOnlineUsers) Reset() {
 	*x = MsgOnlineUsers{}
-	mi := &file_pb_v1_protocol_proto_msgTypes[19]
+	mi := &file_pb_v1_protocol_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1343,7 +1389,7 @@ func (x *MsgOnlineUsers) String() string {
 func (*MsgOnlineUsers) ProtoMessage() {}
 
 func (x *MsgOnlineUsers) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_v1_protocol_proto_msgTypes[19]
+	mi := &file_pb_v1_protocol_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1356,10 +1402,10 @@ func (x *MsgOnlineUsers) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MsgOnlineUsers.ProtoReflect.Descriptor instead.
 func (*MsgOnlineUsers) Descriptor() ([]byte, []int) {
-	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{19}
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{20}
 }
 
-func (x *MsgOnlineUsers) GetUsers() []string {
+func (x *MsgOnlineUsers) GetUsers() []*OnlineUserStatus {
 	if x != nil {
 		return x.Users
 	}
@@ -1425,9 +1471,11 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x16\n" +
 	"\x06offset\x18\x02 \x01(\x04R\x06offset\x12\x14\n" +
 	"\x05limit\x18\x03 \x01(\x04R\x05limit\"\x13\n" +
-	"\x11MsgGetOnlineUsers\"&\n" +
-	"\x0eMsgOnlineUsers\x12\x14\n" +
-	"\x05users\x18\x01 \x03(\tR\x05users*\x96\x04\n" +
+	"\x11MsgGetOnlineUsers\".\n" +
+	"\x10OnlineUserStatus\x12\x1a\n" +
+	"\busername\x18\x01 \x01(\tR\busername\"?\n" +
+	"\x0eMsgOnlineUsers\x12-\n" +
+	"\x05users\x18\x01 \x03(\v2\x17.pb.v1.OnlineUserStatusR\x05users*\x96\x04\n" +
 	"\aMsgType\x12\x18\n" +
 	"\x14MSG_TYPE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rMSG_TYPE_PING\x10\x01\x12\x11\n" +
@@ -1484,7 +1532,7 @@ func file_pb_v1_protocol_proto_rawDescGZIP() []byte {
 }
 
 var file_pb_v1_protocol_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_pb_v1_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_pb_v1_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_pb_v1_protocol_proto_goTypes = []any{
 	(MsgType)(0),                 // 0: pb.v1.MsgType
 	(ErrType)(0),                 // 1: pb.v1.ErrType
@@ -1509,7 +1557,8 @@ var file_pb_v1_protocol_proto_goTypes = []any{
 	(*MsgFileMeta)(nil),          // 20: pb.v1.MsgFileMeta
 	(*MsgGetFile)(nil),           // 21: pb.v1.MsgGetFile
 	(*MsgGetOnlineUsers)(nil),    // 22: pb.v1.MsgGetOnlineUsers
-	(*MsgOnlineUsers)(nil),       // 23: pb.v1.MsgOnlineUsers
+	(*OnlineUserStatus)(nil),     // 23: pb.v1.OnlineUserStatus
+	(*MsgOnlineUsers)(nil),       // 24: pb.v1.MsgOnlineUsers
 }
 var file_pb_v1_protocol_proto_depIdxs = []int32{
 	1,  // 0: pb.v1.MsgError.type:type_name -> pb.v1.ErrType
@@ -1519,11 +1568,12 @@ var file_pb_v1_protocol_proto_depIdxs = []int32{
 	2,  // 4: pb.v1.MsgVersionRejected.reason:type_name -> pb.v1.VersionRejectionReason
 	3,  // 5: pb.v1.MsgAuthRejected.reason:type_name -> pb.v1.AuthRejectionReason
 	20, // 6: pb.v1.MsgDirFiles.files:type_name -> pb.v1.MsgFileMeta
-	7,  // [7:7] is the sub-list for method output_type
-	7,  // [7:7] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	23, // 7: pb.v1.MsgOnlineUsers.users:type_name -> pb.v1.OnlineUserStatus
+	8,  // [8:8] is the sub-list for method output_type
+	8,  // [8:8] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_pb_v1_protocol_proto_init() }
@@ -1540,7 +1590,7 @@ func file_pb_v1_protocol_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pb_v1_protocol_proto_rawDesc), len(file_pb_v1_protocol_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   20,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
