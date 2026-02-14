@@ -1,4 +1,6 @@
-package main
+//go:build old
+
+package client
 
 import (
 	"os"
