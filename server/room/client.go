@@ -56,12 +56,8 @@ func (c *Client) msgHandler(bidi protocol.ProtoBidi, firstMsg *protocol.UntypedP
 	switch firstMsg.Type {
 	case pb.MsgType_MSG_TYPE_PING:
 		return c.handlers.OnPing(ctx, c, bidi, protocol.ToTyped[*pb.MsgPing](firstMsg))
-	case pb.MsgType_MSG_TYPE_GET_DIR_FILES:
-		return c.handlers.OnGetDirFiles(ctx, c, bidi, protocol.ToTyped[*pb.MsgGetDirFiles](firstMsg))
-	case pb.MsgType_MSG_TYPE_GET_FILE_META:
-		return c.handlers.OnGetFileMeta(ctx, c, bidi, protocol.ToTyped[*pb.MsgGetFileMeta](firstMsg))
-	case pb.MsgType_MSG_TYPE_GET_FILE:
-		return c.handlers.OnGetFile(ctx, c, bidi, protocol.ToTyped[*pb.MsgGetFile](firstMsg))
+	case pb.MsgType_MSG_TYPE_OPEN_OUTBOUND_PROXY:
+		return c.handlers.OnOpenOutboundProxy(ctx, c, bidi, protocol.ToTyped[*pb.MsgOpenOutboundProxy](firstMsg))
 	case pb.MsgType_MSG_TYPE_GET_ONLINE_USERS:
 		return c.handlers.OnGetOnlineUsers(ctx, c, bidi, protocol.ToTyped[*pb.MsgGetOnlineUsers](firstMsg))
 
