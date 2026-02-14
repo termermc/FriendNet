@@ -30,6 +30,8 @@ func MsgTypeToEmptyMsg(typ pb.MsgType) proto.Message {
 		return &pb.MsgAuthAccepted{}
 	case pb.MsgType_MSG_TYPE_AUTH_REJECTED:
 		return &pb.MsgAuthRejected{}
+	case pb.MsgType_MSG_TYPE_OPEN_OUTBOUND_PROXY:
+		return &pb.MsgOpenOutboundProxy{}
 	case pb.MsgType_MSG_TYPE_GET_DIR_FILES:
 		return &pb.MsgGetDirFiles{}
 	case pb.MsgType_MSG_TYPE_DIR_FILES:
