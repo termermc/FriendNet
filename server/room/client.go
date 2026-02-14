@@ -69,7 +69,7 @@ func (c *Client) msgHandler(bidi protocol.ProtoBidi, firstMsg *protocol.UntypedP
 			"type", firstMsg.Type,
 		)
 
-		_ = protocol.WriteUnimplementedError(bidi, firstMsg.Type)
+		_ = bidi.WriteUnimplementedError(firstMsg.Type)
 
 		// Don't return an error here.
 		// Errors returned are for genuine internal errors.

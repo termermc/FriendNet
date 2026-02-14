@@ -472,7 +472,7 @@ func (bidi ProtoBidi) WriteInternalError(err error) error {
 
 // WriteUnimplementedError writes an ERR_TYPE_UNIMPLEMENTED error to the provided bidi stream,
 // based on the specified message type.
-func WriteUnimplementedError(bidi ProtoBidi, msgType pb.MsgType) error {
+func (bidi ProtoBidi) WriteUnimplementedError(msgType pb.MsgType) error {
 	message := fmt.Sprintf("handler for %q is unimplemented", msgType.String())
 	return bidi.Write(pb.MsgType_MSG_TYPE_ERROR, &pb.MsgError{
 		Type:    pb.ErrType_ERR_TYPE_UNIMPLEMENTED,

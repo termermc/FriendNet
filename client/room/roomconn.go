@@ -1,8 +1,9 @@
-package client
+package room
 
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"sync"
 
 	"friendnet.org/client/cert"
@@ -14,21 +15,47 @@ import (
 // ErrRoomConnClosed is returned when trying to interact with a closed room connection.
 var ErrRoomConnClosed = errors.New("room connection closed")
 
-// RoomConn represents a room connection.
+// Credentials are the credentials used to authenticate with a room.
+type Credentials struct {
+	// The room name.
+	Room common.NormalizedRoomName
+
+	// The room user's username.
+	Username common.NormalizedUsername
+
+	// The room user's password.
+	Password string
+}
+
+// Arbitrary size to prevent lockups on the incoming bidi channel.
+const incomingBidiChanSize = 64
+
+// Conn represents a room connection.
 // The room connection contains a connection to a central server, as well as potentially direct connections with peers in the room.
-// A RoomConn is always in an authenticated and usable state until it is closed, either by calling RoomConn.Close, or the connection being interrupted.
-type RoomConn struct {
+// A Conn is always in an authenticated and usable state until it is closed, either by calling RoomConn.Close, or the connection being interrupted.
+type Conn struct {
 	mu       sync.RWMutex
 	isClosed bool
 
+	logger *slog.Logger
+
+	handlers MessageHandlers
+
 	clientVer *pb.ProtoVersion
 	serverVer *pb.ProtoVersion
+
+	// The room name.
+	RoomName common.NormalizedRoomName
+
+	// The current user's username.
+	Username common.NormalizedUsername
 
 	// The room's context.
 	Context   context.Context
 	ctxCancel context.CancelFunc
 
-	serverConn protocol.ProtoConn
+	serverConn   protocol.ProtoConn
+	incomingBidi chan C2cBidi
 }
 
 // negotiateVersion negotiates the protocol version with the server.
@@ -57,16 +84,11 @@ func negotiateVersion(serverConn protocol.ProtoConn, clientVer *pb.ProtoVersion)
 
 // authenticate authenticates with the server.
 // Returns a protocol.AuthRejectedError if the server rejected the request.
-func authenticate(
-	serverConn protocol.ProtoConn,
-	room common.NormalizedRoomName,
-	username common.NormalizedUsername,
-	password string,
-) error {
+func authenticate(serverConn protocol.ProtoConn, creds Credentials) error {
 	res, err := serverConn.SendAndReceive(pb.MsgType_MSG_TYPE_AUTHENTICATE, &pb.MsgAuthenticate{
-		Room:     room.String(),
-		Username: username.String(),
-		Password: password,
+		Room:     creds.Room.String(),
+		Username: creds.Username.String(),
+		Password: creds.Password,
 	})
 	if err != nil {
 		return err
@@ -89,12 +111,12 @@ func authenticate(
 // If the server rejects the client's protocol version, returns a protocol.VersionRejectedError.
 // If the server rejects the client's credentials, returns a protocol.AuthRejectedError.
 func NewRoomConn(
+	logger *slog.Logger,
+	handlers MessageHandlers,
 	certStore cert.Store,
 	address string,
-	room common.NormalizedRoomName,
-	username common.NormalizedUsername,
-	password string,
-) (*RoomConn, error) {
+	creds Credentials,
+) (*Conn, error) {
 	clientVer := protocol.CurrentProtocolVersion
 
 	ctx, ctxCancel := context.WithCancel(context.Background())
@@ -109,38 +131,50 @@ func NewRoomConn(
 		ctxCancel()
 		return nil, err
 	}
-	err = authenticate(conn, room, username, password)
+	err = authenticate(conn, creds)
 	if err != nil {
 		ctxCancel()
 		return nil, err
 	}
 
-	// TODO Read loop
+	c := &Conn{
+		logger: logger,
 
-	return &RoomConn{
+		handlers: handlers,
+
 		clientVer: clientVer,
 		serverVer: serverVer,
+
+		RoomName: creds.Room,
+		Username: creds.Username,
 
 		Context:   ctx,
 		ctxCancel: ctxCancel,
 
-		serverConn: conn,
-	}, nil
+		serverConn:   conn,
+		incomingBidi: make(chan C2cBidi, incomingBidiChanSize),
+	}
+
+	go c.c2cLoop()
+
+	// TODO S2C read loop (also sending proxy bidis to chan)
+
+	return c, nil
 }
 
 // Close closes the room connection.
 // Subsequent calls are no-op.
-func (rc *RoomConn) Close() error {
-	rc.mu.Lock()
-	defer rc.mu.Unlock()
-	if rc.isClosed {
+func (c *Conn) Close() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.isClosed {
 		return nil
 	}
-	rc.isClosed = true
+	c.isClosed = true
 
-	_ = rc.serverConn.CloseWithReason("closing")
+	_ = c.serverConn.CloseWithReason("closing")
 
-	rc.ctxCancel()
+	c.ctxCancel()
 
 	return nil
 }
