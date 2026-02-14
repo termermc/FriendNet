@@ -44,7 +44,7 @@ type ServerRecord struct {
 	CreatedTs time.Time
 }
 
-func ScanAccountRecord(row common.Scannable) (record ServerRecord, has bool, err error) {
+func ScanServerRecord(row common.Scannable) (record ServerRecord, has bool, err error) {
 	var uuid string
 	var name string
 	var address string

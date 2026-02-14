@@ -45,14 +45,14 @@ create index server_created_ts_index
 
 create table share
 (
-    uuid text not null primary key,
     server text not null
 		constraint share_server_server_uuid_fk
         references server
 		on delete cascade,
 	name text not null,
 	path text not null,
-	created_ts integer default (strftime('%s', 'now')) not null
+	created_ts integer default (strftime('%s', 'now')) not null,
+	primary key (server, name)
 );
 
 create index share_created_ts_index

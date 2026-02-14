@@ -19,9 +19,9 @@ import (
 //   - This function expects a host only (no port, no scheme, no path).
 //   - Zone-scoped IPv6 (e.g. "fe80::1%en0") is preserved but lowercased.
 //   - If the input has surrounding brackets (e.g. "[::1]"), they are removed.
-func NormalizeHostname(host string) string {
-	orig := host
-	s := strings.TrimSpace(host)
+func NormalizeHostname(hostname string) string {
+	orig := hostname
+	s := strings.TrimSpace(hostname)
 	if s == "" {
 		return orig
 	}

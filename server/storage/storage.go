@@ -126,7 +126,7 @@ func (s *Storage) GetRooms(ctx context.Context) ([]RoomRecord, error) {
 		records = append(records, record)
 	}
 
-	return nil, nil
+	return records, nil
 }
 
 // DeleteRoomByName will delete the room record with the specified name.
