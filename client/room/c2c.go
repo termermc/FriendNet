@@ -3,7 +3,6 @@ package room
 import (
 	"errors"
 	"io"
-	"log/slog"
 
 	"friendnet.org/common"
 	"friendnet.org/protocol"
@@ -31,7 +30,10 @@ loop:
 			go func() {
 				defer func() {
 					if err := recover(); err != nil {
-						c.logger.Error("c2c bidi handler panic", slog.Any("err", err))
+						c.logger.Error("c2c bidi handler panic",
+							"service", "room.Conn",
+							"err", err,
+						)
 					}
 				}()
 
