@@ -24,7 +24,7 @@ var ErrClientNotConnected = errors.New("client not connected")
 type ProtoClient struct {
 	conn *quic.Conn
 
-	// OnPing handles incoming MSG_TYPE_PING messages.
+	// S2cOnPing handles incoming MSG_TYPE_PING messages.
 	OnPing PingHandler
 	// OnGetDirFiles handles incoming MSG_TYPE_GET_DIR_FILES messages.
 	OnGetDirFiles GetDirFilesHandler
