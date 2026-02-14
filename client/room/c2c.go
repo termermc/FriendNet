@@ -1,21 +1,24 @@
 package room
 
 import (
+	"errors"
+	"io"
 	"log/slog"
 
 	"friendnet.org/common"
 	"friendnet.org/protocol"
+	"github.com/quic-go/quic-go"
 )
 
 // C2cBidi is a client-to-client bidi stream
 type C2cBidi struct {
 	protocol.ProtoBidi
 
+	// The associated room connection.
+	RoomConn *Conn
+
 	// The client's username.
 	Username common.NormalizedUsername
-
-	// The associated room connection.
-	RoomCoon *Conn
 }
 
 func (c *Conn) c2cLoop() {
@@ -32,26 +35,33 @@ loop:
 					}
 				}()
 
-				// Read message.
-				msg, err := bidi.Read()
+				rawMsg, err := bidi.Read()
 				if err != nil {
-					c.logger.Error("failed to read bidi message", slog.Any("err", err))
+					if errors.Is(err, io.EOF) {
+						return
+					}
+					var streamErr *quic.StreamError
+					if errors.As(err, &streamErr) {
+						return
+					}
+
+					c.logger.Error("failed to read c2c bidi message",
+						"service", "room.Conn",
+						"err", err,
+					)
 					return
 				}
 
-				// TODO Handle message.
+				// Handle C2C message.
 				err = nil
-				switch payload := msg.Payload.(type) {
+				switch rawMsg.Type {
 				default:
-					_ = bidi.WriteUnimplementedError(msg.Type)
-
-					// TODO REMOVE THIS
-					_ = payload
+					err = bidi.WriteUnimplementedError(rawMsg.Type)
 				}
 				if err != nil {
-					c.logger.Error("failed to handle bidi message",
+					c.logger.Error("failed to handle C2C bidi message",
 						"service", "room.Conn",
-						"type", msg.Type.String(),
+						"type", rawMsg.Type.String(),
 						"err", err,
 					)
 				}
