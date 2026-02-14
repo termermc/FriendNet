@@ -31,6 +31,8 @@ func NewSqliteStore(db *sql.DB) *SqliteStore {
 }
 
 func (s *SqliteStore) GetDer(ctx context.Context, hostname string) ([]byte, error) {
+	hostname = NormalizeHostname(hostname)
+
 	row := s.db.QueryRowContext(ctx, "select * from server_cert where hostname = ?", hostname)
 
 	record, has, err := storage.ScanServerCertRecord(row)
@@ -45,6 +47,8 @@ func (s *SqliteStore) GetDer(ctx context.Context, hostname string) ([]byte, erro
 }
 
 func (s *SqliteStore) PutDer(ctx context.Context, hostname string, der []byte) error {
+	hostname = NormalizeHostname(hostname)
+
 	_, err := s.db.ExecContext(ctx, "insert or replace into server_cert (hostname, cert_der) values (?, ?)", hostname, der)
 	return err
 }
