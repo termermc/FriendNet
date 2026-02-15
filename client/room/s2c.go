@@ -72,7 +72,7 @@ func (c *Conn) s2cLoop() {
 			switch rawMsg.Type {
 			case pb.MsgType_MSG_TYPE_PING:
 				msg := protocol.ToTyped[*pb.MsgPing](rawMsg)
-				err = c.handlers.S2cOnPing(c.Context, c, bidi, msg)
+				err = c.logic.OnPing(c.Context, c, bidi, msg)
 			default:
 				err = bidi.WriteUnimplementedError(rawMsg.Type)
 			}

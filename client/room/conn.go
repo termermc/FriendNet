@@ -39,7 +39,7 @@ type Conn struct {
 
 	logger *slog.Logger
 
-	handlers MessageHandlers
+	logic Logic
 
 	clientVer *pb.ProtoVersion
 	serverVer *pb.ProtoVersion
@@ -113,7 +113,7 @@ func authenticate(serverConn protocol.ProtoConn, creds Credentials) error {
 // If the server rejects the client's credentials, returns a protocol.AuthRejectedError.
 func NewRoomConn(
 	logger *slog.Logger,
-	handlers MessageHandlers,
+	logic Logic,
 	certStore cert.Store,
 	address string,
 	creds Credentials,
@@ -141,7 +141,7 @@ func NewRoomConn(
 	c := &Conn{
 		logger: logger,
 
-		handlers: handlers,
+		logic: logic,
 
 		clientVer: clientVer,
 		serverVer: serverVer,
