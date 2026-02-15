@@ -1,11 +1,17 @@
 package client
 
 import (
+	"context"
+	"errors"
 	"log/slog"
 	"sync"
 
+	"friendnet.org/client/cert"
 	"friendnet.org/client/room"
 )
+
+var ErrConnNannyClosed = errors.New("conn nanny closed")
+var ErrConnNotOpen = errors.New("connection not open")
 
 // ConnState is the state of a connection.
 type ConnState string
@@ -20,12 +26,18 @@ const (
 type ConnNanny struct {
 	logger *slog.Logger
 
+	// openCh is closed when the connection is currently open.
+	// It is replaced with a new channel each time we transition away from open.
+	openCh chan struct{}
+
 	mu       sync.RWMutex
 	isClosed bool
 
-	address string
-	creds   room.Credentials
+	certStore cert.Store
+	address   string
+	creds     room.Credentials
 
+	isDaemonRunning bool
 	shouldReconnect bool
 	connOrNil       *room.Conn
 
@@ -34,13 +46,22 @@ type ConnNanny struct {
 
 // NewConnNanny creates a new ConnNanny with the specified server address and credentials.
 // It automatically starts trying to connect after instantiation.
-func NewConnNanny(logger *slog.Logger, address string, creds room.Credentials) *ConnNanny {
+func NewConnNanny(
+	logger *slog.Logger,
+	certStore cert.Store,
+	address string,
+	creds room.Credentials,
+) *ConnNanny {
 	n := &ConnNanny{
 		logger: logger,
 
-		address: address,
-		creds:   creds,
+		certStore: certStore,
+		address:   address,
+		creds:     creds,
 
+		openCh: make(chan struct{}),
+
+		isDaemonRunning: false,
 		shouldReconnect: true,
 		state:           ConnStateClosed,
 	}
@@ -48,6 +69,67 @@ func NewConnNanny(logger *slog.Logger, address string, creds room.Credentials) *
 	go n.daemon()
 
 	return n
+}
+
+// WaitOpen blocks until the underlying connection is open, ctx is done, or the nanny is closed.
+// The returned *room.Conn is a snapshot; it may become unusable at any time due to disconnects.
+// Callers should not retain it beyond a short-lived operation.
+func (n *ConnNanny) WaitOpen(ctx context.Context) (*room.Conn, error) {
+	for {
+		n.mu.RLock()
+		if n.isClosed {
+			n.mu.RUnlock()
+			return nil, ErrConnNannyClosed
+		}
+
+		// Fast path if already open and non-nil.
+		if n.state == ConnStateOpen && n.connOrNil != nil {
+			c := n.connOrNil
+			n.mu.RUnlock()
+			return c, nil
+		}
+
+		ch := n.openCh
+		n.mu.RUnlock()
+
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-ch:
+			// openCh closed; connection transitioned to open.
+			// Loop to re-check state and grab the conn pointer.
+		}
+	}
+}
+
+// TryDo calls fn with the current connection snapshot if open; otherwise returns ErrConnNotOpen.
+func (n *ConnNanny) TryDo(fn func(*room.Conn) error) error {
+	n.mu.RLock()
+	if n.isClosed {
+		n.mu.RUnlock()
+		return ErrConnNannyClosed
+	}
+	if n.state != ConnStateOpen || n.connOrNil == nil {
+		n.mu.RUnlock()
+		return ErrConnNotOpen
+	}
+	c := n.connOrNil
+	n.mu.RUnlock()
+
+	return fn(c)
+}
+
+// Do waits until the connection is open (or ctx done), then calls fn with the current connection snapshot.
+// fn is called without holding the nanny lock.
+func (n *ConnNanny) Do(
+	ctx context.Context,
+	fn func(ctx context.Context, c *room.Conn) error,
+) error {
+	c, err := n.WaitOpen(ctx)
+	if err != nil {
+		return err
+	}
+	return fn(ctx, c)
 }
 
 func (n *ConnNanny) daemon() {
@@ -60,45 +142,103 @@ func (n *ConnNanny) daemon() {
 				"err", err,
 			)
 
-			// Attempt to relaunch daemon.
-			// This will eventually cause a stack overflow if it happens too many times,
-			// but it's easy enough to do this to recover from panics without breaking
-			// everything.
+			// Mark daemon as stopped, then attempt to restart.
+			// Note: we restart in a new goroutine to avoid reusing the current stack.
 			n.mu.Lock()
+			orphanedConn := n.connOrNil
+			n.isDaemonRunning = false
 			n.connOrNil = nil
+			n.state = ConnStateClosed
+			// Ensure future WaitOpen calls block until we transition to open again.
+			n.openCh = make(chan struct{})
+			shouldRestart := !n.isClosed && n.shouldReconnect
 			n.mu.Unlock()
-			go n.daemon()
+
+			// If there was still a live connection during the crash, we need to close it.
+			// Leaving it open would leave it orphaned, and weird things might happen.
+			if orphanedConn != nil {
+				_ = orphanedConn.Close()
+			}
+
+			if shouldRestart {
+				n.startDaemonLockedSafe()
+			}
 		}
 	}()
 
 	for {
 		n.mu.Lock()
-		if n.isClosed || n.connOrNil != nil {
-			// Closed or another daemon is running.
+		if n.isClosed || !n.shouldReconnect {
+			n.isDaemonRunning = false
 			n.mu.Unlock()
-			break
+			return
 		}
 
 		n.state = ConnStateOpening
-		// TODO Create and put conn
-		n.state = ConnStateOpen
-
 		n.mu.Unlock()
 
-		// TODO Listen.
-		// Only return after close or terminal error.
-		// TODO If there was an error, apply some kind of backoff timeout for connecting.
+		conn, err := room.NewRoomConn(
+			n.logger,
+			room.MessageHandlersImpl,
+			n.certStore,
+			n.address,
+			n.creds,
+		)
+		if err == nil {
+			n.mu.Lock()
+			n.state = ConnStateOpen
+			n.connOrNil = conn
+			close(n.openCh)
+			n.mu.Unlock()
+
+			// Wait for connection to close.
+			<-conn.Context.Done()
+		} else {
+			n.logger.Error("failed to create room connection",
+				"address", n.address,
+				"room", n.creds.Room,
+				"username", n.creds.Username.String(),
+				"err", err,
+			)
+
+			n.mu.Lock()
+			n.state = ConnStateClosed
+			close(n.openCh)
+			n.mu.Unlock()
+
+			// TODO Apply backoff
+		}
 
 		// Clear conn value, reconnect if possible.
 		n.mu.Lock()
+
+		// Notify waiters that connection state has changed.
+		n.openCh = make(chan struct{})
+
 		n.connOrNil = nil
 		n.state = ConnStateClosed
 		if !n.shouldReconnect {
+			n.isDaemonRunning = false
 			n.mu.Unlock()
-			break
+			return
 		}
 		n.mu.Unlock()
 	}
+}
+
+// startDaemonLockedSafe starts the daemon if it isn't running.
+// Caller must NOT hold n.mu when calling this helper; it acquires the lock itself.
+func (n *ConnNanny) startDaemonLockedSafe() {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	if n.isClosed {
+		return
+	}
+	if n.isDaemonRunning {
+		return
+	}
+	n.isDaemonRunning = true
+	go n.daemon()
 }
 
 // Close closes the ConnNanny, and as a result, the underlying connection.
@@ -106,18 +246,32 @@ func (n *ConnNanny) daemon() {
 // Subsequent calls are no-op.
 func (n *ConnNanny) Close() error {
 	n.mu.Lock()
-	defer n.mu.Unlock()
 	if n.isClosed {
+		n.mu.Unlock()
 		return nil
 	}
 	n.isClosed = true
 
+	oldConn := n.connOrNil
+
 	n.state = ConnStateClosed
 	n.shouldReconnect = false
 
-	// Close connection if present.
-	if n.connOrNil != nil {
-		_ = n.connOrNil.Close()
+	// If someone is waiting in WaitOpen, unblock them by closing openCh (if not already closed)
+	// so that they can observe closure.
+	//
+	// WaitOpen always checks isClosed under lock first, so it will return ErrConnNannyClosed.
+	select {
+	case <-n.openCh:
+	default:
+		close(n.openCh)
+	}
+
+	n.mu.Unlock()
+
+	// Close old connection if present.
+	if oldConn != nil {
+		_ = oldConn.Close()
 	}
 
 	return nil
@@ -154,8 +308,11 @@ func (n *ConnNanny) Connect() {
 
 	n.shouldReconnect = true
 
-	// If there is already a connection, the daemon will exit itself.
-	go n.daemon()
+	// Start daemon if needed.
+	if !n.isDaemonRunning {
+		n.isDaemonRunning = true
+		go n.daemon()
+	}
 }
 
 // Disconnect closes the current underlying connection and disabled reconnection.
@@ -163,15 +320,20 @@ func (n *ConnNanny) Connect() {
 // No-op if the ConnNanny is closed.
 func (n *ConnNanny) Disconnect() {
 	n.mu.Lock()
-	defer n.mu.Unlock()
 	if n.isClosed {
+		n.mu.Unlock()
 		return
 	}
 
+	oldConn := n.connOrNil
+
 	n.shouldReconnect = false
 	n.state = ConnStateClosed
+	n.connOrNil = nil
 
-	if n.connOrNil != nil {
-		_ = n.connOrNil.Close()
+	n.mu.Unlock()
+
+	if oldConn != nil {
+		_ = oldConn.Close()
 	}
 }

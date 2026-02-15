@@ -51,6 +51,7 @@ type Conn struct {
 	Username common.NormalizedUsername
 
 	// The room's context.
+	// Done when the connection is closed.
 	Context   context.Context
 	ctxCancel context.CancelFunc
 
