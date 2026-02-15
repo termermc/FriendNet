@@ -174,11 +174,9 @@ func (n *ConnNanny) daemon() {
 		}
 		if !n.shouldReconnect {
 			n.mu.Unlock()
-			// Park until either Close() or Connect() flips shouldReconnect.
+			// Return, not doing anything until either Close() or Connect() flips shouldReconnect.
 			// We don't have a dedicated "reconnect signal" channel yet; simplest
 			// is to just return and let Connect() start a new daemon if desired.
-			// To keep "daemon started once" semantics, we instead sleep-spinning is bad,
-			// so we return here and rely on Connect() to re-launch.
 			return
 		}
 		n.state = ConnStateOpening
