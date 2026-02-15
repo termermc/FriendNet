@@ -9,22 +9,36 @@ import (
 	pb "friendnet.org/protocol/pb/v1"
 )
 
+// ErrShareClosed is returned by Share methods when the share is closed.
+var ErrShareClosed = errors.New("share closed")
+
 // Share is a shared filesystem.
 // A share only has the concepts of files and directories.
 // It has no way of representing symlinks or pipes.
 // It is up to the implementation on how to represent or ignore these concepts.
+//
+// The Close method may be no-op for some implementations.
 type Share interface {
+	io.Closer
+
+	// Name returns the name of the share.
+	Name() string
+
 	// GetFileMeta returns the metadata for a path.
 	// The path may be a file or a directory.
 	//
 	// Returns fs.ErrNotExist if the path does not exist.
 	// Returns fs.ErrPermission if access is denied.
+	//
+	// May return ErrShareClosed if the share is closed, depending on the implementation.
 	GetFileMeta(path string) (*pb.MsgFileMeta, error)
 
 	// DirFiles returns metadata for all files in the directory at the specified path.
 	//
 	// Returns fs.ErrNotExist if the path does not exist.
 	// Returns fs.ErrPermission if access is denied.
+	//
+	// May return ErrShareClosed if the share is closed, depending on the implementation.
 	DirFiles(path string) ([]*pb.MsgFileMeta, error)
 
 	// GetFile returns the metadata for a path and a stream of its binary content (if not a directory).
@@ -38,19 +52,33 @@ type Share interface {
 	//
 	// Returns fs.ErrNotExist if the path does not exist.
 	// Returns fs.ErrPermission if access is denied.
+	//
+	// May return ErrShareClosed if the share is closed, depending on the implementation.
 	GetFile(path string, offset uint64, limit uint64) (*pb.MsgFileMeta, io.ReadCloser, error)
 }
 
 // FsShare is an implementation of Share backed by an fs.FS instance.
 type FsShare struct {
+	name string
 	fsys fs.FS
 }
 
+var _ Share = (*FsShare)(nil)
+
+// Close is no-op because FsShare is stateless.
+func (s *FsShare) Close() error {
+	return nil
+}
+
 // NewFsShare creates a new FsShare backed by the specified fs.FS instance.
-func NewFsShare(fsys fs.FS) *FsShare {
+func NewFsShare(name string, fsys fs.FS) *FsShare {
 	return &FsShare{
 		fsys: fsys,
 	}
+}
+
+func (s *FsShare) Name() string {
+	return s.name
 }
 
 func (s *FsShare) GetFileMeta(path string) (*pb.MsgFileMeta, error) {
