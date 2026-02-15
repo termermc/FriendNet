@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="go build friendnet.org/server/cmd/server" type="GoApplicationRunConfiguration" factoryName="Go Application">
+  <configuration default="false" name="Server" type="GoApplicationRunConfiguration" factoryName="Go Application">
     <module name="FriendNet" />
     <working_directory value="$PROJECT_DIR$/server" />
     <kind value="PACKAGE" />
