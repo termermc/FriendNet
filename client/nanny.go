@@ -26,13 +26,12 @@ const (
 type ConnNanny struct {
 	logger *slog.Logger
 
+	ctx       context.Context
+	ctxCancel context.CancelFunc
+
 	// openCh is closed when the connection is currently open.
 	// It is replaced with a new channel each time we transition away from open.
 	openCh chan struct{}
-
-	// closedCh is closed exactly once when the nanny is closed.
-	// It is never replaced.
-	closedCh chan struct{}
 
 	mu       sync.RWMutex
 	isClosed bool
@@ -55,15 +54,19 @@ func NewConnNanny(
 	address string,
 	creds room.Credentials,
 ) *ConnNanny {
+	ctx, ctxCancel := context.WithCancel(context.Background())
+
 	n := &ConnNanny{
 		logger: logger,
+
+		ctx:       ctx,
+		ctxCancel: ctxCancel,
 
 		certStore: certStore,
 		address:   address,
 		creds:     creds,
 
-		openCh:   make(chan struct{}),
-		closedCh: make(chan struct{}),
+		openCh: make(chan struct{}),
 
 		shouldReconnect: true,
 		state:           ConnStateClosed,
@@ -88,7 +91,6 @@ func (n *ConnNanny) WaitOpen(ctx context.Context) (*room.Conn, error) {
 
 		// Conn was not open yet, snapshot what we need to wait for it.
 		openCh := n.openCh
-		closedCh := n.closedCh
 		isClosed := n.isClosed
 		n.mu.RUnlock()
 
@@ -99,7 +101,7 @@ func (n *ConnNanny) WaitOpen(ctx context.Context) (*room.Conn, error) {
 		select {
 		case <-ctx.Done():
 			return nil, ctx.Err()
-		case <-closedCh:
+		case <-n.ctx.Done():
 			return nil, ErrConnNannyClosed
 		case <-openCh:
 			// openCh closed => transitioned to open; loop to grab conn snapshot.
@@ -259,12 +261,7 @@ func (n *ConnNanny) Close() error {
 	oldConn := n.connOrNil
 	n.connOrNil = nil
 
-	// Wake any waiters.
-	select {
-	case <-n.closedCh:
-	default:
-		close(n.closedCh)
-	}
+	n.ctxCancel()
 
 	n.mu.Unlock()
 
