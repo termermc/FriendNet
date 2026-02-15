@@ -76,6 +76,7 @@ const (
 	// [C2C] Request to get a file's metadata and contents.
 	// Expected: Either:
 	//   - Message MSG_TYPE_FILE_META then the file's requested binary content until the stream is closed by receiver.
+	//     If the file is a directory, the size will be zero and no content will be sent.
 	//   - Message MSG_TYPE_ERROR of ERR_TYPE_FILE_NOT_EXIST.
 	MsgType_MSG_TYPE_GET_FILE MsgType = 17
 	// [C2S] Request to get a list of online users in the room.
