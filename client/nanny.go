@@ -8,6 +8,7 @@ import (
 
 	"friendnet.org/client/cert"
 	"friendnet.org/client/room"
+	"friendnet.org/common"
 )
 
 var ErrConnNannyClosed = errors.New("conn nanny closed")
@@ -75,6 +76,16 @@ func NewConnNanny(
 	go n.daemon()
 
 	return n
+}
+
+// Room returns the name of the room the connection is for.
+func (n *ConnNanny) Room() common.NormalizedRoomName {
+	return n.creds.Room
+}
+
+// Username returns the username used to connect to the room.
+func (n *ConnNanny) Username() common.NormalizedUsername {
+	return n.creds.Username
 }
 
 // WaitOpen blocks until the underlying connection is open, ctx is done, or the nanny is closed.
