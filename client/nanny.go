@@ -147,7 +147,7 @@ func (n *ConnNanny) State() ConnState {
 // No-op if the ConnNanny is closed.
 func (n *ConnNanny) Connect() {
 	n.mu.Lock()
-	defer n.mu.Lock()
+	defer n.mu.Unlock()
 	if n.isClosed {
 		return
 	}
