@@ -12,8 +12,10 @@ import (
 	pb "friendnet.org/protocol/pb/v1"
 )
 
+const shareName = "testshare"
+
 func TestFsShare_GetFileMeta_File(t *testing.T) {
-	s := NewFsShare(fstest.MapFS{
+	s := NewFsShare(shareName, fstest.MapFS{
 		"dir/hello.txt": &fstest.MapFile{Data: []byte("hello")},
 	})
 
@@ -33,7 +35,7 @@ func TestFsShare_GetFileMeta_File(t *testing.T) {
 }
 
 func TestFsShare_GetFileMeta_Dir(t *testing.T) {
-	s := NewFsShare(fstest.MapFS{
+	s := NewFsShare(shareName, fstest.MapFS{
 		"dir/hello.txt": &fstest.MapFile{Data: []byte("hello")},
 	})
 
@@ -53,7 +55,7 @@ func TestFsShare_GetFileMeta_Dir(t *testing.T) {
 }
 
 func TestFsShare_GetFileMeta_NotExist(t *testing.T) {
-	s := NewFsShare(fstest.MapFS{})
+	s := NewFsShare(shareName, fstest.MapFS{})
 
 	_, err := s.GetFileMeta("nope.txt")
 	if err == nil {
@@ -65,7 +67,7 @@ func TestFsShare_GetFileMeta_NotExist(t *testing.T) {
 }
 
 func TestFsShare_DirFiles_Basic(t *testing.T) {
-	s := NewFsShare(fstest.MapFS{
+	s := NewFsShare(shareName, fstest.MapFS{
 		"dir/a.txt": &fstest.MapFile{Data: []byte("a")},
 		"dir/b.bin": &fstest.MapFile{Data: []byte{1, 2, 3, 4}},
 		"dir/sub/c": &fstest.MapFile{Data: []byte("c")},
@@ -93,7 +95,7 @@ func TestFsShare_DirFiles_Basic(t *testing.T) {
 }
 
 func TestFsShare_DirFiles_NotExist(t *testing.T) {
-	s := NewFsShare(fstest.MapFS{
+	s := NewFsShare(shareName, fstest.MapFS{
 		"dir/a.txt": &fstest.MapFile{Data: []byte("a")},
 	})
 
@@ -107,7 +109,7 @@ func TestFsShare_DirFiles_NotExist(t *testing.T) {
 }
 
 func TestFsShare_GetFile_DirReturnsEmptyStream(t *testing.T) {
-	s := NewFsShare(fstest.MapFS{
+	s := NewFsShare(shareName, fstest.MapFS{
 		"dir/a.txt": &fstest.MapFile{Data: []byte("a")},
 	})
 
@@ -137,7 +139,7 @@ func TestFsShare_GetFile_DirReturnsEmptyStream(t *testing.T) {
 }
 
 func TestFsShare_GetFile_WholeFile(t *testing.T) {
-	s := NewFsShare(fstest.MapFS{
+	s := NewFsShare(shareName, fstest.MapFS{
 		"f.txt": &fstest.MapFile{Data: []byte("abcdef")},
 	})
 
@@ -168,7 +170,7 @@ func TestFsShare_GetFile_WholeFile(t *testing.T) {
 }
 
 func TestFsShare_GetFile_Offset(t *testing.T) {
-	s := NewFsShare(fstest.MapFS{
+	s := NewFsShare(shareName, fstest.MapFS{
 		"f.txt": &fstest.MapFile{Data: []byte("abcdef")},
 	})
 
@@ -190,7 +192,7 @@ func TestFsShare_GetFile_Offset(t *testing.T) {
 }
 
 func TestFsShare_GetFile_Limit(t *testing.T) {
-	s := NewFsShare(fstest.MapFS{
+	s := NewFsShare(shareName, fstest.MapFS{
 		"f.txt": &fstest.MapFile{Data: []byte("abcdef")},
 	})
 
@@ -212,7 +214,7 @@ func TestFsShare_GetFile_Limit(t *testing.T) {
 }
 
 func TestFsShare_GetFile_OffsetAndLimit(t *testing.T) {
-	s := NewFsShare(fstest.MapFS{
+	s := NewFsShare(shareName, fstest.MapFS{
 		"f.txt": &fstest.MapFile{Data: []byte("abcdef")},
 	})
 
@@ -234,7 +236,7 @@ func TestFsShare_GetFile_OffsetAndLimit(t *testing.T) {
 }
 
 func TestFsShare_GetFile_OffsetPastEOF(t *testing.T) {
-	s := NewFsShare(fstest.MapFS{
+	s := NewFsShare(shareName, fstest.MapFS{
 		"f.txt": &fstest.MapFile{Data: []byte("abc")},
 	})
 
@@ -256,7 +258,7 @@ func TestFsShare_GetFile_OffsetPastEOF(t *testing.T) {
 }
 
 func TestFsShare_GetFile_NotExist(t *testing.T) {
-	s := NewFsShare(fstest.MapFS{})
+	s := NewFsShare(shareName, fstest.MapFS{})
 
 	_, _, err := s.GetFile("nope", 0, 0)
 	if err == nil {
@@ -290,7 +292,7 @@ func TestFsShare_GetFile_OffsetNonSeekable(t *testing.T) {
 	base := fstest.MapFS{
 		"f.txt": &fstest.MapFile{Data: []byte("abcdef")},
 	}
-	s := NewFsShare(nonSeekFS{fsys: base})
+	s := NewFsShare(shareName, nonSeekFS{fsys: base})
 
 	_, rc, err := s.GetFile("f.txt", 2, 0)
 	if err != nil {
@@ -311,7 +313,7 @@ func TestFsShare_GetFile_OffsetNonSeekable(t *testing.T) {
 
 // Optional: if you want to assert DirFiles names are base names only.
 func TestFsShare_DirFiles_NamesAreBase(t *testing.T) {
-	s := NewFsShare(fstest.MapFS{
+	s := NewFsShare(shareName, fstest.MapFS{
 		"dir/sub/file.txt": &fstest.MapFile{Data: []byte("x")},
 	})
 

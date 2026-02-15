@@ -73,6 +73,7 @@ func (s *FsShare) Close() error {
 // NewFsShare creates a new FsShare backed by the specified fs.FS instance.
 func NewFsShare(name string, fsys fs.FS) *FsShare {
 	return &FsShare{
+		name: name,
 		fsys: fsys,
 	}
 }
