@@ -156,8 +156,7 @@ func NewRoomConn(
 	}
 
 	go c.c2cLoop()
-
-	// TODO S2C read loop (also sending proxy bidis to chan)
+	go c.s2cLoop()
 
 	return c, nil
 }
