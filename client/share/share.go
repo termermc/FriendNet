@@ -1,8 +1,11 @@
 package share
 
 import (
+	"errors"
 	"io"
+	"io/fs"
 
+	"friendnet.org/common"
 	pb "friendnet.org/protocol/pb/v1"
 )
 
@@ -13,19 +16,149 @@ import (
 type Share interface {
 	// GetFileMeta returns the metadata for a path.
 	// The path may be a file or a directory.
+	//
 	// Returns fs.ErrNotExist if the path does not exist.
+	// Returns fs.ErrPermission if access is denied.
 	GetFileMeta(path string) (*pb.MsgFileMeta, error)
 
 	// DirFiles returns metadata for all files in the directory at the specified path.
+	//
 	// Returns fs.ErrNotExist if the path does not exist.
+	// Returns fs.ErrPermission if access is denied.
 	DirFiles(path string) ([]*pb.MsgFileMeta, error)
 
 	// GetFile returns the metadata for a path and a stream of its binary content (if not a directory).
-	// Important: If the file is a directory, the stream will be nil.
-	GetFile(path string) (*pb.MsgFileMeta, io.ReadCloser, error)
+	// Important: If the file is a directory, the stream will be empty and always return io.EOF.
+	//
+	// `offset` is the offset into the file to read, in bytes.
+	// Values above the file size will just result in no data being returned.
+	//
+	// `limit` is the limit of the file to read, in bytes.
+	// Specify 0 for no limit.
+	//
+	// Returns fs.ErrNotExist if the path does not exist.
+	// Returns fs.ErrPermission if access is denied.
+	GetFile(path string, offset uint64, limit uint64) (*pb.MsgFileMeta, io.ReadCloser, error)
 }
 
-// DirShare is an implementation of Share backed by a local directory.
-// TODO Use DirFS?
-type DirShare struct {
+// FsShare is an implementation of Share backed by an fs.FS instance.
+type FsShare struct {
+	fsys fs.FS
+}
+
+// NewFsShare creates a new FsShare backed by the specified fs.FS instance.
+func NewFsShare(fsys fs.FS) *FsShare {
+	return &FsShare{
+		fsys: fsys,
+	}
+}
+
+func (s *FsShare) GetFileMeta(path string) (*pb.MsgFileMeta, error) {
+	info, err := fs.Stat(s.fsys, path)
+	if err != nil {
+		// fs.Stat already returns errors compatible with fs.ErrNotExist and fs.ErrPermission.
+		return nil, err
+	}
+
+	return fileInfoToMeta(info), nil
+}
+
+func (s *FsShare) DirFiles(path string) ([]*pb.MsgFileMeta, error) {
+	entries, readDirErr := fs.ReadDir(s.fsys, path)
+	if readDirErr != nil {
+		return nil, readDirErr
+	}
+
+	out := make([]*pb.MsgFileMeta, 0, len(entries))
+	for _, entry := range entries {
+		info, err := entry.Info()
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, fileInfoToMeta(info))
+	}
+
+	return out, nil
+}
+
+func (s *FsShare) GetFile(
+	path string,
+	offset uint64,
+	limit uint64,
+) (*pb.MsgFileMeta, io.ReadCloser, error) {
+	info, err := fs.Stat(s.fsys, path)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	meta := fileInfoToMeta(info)
+
+	if meta.IsDir {
+		// Directory; nothing to read.
+		return meta, common.EofReadCloser{}, nil
+	}
+	if offset >= meta.Size {
+		// Offset >= file size; nothing to read.
+		return meta, common.EofReadCloser{}, nil
+	}
+
+	f, err := s.fsys.Open(path)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Close if we weren't able to open and seek.
+	openOk := false
+	defer func() {
+		if !openOk {
+			_ = f.Close()
+		}
+	}()
+
+	// We have two options:
+	//  - Seek if the underlying type is io.Seeker
+	//  - Fall back to emulating seeking by discarding offset (expensive)
+	var rc io.ReadCloser = f
+	if offset > 0 {
+		if seeker, ok := f.(io.Seeker); ok {
+			if _, err = seeker.Seek(int64(offset), io.SeekStart); err != nil {
+				return nil, nil, err
+			}
+		} else {
+			if _, err := io.CopyN(io.Discard, f, int64(offset)); err != nil {
+				// If offset is past EOF, CopyN returns io.EOF; treat as empty stream.
+				if !errors.Is(err, io.EOF) {
+					return nil, nil, err
+				}
+			}
+		}
+	}
+
+	openOk = true
+
+	if limit > 0 {
+		rc = common.NewLimitReadCloser(f, int64(limit))
+	}
+
+	return meta, rc, nil
+}
+
+func fileInfoToMeta(info fs.FileInfo) *pb.MsgFileMeta {
+	isDir := info.IsDir()
+
+	var size uint64
+	if !isDir {
+		// I don't even know how a file could have a negative size, but we'll just use 0 if it does.
+		if info.Size() > 0 {
+			size = uint64(info.Size())
+		} else {
+			size = 0
+		}
+	}
+
+	return &pb.MsgFileMeta{
+		Name:  info.Name(),
+		IsDir: isDir,
+		Size:  size,
+	}
 }

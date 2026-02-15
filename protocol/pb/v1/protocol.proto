@@ -136,6 +136,9 @@ enum ErrType {
 
     // Unimplemented functionality.
     ERR_TYPE_UNIMPLEMENTED = 9;
+
+    // Permission denied.
+    ERR_TYPE_PERMISSION_DENIED = 10;
 }
 
 // An error, usually sent by the server.

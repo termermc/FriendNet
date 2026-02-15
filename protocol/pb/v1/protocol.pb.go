@@ -185,21 +185,24 @@ const (
 	ErrType_ERR_TYPE_FILE_NOT_EXIST ErrType = 8
 	// Unimplemented functionality.
 	ErrType_ERR_TYPE_UNIMPLEMENTED ErrType = 9
+	// Permission denied.
+	ErrType_ERR_TYPE_PERMISSION_DENIED ErrType = 10
 )
 
 // Enum value maps for ErrType.
 var (
 	ErrType_name = map[int32]string{
-		0: "ERR_TYPE_UNSPECIFIED",
-		1: "ERR_TYPE_INTERNAL",
-		2: "ERR_TYPE_MALFORMED_MESSAGE",
-		3: "ERR_TYPE_PAYLOAD_TOO_LARGE",
-		4: "ERR_TYPE_MISSING_FIELDS",
-		5: "ERR_TYPE_INVALID_FIELDS",
-		6: "ERR_TYPE_UNEXPECTED_MSG_TYPE",
-		7: "ERR_TYPE_RATE_LIMITED",
-		8: "ERR_TYPE_FILE_NOT_EXIST",
-		9: "ERR_TYPE_UNIMPLEMENTED",
+		0:  "ERR_TYPE_UNSPECIFIED",
+		1:  "ERR_TYPE_INTERNAL",
+		2:  "ERR_TYPE_MALFORMED_MESSAGE",
+		3:  "ERR_TYPE_PAYLOAD_TOO_LARGE",
+		4:  "ERR_TYPE_MISSING_FIELDS",
+		5:  "ERR_TYPE_INVALID_FIELDS",
+		6:  "ERR_TYPE_UNEXPECTED_MSG_TYPE",
+		7:  "ERR_TYPE_RATE_LIMITED",
+		8:  "ERR_TYPE_FILE_NOT_EXIST",
+		9:  "ERR_TYPE_UNIMPLEMENTED",
+		10: "ERR_TYPE_PERMISSION_DENIED",
 	}
 	ErrType_value = map[string]int32{
 		"ERR_TYPE_UNSPECIFIED":         0,
@@ -212,6 +215,7 @@ var (
 		"ERR_TYPE_RATE_LIMITED":        7,
 		"ERR_TYPE_FILE_NOT_EXIST":      8,
 		"ERR_TYPE_UNIMPLEMENTED":       9,
+		"ERR_TYPE_PERMISSION_DENIED":   10,
 	}
 )
 
@@ -1498,7 +1502,7 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x12MSG_TYPE_FILE_META\x10\x10\x12\x15\n" +
 	"\x11MSG_TYPE_GET_FILE\x10\x11\x12\x1d\n" +
 	"\x19MSG_TYPE_GET_ONLINE_USERS\x10\x12\x12\x19\n" +
-	"\x15MSG_TYPE_ONLINE_USERS\x10\x13*\xaa\x02\n" +
+	"\x15MSG_TYPE_ONLINE_USERS\x10\x13*\xca\x02\n" +
 	"\aErrType\x12\x18\n" +
 	"\x14ERR_TYPE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11ERR_TYPE_INTERNAL\x10\x01\x12\x1e\n" +
@@ -1509,7 +1513,9 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x1cERR_TYPE_UNEXPECTED_MSG_TYPE\x10\x06\x12\x19\n" +
 	"\x15ERR_TYPE_RATE_LIMITED\x10\a\x12\x1b\n" +
 	"\x17ERR_TYPE_FILE_NOT_EXIST\x10\b\x12\x1a\n" +
-	"\x16ERR_TYPE_UNIMPLEMENTED\x10\t*\x8e\x01\n" +
+	"\x16ERR_TYPE_UNIMPLEMENTED\x10\t\x12\x1e\n" +
+	"\x1aERR_TYPE_PERMISSION_DENIED\x10\n" +
+	"*\x8e\x01\n" +
 	"\x16VersionRejectionReason\x12(\n" +
 	"$VERSION_REJECTION_REASON_UNSPECIFIED\x10\x00\x12$\n" +
 	" VERSION_REJECTION_REASON_TOO_OLD\x10\x02\x12$\n" +
