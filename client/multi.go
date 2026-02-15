@@ -9,7 +9,6 @@ import (
 	"friendnet.org/client/cert"
 	"friendnet.org/client/room"
 	"friendnet.org/client/storage"
-	"friendnet.org/common"
 )
 
 // ErrMultiClientClosed is returned by MultiClient methods when the MultiClient is closed.
@@ -40,10 +39,6 @@ type MultiClient struct {
 
 	// Mapping of server UUIDs to the ConnNanny instances that manage connections to them.
 	servers map[string]ServerConnNanny
-}
-
-func mkRoomIdent(serverUuid string, name common.NormalizedRoomName) string {
-	return serverUuid + "/" + name.String()
 }
 
 // NewMultiClient creates a new MultiClient instance.
