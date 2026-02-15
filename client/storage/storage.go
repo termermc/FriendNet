@@ -207,12 +207,12 @@ func (s *Storage) GetSharesByServer(ctx context.Context, serverUuid string) ([]S
 // If the share does not exist, this is a no-op.
 func (s *Storage) DeleteShareByServerAndName(
 	ctx context.Context,
-	room common.NormalizedRoomName,
-	username common.NormalizedUsername,
+	serverUuid string,
+	name string,
 ) error {
 	_, err := s.db.ExecContext(ctx, `delete from share where server = ? and name = ?`,
-		room.String(),
-		username.String(),
+		serverUuid,
+		name,
 	)
 	return err
 }
