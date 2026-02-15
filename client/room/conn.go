@@ -33,6 +33,10 @@ const incomingBidiChanSize = 64
 // Conn represents a room connection.
 // The room connection contains a connection to a central server, as well as potentially direct connections with peers in the room.
 // A Conn is always in an authenticated and usable state until it is closed, either by calling RoomConn.Close, or the connection being interrupted.
+//
+// Important: Does not close the Logic passed to it.
+// The lifecycle of its Logic must be managed at a higher level.
+// The reason for this is avoiding reinstantiating Logic on reconnects.
 type Conn struct {
 	mu       sync.RWMutex
 	isClosed bool

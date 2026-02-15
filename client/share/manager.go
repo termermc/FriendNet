@@ -31,9 +31,9 @@ type ServerShareManager struct {
 	shareMap map[string]Share
 }
 
-// NewManager creates a new share manager for the given server.
+// NewServerShareManager creates a new share manager for the given server.
 // It gets share records for the server and instantiates Share instances for them.
-func NewManager(serverUuid string, storage storage.Storage) (*ServerShareManager, error) {
+func NewServerShareManager(serverUuid string, storage storage.Storage) (*ServerShareManager, error) {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
 	// Get shares for server.

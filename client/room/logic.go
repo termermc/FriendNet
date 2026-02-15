@@ -2,6 +2,7 @@ package room
 
 import (
 	"context"
+	"io"
 
 	"friendnet.org/client/share"
 	"friendnet.org/protocol"
@@ -14,6 +15,8 @@ import (
 // Handlers must not hold references to the bidi or connection outside the handler.
 // Handlers do not need to close bidis; they are closed by the caller after the handler returns.
 type Logic interface {
+	io.Closer
+
 	// OnPing handles an incoming ping request.
 	//
 	// S2C, C2C
@@ -27,10 +30,14 @@ type LogicImpl struct {
 
 var _ Logic = (*LogicImpl)(nil)
 
-func NewLogic(shares *share.ServerShareManager) *LogicImpl {
+func NewLogicImpl(shares *share.ServerShareManager) *LogicImpl {
 	return &LogicImpl{
 		shares: shares,
 	}
+}
+
+func (l *LogicImpl) Close() error {
+	return l.shares.Close()
 }
 
 func (l *LogicImpl) OnPing(_ context.Context, _ *Conn, bidi protocol.ProtoBidi, _ *protocol.TypedProtoMsg[*pb.MsgPing]) error {

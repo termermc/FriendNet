@@ -8,14 +8,15 @@ import (
 
 	"friendnet.org/client/cert"
 	"friendnet.org/client/room"
+	"friendnet.org/client/share"
 	"friendnet.org/client/storage"
 )
 
 // ErrMultiClientClosed is returned by MultiClient methods when the MultiClient is closed.
 var ErrMultiClientClosed = errors.New("multi client is closed")
 
-// ServerConnNanny includes a ConnNanny and the server UUID it is for.
-type ServerConnNanny struct {
+// Server includes state for managing a server connection.
+type Server struct {
 	// The server UUID.
 	// Do not update.
 	Uuid string
@@ -37,8 +38,8 @@ type MultiClient struct {
 	storage   storage.Storage
 	certStore cert.Store
 
-	// Mapping of server UUIDs to the ConnNanny instances that manage connections to them.
-	servers map[string]ServerConnNanny
+	// Mapping of server UUIDs to the Server instances that manage connections to them.
+	servers map[string]Server
 }
 
 // NewMultiClient creates a new MultiClient instance.
@@ -50,15 +51,27 @@ func NewMultiClient(
 ) (*MultiClient, error) {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
-	records, err := storage.GetServers(ctx)
+	serverRecs, err := storage.GetServers(ctx)
 	if err != nil {
 		ctxCancel()
 		return nil, err
 	}
 
-	servers := make(map[string]ServerConnNanny, len(records))
-	for _, record := range records {
-		servers[record.Uuid] = ServerConnNanny{
+	servers := make(map[string]Server, len(serverRecs))
+	for _, record := range serverRecs {
+		var shareMgr *share.ServerShareManager
+		shareMgr, err = share.NewServerShareManager(
+			record.Uuid,
+			storage,
+		)
+		if err != nil {
+			ctxCancel()
+			return nil, err
+		}
+
+		logic := room.NewLogicImpl(shareMgr)
+
+		servers[record.Uuid] = Server{
 			Uuid: record.Uuid,
 			ConnNanny: NewConnNanny(
 				logger,
@@ -69,6 +82,7 @@ func NewMultiClient(
 					Username: record.Username,
 					Password: record.Password,
 				},
+				logic,
 			),
 		}
 	}
@@ -83,8 +97,8 @@ func NewMultiClient(
 	}, nil
 }
 
-func (c *MultiClient) snapshotServers() []ServerConnNanny {
-	slice := make([]ServerConnNanny, 0, len(c.servers))
+func (c *MultiClient) snapshotServers() []Server {
+	slice := make([]Server, 0, len(c.servers))
 	for _, server := range c.servers {
 		slice = append(slice, server)
 	}
@@ -118,7 +132,7 @@ func (c *MultiClient) Close() error {
 // GetAll returns all server connections under management.
 // Returns an empty slice if the MultiClient is closed.
 // Note that this method creates a new slice each time it is called.
-func (c *MultiClient) GetAll() []ServerConnNanny {
+func (c *MultiClient) GetAll() []Server {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	if c.isClosed {
@@ -131,11 +145,11 @@ func (c *MultiClient) GetAll() []ServerConnNanny {
 // GetByUuid returns the server connection for the server with the specified UUID and true if found,
 // otherwise empty and false.
 // Returns empty and false if the MultiClient is closed.
-func (c *MultiClient) GetByUuid(uuid string) (ServerConnNanny, bool) {
+func (c *MultiClient) GetByUuid(uuid string) (Server, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	if c.isClosed {
-		return ServerConnNanny{}, false
+		return Server{}, false
 	}
 
 	server, has := c.servers[uuid]

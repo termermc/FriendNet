@@ -24,6 +24,7 @@ const (
 )
 
 // ConnNanny watches over a connection and manages reconnections, reporting state, etc.
+// It also owns the Logic passed into it, closing it when Close is called.
 type ConnNanny struct {
 	logger *slog.Logger
 
@@ -40,6 +41,7 @@ type ConnNanny struct {
 	certStore cert.Store
 	address   string
 	creds     room.Credentials
+	logic     room.Logic
 
 	shouldReconnect bool
 	connOrNil       *room.Conn
@@ -54,6 +56,7 @@ func NewConnNanny(
 	certStore cert.Store,
 	address string,
 	creds room.Credentials,
+	logic room.Logic,
 ) *ConnNanny {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
@@ -66,6 +69,7 @@ func NewConnNanny(
 		certStore: certStore,
 		address:   address,
 		creds:     creds,
+		logic:     logic,
 
 		openCh: make(chan struct{}),
 
@@ -198,7 +202,7 @@ func (n *ConnNanny) daemon() {
 		// Connect outside lock; may block.
 		conn, err := room.NewRoomConn(
 			n.logger,
-			room.MessageHandlersImpl,
+			n.logic,
 			n.certStore,
 			n.address,
 			n.creds,
@@ -279,6 +283,8 @@ func (n *ConnNanny) Close() error {
 	if oldConn != nil {
 		_ = oldConn.Close()
 	}
+
+	_ = n.logic.Close()
 
 	return nil
 }
