@@ -373,7 +373,10 @@ func validateArgCount(args []string, min int, max int, usage string) error {
 // It returns when the client presses CTRL+D.
 func (c *Cli) Run() {
 	println("Welcome to the FriendNet server RPC CLI.\nType \"help\" for a list of commands.")
-	rl, newErr := readline.New("> ")
+	rl, newErr := readline.NewEx(&readline.Config{
+		Prompt:       "> ",
+		AutoComplete: c.completer(),
+	})
 	if newErr != nil {
 		panic(newErr)
 	}
@@ -392,4 +395,23 @@ func (c *Cli) Run() {
 			_, _ = fmt.Fprintln(os.Stderr, doErr.Error()+"\n")
 		}
 	}
+}
+
+func (c *Cli) completer() readline.AutoCompleter {
+	items := make([]readline.PrefixCompleterInterface, 0, len(c.commands))
+	helpChildren := make([]readline.PrefixCompleterInterface, 0, len(c.commands))
+	for _, cmd := range c.commands {
+		if cmd.Name == "help" {
+			continue
+		}
+		helpChildren = append(helpChildren, readline.PcItem(cmd.Name))
+	}
+	items = append(items, readline.PcItem("help", helpChildren...))
+	for _, cmd := range c.commands {
+		if cmd.Name == "help" {
+			continue
+		}
+		items = append(items, readline.PcItem(cmd.Name))
+	}
+	return readline.NewPrefixCompleter(items...)
 }
