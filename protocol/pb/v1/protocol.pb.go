@@ -1523,8 +1523,8 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x13AuthRejectionReason\x12%\n" +
 	"!AUTH_REJECTION_REASON_UNSPECIFIED\x10\x00\x12-\n" +
 	")AUTH_REJECTION_REASON_INVALID_CREDENTIALS\x10\x02\x12 \n" +
-	"\x1cAUTH_REJECTION_REASON_BANNED\x10\x03Bu\n" +
-	"\tcom.pb.v1B\rProtocolProtoP\x01Z$friendnet.org/protocol/v1/pb/v1;pbv1\xa2\x02\x03PXX\xaa\x02\x05Pb.V1\xca\x02\x05Pb\\V1\xe2\x02\x11Pb\\V1\\GPBMetadata\xea\x02\x06Pb::V1b\x06proto3"
+	"\x1cAUTH_REJECTION_REASON_BANNED\x10\x03Br\n" +
+	"\tcom.pb.v1B\rProtocolProtoP\x01Z!friendnet.org/protocol/pb/v1;pbv1\xa2\x02\x03PXX\xaa\x02\x05Pb.V1\xca\x02\x05Pb\\V1\xe2\x02\x11Pb\\V1\\GPBMetadata\xea\x02\x06Pb::V1b\x06proto3"
 
 var (
 	file_pb_v1_protocol_proto_rawDescOnce sync.Once

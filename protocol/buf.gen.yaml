@@ -4,9 +4,14 @@ plugins:
     - local: protoc-gen-go
       out: .
       opt: paths=source_relative
+    - local: protoc-gen-connect-go
+      out: .
+      opt:
+          - paths=source_relative
+          - simple
 
 managed:
     enabled: true
     override:
         - file_option: go_package_prefix
-          value: friendnet.org/protocol/v1
+          value: friendnet.org/protocol

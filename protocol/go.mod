@@ -3,6 +3,7 @@ module friendnet.org/protocol
 go 1.25.6
 
 require (
+	connectrpc.com/connect v1.19.1
 	github.com/quic-go/quic-go v0.59.0
 	google.golang.org/protobuf v1.36.11
 )

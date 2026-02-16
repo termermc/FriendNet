@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"friendnet.org/client/storage/migration"
 	"friendnet.org/common"
-	"friendnet.org/server/storage/migration"
 	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
 )

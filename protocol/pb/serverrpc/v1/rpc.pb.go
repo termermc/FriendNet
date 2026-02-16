@@ -998,8 +998,8 @@ const file_pb_serverrpc_v1_rpc_proto_rawDesc = "" +
 	"DeleteRoom\x12\".pb.serverrpc.v1.DeleteRoomRequest\x1a#.pb.serverrpc.v1.DeleteRoomResponse\"\x00\x12`\n" +
 	"\rCreateAccount\x12%.pb.serverrpc.v1.CreateAccountRequest\x1a&.pb.serverrpc.v1.CreateAccountResponse\"\x00\x12`\n" +
 	"\rDeleteAccount\x12%.pb.serverrpc.v1.DeleteAccountRequest\x1a&.pb.serverrpc.v1.DeleteAccountResponse\"\x00\x12x\n" +
-	"\x15UpdateAccountPassword\x12-.pb.serverrpc.v1.UpdateAccountPasswordRequest\x1a..pb.serverrpc.v1.UpdateAccountPasswordResponse\"\x00B\xb4\x01\n" +
-	"\x13com.pb.serverrpc.v1B\bRpcProtoP\x01Z5friendnet.org/protocol/v1/pb/serverrpc/v1;serverrpcv1\xa2\x02\x03PSX\xaa\x02\x0fPb.Serverrpc.V1\xca\x02\x0fPb\\Serverrpc\\V1\xe2\x02\x1bPb\\Serverrpc\\V1\\GPBMetadata\xea\x02\x11Pb::Serverrpc::V1b\x06proto3"
+	"\x15UpdateAccountPassword\x12-.pb.serverrpc.v1.UpdateAccountPasswordRequest\x1a..pb.serverrpc.v1.UpdateAccountPasswordResponse\"\x00B\xb1\x01\n" +
+	"\x13com.pb.serverrpc.v1B\bRpcProtoP\x01Z2friendnet.org/protocol/pb/serverrpc/v1;serverrpcv1\xa2\x02\x03PSX\xaa\x02\x0fPb.Serverrpc.V1\xca\x02\x0fPb\\Serverrpc\\V1\xe2\x02\x1bPb\\Serverrpc\\V1\\GPBMetadata\xea\x02\x11Pb::Serverrpc::V1b\x06proto3"
 
 var (
 	file_pb_serverrpc_v1_rpc_proto_rawDescOnce sync.Once

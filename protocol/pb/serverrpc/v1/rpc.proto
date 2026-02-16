@@ -113,8 +113,8 @@ message UpdateAccountPasswordResponse {
 // ServerRpcService provides an RPC interface to a running FriendNet server.
 // It can query state and perform administrative tasks.
 //
-// If a caller does not have permission to call an RPC method, the server will return
-// the PERMISSION_DENIED status code.
+// If authorization is required but not provided, returns status code UNAUTHENTICATED.
+// If authorization is invalid, returns PERMISSION_DENIED status code.
 service ServerRpcService {
     // GetRooms returns a list of all rooms in the server.
     rpc GetRooms(GetRoomsRequest) returns (GetRoomsResponse) {}
