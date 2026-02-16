@@ -13,6 +13,7 @@ import (
 	"friendnet.org/server/room"
 )
 
+var errMethodNotAllowed = connect.NewError(connect.CodePermissionDenied, errors.New("method not allowed"))
 var errRoomNotFound = connect.NewError(connect.CodeNotFound, errors.New("room not found"))
 var errUserNotOnline = connect.NewError(connect.CodeNotFound, errors.New("user not online"))
 var errAccountNotFound = connect.NewError(connect.CodeNotFound, errors.New("account not found"))
@@ -26,6 +27,13 @@ type rpcServerImpl struct {
 }
 
 var _ serverrpcv1connect.ServerRpcServiceHandler = (*rpcServerImpl)(nil)
+
+func (s *rpcServerImpl) guard(method string) error {
+	if !s.s.isMethodAllowed(method) {
+		return errMethodNotAllowed
+	}
+	return nil
+}
 
 func (s *rpcServerImpl) roomToInfo(r *room.Room) *v1.RoomInfo {
 	if r == nil {
@@ -78,6 +86,10 @@ func (s *rpcServerImpl) getOrGenPass(pass string) (string, bool) {
 }
 
 func (s *rpcServerImpl) GetRooms(context.Context, *v1.GetRoomsRequest) (*v1.GetRoomsResponse, error) {
+	if err := s.guard("GetRooms"); err != nil {
+		return nil, err
+	}
+
 	rooms := s.s.server.RoomManager.GetAll()
 	infos := make([]*v1.RoomInfo, len(rooms))
 	for i, r := range rooms {
@@ -89,6 +101,10 @@ func (s *rpcServerImpl) GetRooms(context.Context, *v1.GetRoomsRequest) (*v1.GetR
 	}, nil
 }
 func (s *rpcServerImpl) GetRoomInfo(_ context.Context, req *v1.GetRoomInfoRequest) (*v1.GetRoomInfoResponse, error) {
+	if err := s.guard("GetRoomInfo"); err != nil {
+		return nil, err
+	}
+
 	r, err := s.getRoom(req.Name)
 	if err != nil {
 		return nil, err
@@ -99,6 +115,10 @@ func (s *rpcServerImpl) GetRoomInfo(_ context.Context, req *v1.GetRoomInfoReques
 	}, nil
 }
 func (s *rpcServerImpl) GetOnlineUsers(_ context.Context, req *v1.GetOnlineUsersRequest, stream *connect.ServerStream[v1.GetOnlineUsersResponse]) error {
+	if err := s.guard("GetOnlineUsers"); err != nil {
+		return err
+	}
+
 	r, err := s.getRoom(req.Room)
 	if err != nil {
 		return err
@@ -134,6 +154,10 @@ func (s *rpcServerImpl) GetOnlineUsers(_ context.Context, req *v1.GetOnlineUsers
 	return nil
 }
 func (s *rpcServerImpl) GetOnlineUserInfo(_ context.Context, req *v1.GetOnlineUserInfoRequest) (*v1.GetOnlineUserInfoResponse, error) {
+	if err := s.guard("GetOnlineUserInfo"); err != nil {
+		return nil, err
+	}
+
 	r, err := s.getRoom(req.Room)
 	if err != nil {
 		return nil, err
@@ -149,6 +173,10 @@ func (s *rpcServerImpl) GetOnlineUserInfo(_ context.Context, req *v1.GetOnlineUs
 	}, nil
 }
 func (s *rpcServerImpl) CreateRoom(ctx context.Context, req *v1.CreateRoomRequest) (*v1.CreateRoomResponse, error) {
+	if err := s.guard("CreateRoom"); err != nil {
+		return nil, err
+	}
+
 	name, ok := common.NormalizeRoomName(req.Name)
 	if !ok {
 		return nil, errInvalidRoomName
@@ -168,6 +196,10 @@ func (s *rpcServerImpl) CreateRoom(ctx context.Context, req *v1.CreateRoomReques
 	}, nil
 }
 func (s *rpcServerImpl) DeleteRoom(ctx context.Context, req *v1.DeleteRoomRequest) (*v1.DeleteRoomResponse, error) {
+	if err := s.guard("DeleteRoom"); err != nil {
+		return nil, err
+	}
+
 	r, err := s.getRoom(req.Name)
 	if err != nil {
 		return nil, err
@@ -181,6 +213,10 @@ func (s *rpcServerImpl) DeleteRoom(ctx context.Context, req *v1.DeleteRoomReques
 	return &v1.DeleteRoomResponse{}, nil
 }
 func (s *rpcServerImpl) CreateAccount(ctx context.Context, req *v1.CreateAccountRequest) (*v1.CreateAccountResponse, error) {
+	if err := s.guard("CreateAccount"); err != nil {
+		return nil, err
+	}
+
 	r, err := s.getRoom(req.Room)
 	if err != nil {
 		return nil, err
@@ -208,6 +244,10 @@ func (s *rpcServerImpl) CreateAccount(ctx context.Context, req *v1.CreateAccount
 	return res, nil
 }
 func (s *rpcServerImpl) DeleteAccount(ctx context.Context, req *v1.DeleteAccountRequest) (*v1.DeleteAccountResponse, error) {
+	if err := s.guard("DeleteAccount"); err != nil {
+		return nil, err
+	}
+
 	r, err := s.getRoom(req.Room)
 	if err != nil {
 		return nil, err
@@ -230,6 +270,10 @@ func (s *rpcServerImpl) DeleteAccount(ctx context.Context, req *v1.DeleteAccount
 	return nil, nil
 }
 func (s *rpcServerImpl) UpdateAccountPassword(ctx context.Context, req *v1.UpdateAccountPasswordRequest) (*v1.UpdateAccountPasswordResponse, error) {
+	if err := s.guard("UpdateAccountPassword"); err != nil {
+		return nil, err
+	}
+
 	r, err := s.getRoom(req.Room)
 	if err != nil {
 		return nil, err
