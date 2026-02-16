@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"friendnet.org/protocol"
@@ -60,16 +61,39 @@ func main() {
 		_ = srv.Close()
 	}()
 
+	// Create RPC servers.
+	rpcs := make([]*server.RpcServer, 0, len(cfg.Rpc.Interfaces))
+	for _, iface := range cfg.Rpc.Interfaces {
+		rpcSrv, err := server.NewRpcServer(logger, iface, srv)
+		if err != nil {
+			logger.Error(
+				"failed to create RPC server",
+				"address", iface.Address,
+				"err", err,
+			)
+			os.Exit(1)
+		}
+		rpcs = append(rpcs, rpcSrv)
+	}
+
 	// Close server on SIGTERM.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	go func() {
 		<-ctx.Done()
 		logger.Info("shutdown signal received, closing server")
+
+		var wg sync.WaitGroup
+		for _, rpc := range rpcs {
+			wg.Go(func() {
+				_ = rpc.Close()
+			})
+		}
+		wg.Wait()
 		_ = srv.Close()
 	}()
 
-	listenErrChan := make(chan error, len(cfg.Listen))
+	listenErrChan := make(chan error, len(cfg.Listen)+len(cfg.Rpc.Interfaces))
 
 	for _, listenAddr := range cfg.Listen {
 		go func() {
@@ -82,8 +106,24 @@ func main() {
 			}
 			listenErrChan <- listenErr
 		}()
-		logger.Info("listening",
+		logger.Info("server listening",
 			"addr", listenAddr,
+		)
+	}
+
+	for _, rpc := range rpcs {
+		go func() {
+			listenErr := rpc.Serve()
+			if listenErr != nil {
+				logger.Error("RPC server ended with error",
+					"addr", rpc.Addr,
+					"err", listenErr,
+				)
+			}
+			listenErrChan <- listenErr
+		}()
+		logger.Info("RPC listening",
+			"addr", rpc.Addr,
 		)
 	}
 

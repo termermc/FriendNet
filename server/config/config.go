@@ -52,7 +52,7 @@ type ServerRpcConfigInterface struct {
 // ServerRpcConfig is the configuration for the server's RPC service.
 type ServerRpcConfig struct {
 	// Interfaces is a list of RPC server interfaces and their settings.
-	Interfaces []ServerRpcConfigInterface `json:"listeners"`
+	Interfaces []ServerRpcConfigInterface `json:"interfaces"`
 }
 
 // ServerConfig is the server configuration.

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/netip"
@@ -38,13 +38,17 @@ func (e *InvalidRpcProtocolError) Error() string { return "invalid RPC protocol:
 // RpcServer implements an RPC server for a FriendNet server.
 // It is a single instance that runs on a single interface.
 type RpcServer struct {
-	logger *log.Logger
+	logger *slog.Logger
 
 	mu       sync.RWMutex
 	isClosed bool
 
 	ctx       context.Context
 	ctxCancel context.CancelFunc
+
+	// The RPC server's address.
+	// Do not update.
+	Addr string
 
 	server *Server
 
@@ -140,7 +144,11 @@ func (i rpcServerInterceptor) WrapStreamingHandler(fn connect.StreamingHandlerFu
 	}
 }
 
-func NewRpcServer(iface config.ServerRpcConfigInterface, server *Server) (*RpcServer, error) {
+func NewRpcServer(
+	logger *slog.Logger,
+	iface config.ServerRpcConfigInterface,
+	server *Server,
+) (*RpcServer, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	var isAllAllowed bool
@@ -157,9 +165,12 @@ func NewRpcServer(iface config.ServerRpcConfigInterface, server *Server) (*RpcSe
 	}
 
 	s := &RpcServer{
+		logger: logger,
+
 		ctx:       ctx,
 		ctxCancel: cancel,
 
+		Addr:   iface.Address,
 		server: server,
 
 		isAllMethodsAllowed: isAllAllowed,
@@ -170,88 +181,89 @@ func NewRpcServer(iface config.ServerRpcConfigInterface, server *Server) (*RpcSe
 	var listener net.Listener
 	protoIdx := strings.Index(iface.Address, "://")
 	if protoIdx == -1 {
-		proto := strings.ToLower(iface.Address[:protoIdx])
-		protoAddr := iface.Address[protoIdx+3:]
-		switch proto {
-		case "http":
-			// Create basic HTTP listener.
-			var err error
-			listener, err = net.Listen("tcp", protoAddr)
-			if err != nil {
-				return nil, fmt.Errorf(`failed to listen on TCP address %q: %w`, protoAddr, err)
-			}
-		case "unix":
-			// First, resolve absolute path.
-			unixPath, err := filepath.Abs(protoAddr)
-			if err != nil {
-				return nil, fmt.Errorf(`failed to resolve absolute path for UNIX socket path %q: %w`, protoAddr, err)
-			}
-
-			// If set, validate specified file permission.
-			var permOctal os.FileMode
-			if iface.FilePermission == "" {
-				permOctal = 0600
-			} else {
-				octal, permErr := common.ParseGoOctalLiteral(iface.FilePermission)
-				if permErr != nil {
-					return nil, fmt.Errorf(`invalid file permission %q for UNIX socket path %q: %w`, iface.FilePermission, unixPath, permErr)
-				}
-
-				permOctal = os.FileMode(octal)
-			}
-
-			// Check if the containing directory exists.
-			unixDir := filepath.Dir(unixPath)
-			{
-				info, statErr := os.Stat(unixDir)
-				if statErr != nil {
-					if os.IsNotExist(statErr) {
-						return nil, fmt.Errorf(`containing directory %q for UNIX path %q does not exist (server will not create it manually)`, unixDir, unixPath)
-					}
-
-					return nil, fmt.Errorf(`failed to stat containing directory %q for UNIX path %q: %w`, unixDir, unixPath, statErr)
-				}
-
-				if !info.IsDir() {
-					return nil, fmt.Errorf(`containing directory %q for UNIX path %q exists, but is not a directory`, unixDir, unixPath)
-				}
-			}
-
-			// Stat path to figure out what's there, if anything.
-			{
-				info, statErr := os.Lstat(unixPath)
-				if statErr != nil {
-					if !os.IsNotExist(statErr) {
-						return nil, fmt.Errorf(`failed to stat UNIX socket path %q: %w`, unixPath, statErr)
-					}
-				} else if info.Mode().IsDir() {
-					return nil, fmt.Errorf(`UNIX socket path %q points to a directory`, unixPath)
-				} else if info.Mode()&os.ModeSocket == 0 {
-					return nil, fmt.Errorf(`there is already a file at UNIX socket path %q, but it is not a UNIX socket`, unixPath)
-				} else {
-					// Socket already exists at path; delete it.
-					delErr := os.Remove(unixPath)
-					if delErr != nil {
-						return nil, fmt.Errorf(`failed to delete existing UNIX socket at path %q: %w`, unixPath, delErr)
-					}
-				}
-			}
-
-			// Socket path is validated and any old socket there was removed.
-
-			listener, err = net.Listen("unix", unixPath)
-			if err != nil {
-				return nil, fmt.Errorf(`failed to listen on UNIX socket path %q: %w`, unixPath, err)
-			}
-			err = os.Chmod(unixPath, permOctal)
-			if err != nil {
-				_ = listener.Close()
-				return nil, fmt.Errorf(`failed to set file permission %q for UNIX socket path %q: %w`, iface.FilePermission, unixPath, err)
-			}
-
-		default:
-			return nil, fmt.Errorf(`unsupported protocol %q in server RPC address %q`, proto, iface.Address)
+		return nil, fmt.Errorf(`RPC server address %q is missing a protocol (should be something like "http://127.0.0.1:8080" or "unix:///tmp/server.sock")`, iface.Address)
+	}
+	proto := strings.ToLower(iface.Address[:protoIdx])
+	protoAddr := iface.Address[protoIdx+3:]
+	switch proto {
+	case "http":
+		// Create basic HTTP listener.
+		var err error
+		listener, err = net.Listen("tcp", protoAddr)
+		if err != nil {
+			return nil, fmt.Errorf(`failed to listen on TCP address %q: %w`, protoAddr, err)
 		}
+	case "unix":
+		// First, resolve absolute path.
+		unixPath, err := filepath.Abs(protoAddr)
+		if err != nil {
+			return nil, fmt.Errorf(`failed to resolve absolute path for UNIX socket path %q: %w`, protoAddr, err)
+		}
+
+		// If set, validate specified file permission.
+		var permOctal os.FileMode
+		if iface.FilePermission == "" {
+			permOctal = 0600
+		} else {
+			octal, permErr := common.ParseGoOctalLiteral(iface.FilePermission)
+			if permErr != nil {
+				return nil, fmt.Errorf(`invalid file permission %q for UNIX socket path %q: %w`, iface.FilePermission, unixPath, permErr)
+			}
+
+			permOctal = os.FileMode(octal)
+		}
+
+		// Check if the containing directory exists.
+		unixDir := filepath.Dir(unixPath)
+		{
+			info, statErr := os.Stat(unixDir)
+			if statErr != nil {
+				if os.IsNotExist(statErr) {
+					return nil, fmt.Errorf(`containing directory %q for UNIX path %q does not exist (server will not create it manually)`, unixDir, unixPath)
+				}
+
+				return nil, fmt.Errorf(`failed to stat containing directory %q for UNIX path %q: %w`, unixDir, unixPath, statErr)
+			}
+
+			if !info.IsDir() {
+				return nil, fmt.Errorf(`containing directory %q for UNIX path %q exists, but is not a directory`, unixDir, unixPath)
+			}
+		}
+
+		// Stat path to figure out what's there, if anything.
+		{
+			info, statErr := os.Lstat(unixPath)
+			if statErr != nil {
+				if !os.IsNotExist(statErr) {
+					return nil, fmt.Errorf(`failed to stat UNIX socket path %q: %w`, unixPath, statErr)
+				}
+			} else if info.Mode().IsDir() {
+				return nil, fmt.Errorf(`UNIX socket path %q points to a directory`, unixPath)
+			} else if info.Mode()&os.ModeSocket == 0 {
+				return nil, fmt.Errorf(`there is already a file at UNIX socket path %q, but it is not a UNIX socket`, unixPath)
+			} else {
+				// Socket already exists at path; delete it.
+				delErr := os.Remove(unixPath)
+				if delErr != nil {
+					return nil, fmt.Errorf(`failed to delete existing UNIX socket at path %q: %w`, unixPath, delErr)
+				}
+			}
+		}
+
+		// Socket path is validated and any old socket there was removed.
+
+		listener, err = net.Listen("unix", unixPath)
+		if err != nil {
+			return nil, fmt.Errorf(`failed to listen on UNIX socket path %q: %w`, unixPath, err)
+		}
+		err = os.Chmod(unixPath, permOctal)
+		if err != nil {
+			_ = listener.Close()
+			return nil, fmt.Errorf(`failed to set file permission %q for UNIX socket path %q: %w`, iface.FilePermission, unixPath, err)
+		}
+
+	default:
+		return nil, fmt.Errorf(`unsupported protocol %q in server RPC address %q`, proto, iface.Address)
 	}
 
 	impl := &rpcServerImpl{
@@ -261,6 +273,11 @@ func NewRpcServer(iface config.ServerRpcConfigInterface, server *Server) (*RpcSe
 		connect.WithInterceptors(rpcServerInterceptor{s: s}),
 	)
 	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.WriteHeader(200)
+		_, _ = w.Write([]byte("Hi, you've reached the RPC interface of a FriendNet server.\nYou can communicate with it using gRPC, gRPC-Web, and ConnectRPC.\nHave fun!\n"))
+	})
 	mux.Handle(handlerPath, handler)
 
 	httpProtos := &http.Protocols{}
@@ -300,9 +317,17 @@ func (s *RpcServer) Serve() error {
 	defer func() {
 		_ = s.Close()
 	}()
-	return s.httpServer.Serve(s.httpListener)
+
+	err := s.httpServer.Serve(s.httpListener)
+	if errors.Is(err, http.ErrServerClosed) {
+		return nil
+	}
+
+	return err
 }
 
+// Close closes the RPC server and disconnects any currently connected clients of it.
+// Subsequent calls are no-op.
 func (s *RpcServer) Close() error {
 	s.mu.Lock()
 	if s.isClosed {

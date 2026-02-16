@@ -1,4 +1,5 @@
 friendnet-server
+friendnet-server.sock
 server.json
 server.pem
 server.db*
