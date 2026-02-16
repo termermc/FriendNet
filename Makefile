@@ -1,4 +1,4 @@
-.PHONY: help install-tools pb server client
+.PHONY: help install-tools pb server client rpcclient run-rpcclient
 
 help:
 	echo "Read the Makefile to see options"
@@ -17,3 +17,9 @@ server:
 
 client:
 	cd client && go build -o friendnet-client friendnet.org/client/cmd/client
+
+rpcclient:
+	cd rpcclient && go build -o friendnet-rpcclient friendnet.org/rpcclient/cmd/cli
+
+run-rpcclient:
+	make rpcclient && cd server && ../rpcclient/friendnet-rpcclient
