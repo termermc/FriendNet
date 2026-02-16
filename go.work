@@ -4,5 +4,6 @@ use (
 	./client
 	./common
 	./protocol
+	./rpcclient
 	./server
 )
