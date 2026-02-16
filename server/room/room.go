@@ -3,16 +3,21 @@ package room
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"sync"
 
 	"friendnet.org/common"
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
+	"friendnet.org/server/storage"
+	mcfpassword "github.com/termermc/go-mcf-password"
 )
 
 var ErrRoomClosed = errors.New("room closed")
 var ErrUsernameAlreadyConnected = errors.New("client with same username already connected to room")
+var ErrAccountExists = errors.New("account with same username already exists")
+var ErrNoSuchAccount = errors.New("no such account")
 
 // TODO Protocol message for server-driven close and reason.
 
@@ -23,14 +28,16 @@ type Room struct {
 	mu       sync.RWMutex
 	isClosed bool
 
+	storage *storage.Storage
+
 	// The room's name.
 	Name common.NormalizedRoomName
 
 	// The room's context.
 	// Canceled when it is closed.
-	Context context.Context
+	Context   context.Context
+	ctxCancel context.CancelFunc
 
-	ctxCancel             context.CancelFunc
 	clientMessageHandlers ClientMessageHandlers
 	// Key is the string value of a common.NormalizedUsername.
 	clients map[string]*Client
@@ -40,6 +47,7 @@ type Room struct {
 // The room manages clients within it.
 func NewRoom(
 	logger *slog.Logger,
+	storage *storage.Storage,
 	name common.NormalizedRoomName,
 	clientMessageHandlers ClientMessageHandlers,
 ) *Room {
@@ -47,6 +55,7 @@ func NewRoom(
 
 	return &Room{
 		logger:                logger,
+		storage:               storage,
 		Name:                  name,
 		Context:               ctx,
 		ctxCancel:             ctxCancel,
@@ -186,4 +195,119 @@ func (r *Room) GetClientByUsername(username common.NormalizedUsername) (*Client,
 
 	client, has := r.clients[username.String()]
 	return client, has
+}
+
+// CreateAccount creates a new account in the room.
+// Returns ErrAccountExists if an account with the same username already exists.
+func (r *Room) CreateAccount(ctx context.Context, username common.NormalizedUsername, password string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.isClosed {
+		return ErrRoomClosed
+	}
+
+	_, has, err := r.storage.GetAccountByRoomAndUsername(ctx, r.Name, username)
+	if err != nil {
+		return fmt.Errorf(`failed to check if account %q@%q already exists in CreateAccount: %w`,
+			username.String(),
+			r.Name.String(),
+			err,
+		)
+	}
+	if has {
+		return ErrAccountExists
+	}
+
+	hash, err := mcfpassword.HashPassword(password)
+	if err != nil {
+		return fmt.Errorf(`failed to hash password for account %q@%q in CreateAccount: %w`,
+			username.String(),
+			r.Name.String(),
+			err,
+		)
+	}
+
+	err = r.storage.CreateAccount(ctx, r.Name, username, hash)
+	if err != nil {
+		return fmt.Errorf(`failed to create account %q@%q in CreateAccount: %w`,
+			username.String(),
+			r.Name.String(),
+			err,
+		)
+	}
+
+	return nil
+}
+
+// DeleteAccount deletes an account from the room.
+// If the account does not exist, returns ErrNoSuchAccount.
+func (r *Room) DeleteAccount(ctx context.Context, username common.NormalizedUsername) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.isClosed {
+		return ErrRoomClosed
+	}
+
+	_, has, err := r.storage.GetAccountByRoomAndUsername(ctx, r.Name, username)
+	if err != nil {
+		return fmt.Errorf(`failed to check if account %q@%q exists in DeleteAccount: %w`,
+			username.String(),
+			r.Name.String(),
+			err,
+		)
+	}
+	if !has {
+		return ErrNoSuchAccount
+	}
+
+	err = r.storage.DeleteAccountByRoomAndUsername(ctx, r.Name, username)
+	if err != nil {
+		return fmt.Errorf(`failed to delete account %q@%q in DeleteAccount: %w`,
+			username.String(),
+			r.Name.String(),
+			err,
+		)
+	}
+
+	return nil
+}
+
+func (r *Room) UpdateAccountPassword(ctx context.Context, username common.NormalizedUsername, password string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.isClosed {
+		return ErrRoomClosed
+	}
+
+	hash, err := mcfpassword.HashPassword(password)
+	if err != nil {
+		return fmt.Errorf(`failed to hash password for account %q@%q in UpdateAccountPassword: %w`,
+			username.String(),
+			r.Name.String(),
+			err,
+		)
+	}
+
+	_, has, err := r.storage.GetAccountByRoomAndUsername(ctx, r.Name, username)
+	if err != nil {
+		return fmt.Errorf(`failed to check if account %q@%q exists in UpdateAccountPassword: %w`,
+			username.String(),
+			r.Name.String(),
+			err,
+		)
+	}
+	if !has {
+		return ErrNoSuchAccount
+	}
+
+	err = r.storage.UpdateAccountPasswordHash(ctx, r.Name, username, hash)
+	if err != nil {
+		return fmt.Errorf(`failed to update account %q@%q with rehashed password in UpdateAccountPassword: %w`,
+			username.String(),
+			r.Name.String(),
+			err,
+		)
+	}
+
+	return nil
 }

@@ -658,7 +658,7 @@ type CreateAccountRequest struct {
 	Room string `protobuf:"bytes,1,opt,name=room,proto3" json:"room,omitempty"`
 	// The new account's username.
 	Username string `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	// The new account's password.
+	// The new account's password, or empty to generate one.
 	Password      string `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -716,9 +716,11 @@ func (x *CreateAccountRequest) GetPassword() string {
 }
 
 type CreateAccountResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The generated password, if applicable.
+	GeneratedPassword *string `protobuf:"bytes,1,opt,name=generated_password,json=generatedPassword,proto3,oneof" json:"generated_password,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *CreateAccountResponse) Reset() {
@@ -749,6 +751,13 @@ func (x *CreateAccountResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use CreateAccountResponse.ProtoReflect.Descriptor instead.
 func (*CreateAccountResponse) Descriptor() ([]byte, []int) {
 	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *CreateAccountResponse) GetGeneratedPassword() string {
+	if x != nil && x.GeneratedPassword != nil {
+		return *x.GeneratedPassword
+	}
+	return ""
 }
 
 type DeleteAccountRequest struct {
@@ -907,7 +916,7 @@ func (x *UpdateAccountPasswordRequest) GetPassword() string {
 type UpdateAccountPasswordResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The generated password, if applicable.
-	GeneratedPassword string `protobuf:"bytes,1,opt,name=generated_password,json=generatedPassword,proto3" json:"generated_password,omitempty"`
+	GeneratedPassword *string `protobuf:"bytes,1,opt,name=generated_password,json=generatedPassword,proto3,oneof" json:"generated_password,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -943,8 +952,8 @@ func (*UpdateAccountPasswordResponse) Descriptor() ([]byte, []int) {
 }
 
 func (x *UpdateAccountPasswordResponse) GetGeneratedPassword() string {
-	if x != nil {
-		return x.GeneratedPassword
+	if x != nil && x.GeneratedPassword != nil {
+		return *x.GeneratedPassword
 	}
 	return ""
 }
@@ -985,8 +994,10 @@ const file_pb_serverrpc_v1_rpc_proto_rawDesc = "" +
 	"\x14CreateAccountRequest\x12\x12\n" +
 	"\x04room\x18\x01 \x01(\tR\x04room\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1a\n" +
-	"\bpassword\x18\x03 \x01(\tR\bpassword\"\x17\n" +
-	"\x15CreateAccountResponse\"F\n" +
+	"\bpassword\x18\x03 \x01(\tR\bpassword\"b\n" +
+	"\x15CreateAccountResponse\x122\n" +
+	"\x12generated_password\x18\x01 \x01(\tH\x00R\x11generatedPassword\x88\x01\x01B\x15\n" +
+	"\x13_generated_password\"F\n" +
 	"\x14DeleteAccountRequest\x12\x12\n" +
 	"\x04room\x18\x01 \x01(\tR\x04room\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\"\x17\n" +
@@ -994,9 +1005,10 @@ const file_pb_serverrpc_v1_rpc_proto_rawDesc = "" +
 	"\x1cUpdateAccountPasswordRequest\x12\x12\n" +
 	"\x04room\x18\x01 \x01(\tR\x04room\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1a\n" +
-	"\bpassword\x18\x03 \x01(\tR\bpassword\"N\n" +
-	"\x1dUpdateAccountPasswordResponse\x12-\n" +
-	"\x12generated_password\x18\x01 \x01(\tR\x11generatedPassword2\x86\a\n" +
+	"\bpassword\x18\x03 \x01(\tR\bpassword\"j\n" +
+	"\x1dUpdateAccountPasswordResponse\x122\n" +
+	"\x12generated_password\x18\x01 \x01(\tH\x00R\x11generatedPassword\x88\x01\x01B\x15\n" +
+	"\x13_generated_password2\x86\a\n" +
 	"\x10ServerRpcService\x12Q\n" +
 	"\bGetRooms\x12 .pb.serverrpc.v1.GetRoomsRequest\x1a!.pb.serverrpc.v1.GetRoomsResponse\"\x00\x12Z\n" +
 	"\vGetRoomInfo\x12#.pb.serverrpc.v1.GetRoomInfoRequest\x1a$.pb.serverrpc.v1.GetRoomInfoResponse\"\x00\x12e\n" +
@@ -1082,6 +1094,8 @@ func file_pb_serverrpc_v1_rpc_proto_init() {
 	if File_pb_serverrpc_v1_rpc_proto != nil {
 		return
 	}
+	file_pb_serverrpc_v1_rpc_proto_msgTypes[15].OneofWrappers = []any{}
+	file_pb_serverrpc_v1_rpc_proto_msgTypes[19].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

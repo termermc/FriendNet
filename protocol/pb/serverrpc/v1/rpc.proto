@@ -80,11 +80,12 @@ message CreateAccountRequest {
     // The new account's username.
     string username = 2;
 
-    // The new account's password.
+    // The new account's password, or empty to generate one.
     string password = 3;
 }
 message CreateAccountResponse {
-
+    // The generated password, if applicable.
+    optional string generated_password = 1;
 }
 
 message DeleteAccountRequest {
@@ -110,7 +111,7 @@ message UpdateAccountPasswordRequest {
 }
 message UpdateAccountPasswordResponse {
     // The generated password, if applicable.
-    string generated_password = 1;
+    optional string generated_password = 1;
 }
 
 // ServerRpcService provides an RPC interface to a running FriendNet server.
@@ -144,6 +145,7 @@ service ServerRpcService {
     rpc DeleteRoom(DeleteRoomRequest) returns (DeleteRoomResponse) {}
 
     // CreateAccount creates a new account in a room.
+    // It can generate a password if none is given.
     // Returns status code NOT_FOUND if no such room exists.
     // Returns status code ALREADY_EXISTS if an account with the same username already exists in the room.
     rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse) {}

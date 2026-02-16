@@ -11,6 +11,7 @@ import (
 )
 
 var ErrManagerClosed = fmt.Errorf("room manager is closed")
+var ErrRoomExists = fmt.Errorf("room with same name already exists")
 
 // Manager manages rooms.
 // It is responsible for coordinating room fetching, creation and deletion.
@@ -48,7 +49,12 @@ func NewManager(
 		return nil, fmt.Errorf(`failed to get all rooms while creating new room manager: %w`, err)
 	}
 	for _, room := range rooms {
-		m.rooms[room.Name.String()] = NewRoom(logger, room.Name, clientMessageHandlers)
+		m.rooms[room.Name.String()] = NewRoom(
+			logger,
+			storage,
+			room.Name,
+			clientMessageHandlers,
+		)
 	}
 
 	return m, nil
@@ -98,11 +104,17 @@ func (m *Manager) GetAll() []*Room {
 }
 
 // CreateRoom creates a new room and returns it.
+// If a room with the same name already exists, returns ErrRoomExists.
 func (m *Manager) CreateRoom(ctx context.Context, name common.NormalizedRoomName) (*Room, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.isClosed {
 		return nil, ErrManagerClosed
+	}
+
+	_, has := m.rooms[name.String()]
+	if has {
+		return nil, ErrRoomExists
 	}
 
 	// Create room in storage.
@@ -112,7 +124,12 @@ func (m *Manager) CreateRoom(ctx context.Context, name common.NormalizedRoomName
 	}
 
 	// Create room instance and add it to manager.
-	room := NewRoom(m.logger, name, m.clientMessageHandlers)
+	room := NewRoom(
+		m.logger,
+		m.storage,
+		name,
+		m.clientMessageHandlers,
+	)
 	m.rooms[name.String()] = room
 
 	return room, nil

@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 
 	"connectrpc.com/connect"
@@ -17,6 +19,7 @@ var errAccountNotFound = connect.NewError(connect.CodeNotFound, errors.New("acco
 var errRoomExists = connect.NewError(connect.CodeAlreadyExists, errors.New("room already exists"))
 var errAccountExists = connect.NewError(connect.CodeAlreadyExists, errors.New("account already exists"))
 var errInvalidRoomName = connect.NewError(connect.CodeInvalidArgument, errors.New("invalid room name"))
+var errInvalidUsername = connect.NewError(connect.CodeInvalidArgument, errors.New("invalid username"))
 
 type rpcServerImpl struct {
 	s *RpcServer
@@ -64,6 +67,14 @@ func (s *rpcServerImpl) getClient(r *room.Room, username string) (*room.Client, 
 	}
 
 	return client, nil
+}
+func (s *rpcServerImpl) getOrGenPass(pass string) (string, bool) {
+	if pass == "" {
+		var buf [12]byte
+		_, _ = rand.Read(buf[:])
+		return base64.RawURLEncoding.EncodeToString(buf[:]), true
+	}
+	return pass, false
 }
 
 func (s *rpcServerImpl) GetRooms(context.Context, *v1.GetRoomsRequest) (*v1.GetRoomsResponse, error) {
@@ -145,6 +156,10 @@ func (s *rpcServerImpl) CreateRoom(ctx context.Context, req *v1.CreateRoomReques
 
 	r, err := s.s.server.RoomManager.CreateRoom(ctx, name)
 	if err != nil {
+		if errors.Is(err, room.ErrRoomExists) {
+			return nil, errRoomExists
+		}
+
 		return nil, err
 	}
 
@@ -171,20 +186,67 @@ func (s *rpcServerImpl) CreateAccount(ctx context.Context, req *v1.CreateAccount
 		return nil, err
 	}
 
-	_ = r
+	username, ok := common.NormalizeUsername(req.Username)
+	if !ok {
+		return nil, errInvalidUsername
+	}
 
-	// TODO Figure out the best way to do this.
-	// I believe that having a method on room.Room makes the most sense.
+	pass, wasGen := s.getOrGenPass(req.Password)
 
-	return nil, nil
+	err = r.CreateAccount(ctx, username, pass)
+	if err != nil {
+		if errors.Is(err, room.ErrAccountExists) {
+			return nil, errAccountExists
+		}
+		return nil, err
+	}
+
+	res := &v1.CreateAccountResponse{}
+	if wasGen {
+		res.GeneratedPassword = &pass
+	}
+	return res, nil
 }
 func (s *rpcServerImpl) DeleteAccount(ctx context.Context, req *v1.DeleteAccountRequest) (*v1.DeleteAccountResponse, error) {
-	// TODO See comment in CreateAccount.
+	r, err := s.getRoom(req.Room)
+	if err != nil {
+		return nil, err
+	}
+
+	username, ok := common.NormalizeUsername(req.Username)
+	if !ok {
+		return nil, errAccountNotFound
+	}
+
+	err = r.DeleteAccount(ctx, username)
+	if err != nil {
+		if errors.Is(err, room.ErrNoSuchAccount) {
+			return nil, errAccountNotFound
+		}
+
+		return nil, err
+	}
 
 	return nil, nil
 }
 func (s *rpcServerImpl) UpdateAccountPassword(ctx context.Context, req *v1.UpdateAccountPasswordRequest) (*v1.UpdateAccountPasswordResponse, error) {
-	// TODO See comment in CreateAccount.
+	r, err := s.getRoom(req.Room)
+	if err != nil {
+		return nil, err
+	}
+
+	username, ok := common.NormalizeUsername(req.Username)
+	if !ok {
+		return nil, errAccountNotFound
+	}
+
+	err = r.UpdateAccountPassword(ctx, username, req.Password)
+	if err != nil {
+		if errors.Is(err, room.ErrNoSuchAccount) {
+			return nil, errAccountNotFound
+		}
+		return nil, err
+	}
 
 	return nil, nil
 }
