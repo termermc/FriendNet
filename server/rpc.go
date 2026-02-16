@@ -29,7 +29,7 @@ var errIpNotAllowed = connect.NewError(connect.CodePermissionDenied, errors.New(
 
 // InvalidRpcProtocolError is returned if an invalid RPC protocol version is specified.
 type InvalidRpcProtocolError struct {
-	// The invalid protocol
+	// The invalid protocol.
 	Protocol string
 }
 
