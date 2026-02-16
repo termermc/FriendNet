@@ -308,8 +308,8 @@ message MsgGetFile {
 message MsgGetOnlineUsers {
 }
 
-// An online user's status.
-message OnlineUserStatus {
+// OnlineUserInfo is information about an online user.
+message OnlineUserInfo {
     // The user's username.
     string username = 1;
 }
@@ -317,5 +317,5 @@ message OnlineUserStatus {
 // See MSG_TYPE_ONLINE_USERS.
 message MsgOnlineUsers {
     // A list of online users in the room and their statuses.
-    repeated OnlineUserStatus users = 1;
+    repeated OnlineUserInfo users = 1;
 }

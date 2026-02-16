@@ -1,0 +1,158 @@
+syntax = "proto3";
+
+option go_package = "friendnet.org/protocol/serverrpc";
+
+package pb.serverrpc.v1;
+
+// RoomInfo is information about a room.
+message RoomInfo {
+    // The room's name.
+    string name = 1;
+
+    // The number of online users in the room.
+    int32 online_user_count = 2;
+}
+
+// OnlineUserInfo is information about an online user.
+message OnlineUserInfo {
+    // The user's username.
+    string username = 1;
+}
+
+message GetRoomsRequest {
+
+}
+message GetRoomsResponse {
+    // All the rooms in the server.
+    repeated RoomInfo rooms = 1;
+}
+
+message GetRoomInfoRequest {
+    // The room's name.
+    string name = 1;
+}
+message GetRoomInfoResponse {
+    // Information about the room..
+    RoomInfo room = 1;
+}
+
+message GetOnlineUsersRequest {
+    // The room to query.
+    string room = 1;
+}
+message GetOnlineUsersResponse {
+    repeated OnlineUserInfo users = 1;
+}
+
+message GetOnlineUserInfoRequest {
+    // The user's username.
+    string username = 1;
+}
+message GetOnlineUserInfoResponse {
+    // Information about the online user.
+    OnlineUserInfo user = 1;
+}
+
+message CreateRoomRequest {
+    // The new room's name.
+    string name = 1;
+}
+message CreateRoomResponse {
+    // Information about the newly created room.
+    RoomInfo room = 1;
+}
+
+message DeleteRoomRequest {
+    // The room's name.
+    string name = 1;
+}
+message DeleteRoomResponse {
+
+}
+
+message CreateAccountRequest {
+    // The room's name.
+    string room = 1;
+
+    // The new account's username.
+    string username = 2;
+
+    // The new account's password.
+    string password = 3;
+}
+message CreateAccountResponse {
+
+}
+
+message DeleteAccountRequest {
+    // The room's name.
+    string room = 1;
+
+    // The account's username.
+    string username = 2;
+}
+message DeleteAccountResponse {
+
+}
+
+message UpdateAccountPasswordRequest {
+    // The room's name.
+    string room = 1;
+
+    // The account's username.
+    string username = 2;
+
+    // The account's new password, or empty to generate one.
+    string password = 3;
+}
+message UpdateAccountPasswordResponse {
+    // The generated password, if applicable.
+    string generated_password = 1;
+}
+
+// ServerRpcService provides an RPC interface to a running FriendNet server.
+// It can query state and perform administrative tasks.
+//
+// If a caller does not have permission to call an RPC method, the server will return
+// the PERMISSION_DENIED status code.
+service ServerRpcService {
+    // GetRooms returns a list of all rooms in the server.
+    rpc GetRooms(GetRoomsRequest) returns (GetRoomsResponse) {}
+
+    // GetRoomInfo returns information about a room.
+    // Returns status code NOT_FOUND if no such room exists.
+    rpc GetRoomInfo(GetRoomInfoRequest) returns (GetRoomInfoResponse) {}
+
+    // GetOnlineUsers returns a list of online users in a room.
+    // The response is paginated and may return zero or more responses.
+    rpc GetOnlineUsers(GetOnlineUsersRequest) returns (stream GetOnlineUsersResponse) {}
+
+    // GetOnlineUserInfo returns information about an online user.
+    // Returns status code NOT_FOUND if the user is not online or does not exist.
+    rpc GetOnlineUserInfo(GetOnlineUserInfoRequest) returns (GetOnlineUserInfoResponse) {}
+
+    // CreateRoom creates a new room.
+    // Returns status code ALREADY_EXISTS if a room with the same name already exists.
+    rpc CreateRoom(CreateRoomRequest) returns (CreateRoomResponse) {}
+
+    // DeleteRoom deletes an existing room.
+    // Any connected users are disconnected before deletion.
+    // Returns status code NOT_FOUND if no such room exists.
+    rpc DeleteRoom(DeleteRoomRequest) returns (DeleteRoomResponse) {}
+
+    // CreateAccount creates a new account in a room.
+    // Returns status code NOT_FOUND if no such room exists.
+    // Returns status code ALREADY_EXISTS if an account with the same username already exists in the room.
+    rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse) {}
+
+    // DeleteAccount deletes an existing account in a room.
+    // Returns status code NOT_FOUND if no such room exists.
+    // Returns status code NOT_FOUND if no such account exists.
+    rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse) {}
+
+    // UpdateAccountPassword updates a user's password.
+    // It can either update a user's password to a provided string, or generate one.
+    // Returns status code NOT_FOUND if no such room exists.
+    // Returns status code NOT_FOUND if no such account exists.
+    rpc UpdateAccountPassword(UpdateAccountPasswordRequest) returns (UpdateAccountPasswordResponse) {}
+}

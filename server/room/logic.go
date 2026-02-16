@@ -22,9 +22,9 @@ var ClientMessageHandlersImpl = ClientMessageHandlers{
 
 		// Snapshot clients and get their statuses.
 		clients := client.Room.snapshotClients()
-		statuses := make([]*pb.OnlineUserStatus, len(clients))
+		statuses := make([]*pb.OnlineUserInfo, len(clients))
 		for i, client := range clients {
-			statuses[i] = &pb.OnlineUserStatus{
+			statuses[i] = &pb.OnlineUserInfo{
 				Username: client.Username.String(),
 			}
 		}
