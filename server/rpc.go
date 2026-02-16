@@ -164,6 +164,26 @@ func NewRpcServer(
 		}
 	}
 
+	var checkIp bool
+	var allowedIps map[netip.Addr]struct{}
+	if len(iface.AllowedIps) > 0 {
+		checkIp = true
+		allowedIps = make(map[netip.Addr]struct{}, len(iface.AllowedIps))
+
+		for _, ipStr := range iface.AllowedIps {
+			ip, err := netip.ParseAddr(ipStr)
+			if err != nil {
+				cancel()
+				return nil, fmt.Errorf(`invalid IP address %q in server RPC allowed IPs list: %w`, ipStr, err)
+			}
+
+			allowedIps[ip] = struct{}{}
+		}
+	} else {
+		checkIp = false
+		allowedIps = nil
+	}
+
 	s := &RpcServer{
 		logger: logger,
 
@@ -172,6 +192,11 @@ func NewRpcServer(
 
 		Addr:   iface.Address,
 		server: server,
+
+		checkIp:    checkIp,
+		allowedIps: allowedIps,
+
+		bearerToken: iface.BearerToken,
 
 		isAllMethodsAllowed: isAllAllowed,
 		allowedMethods:      make(map[string]struct{}),
