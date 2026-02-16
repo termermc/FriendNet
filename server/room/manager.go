@@ -54,6 +54,14 @@ func NewManager(
 	return m, nil
 }
 
+func (m *Manager) snapshotRooms() []*Room {
+	rooms := make([]*Room, 0, len(m.rooms))
+	for _, room := range m.rooms {
+		rooms = append(rooms, room)
+	}
+	return rooms
+}
+
 // Close closes all rooms and then closes the manager itself.
 // Manager must never be used after calling Manager.Close.
 // Will never return an error.
@@ -75,6 +83,18 @@ func (m *Manager) Close() error {
 	}
 
 	return nil
+}
+
+// GetAll returns all rooms.
+// Returns empty if the manager is closed.
+// Note that this method creates a new slice each time it is called.
+func (m *Manager) GetAll() []*Room {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.isClosed {
+		return nil
+	}
+	return m.snapshotRooms()
 }
 
 // CreateRoom creates a new room and returns it.

@@ -21,7 +21,7 @@ var ClientMessageHandlersImpl = ClientMessageHandlers{
 		const pageSize = 50
 
 		// Snapshot clients and get their statuses.
-		clients := client.Room.snapshotClients()
+		clients := client.Room.GetAllClients()
 		statuses := make([]*pb.OnlineUserInfo, len(clients))
 		for i, client := range clients {
 			statuses[i] = &pb.OnlineUserInfo{

@@ -55,9 +55,6 @@ func NewRoom(
 	}
 }
 
-// snapshotClients snapshots all clients currently connected and returns a slice of them.
-// Note that this method calls RLock.
-// It is best to call this, then do work on the clients without locking.
 func (r *Room) snapshotClients() []*Client {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -93,6 +90,31 @@ func (r *Room) Close() error {
 	r.clients = nil
 
 	return nil
+}
+
+// ClientCount returns the current number of clients.
+// Returns 0 if the room is closed.
+func (r *Room) ClientCount() int {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	if r.isClosed {
+		return 0
+	}
+
+	return len(r.clients)
+}
+
+// GetAllClients returns all connected clients.
+// Returns empty if the room is closed.
+// Note that this method creates a new slice each time it is called.
+func (r *Room) GetAllClients() []*Client {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	if r.isClosed {
+		return nil
+	}
+
+	return r.snapshotClients()
 }
 
 // Onboard takes ownership of a connection and adds it to the room.

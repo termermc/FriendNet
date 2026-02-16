@@ -27,7 +27,7 @@ type RoomInfo struct {
 	// The room's name.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The number of online users in the room.
-	OnlineUserCount int32 `protobuf:"varint,2,opt,name=online_user_count,json=onlineUserCount,proto3" json:"online_user_count,omitempty"`
+	OnlineUserCount uint32 `protobuf:"varint,2,opt,name=online_user_count,json=onlineUserCount,proto3" json:"online_user_count,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -69,7 +69,7 @@ func (x *RoomInfo) GetName() string {
 	return ""
 }
 
-func (x *RoomInfo) GetOnlineUserCount() int32 {
+func (x *RoomInfo) GetOnlineUserCount() uint32 {
 	if x != nil {
 		return x.OnlineUserCount
 	}
@@ -384,8 +384,10 @@ func (x *GetOnlineUsersResponse) GetUsers() []*OnlineUserInfo {
 
 type GetOnlineUserInfoRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// The room's name.
+	Room string `protobuf:"bytes,1,opt,name=room,proto3" json:"room,omitempty"`
 	// The user's username.
-	Username      string `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	Username      string `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -418,6 +420,13 @@ func (x *GetOnlineUserInfoRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetOnlineUserInfoRequest.ProtoReflect.Descriptor instead.
 func (*GetOnlineUserInfoRequest) Descriptor() ([]byte, []int) {
 	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *GetOnlineUserInfoRequest) GetRoom() string {
+	if x != nil {
+		return x.Room
+	}
+	return ""
 }
 
 func (x *GetOnlineUserInfoRequest) GetUsername() string {
@@ -947,7 +956,7 @@ const file_pb_serverrpc_v1_rpc_proto_rawDesc = "" +
 	"\x19pb/serverrpc/v1/rpc.proto\x12\x0fpb.serverrpc.v1\"J\n" +
 	"\bRoomInfo\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12*\n" +
-	"\x11online_user_count\x18\x02 \x01(\x05R\x0fonlineUserCount\",\n" +
+	"\x11online_user_count\x18\x02 \x01(\rR\x0fonlineUserCount\",\n" +
 	"\x0eOnlineUserInfo\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\"\x11\n" +
 	"\x0fGetRoomsRequest\"C\n" +
@@ -960,9 +969,10 @@ const file_pb_serverrpc_v1_rpc_proto_rawDesc = "" +
 	"\x15GetOnlineUsersRequest\x12\x12\n" +
 	"\x04room\x18\x01 \x01(\tR\x04room\"O\n" +
 	"\x16GetOnlineUsersResponse\x125\n" +
-	"\x05users\x18\x01 \x03(\v2\x1f.pb.serverrpc.v1.OnlineUserInfoR\x05users\"6\n" +
-	"\x18GetOnlineUserInfoRequest\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\"P\n" +
+	"\x05users\x18\x01 \x03(\v2\x1f.pb.serverrpc.v1.OnlineUserInfoR\x05users\"J\n" +
+	"\x18GetOnlineUserInfoRequest\x12\x12\n" +
+	"\x04room\x18\x01 \x01(\tR\x04room\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\"P\n" +
 	"\x19GetOnlineUserInfoResponse\x123\n" +
 	"\x04user\x18\x01 \x01(\v2\x1f.pb.serverrpc.v1.OnlineUserInfoR\x04user\"'\n" +
 	"\x11CreateRoomRequest\x12\x12\n" +

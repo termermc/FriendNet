@@ -10,7 +10,7 @@ message RoomInfo {
     string name = 1;
 
     // The number of online users in the room.
-    int32 online_user_count = 2;
+    uint32 online_user_count = 2;
 }
 
 // OnlineUserInfo is information about an online user.
@@ -45,8 +45,11 @@ message GetOnlineUsersResponse {
 }
 
 message GetOnlineUserInfoRequest {
+    // The room's name.
+    string room = 1;
+
     // The user's username.
-    string username = 1;
+    string username = 2;
 }
 message GetOnlineUserInfoResponse {
     // Information about the online user.
