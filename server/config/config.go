@@ -96,6 +96,7 @@ var Default = &ServerConfig{
 					"GetRoomInfo",
 					"GetOnlineUsers",
 					"GetOnlineUserInfo",
+					"GetAccounts",
 				},
 			},
 		},

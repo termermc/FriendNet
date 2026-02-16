@@ -19,6 +19,12 @@ message OnlineUserInfo {
     string username = 1;
 }
 
+// AccountInfo is information about an account.
+message AccountInfo {
+    // The account's username.
+    string username = 1;
+}
+
 message GetRoomsRequest {
 
 }
@@ -54,6 +60,15 @@ message GetOnlineUserInfoRequest {
 message GetOnlineUserInfoResponse {
     // Information about the online user.
     OnlineUserInfo user = 1;
+}
+
+message GetAccountsRequest {
+    // The room to query.
+    string room = 1;
+}
+message GetAccountsResponse {
+    // All accounts in the room.
+    repeated AccountInfo accounts = 1;
 }
 
 message CreateRoomRequest {
@@ -134,6 +149,10 @@ service ServerRpcService {
     // GetOnlineUserInfo returns information about an online user.
     // Returns status code NOT_FOUND if the user is not online or does not exist.
     rpc GetOnlineUserInfo(GetOnlineUserInfoRequest) returns (GetOnlineUserInfoResponse) {}
+
+    // GetAccounts returns all accounts in a room.
+    // Returns status code NOT_FOUND if no such room exists.
+    rpc GetAccounts(GetAccountsRequest) returns (GetAccountsResponse) {}
 
     // CreateRoom creates a new room.
     // Returns status code ALREADY_EXISTS if a room with the same name already exists.

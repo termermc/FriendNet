@@ -311,3 +311,35 @@ func (r *Room) UpdateAccountPassword(ctx context.Context, username common.Normal
 
 	return nil
 }
+
+// handleDisconnect performs logic that needs to be done after a client disconnects.
+// It returns quickly and does not lock on its own.
+// The caller must lock before calling it.
+func (r *Room) handleDisconnect(client *Client) {
+	delete(r.clients, client.Username.String())
+}
+
+// KickClientByUsername disconnects the client with the specified username.
+// If there is no client with that username, this is a no-op.
+func (r *Room) KickClientByUsername(username common.NormalizedUsername) error {
+	r.mu.Lock()
+	if r.isClosed {
+		r.mu.Unlock()
+		return ErrRoomClosed
+	}
+
+	client, has := r.clients[username.String()]
+	if !has {
+		r.mu.Unlock()
+		return nil
+	}
+
+	r.handleDisconnect(client)
+	r.mu.Unlock()
+
+	if client != nil {
+		return client.conn.CloseWithReason("kicked")
+	}
+
+	return nil
+}

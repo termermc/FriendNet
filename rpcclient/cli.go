@@ -62,6 +62,13 @@ func NewCli(client serverrpcv1connect.ServerRpcServiceClient) *Cli {
 			},
 		},
 		{
+			Name:  "getaccounts",
+			Usage: "getaccounts <room>",
+			Handler: func(cli *Cli, args []string) error {
+				return cli.cmdGetAccounts(args)
+			},
+		},
+		{
 			Name:  "createroom",
 			Usage: "createroom <room>",
 			Handler: func(cli *Cli, args []string) error {
@@ -244,6 +251,32 @@ func (c *Cli) cmdGetOnlineUserInfo(args []string) error {
 		return nil
 	}
 	fmt.Println(user.GetUsername())
+	return nil
+}
+
+func (c *Cli) cmdGetAccounts(args []string) error {
+	if err := validateArgCount(args, 1, 1, "getaccounts <room>"); err != nil {
+		return err
+	}
+
+	resp, err := c.client.GetAccounts(context.Background(), &v1.GetAccountsRequest{
+		Room: args[0],
+	})
+	if err != nil {
+		return err
+	}
+
+	accounts := resp.GetAccounts()
+	if len(accounts) == 0 {
+		fmt.Println("No accounts.")
+		return nil
+	}
+	for _, account := range accounts {
+		if account == nil {
+			continue
+		}
+		fmt.Println(account.GetUsername())
+	}
 	return nil
 }
 

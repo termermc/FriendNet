@@ -11,6 +11,7 @@ import (
 	v1 "friendnet.org/protocol/pb/serverrpc/v1"
 	"friendnet.org/protocol/pb/serverrpc/v1/serverrpcv1connect"
 	"friendnet.org/server/room"
+	"friendnet.org/server/storage"
 )
 
 var errMethodNotAllowed = connect.NewError(connect.CodePermissionDenied, errors.New("method not allowed"))
@@ -47,6 +48,11 @@ func (s *rpcServerImpl) roomToInfo(r *room.Room) *v1.RoomInfo {
 func (s *rpcServerImpl) clientToInfo(c *room.Client) *v1.OnlineUserInfo {
 	return &v1.OnlineUserInfo{
 		Username: c.Username.String(),
+	}
+}
+func (s *rpcServerImpl) accountToInfo(r storage.AccountRecord) *v1.AccountInfo {
+	return &v1.AccountInfo{
+		Username: r.Username.String(),
 	}
 }
 
@@ -172,6 +178,30 @@ func (s *rpcServerImpl) GetOnlineUserInfo(_ context.Context, req *v1.GetOnlineUs
 		User: s.clientToInfo(client),
 	}, nil
 }
+func (s *rpcServerImpl) GetAccounts(ctx context.Context, req *v1.GetAccountsRequest) (*v1.GetAccountsResponse, error) {
+	if err := s.guard("GetAccounts"); err != nil {
+		return nil, err
+	}
+
+	r, err := s.getRoom(req.Room)
+	if err != nil {
+		return nil, err
+	}
+
+	records, err := s.s.server.storage.GetAccountsByRoom(ctx, r.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	infos := make([]*v1.AccountInfo, len(records))
+	for i, record := range records {
+		infos[i] = s.accountToInfo(record)
+	}
+
+	return &v1.GetAccountsResponse{
+		Accounts: infos,
+	}, nil
+}
 func (s *rpcServerImpl) CreateRoom(ctx context.Context, req *v1.CreateRoomRequest) (*v1.CreateRoomResponse, error) {
 	if err := s.guard("CreateRoom"); err != nil {
 		return nil, err
@@ -257,6 +287,9 @@ func (s *rpcServerImpl) DeleteAccount(ctx context.Context, req *v1.DeleteAccount
 	if !ok {
 		return nil, errAccountNotFound
 	}
+
+	// Kick client before deleting account in storage.
+	_ = r.KickClientByUsername(username)
 
 	err = r.DeleteAccount(ctx, username)
 	if err != nil {

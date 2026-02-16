@@ -45,6 +45,9 @@ const (
 	// ServerRpcServiceGetOnlineUserInfoProcedure is the fully-qualified name of the ServerRpcService's
 	// GetOnlineUserInfo RPC.
 	ServerRpcServiceGetOnlineUserInfoProcedure = "/pb.serverrpc.v1.ServerRpcService/GetOnlineUserInfo"
+	// ServerRpcServiceGetAccountsProcedure is the fully-qualified name of the ServerRpcService's
+	// GetAccounts RPC.
+	ServerRpcServiceGetAccountsProcedure = "/pb.serverrpc.v1.ServerRpcService/GetAccounts"
 	// ServerRpcServiceCreateRoomProcedure is the fully-qualified name of the ServerRpcService's
 	// CreateRoom RPC.
 	ServerRpcServiceCreateRoomProcedure = "/pb.serverrpc.v1.ServerRpcService/CreateRoom"
@@ -75,6 +78,9 @@ type ServerRpcServiceClient interface {
 	// GetOnlineUserInfo returns information about an online user.
 	// Returns status code NOT_FOUND if the user is not online or does not exist.
 	GetOnlineUserInfo(context.Context, *v1.GetOnlineUserInfoRequest) (*v1.GetOnlineUserInfoResponse, error)
+	// GetAccounts returns all accounts in a room.
+	// Returns status code NOT_FOUND if no such room exists.
+	GetAccounts(context.Context, *v1.GetAccountsRequest) (*v1.GetAccountsResponse, error)
 	// CreateRoom creates a new room.
 	// Returns status code ALREADY_EXISTS if a room with the same name already exists.
 	CreateRoom(context.Context, *v1.CreateRoomRequest) (*v1.CreateRoomResponse, error)
@@ -83,6 +89,7 @@ type ServerRpcServiceClient interface {
 	// Returns status code NOT_FOUND if no such room exists.
 	DeleteRoom(context.Context, *v1.DeleteRoomRequest) (*v1.DeleteRoomResponse, error)
 	// CreateAccount creates a new account in a room.
+	// It can generate a password if none is given.
 	// Returns status code NOT_FOUND if no such room exists.
 	// Returns status code ALREADY_EXISTS if an account with the same username already exists in the room.
 	CreateAccount(context.Context, *v1.CreateAccountRequest) (*v1.CreateAccountResponse, error)
@@ -132,6 +139,12 @@ func NewServerRpcServiceClient(httpClient connect.HTTPClient, baseURL string, op
 			connect.WithSchema(serverRpcServiceMethods.ByName("GetOnlineUserInfo")),
 			connect.WithClientOptions(opts...),
 		),
+		getAccounts: connect.NewClient[v1.GetAccountsRequest, v1.GetAccountsResponse](
+			httpClient,
+			baseURL+ServerRpcServiceGetAccountsProcedure,
+			connect.WithSchema(serverRpcServiceMethods.ByName("GetAccounts")),
+			connect.WithClientOptions(opts...),
+		),
 		createRoom: connect.NewClient[v1.CreateRoomRequest, v1.CreateRoomResponse](
 			httpClient,
 			baseURL+ServerRpcServiceCreateRoomProcedure,
@@ -171,6 +184,7 @@ type serverRpcServiceClient struct {
 	getRoomInfo           *connect.Client[v1.GetRoomInfoRequest, v1.GetRoomInfoResponse]
 	getOnlineUsers        *connect.Client[v1.GetOnlineUsersRequest, v1.GetOnlineUsersResponse]
 	getOnlineUserInfo     *connect.Client[v1.GetOnlineUserInfoRequest, v1.GetOnlineUserInfoResponse]
+	getAccounts           *connect.Client[v1.GetAccountsRequest, v1.GetAccountsResponse]
 	createRoom            *connect.Client[v1.CreateRoomRequest, v1.CreateRoomResponse]
 	deleteRoom            *connect.Client[v1.DeleteRoomRequest, v1.DeleteRoomResponse]
 	createAccount         *connect.Client[v1.CreateAccountRequest, v1.CreateAccountResponse]
@@ -204,6 +218,15 @@ func (c *serverRpcServiceClient) GetOnlineUsers(ctx context.Context, req *v1.Get
 // GetOnlineUserInfo calls pb.serverrpc.v1.ServerRpcService.GetOnlineUserInfo.
 func (c *serverRpcServiceClient) GetOnlineUserInfo(ctx context.Context, req *v1.GetOnlineUserInfoRequest) (*v1.GetOnlineUserInfoResponse, error) {
 	response, err := c.getOnlineUserInfo.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// GetAccounts calls pb.serverrpc.v1.ServerRpcService.GetAccounts.
+func (c *serverRpcServiceClient) GetAccounts(ctx context.Context, req *v1.GetAccountsRequest) (*v1.GetAccountsResponse, error) {
+	response, err := c.getAccounts.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -268,6 +291,9 @@ type ServerRpcServiceHandler interface {
 	// GetOnlineUserInfo returns information about an online user.
 	// Returns status code NOT_FOUND if the user is not online or does not exist.
 	GetOnlineUserInfo(context.Context, *v1.GetOnlineUserInfoRequest) (*v1.GetOnlineUserInfoResponse, error)
+	// GetAccounts returns all accounts in a room.
+	// Returns status code NOT_FOUND if no such room exists.
+	GetAccounts(context.Context, *v1.GetAccountsRequest) (*v1.GetAccountsResponse, error)
 	// CreateRoom creates a new room.
 	// Returns status code ALREADY_EXISTS if a room with the same name already exists.
 	CreateRoom(context.Context, *v1.CreateRoomRequest) (*v1.CreateRoomResponse, error)
@@ -276,6 +302,7 @@ type ServerRpcServiceHandler interface {
 	// Returns status code NOT_FOUND if no such room exists.
 	DeleteRoom(context.Context, *v1.DeleteRoomRequest) (*v1.DeleteRoomResponse, error)
 	// CreateAccount creates a new account in a room.
+	// It can generate a password if none is given.
 	// Returns status code NOT_FOUND if no such room exists.
 	// Returns status code ALREADY_EXISTS if an account with the same username already exists in the room.
 	CreateAccount(context.Context, *v1.CreateAccountRequest) (*v1.CreateAccountResponse, error)
@@ -321,6 +348,12 @@ func NewServerRpcServiceHandler(svc ServerRpcServiceHandler, opts ...connect.Han
 		connect.WithSchema(serverRpcServiceMethods.ByName("GetOnlineUserInfo")),
 		connect.WithHandlerOptions(opts...),
 	)
+	serverRpcServiceGetAccountsHandler := connect.NewUnaryHandlerSimple(
+		ServerRpcServiceGetAccountsProcedure,
+		svc.GetAccounts,
+		connect.WithSchema(serverRpcServiceMethods.ByName("GetAccounts")),
+		connect.WithHandlerOptions(opts...),
+	)
 	serverRpcServiceCreateRoomHandler := connect.NewUnaryHandlerSimple(
 		ServerRpcServiceCreateRoomProcedure,
 		svc.CreateRoom,
@@ -361,6 +394,8 @@ func NewServerRpcServiceHandler(svc ServerRpcServiceHandler, opts ...connect.Han
 			serverRpcServiceGetOnlineUsersHandler.ServeHTTP(w, r)
 		case ServerRpcServiceGetOnlineUserInfoProcedure:
 			serverRpcServiceGetOnlineUserInfoHandler.ServeHTTP(w, r)
+		case ServerRpcServiceGetAccountsProcedure:
+			serverRpcServiceGetAccountsHandler.ServeHTTP(w, r)
 		case ServerRpcServiceCreateRoomProcedure:
 			serverRpcServiceCreateRoomHandler.ServeHTTP(w, r)
 		case ServerRpcServiceDeleteRoomProcedure:
@@ -394,6 +429,10 @@ func (UnimplementedServerRpcServiceHandler) GetOnlineUsers(context.Context, *v1.
 
 func (UnimplementedServerRpcServiceHandler) GetOnlineUserInfo(context.Context, *v1.GetOnlineUserInfoRequest) (*v1.GetOnlineUserInfoResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.serverrpc.v1.ServerRpcService.GetOnlineUserInfo is not implemented"))
+}
+
+func (UnimplementedServerRpcServiceHandler) GetAccounts(context.Context, *v1.GetAccountsRequest) (*v1.GetAccountsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.serverrpc.v1.ServerRpcService.GetAccounts is not implemented"))
 }
 
 func (UnimplementedServerRpcServiceHandler) CreateRoom(context.Context, *v1.CreateRoomRequest) (*v1.CreateRoomResponse, error) {
