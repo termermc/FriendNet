@@ -30,4 +30,5 @@ require (
 replace (
 	friendnet.org/common => ../common
 	friendnet.org/protocol => ../protocol
+	friendnet.org/webui => ../webui
 )

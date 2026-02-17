@@ -16,7 +16,7 @@ server:
 	cd server && go build -o friendnet-server friendnet.org/server/cmd/server
 
 client:
-	cd client && go build -o friendnet-client friendnet.org/client/cmd/client
+	cd webui && go generate && cd ../client && go build -o friendnet-client friendnet.org/client/cmd/client
 
 rpcclient:
 	cd rpcclient && go build -o friendnet-rpcclient friendnet.org/rpcclient/cmd/cli

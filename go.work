@@ -6,4 +6,5 @@ use (
 	./protocol
 	./rpcclient
 	./server
+	./webui
 )

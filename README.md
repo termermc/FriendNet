@@ -29,3 +29,8 @@ TODO
 # Protocol
 
 See the [protocol](protocol) directory.
+
+# Building From Source
+
+TODO Manual steps
+TODO Docker for both Linux and cross-compiling for Windows and Mac.
