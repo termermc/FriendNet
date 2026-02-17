@@ -5,12 +5,16 @@ import (
 	"crypto/tls"
 	"flag"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 
+	"connectrpc.com/connect"
+	"friendnet.org/common"
 	"friendnet.org/protocol"
+	"friendnet.org/protocol/pb/serverrpc/v1/serverrpcv1connect"
 	"friendnet.org/server"
 	"friendnet.org/server/cert"
 	"friendnet.org/server/config"
@@ -62,9 +66,16 @@ func main() {
 	}()
 
 	// Create RPC servers.
-	rpcs := make([]*server.RpcServer, 0, len(cfg.Rpc.Interfaces))
+	rpcs := make([]*common.RpcServer[*server.RpcServer], 0, len(cfg.Rpc.Interfaces))
 	for _, iface := range cfg.Rpc.Interfaces {
-		rpcSrv, err := server.NewRpcServer(logger, iface, srv)
+		rpcSrv, err := common.NewRpcServer(
+			logger,
+			iface,
+			server.NewRpcServer(srv),
+			func(impl *server.RpcServer, options ...connect.HandlerOption) (string, http.Handler) {
+				return serverrpcv1connect.NewServerRpcServiceHandler(impl, options...)
+			},
+		)
 		if err != nil {
 			logger.Error(
 				"failed to create RPC server",
