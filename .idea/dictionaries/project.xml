@@ -2,7 +2,9 @@
   <dictionary name="project">
     <words>
       <w>bidis</w>
+      <w>clientrpc</w>
       <w>friendnet</w>
+      <w>serverrpc</w>
     </words>
   </dictionary>
 </component>

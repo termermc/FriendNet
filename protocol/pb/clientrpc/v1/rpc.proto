@@ -1,0 +1,285 @@
+syntax = "proto3";
+
+option go_package = "friendnet.org/protocol/clientrpc";
+
+package pb.clientrpc.v1;
+
+// Information about a server.
+message ServerInfo {
+    // The server's UUID.
+    string uuid = 1;
+
+    // The name given to the server.
+    string name = 2;
+
+    // The server's address.
+    string address = 3;
+
+    // The room to connect to.
+    string room = 4;
+
+    // The username to use for authentication.
+    string username = 5;
+
+    // The UNIX timestamp when the server was created.
+    int64 created_ts = 6;
+}
+
+// Information about a server share.
+message ShareInfo {
+    // The UUID of the associated server.
+    string server_uuid = 1;
+
+    // The share's name.
+    string name = 2;
+
+    // The share's path on disk.
+    string path = 3;
+
+    // The UNIX timestamp when the share was created.
+    int64 created_ts = 4;
+}
+
+// OnlineUserInfo is information about an online user.
+message OnlineUserInfo {
+    // The user's username.
+    string username = 1;
+}
+
+// FileMeta is metadata about a file/folder.
+message FileMeta {
+    // The file's name.
+    string name = 1;
+
+    // Whether the file is a directory.
+    bool is_dir = 2;
+
+    // The file's size, in bytes.
+    // Always zero if the file is a folder.
+    uint64 size = 3;
+}
+
+message StopRequest {
+
+}
+message StopResponse {
+
+}
+
+message GetServersRequest {
+
+}
+message GetServersResponse {
+    // The server records.
+    repeated ServerInfo servers = 1;
+}
+
+message CreateServerRequest {
+    // The name given to the server record.
+    string name = 1;
+
+    // The server's address.
+    string address = 2;
+
+    // The room to connect to.
+    string room = 3;
+
+    // The username to use.
+    string username = 4;
+
+    // The password to use.
+    string password = 5;
+}
+message CreateServerResponse {
+    // The newly created server record.
+    ServerInfo server = 1;
+}
+
+message DeleteServerRequest {
+    // The server's UUID.
+    string uuid = 1;
+}
+message DeleteServerResponse {
+
+}
+
+message ConnectServerRequest {
+    // The server's UUID.
+    string uuid = 1;
+}
+message ConnectServerResponse {
+
+}
+
+message DisconnectServerRequest {
+    // The server's UUID.
+    string uuid = 1;
+}
+message DisconnectServerResponse {
+
+}
+
+message UpdateServerRequest {
+    // The server's UUID.
+    string uuid = 1;
+
+    // The new name, if any.
+    optional string name = 2;
+
+    // The new room, if any.
+    optional string room = 3;
+
+    // The new username, if any.
+    optional string username = 4;
+
+    // The new password, if any.
+    optional string password = 5;
+}
+message UpdateServerResponse {
+    // The server after update.
+    ServerInfo server = 1;
+}
+
+message GetSharesRequest {
+    // The UUID of the server to get shares for.
+    string server_uuid = 1;
+}
+message GetSharesResponse {
+    // The shares.
+    repeated ShareInfo shares = 1;
+}
+
+message CreateShareRequest {
+    // The UUID of the associated server.
+    string server_uuid = 1;
+
+    // The share's name.
+    string name = 2;
+
+    // The share's path on disk.
+    string path = 3;
+}
+message CreateShareResponse {
+    // The newly created share.
+    ShareInfo share = 1;
+}
+
+message DeleteShareRequest {
+    // The associated server UUID.
+    string server_uuid = 1;
+
+    // The share's name.
+    string name = 2;
+}
+message DeleteShareResponse {
+
+}
+
+message GetDirFilesRequest {
+    // The server's UUID.
+    string server_uuid = 1;
+
+    // The online user's username.
+    string username = 2;
+
+    // The path to get the contents of.
+    string path = 3;
+}
+message GetDirFilesResponse {
+    // The directory's metadata.
+    // This will only be set on the first message.
+    optional FileMeta meta = 1;
+
+    // The directory's files.
+    // This may be empty in the first message, but may have entries as well.
+    repeated FileMeta content = 2;
+}
+
+message GetFileMetaRequest {
+    // The server's UUID.
+    string server_uuid = 1;
+
+    // The online user's username.
+    string username = 2;
+
+    // The path to get the contents of.
+    string path = 3;
+}
+message GetFileMetaResponse {
+    // The file's metadata.
+    FileMeta meta = 1;
+}
+
+// ClientRpcService provides an RPC interface to a running FriendNet client.
+// It can query state and perform actions.
+//
+// If authorization is required but not provided, returns status code UNAUTHENTICATED.
+// If authorization is invalid, returns PERMISSION_DENIED status code.
+service ClientRpcService {
+    // Stop shuts down the client.
+    rpc Stop(StopRequest) returns (StopResponse) {}
+
+    // GetServers returns a list of all servers.
+    rpc GetServers(GetServersRequest) returns (GetServersResponse) {}
+
+    // CreateServer creates a new server and automatically connects to it.
+    rpc CreateServer(CreateServerRequest) returns (CreateServerResponse) {}
+
+    // DeleteServer disconnects and deletes a server.
+    //
+    // Returns NOT_FOUND if no such server exists.
+    rpc DeleteServer(DeleteServerRequest) returns (DeleteServerResponse) {}
+
+    // ConnectServer connects to an existing server.
+    // The server will reconnect automatically until DisconnectServer is called.
+    // No-op if the server is already connected.
+    //
+    // Returns NOT_FOUND if no such server exists.
+    rpc ConnectServer(ConnectServerRequest) returns (ConnectServerResponse) {}
+
+    // DisconnectServer disconnects from an existing server.
+    // The server will not reconnect until ConnectServer is called.
+    // No-op if the server is already disconnected.
+    //
+    // Returns NOT_FOUND if no such server exists.
+    rpc DisconnectServer(DisconnectServerRequest) returns (DisconnectServerResponse) {}
+
+    // UpdateServer updates server info.
+    // Does not disconnect the server connection if any, so disconnection then reconnection is required for changes to take effect.
+    //
+    // Returns NOT_FOUND if no such server exists.
+    rpc UpdateServer(UpdateServerRequest) returns (UpdateServerResponse) {}
+
+    // GetShares returns shares for a server.
+    //
+    // Returns NOT_FOUND if no such server exists.
+    rpc GetShares(GetSharesRequest) returns (GetSharesResponse) {}
+
+    // CreateShare creates a new server share.
+    //
+    // Returns ALREADY_EXISTS if a share with the same name already exists.
+    rpc CreateShare(CreateShareRequest) returns (CreateShareResponse) {}
+
+    // DeleteShare deletes an existing server share.
+    //
+    // Returns NOT_FOUND if no such server exists.
+    // Returns NOT_FOUND if no such share exists.
+    rpc DeleteShare(DeleteShareRequest) returns (DeleteShareResponse) {}
+
+    // GetDirFiles requests the files within a directory shared by an online user.
+    // The first message will contain metadata about the path, and optionally a list of files within it.
+    // Each subsequent message will not contain metadata and will contain files within the path.
+    // If the path is not a directory, it will only return one message with metadata, then stop.
+    //
+    // Returns NOT_FOUND if no such server exists.
+    // Returns NOT_FOUND if no such path exists.
+    // Returns UNAVAILABLE if the user is offline or otherwise cannot be reached.
+    rpc GetDirFiles(GetDirFilesRequest) returns (stream GetDirFilesResponse) {}
+
+    // GetFileMeta returns metadata about a path shared by an online user.
+    //
+    // Returns NOT_FOUND if no such server exists.
+    // Returns NOT_FOUND if no such path exists.
+    // Returns UNAVAILABLE if the user is offline or otherwise cannot be reached.
+    rpc GetFileMeta(GetFileMetaRequest) returns (GetFileMetaResponse) {}
+}
