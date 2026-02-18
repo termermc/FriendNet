@@ -151,14 +151,9 @@ func (s *Storage) GetServers(ctx context.Context) ([]ServerRecord, error) {
 }
 
 // GetServerByUuid returns the server record with the specified UUID.
-func (s *Storage) GetServerByUuid(ctx context.Context, uuid string) (ServerRecord, error) {
+func (s *Storage) GetServerByUuid(ctx context.Context, uuid string) (record ServerRecord, has bool, err error) {
 	row := s.db.QueryRowContext(ctx, `select * from server where uuid = ?`, uuid)
-	var record ServerRecord
-	record, _, err := ScanServerRecord(row)
-	if err != nil {
-		return ServerRecord{}, err
-	}
-	return record, nil
+	return ScanServerRecord(row)
 }
 
 // DeleteServerByUuid will delete the server record with the specified UUID.
@@ -213,6 +208,11 @@ func (s *Storage) GetSharesByServer(ctx context.Context, serverUuid string) ([]S
 	}
 
 	return records, nil
+}
+
+func (s *Storage) GetShareByServerAndName(ctx context.Context, serverUuid string, name string) (record ShareRecord, has bool, err error) {
+	row := s.db.QueryRowContext(ctx, `select * from share where server = ? and name = ?`, serverUuid, name)
+	return ScanShareRecord(row)
 }
 
 // DeleteShareByServerAndName deletes the server with the specified server UUID and name.

@@ -3,10 +3,12 @@ package client
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 
 	"connectrpc.com/connect"
 	"friendnet.org/client/room"
+	"friendnet.org/client/storage"
 	"friendnet.org/common"
 	"friendnet.org/protocol"
 	v1 "friendnet.org/protocol/pb/clientrpc/v1"
@@ -18,6 +20,7 @@ var errServerNotFound = connect.NewError(connect.CodeNotFound, errors.New("serve
 var errInvalidUsername = connect.NewError(connect.CodeInvalidArgument, errors.New("invalid username"))
 var errInvalidRoomName = connect.NewError(connect.CodeInvalidArgument, errors.New("invalid room name"))
 var errPathNotDir = connect.NewError(connect.CodeInvalidArgument, errors.New("path is not a directory"))
+var errShareNotFound = connect.NewError(connect.CodeNotFound, errors.New("share not found"))
 
 type RpcServer struct {
 	client *MultiClient
@@ -38,6 +41,14 @@ func (s *RpcServer) metaToInfo(meta *pb.MsgFileMeta) *v1.FileMeta {
 		Name:  meta.Name,
 		IsDir: meta.IsDir,
 		Size:  meta.Size,
+	}
+}
+func (s *RpcServer) shareRecToInfo(share storage.ShareRecord) *v1.ShareInfo {
+	return &v1.ShareInfo{
+		ServerUuid: share.Server,
+		Name:       share.Name,
+		Path:       share.Path,
+		CreatedTs:  share.CreatedTs.Unix(),
 	}
 }
 
@@ -170,19 +181,68 @@ func (s *RpcServer) UpdateServer(ctx context.Context, request *v1.UpdateServerRe
 }
 
 func (s *RpcServer) GetShares(ctx context.Context, request *v1.GetSharesRequest) (*v1.GetSharesResponse, error) {
+	_, has := s.client.GetByUuid(request.ServerUuid)
+	if !has {
+		return nil, errServerNotFound
+	}
 
-	//TODO implement me
-	panic("implement me")
+	records, err := s.client.storage.GetSharesByServer(ctx, request.ServerUuid)
+	if err != nil {
+		return nil, err
+	}
+
+	infos := make([]*v1.ShareInfo, len(records))
+	for i, record := range records {
+		infos[i] = s.shareRecToInfo(record)
+	}
+
+	return &v1.GetSharesResponse{
+		Shares: infos,
+	}, nil
 }
 
 func (s *RpcServer) CreateShare(ctx context.Context, request *v1.CreateShareRequest) (*v1.CreateShareResponse, error) {
-	//TODO implement me
-	panic("implement me")
+	srv, has := s.client.GetByUuid(request.ServerUuid)
+	if !has {
+		return nil, errServerNotFound
+	}
+
+	_, err := srv.ShareMgr.Add(ctx, request.Name, request.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	record, has, err := s.client.storage.GetShareByServerAndName(ctx, request.ServerUuid, request.Name)
+	if err != nil {
+		return nil, err
+	}
+	if !has {
+		return nil, fmt.Errorf(`failed to get newly created share record with name %q and server UUID %q`, request.Name, request.ServerUuid)
+	}
+
+	info := s.shareRecToInfo(record)
+	return &v1.CreateShareResponse{
+		Share: info,
+	}, nil
 }
 
 func (s *RpcServer) DeleteShare(ctx context.Context, request *v1.DeleteShareRequest) (*v1.DeleteShareResponse, error) {
-	//TODO implement me
-	panic("implement me")
+	srv, has := s.client.GetByUuid(request.ServerUuid)
+	if !has {
+		return nil, errServerNotFound
+	}
+
+	_, has = srv.ShareMgr.GetByName(request.Name)
+	if !has {
+		return nil, errShareNotFound
+	}
+
+	err := srv.ShareMgr.Delete(ctx, request.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	return &v1.DeleteShareResponse{}, nil
 }
 
 func (s *RpcServer) GetDirFiles(ctx context.Context, request *v1.GetDirFilesRequest, res *connect.ServerStream[v1.GetDirFilesResponse]) error {

@@ -29,7 +29,12 @@ type Server struct {
 	Name string
 
 	// The server record's creation timestamp.
+	// Do not update.
 	CreatedTs time.Time
+
+	// The server's share manager.
+	// Do not update.
+	ShareMgr *share.ServerShareManager
 
 	*ConnNanny
 }
@@ -165,6 +170,7 @@ func (c *MultiClient) createServerInstance(record storage.ServerRecord) (Server,
 		Uuid:      record.Uuid,
 		Name:      record.Name,
 		CreatedTs: record.CreatedTs,
+		ShareMgr:  shareMgr,
 		ConnNanny: NewConnNanny(
 			c.logger,
 			c.certStore,
@@ -215,9 +221,12 @@ func (c *MultiClient) Create(
 	}()
 
 	// Return record.
-	record, err := c.storage.GetServerByUuid(ctx, uuid)
+	record, has, err := c.storage.GetServerByUuid(ctx, uuid)
 	if err != nil {
 		return Server{}, fmt.Errorf(`failed to get server record for server %q (UUID: %q): %w`, name, uuid, err)
+	}
+	if !has {
+		return Server{}, fmt.Errorf(`newly created server record with UUID %q not found`, uuid)
 	}
 
 	inst, err := c.createServerInstance(record)
