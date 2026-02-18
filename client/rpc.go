@@ -63,7 +63,7 @@ func (s *RpcServer) GetServers(ctx context.Context, request *v1.GetServersReques
 }
 
 func (s *RpcServer) CreateServer(ctx context.Context, request *v1.CreateServerRequest) (*v1.CreateServerResponse, error) {
-	room, roomOk := common.NormalizeRoomName(request.Room)
+	roomName, roomOk := common.NormalizeRoomName(request.Room)
 	if !roomOk {
 		return nil, errInvalidRoomName
 	}
@@ -76,7 +76,7 @@ func (s *RpcServer) CreateServer(ctx context.Context, request *v1.CreateServerRe
 		ctx,
 		request.Name,
 		request.Address,
-		room,
+		roomName,
 		username,
 		request.Password,
 	)
@@ -125,8 +125,48 @@ func (s *RpcServer) DisconnectServer(ctx context.Context, request *v1.Disconnect
 }
 
 func (s *RpcServer) UpdateServer(ctx context.Context, request *v1.UpdateServerRequest) (*v1.UpdateServerResponse, error) {
-	//TODO implement me
-	panic("implement me")
+	var roomName *common.NormalizedRoomName
+	if request.Room != nil {
+		n, roomOk := common.NormalizeRoomName(*request.Room)
+		if !roomOk {
+			return nil, errInvalidRoomName
+		}
+		roomName = &n
+	}
+	var username *common.NormalizedUsername
+	if request.Username != nil {
+		u, usernameOk := common.NormalizeUsername(*request.Username)
+		if !usernameOk {
+			return nil, errInvalidUsername
+		}
+		username = &u
+	}
+
+	srv, has := s.client.GetByUuid(request.Uuid)
+	if !has {
+		return nil, errServerNotFound
+	}
+
+	err := s.client.Update(ctx,
+		request.Uuid,
+		request.Name,
+		request.Address,
+		roomName,
+		username,
+		request.Password,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	srv, has = s.client.GetByUuid(request.Uuid)
+	if !has {
+		return nil, errServerNotFound
+	}
+
+	return &v1.UpdateServerResponse{
+		Server: s.serverToInfo(srv),
+	}, nil
 }
 
 func (s *RpcServer) GetShares(ctx context.Context, request *v1.GetSharesRequest) (*v1.GetSharesResponse, error) {

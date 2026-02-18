@@ -234,6 +234,62 @@ func (c *MultiClient) Create(
 	return inst, nil
 }
 
+// Update updates a server's record in storage and in memory.
+// It does not interrupt any connections, and any changes to the connection parameters will take effect on the next reconnect.
+func (c *MultiClient) Update(
+	ctx context.Context,
+	uuid string,
+	name *string,
+	address *string,
+	room *common.NormalizedRoomName,
+	username *common.NormalizedUsername,
+	password *string,
+) error {
+	c.mu.Lock()
+	if c.isClosed {
+		c.mu.Unlock()
+		return ErrMultiClientClosed
+	}
+
+	server, hasServer := c.servers[uuid]
+	c.mu.Unlock()
+
+	// Update in storage.
+	err := c.storage.UpdateServer(
+		ctx,
+		uuid,
+		name,
+		address,
+		room,
+		username,
+		password,
+	)
+	if err != nil {
+		return fmt.Errorf(`failed to update server UUID %q in storage: %w`, uuid, err)
+	}
+
+	// Update in memory.
+	if hasServer {
+		if name != nil {
+			server.Name = *name
+		}
+		if address != nil {
+			server.SetAddress(*address)
+		}
+		if room != nil {
+			server.SetRoom(*room)
+		}
+		if username != nil {
+			server.SetUsername(*username)
+		}
+		if password != nil {
+			server.SetPassword(*password)
+		}
+	}
+
+	return nil
+}
+
 // DeleteByUuid deletes the server record from storage and closes its connection, if any.
 // If the server does not exist, this is a no-op.
 func (c *MultiClient) DeleteByUuid(

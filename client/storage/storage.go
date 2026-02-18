@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"friendnet.org/client/storage/migration"
 	"friendnet.org/common"
@@ -225,5 +226,49 @@ func (s *Storage) DeleteShareByServerAndName(
 		serverUuid,
 		name,
 	)
+	return err
+}
+
+// UpdateServer updates the specified server record.
+// Any nil fields will be left unchanged.
+func (s *Storage) UpdateServer(
+	ctx context.Context,
+	uuid string,
+	name *string,
+	address *string,
+	room *common.NormalizedRoomName,
+	username *common.NormalizedUsername,
+	password *string,
+) error {
+	fieldStrs := make([]string, 0, 5)
+	vals := make([]any, 0, 5)
+	if name != nil {
+		fieldStrs = append(fieldStrs, `name = ?`)
+		vals = append(vals, *name)
+	}
+	if address != nil {
+		fieldStrs = append(fieldStrs, `address = ?`)
+		vals = append(vals, *address)
+	}
+	if room != nil {
+		fieldStrs = append(fieldStrs, `room = ?`)
+		vals = append(vals, room.String())
+	}
+	if username != nil {
+		fieldStrs = append(fieldStrs, `username = ?`)
+		vals = append(vals, username.String())
+	}
+	if password != nil {
+		fieldStrs = append(fieldStrs, `password = ?`)
+		vals = append(vals, *password)
+	}
+
+	// Nothing to update.
+	if len(fieldStrs) == 0 {
+		return nil
+	}
+
+	syntax := fmt.Sprintf(`update server set %s where uuid = ?`, strings.Join(fieldStrs, ", "))
+	_, err := s.db.ExecContext(ctx, syntax, append(vals, uuid)...)
 	return err
 }

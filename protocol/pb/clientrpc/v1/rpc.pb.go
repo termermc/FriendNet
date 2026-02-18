@@ -824,12 +824,14 @@ type UpdateServerRequest struct {
 	Uuid string `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
 	// The new name, if any.
 	Name *string `protobuf:"bytes,2,opt,name=name,proto3,oneof" json:"name,omitempty"`
+	// The new address, if any.
+	Address *string `protobuf:"bytes,3,opt,name=address,proto3,oneof" json:"address,omitempty"`
 	// The new room, if any.
-	Room *string `protobuf:"bytes,3,opt,name=room,proto3,oneof" json:"room,omitempty"`
+	Room *string `protobuf:"bytes,4,opt,name=room,proto3,oneof" json:"room,omitempty"`
 	// The new username, if any.
-	Username *string `protobuf:"bytes,4,opt,name=username,proto3,oneof" json:"username,omitempty"`
+	Username *string `protobuf:"bytes,5,opt,name=username,proto3,oneof" json:"username,omitempty"`
 	// The new password, if any.
-	Password      *string `protobuf:"bytes,5,opt,name=password,proto3,oneof" json:"password,omitempty"`
+	Password      *string `protobuf:"bytes,6,opt,name=password,proto3,oneof" json:"password,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -874,6 +876,13 @@ func (x *UpdateServerRequest) GetUuid() string {
 func (x *UpdateServerRequest) GetName() string {
 	if x != nil && x.Name != nil {
 		return *x.Name
+	}
+	return ""
+}
+
+func (x *UpdateServerRequest) GetAddress() string {
+	if x != nil && x.Address != nil {
+		return *x.Address
 	}
 	return ""
 }
@@ -1496,14 +1505,17 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\x15ConnectServerResponse\"-\n" +
 	"\x17DisconnectServerRequest\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\tR\x04uuid\"\x1a\n" +
-	"\x18DisconnectServerResponse\"\xc9\x01\n" +
+	"\x18DisconnectServerResponse\"\xf4\x01\n" +
 	"\x13UpdateServerRequest\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\tR\x04uuid\x12\x17\n" +
-	"\x04name\x18\x02 \x01(\tH\x00R\x04name\x88\x01\x01\x12\x17\n" +
-	"\x04room\x18\x03 \x01(\tH\x01R\x04room\x88\x01\x01\x12\x1f\n" +
-	"\busername\x18\x04 \x01(\tH\x02R\busername\x88\x01\x01\x12\x1f\n" +
-	"\bpassword\x18\x05 \x01(\tH\x03R\bpassword\x88\x01\x01B\a\n" +
-	"\x05_nameB\a\n" +
+	"\x04name\x18\x02 \x01(\tH\x00R\x04name\x88\x01\x01\x12\x1d\n" +
+	"\aaddress\x18\x03 \x01(\tH\x01R\aaddress\x88\x01\x01\x12\x17\n" +
+	"\x04room\x18\x04 \x01(\tH\x02R\x04room\x88\x01\x01\x12\x1f\n" +
+	"\busername\x18\x05 \x01(\tH\x03R\busername\x88\x01\x01\x12\x1f\n" +
+	"\bpassword\x18\x06 \x01(\tH\x04R\bpassword\x88\x01\x01B\a\n" +
+	"\x05_nameB\n" +
+	"\n" +
+	"\b_addressB\a\n" +
 	"\x05_roomB\v\n" +
 	"\t_usernameB\v\n" +
 	"\t_password\"K\n" +

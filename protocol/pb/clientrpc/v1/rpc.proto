@@ -126,14 +126,17 @@ message UpdateServerRequest {
     // The new name, if any.
     optional string name = 2;
 
+    // The new address, if any.
+    optional string address = 3;
+
     // The new room, if any.
-    optional string room = 3;
+    optional string room = 4;
 
     // The new username, if any.
-    optional string username = 4;
+    optional string username = 5;
 
     // The new password, if any.
-    optional string password = 5;
+    optional string password = 6;
 }
 message UpdateServerResponse {
     // The server after update.

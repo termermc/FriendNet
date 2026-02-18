@@ -97,6 +97,42 @@ func (n *ConnNanny) Username() common.NormalizedUsername {
 	return n.creds.Username
 }
 
+// SetAddress sets the server address.
+// It will not interrupt any open connection and will only take effect on the next reconnection.
+// It does not persist any changes to any kind of storage, it is only for this ConnNanny instance.
+func (n *ConnNanny) SetAddress(address string) {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	n.address = address
+}
+
+// SetRoom sets the name of the room the connection is for.
+// It will not interrupt any open connection and will only take effect on the next reconnection.
+// It does not persist any changes to any kind of storage, it is only for this ConnNanny instance.
+func (n *ConnNanny) SetRoom(room common.NormalizedRoomName) {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	n.creds.Room = room
+}
+
+// SetUsername sets the username used to connect to the room.
+// It will not interrupt any open connection and will only take effect on the next reconnection.
+// It does not persist any changes to any kind of storage, it is only for this ConnNanny instance.
+func (n *ConnNanny) SetUsername(username common.NormalizedUsername) {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	n.creds.Username = username
+}
+
+// SetPassword sets the password used to connect to the room.
+// It will not interrupt any open connection and will only take effect on the next reconnection.
+// It does not persist any changes to any kind of storage, it is only for this ConnNanny instance.
+func (n *ConnNanny) SetPassword(password string) {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	n.creds.Password = password
+}
+
 // WaitOpen blocks until the underlying connection is open, ctx is done, or the nanny is closed.
 // The returned *room.Conn is a snapshot; it may become unusable at any time due to disconnects.
 // Callers should not retain it beyond a short-lived operation.
