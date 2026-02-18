@@ -15,6 +15,9 @@
 
 		// Type Checking & Safety
 		"strict": true,
-		"types": ["vite/client"]
-	}
+		"types": ["vite/client"],
+	},
+	"include": [
+		"src/**/*"
+	],
 }

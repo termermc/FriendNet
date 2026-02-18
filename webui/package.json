@@ -8,7 +8,8 @@
 		"dev": "vite",
 		"build": "vite build",
 		"serve": "vite preview",
-		"fmt": "prettier --write ."
+		"fmt": "prettier --write .",
+		"check": "tsc --noEmit"
 	},
 	"license": "AGPL-3.0-only",
 	"devDependencies": {
