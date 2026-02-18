@@ -186,12 +186,7 @@ message GetDirFilesRequest {
     string path = 3;
 }
 message GetDirFilesResponse {
-    // The directory's metadata.
-    // This will only be set on the first message.
-    optional FileMeta meta = 1;
-
     // The directory's files.
-    // This may be empty in the first message, but may have entries as well.
     repeated FileMeta content = 2;
 }
 
@@ -267,10 +262,9 @@ service ClientRpcService {
     rpc DeleteShare(DeleteShareRequest) returns (DeleteShareResponse) {}
 
     // GetDirFiles requests the files within a directory shared by an online user.
-    // The first message will contain metadata about the path, and optionally a list of files within it.
-    // Each subsequent message will not contain metadata and will contain files within the path.
-    // If the path is not a directory, it will only return one message with metadata, then stop.
+    // Each message will contain files within the path.
     //
+    // Returns INVALID_ARGUMENT if the path is not a directory.
     // Returns NOT_FOUND if no such server exists.
     // Returns NOT_FOUND if no such path exists.
     // Returns UNAVAILABLE if the user is offline or otherwise cannot be reached.

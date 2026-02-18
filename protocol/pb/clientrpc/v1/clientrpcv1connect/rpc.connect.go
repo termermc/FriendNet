@@ -113,10 +113,9 @@ type ClientRpcServiceClient interface {
 	// Returns NOT_FOUND if no such share exists.
 	DeleteShare(context.Context, *v1.DeleteShareRequest) (*v1.DeleteShareResponse, error)
 	// GetDirFiles requests the files within a directory shared by an online user.
-	// The first message will contain metadata about the path, and optionally a list of files within it.
-	// Each subsequent message will not contain metadata and will contain files within the path.
-	// If the path is not a directory, it will only return one message with metadata, then stop.
+	// Each message will contain files within the path.
 	//
+	// Returns INVALID_ARGUMENT if the path is not a directory.
 	// Returns NOT_FOUND if no such server exists.
 	// Returns NOT_FOUND if no such path exists.
 	// Returns UNAVAILABLE if the user is offline or otherwise cannot be reached.
@@ -378,10 +377,9 @@ type ClientRpcServiceHandler interface {
 	// Returns NOT_FOUND if no such share exists.
 	DeleteShare(context.Context, *v1.DeleteShareRequest) (*v1.DeleteShareResponse, error)
 	// GetDirFiles requests the files within a directory shared by an online user.
-	// The first message will contain metadata about the path, and optionally a list of files within it.
-	// Each subsequent message will not contain metadata and will contain files within the path.
-	// If the path is not a directory, it will only return one message with metadata, then stop.
+	// Each message will contain files within the path.
 	//
+	// Returns INVALID_ARGUMENT if the path is not a directory.
 	// Returns NOT_FOUND if no such server exists.
 	// Returns NOT_FOUND if no such path exists.
 	// Returns UNAVAILABLE if the user is offline or otherwise cannot be reached.

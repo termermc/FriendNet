@@ -149,6 +149,17 @@ func (s *Storage) GetServers(ctx context.Context) ([]ServerRecord, error) {
 	return records, nil
 }
 
+// GetServerByUuid returns the server record with the specified UUID.
+func (s *Storage) GetServerByUuid(ctx context.Context, uuid string) (ServerRecord, error) {
+	row := s.db.QueryRowContext(ctx, `select * from server where uuid = ?`, uuid)
+	var record ServerRecord
+	record, _, err := ScanServerRecord(row)
+	if err != nil {
+		return ServerRecord{}, err
+	}
+	return record, nil
+}
+
 // DeleteServerByUuid will delete the server record with the specified UUID.
 // Any other records associated with it will also be deleted.
 // If the server does not exist, this is a no-op.

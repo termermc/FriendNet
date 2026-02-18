@@ -3,13 +3,16 @@ package client
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"sync"
+	"time"
 
 	"friendnet.org/client/cert"
 	"friendnet.org/client/room"
 	"friendnet.org/client/share"
 	"friendnet.org/client/storage"
+	"friendnet.org/common"
 )
 
 // ErrMultiClientClosed is returned by MultiClient methods when the MultiClient is closed.
@@ -20,6 +23,13 @@ type Server struct {
 	// The server UUID.
 	// Do not update.
 	Uuid string
+
+	// The name set for the server.
+	// Do not update.
+	Name string
+
+	// The server record's creation timestamp.
+	CreatedTs time.Time
 
 	*ConnNanny
 }
@@ -57,44 +67,27 @@ func NewMultiClient(
 		return nil, err
 	}
 
-	servers := make(map[string]Server, len(serverRecs))
-	for _, record := range serverRecs {
-		var shareMgr *share.ServerShareManager
-		shareMgr, err = share.NewServerShareManager(
-			record.Uuid,
-			storage,
-		)
-		if err != nil {
-			ctxCancel()
-			return nil, err
-		}
-
-		logic := room.NewLogicImpl(shareMgr)
-
-		servers[record.Uuid] = Server{
-			Uuid: record.Uuid,
-			ConnNanny: NewConnNanny(
-				logger,
-				certStore,
-				record.Address,
-				room.Credentials{
-					Room:     record.Room,
-					Username: record.Username,
-					Password: record.Password,
-				},
-				logic,
-			),
-		}
-	}
-
-	return &MultiClient{
+	c := &MultiClient{
 		ctx:       ctx,
 		ctxCancel: ctxCancel,
 		logger:    logger,
 		storage:   storage,
 		certStore: certStore,
-		servers:   servers,
-	}, nil
+		servers:   make(map[string]Server, len(serverRecs)),
+	}
+
+	for _, record := range serverRecs {
+		var inst Server
+		inst, err = c.createServerInstance(record)
+		if err != nil {
+			ctxCancel()
+			return nil, err
+		}
+
+		c.servers[record.Uuid] = inst
+	}
+
+	return c, nil
 }
 
 func (c *MultiClient) snapshotServers() []Server {
@@ -154,4 +147,121 @@ func (c *MultiClient) GetByUuid(uuid string) (Server, bool) {
 
 	server, has := c.servers[uuid]
 	return server, has
+}
+
+func (c *MultiClient) createServerInstance(record storage.ServerRecord) (Server, error) {
+	var shareMgr *share.ServerShareManager
+	shareMgr, err := share.NewServerShareManager(
+		record.Uuid,
+		c.storage,
+	)
+	if err != nil {
+		return Server{}, err
+	}
+
+	logic := room.NewLogicImpl(shareMgr)
+
+	return Server{
+		Uuid:      record.Uuid,
+		Name:      record.Name,
+		CreatedTs: record.CreatedTs,
+		ConnNanny: NewConnNanny(
+			c.logger,
+			c.certStore,
+			record.Address,
+			room.Credentials{
+				Room:     record.Room,
+				Username: record.Username,
+				Password: record.Password,
+			},
+			logic,
+		),
+	}, nil
+}
+
+// Create creates a new server record in storage and starts managing a connection to it.
+func (c *MultiClient) Create(
+	ctx context.Context,
+	name string,
+	address string,
+	room common.NormalizedRoomName,
+	username common.NormalizedUsername,
+	password string,
+) (Server, error) {
+	c.mu.Lock()
+	if c.isClosed {
+		c.mu.Unlock()
+		return Server{}, ErrMultiClientClosed
+	}
+	c.mu.Unlock()
+
+	uuid, err := c.storage.CreateServer(
+		ctx,
+		name,
+		address,
+		room,
+		username,
+		password,
+	)
+	if err != nil {
+		return Server{}, fmt.Errorf(`failed to create server %q in storage: %w`, name, err)
+	}
+
+	ok := false
+	defer func() {
+		if !ok {
+			_ = c.storage.DeleteServerByUuid(ctx, uuid)
+		}
+	}()
+
+	// Return record.
+	record, err := c.storage.GetServerByUuid(ctx, uuid)
+	if err != nil {
+		return Server{}, fmt.Errorf(`failed to get server record for server %q (UUID: %q): %w`, name, uuid, err)
+	}
+
+	inst, err := c.createServerInstance(record)
+	if err != nil {
+		return Server{}, fmt.Errorf(`failed to create server instance for server %q (UUID: %q): %w`, name, uuid, err)
+	}
+
+	c.mu.Lock()
+	c.servers[uuid] = inst
+	c.mu.Unlock()
+
+	ok = true
+
+	return inst, nil
+}
+
+// DeleteByUuid deletes the server record from storage and closes its connection, if any.
+// If the server does not exist, this is a no-op.
+func (c *MultiClient) DeleteByUuid(
+	ctx context.Context,
+	uuid string,
+) error {
+	c.mu.Lock()
+	if c.isClosed {
+		c.mu.Unlock()
+		return ErrMultiClientClosed
+	}
+
+	conn, hasConn := c.servers[uuid]
+	if hasConn {
+		delete(c.servers, uuid)
+	}
+	c.mu.Unlock()
+
+	// Delete server in storage.
+	// We do this without checking hasConn because it may still exist in storage even if not in memory.
+	err := c.storage.DeleteServerByUuid(ctx, uuid)
+	if err != nil {
+		return fmt.Errorf(`failed to delete server %q from storage: %w`, uuid, err)
+	}
+
+	if hasConn {
+		_ = conn.Close()
+	}
+
+	return nil
 }

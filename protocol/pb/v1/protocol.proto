@@ -139,6 +139,9 @@ enum ErrType {
 
     // Permission denied.
     ERR_TYPE_PERMISSION_DENIED = 10;
+
+    // A path did not point to a directory.
+    ERR_TYPE_PATH_NOT_DIRECTORY = 11;
 }
 
 // An error, usually sent by the server.

@@ -52,13 +52,10 @@ var ClientMessageHandlersImpl = ClientMessageHandlers{
 	},
 
 	OnOpenOutboundProxy: func(ctx context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgOpenOutboundProxy]) error {
-		// Create proxy.
-		const magicProxyTargetNotOnlineStatus = 101
-
 		// Validate username.
 		targetUsername, usernameValid := common.NormalizeUsername(msg.Payload.TargetUsername)
 		if !usernameValid {
-			bidi.Stream.CancelRead(magicProxyTargetNotOnlineStatus)
+			bidi.Stream.CancelRead(protocol.ProxyPeerUnreachableStreamErrorCode)
 			return nil
 		}
 

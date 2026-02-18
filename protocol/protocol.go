@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -18,8 +19,11 @@ import (
 
 // TODO Implement timeouts for all reads.
 
-// TODO Include extra headers?
-// I'm thinking of having a header enum for different headers that can be included, and the value for each is a byte string.
+// ProxyPeerUnreachableStreamErrorCode is the code inside a quic.StreamError returned to a proxy initiator when the destination peer is unreachable.
+const ProxyPeerUnreachableStreamErrorCode quic.StreamErrorCode = 101
+
+// ErrPeerUnreachable is returned when a peer is unreachable.
+var ErrPeerUnreachable = errors.New("peer unreachable")
 
 const msgHeaderSize = 8
 
@@ -205,6 +209,7 @@ func NewProtoStreamReader(stream io.Reader) *ProtoStreamReader {
 
 // ReadRaw tries to read a protocol message from the stream.
 // It does not do any special handling for error types.
+// If the bidi was closed because a remote peer was unreachable, returns ErrPeerUnreachable.
 func (r *ProtoStreamReader) ReadRaw() (*UntypedProtoMsg, error) {
 	var (
 		n   int
@@ -221,6 +226,13 @@ func (r *ProtoStreamReader) ReadRaw() (*UntypedProtoMsg, error) {
 			headerRead += n
 		}
 		if err != nil {
+			var streamErr *quic.StreamError
+			if errors.As(err, &streamErr) {
+				if streamErr.ErrorCode == ProxyPeerUnreachableStreamErrorCode {
+					return nil, ErrPeerUnreachable
+				}
+			}
+
 			if err == io.EOF && headerRead == len(header) {
 				break
 			}
@@ -330,6 +342,7 @@ func ReadExpect[T proto.Message](r *ProtoStreamReader, expectedType pb.MsgType) 
 // ProtoStreamWriter wraps a QUIC receive stream to write protocol messages.
 // It does not manage the stream lifecycle or hijack it in any way;
 // the caller can write raw data to the stream if they need to.
+// If the bidi was closed because a remote peer was unreachable, returns ErrPeerUnreachable.
 type ProtoStreamWriter struct {
 	stream io.Writer
 }
@@ -364,6 +377,13 @@ func (w *ProtoStreamWriter) Write(typ pb.MsgType, msg proto.Message) error {
 	for written < len(msgBuf) {
 		n, err := w.stream.Write(msgBuf[written:])
 		if err != nil {
+			var streamErr *quic.StreamError
+			if errors.As(err, &streamErr) {
+				if streamErr.ErrorCode == ProxyPeerUnreachableStreamErrorCode {
+					return ErrPeerUnreachable
+				}
+			}
+
 			return fmt.Errorf(`failed to write payload for message type %s while %d bytes in: %w`,
 				typ.String(),
 				written,

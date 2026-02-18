@@ -82,6 +82,11 @@ func NewConnNanny(
 	return n
 }
 
+// Address returns the server address.
+func (n *ConnNanny) Address() string {
+	return n.address
+}
+
 // Room returns the name of the room the connection is for.
 func (n *ConnNanny) Room() common.NormalizedRoomName {
 	return n.creds.Room
@@ -143,6 +148,7 @@ func (n *ConnNanny) TryDo(fn func(*room.Conn) error) error {
 
 // Do waits until the connection is open (or ctx done), then calls fn with the current connection snapshot.
 // fn is called without holding the nanny lock.
+// If you want to return a value, use DoValue.
 func (n *ConnNanny) Do(
 	ctx context.Context,
 	fn func(ctx context.Context, c *room.Conn) error,
@@ -150,6 +156,20 @@ func (n *ConnNanny) Do(
 	c, err := n.WaitOpen(ctx)
 	if err != nil {
 		return err
+	}
+	return fn(ctx, c)
+}
+
+// DoValue is like ConnNanny.Do, but returns a value.
+func DoValue[T any](
+	n *ConnNanny,
+	ctx context.Context,
+	fn func(ctx context.Context, c *room.Conn) (T, error),
+) (T, error) {
+	c, err := n.WaitOpen(ctx)
+	if err != nil {
+		var empty T
+		return empty, err
 	}
 	return fn(ctx, c)
 }

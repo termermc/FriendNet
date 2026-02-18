@@ -187,6 +187,8 @@ const (
 	ErrType_ERR_TYPE_UNIMPLEMENTED ErrType = 9
 	// Permission denied.
 	ErrType_ERR_TYPE_PERMISSION_DENIED ErrType = 10
+	// A path did not point to a directory.
+	ErrType_ERR_TYPE_PATH_NOT_DIRECTORY ErrType = 11
 )
 
 // Enum value maps for ErrType.
@@ -203,6 +205,7 @@ var (
 		8:  "ERR_TYPE_FILE_NOT_EXIST",
 		9:  "ERR_TYPE_UNIMPLEMENTED",
 		10: "ERR_TYPE_PERMISSION_DENIED",
+		11: "ERR_TYPE_PATH_NOT_DIRECTORY",
 	}
 	ErrType_value = map[string]int32{
 		"ERR_TYPE_UNSPECIFIED":         0,
@@ -216,6 +219,7 @@ var (
 		"ERR_TYPE_FILE_NOT_EXIST":      8,
 		"ERR_TYPE_UNIMPLEMENTED":       9,
 		"ERR_TYPE_PERMISSION_DENIED":   10,
+		"ERR_TYPE_PATH_NOT_DIRECTORY":  11,
 	}
 )
 
@@ -1502,7 +1506,7 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x12MSG_TYPE_FILE_META\x10\x10\x12\x15\n" +
 	"\x11MSG_TYPE_GET_FILE\x10\x11\x12\x1d\n" +
 	"\x19MSG_TYPE_GET_ONLINE_USERS\x10\x12\x12\x19\n" +
-	"\x15MSG_TYPE_ONLINE_USERS\x10\x13*\xca\x02\n" +
+	"\x15MSG_TYPE_ONLINE_USERS\x10\x13*\xeb\x02\n" +
 	"\aErrType\x12\x18\n" +
 	"\x14ERR_TYPE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11ERR_TYPE_INTERNAL\x10\x01\x12\x1e\n" +
@@ -1515,7 +1519,8 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x17ERR_TYPE_FILE_NOT_EXIST\x10\b\x12\x1a\n" +
 	"\x16ERR_TYPE_UNIMPLEMENTED\x10\t\x12\x1e\n" +
 	"\x1aERR_TYPE_PERMISSION_DENIED\x10\n" +
-	"*\x8e\x01\n" +
+	"\x12\x1f\n" +
+	"\x1bERR_TYPE_PATH_NOT_DIRECTORY\x10\v*\x8e\x01\n" +
 	"\x16VersionRejectionReason\x12(\n" +
 	"$VERSION_REJECTION_REASON_UNSPECIFIED\x10\x00\x12$\n" +
 	" VERSION_REJECTION_REASON_TOO_OLD\x10\x02\x12$\n" +

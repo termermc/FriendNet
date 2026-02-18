@@ -1,6 +1,15 @@
 package common
 
-import "strings"
+import (
+	"errors"
+	"strings"
+)
+
+// ErrInvalidUsername is returned when an invalid username is encountered.
+var ErrInvalidUsername = errors.New("invalid username")
+
+// ErrInvalidRoomName is returned when an invalid room name is encountered.
+var ErrInvalidRoomName = errors.New("invalid room name")
 
 // NormalizedUsername is a normalized, valid username.
 //

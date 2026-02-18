@@ -1297,11 +1297,7 @@ func (x *GetDirFilesRequest) GetPath() string {
 
 type GetDirFilesResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The directory's metadata.
-	// This will only be set on the first message.
-	Meta *FileMeta `protobuf:"bytes,1,opt,name=meta,proto3,oneof" json:"meta,omitempty"`
 	// The directory's files.
-	// This may be empty in the first message, but may have entries as well.
 	Content       []*FileMeta `protobuf:"bytes,2,rep,name=content,proto3" json:"content,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1335,13 +1331,6 @@ func (x *GetDirFilesResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetDirFilesResponse.ProtoReflect.Descriptor instead.
 func (*GetDirFilesResponse) Descriptor() ([]byte, []int) {
 	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{25}
-}
-
-func (x *GetDirFilesResponse) GetMeta() *FileMeta {
-	if x != nil {
-		return x.Meta
-	}
-	return nil
 }
 
 func (x *GetDirFilesResponse) GetContent() []*FileMeta {
@@ -1541,11 +1530,9 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\vserver_uuid\x18\x01 \x01(\tR\n" +
 	"serverUuid\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x12\n" +
-	"\x04path\x18\x03 \x01(\tR\x04path\"\x87\x01\n" +
-	"\x13GetDirFilesResponse\x122\n" +
-	"\x04meta\x18\x01 \x01(\v2\x19.pb.clientrpc.v1.FileMetaH\x00R\x04meta\x88\x01\x01\x123\n" +
-	"\acontent\x18\x02 \x03(\v2\x19.pb.clientrpc.v1.FileMetaR\acontentB\a\n" +
-	"\x05_meta\"e\n" +
+	"\x04path\x18\x03 \x01(\tR\x04path\"J\n" +
+	"\x13GetDirFilesResponse\x123\n" +
+	"\acontent\x18\x02 \x03(\v2\x19.pb.clientrpc.v1.FileMetaR\acontent\"e\n" +
 	"\x12GetFileMetaRequest\x12\x1f\n" +
 	"\vserver_uuid\x18\x01 \x01(\tR\n" +
 	"serverUuid\x12\x1a\n" +
@@ -1618,38 +1605,37 @@ var file_pb_clientrpc_v1_rpc_proto_depIdxs = []int32{
 	0,  // 2: pb.clientrpc.v1.UpdateServerResponse.server:type_name -> pb.clientrpc.v1.ServerInfo
 	1,  // 3: pb.clientrpc.v1.GetSharesResponse.shares:type_name -> pb.clientrpc.v1.ShareInfo
 	1,  // 4: pb.clientrpc.v1.CreateShareResponse.share:type_name -> pb.clientrpc.v1.ShareInfo
-	3,  // 5: pb.clientrpc.v1.GetDirFilesResponse.meta:type_name -> pb.clientrpc.v1.FileMeta
-	3,  // 6: pb.clientrpc.v1.GetDirFilesResponse.content:type_name -> pb.clientrpc.v1.FileMeta
-	3,  // 7: pb.clientrpc.v1.GetFileMetaResponse.meta:type_name -> pb.clientrpc.v1.FileMeta
-	4,  // 8: pb.clientrpc.v1.ClientRpcService.Stop:input_type -> pb.clientrpc.v1.StopRequest
-	6,  // 9: pb.clientrpc.v1.ClientRpcService.GetServers:input_type -> pb.clientrpc.v1.GetServersRequest
-	8,  // 10: pb.clientrpc.v1.ClientRpcService.CreateServer:input_type -> pb.clientrpc.v1.CreateServerRequest
-	10, // 11: pb.clientrpc.v1.ClientRpcService.DeleteServer:input_type -> pb.clientrpc.v1.DeleteServerRequest
-	12, // 12: pb.clientrpc.v1.ClientRpcService.ConnectServer:input_type -> pb.clientrpc.v1.ConnectServerRequest
-	14, // 13: pb.clientrpc.v1.ClientRpcService.DisconnectServer:input_type -> pb.clientrpc.v1.DisconnectServerRequest
-	16, // 14: pb.clientrpc.v1.ClientRpcService.UpdateServer:input_type -> pb.clientrpc.v1.UpdateServerRequest
-	18, // 15: pb.clientrpc.v1.ClientRpcService.GetShares:input_type -> pb.clientrpc.v1.GetSharesRequest
-	20, // 16: pb.clientrpc.v1.ClientRpcService.CreateShare:input_type -> pb.clientrpc.v1.CreateShareRequest
-	22, // 17: pb.clientrpc.v1.ClientRpcService.DeleteShare:input_type -> pb.clientrpc.v1.DeleteShareRequest
-	24, // 18: pb.clientrpc.v1.ClientRpcService.GetDirFiles:input_type -> pb.clientrpc.v1.GetDirFilesRequest
-	26, // 19: pb.clientrpc.v1.ClientRpcService.GetFileMeta:input_type -> pb.clientrpc.v1.GetFileMetaRequest
-	5,  // 20: pb.clientrpc.v1.ClientRpcService.Stop:output_type -> pb.clientrpc.v1.StopResponse
-	7,  // 21: pb.clientrpc.v1.ClientRpcService.GetServers:output_type -> pb.clientrpc.v1.GetServersResponse
-	9,  // 22: pb.clientrpc.v1.ClientRpcService.CreateServer:output_type -> pb.clientrpc.v1.CreateServerResponse
-	11, // 23: pb.clientrpc.v1.ClientRpcService.DeleteServer:output_type -> pb.clientrpc.v1.DeleteServerResponse
-	13, // 24: pb.clientrpc.v1.ClientRpcService.ConnectServer:output_type -> pb.clientrpc.v1.ConnectServerResponse
-	15, // 25: pb.clientrpc.v1.ClientRpcService.DisconnectServer:output_type -> pb.clientrpc.v1.DisconnectServerResponse
-	17, // 26: pb.clientrpc.v1.ClientRpcService.UpdateServer:output_type -> pb.clientrpc.v1.UpdateServerResponse
-	19, // 27: pb.clientrpc.v1.ClientRpcService.GetShares:output_type -> pb.clientrpc.v1.GetSharesResponse
-	21, // 28: pb.clientrpc.v1.ClientRpcService.CreateShare:output_type -> pb.clientrpc.v1.CreateShareResponse
-	23, // 29: pb.clientrpc.v1.ClientRpcService.DeleteShare:output_type -> pb.clientrpc.v1.DeleteShareResponse
-	25, // 30: pb.clientrpc.v1.ClientRpcService.GetDirFiles:output_type -> pb.clientrpc.v1.GetDirFilesResponse
-	27, // 31: pb.clientrpc.v1.ClientRpcService.GetFileMeta:output_type -> pb.clientrpc.v1.GetFileMetaResponse
-	20, // [20:32] is the sub-list for method output_type
-	8,  // [8:20] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	3,  // 5: pb.clientrpc.v1.GetDirFilesResponse.content:type_name -> pb.clientrpc.v1.FileMeta
+	3,  // 6: pb.clientrpc.v1.GetFileMetaResponse.meta:type_name -> pb.clientrpc.v1.FileMeta
+	4,  // 7: pb.clientrpc.v1.ClientRpcService.Stop:input_type -> pb.clientrpc.v1.StopRequest
+	6,  // 8: pb.clientrpc.v1.ClientRpcService.GetServers:input_type -> pb.clientrpc.v1.GetServersRequest
+	8,  // 9: pb.clientrpc.v1.ClientRpcService.CreateServer:input_type -> pb.clientrpc.v1.CreateServerRequest
+	10, // 10: pb.clientrpc.v1.ClientRpcService.DeleteServer:input_type -> pb.clientrpc.v1.DeleteServerRequest
+	12, // 11: pb.clientrpc.v1.ClientRpcService.ConnectServer:input_type -> pb.clientrpc.v1.ConnectServerRequest
+	14, // 12: pb.clientrpc.v1.ClientRpcService.DisconnectServer:input_type -> pb.clientrpc.v1.DisconnectServerRequest
+	16, // 13: pb.clientrpc.v1.ClientRpcService.UpdateServer:input_type -> pb.clientrpc.v1.UpdateServerRequest
+	18, // 14: pb.clientrpc.v1.ClientRpcService.GetShares:input_type -> pb.clientrpc.v1.GetSharesRequest
+	20, // 15: pb.clientrpc.v1.ClientRpcService.CreateShare:input_type -> pb.clientrpc.v1.CreateShareRequest
+	22, // 16: pb.clientrpc.v1.ClientRpcService.DeleteShare:input_type -> pb.clientrpc.v1.DeleteShareRequest
+	24, // 17: pb.clientrpc.v1.ClientRpcService.GetDirFiles:input_type -> pb.clientrpc.v1.GetDirFilesRequest
+	26, // 18: pb.clientrpc.v1.ClientRpcService.GetFileMeta:input_type -> pb.clientrpc.v1.GetFileMetaRequest
+	5,  // 19: pb.clientrpc.v1.ClientRpcService.Stop:output_type -> pb.clientrpc.v1.StopResponse
+	7,  // 20: pb.clientrpc.v1.ClientRpcService.GetServers:output_type -> pb.clientrpc.v1.GetServersResponse
+	9,  // 21: pb.clientrpc.v1.ClientRpcService.CreateServer:output_type -> pb.clientrpc.v1.CreateServerResponse
+	11, // 22: pb.clientrpc.v1.ClientRpcService.DeleteServer:output_type -> pb.clientrpc.v1.DeleteServerResponse
+	13, // 23: pb.clientrpc.v1.ClientRpcService.ConnectServer:output_type -> pb.clientrpc.v1.ConnectServerResponse
+	15, // 24: pb.clientrpc.v1.ClientRpcService.DisconnectServer:output_type -> pb.clientrpc.v1.DisconnectServerResponse
+	17, // 25: pb.clientrpc.v1.ClientRpcService.UpdateServer:output_type -> pb.clientrpc.v1.UpdateServerResponse
+	19, // 26: pb.clientrpc.v1.ClientRpcService.GetShares:output_type -> pb.clientrpc.v1.GetSharesResponse
+	21, // 27: pb.clientrpc.v1.ClientRpcService.CreateShare:output_type -> pb.clientrpc.v1.CreateShareResponse
+	23, // 28: pb.clientrpc.v1.ClientRpcService.DeleteShare:output_type -> pb.clientrpc.v1.DeleteShareResponse
+	25, // 29: pb.clientrpc.v1.ClientRpcService.GetDirFiles:output_type -> pb.clientrpc.v1.GetDirFilesResponse
+	27, // 30: pb.clientrpc.v1.ClientRpcService.GetFileMeta:output_type -> pb.clientrpc.v1.GetFileMetaResponse
+	19, // [19:31] is the sub-list for method output_type
+	7,  // [7:19] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_pb_clientrpc_v1_rpc_proto_init() }
@@ -1658,7 +1644,6 @@ func file_pb_clientrpc_v1_rpc_proto_init() {
 		return
 	}
 	file_pb_clientrpc_v1_rpc_proto_msgTypes[16].OneofWrappers = []any{}
-	file_pb_clientrpc_v1_rpc_proto_msgTypes[25].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

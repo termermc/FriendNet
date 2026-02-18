@@ -10,6 +10,8 @@ import (
 	"friendnet.org/common"
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
+	"github.com/quic-go/quic-go"
+	"google.golang.org/protobuf/proto"
 )
 
 // ErrRoomConnClosed is returned when trying to interact with a closed room connection.
@@ -181,4 +183,65 @@ func (c *Conn) Close() error {
 	c.ctxCancel()
 
 	return nil
+}
+
+// openC2cBidiWithMsg opens a bidi to a destination peer.
+// If the peer is definitely unreachable, returns ErrPeerUnreachable.
+// It may not return an error if the peer is unreachable immediately, but read methods
+// will most likely return ErrPeerUnreachable later if the peer is unreachable.
+func (c *Conn) openC2cBidiWithMsg(
+	username common.NormalizedUsername,
+	typ pb.MsgType,
+	msg proto.Message,
+) (protocol.ProtoBidi, error) {
+	// We currently do not support direct connections, so we proxy for now.
+	bidi, err := c.serverConn.OpenBidiWithMsg(pb.MsgType_MSG_TYPE_OPEN_OUTBOUND_PROXY, &pb.MsgOpenOutboundProxy{
+		TargetUsername: username.String(),
+	})
+	if err != nil {
+		var streamErr *quic.StreamError
+		if errors.As(err, &streamErr) {
+			if streamErr.ErrorCode == protocol.ProxyPeerUnreachableStreamErrorCode {
+				return protocol.ProtoBidi{}, protocol.ErrPeerUnreachable
+			}
+		}
+
+		return protocol.ProtoBidi{}, err
+	}
+
+	err = bidi.Write(typ, msg)
+	if err != nil {
+		_ = bidi.Close()
+		return protocol.ProtoBidi{}, err
+	}
+
+	return bidi, nil
+}
+
+// GetVirtualC2cConn returns a virtual connection to a peer.
+// It does not perform any connection logic, it is simply an adapter for the peer
+// logic inside Conn.
+//
+// Methods on the returned VirtualC2cConn may return ErrPeerUnreachable if the
+// desired peer is unavailable.
+func (c *Conn) GetVirtualC2cConn(peer common.NormalizedUsername) VirtualC2cConn {
+	return VirtualC2cConn{
+		ServerConn: c,
+		Username:   peer,
+	}
+}
+
+// GetOnlineUsers returns a stream of online users.
+func (c *Conn) GetOnlineUsers() (protocol.Stream[*pb.MsgOnlineUsers], error) {
+	bidi, err := c.serverConn.OpenBidiWithMsg(pb.MsgType_MSG_TYPE_GET_ONLINE_USERS, &pb.MsgGetOnlineUsers{})
+	if err != nil {
+		return nil, err
+	}
+
+	return protocol.NewTransformerStream(
+		protocol.NewTypedMsgStream[*pb.MsgOnlineUsers](bidi, pb.MsgType_MSG_TYPE_ONLINE_USERS),
+		func(msg *protocol.TypedProtoMsg[*pb.MsgOnlineUsers]) *pb.MsgOnlineUsers {
+			return msg.Payload
+		},
+	), nil
 }
