@@ -25,7 +25,7 @@ type ServerShareManager struct {
 	ctxCancel context.CancelFunc
 
 	serverUuid string
-	storage    storage.Storage
+	storage    *storage.Storage
 
 	// A mapping of share names to their underlying Share instances.
 	shareMap map[string]Share
@@ -33,7 +33,7 @@ type ServerShareManager struct {
 
 // NewServerShareManager creates a new share manager for the given server.
 // It gets share records for the server and instantiates Share instances for them.
-func NewServerShareManager(serverUuid string, storage storage.Storage) (*ServerShareManager, error) {
+func NewServerShareManager(serverUuid string, storage *storage.Storage) (*ServerShareManager, error) {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
 	// Get shares for server.

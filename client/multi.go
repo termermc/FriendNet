@@ -50,7 +50,7 @@ type MultiClient struct {
 	ctxCancel context.CancelFunc
 
 	logger    *slog.Logger
-	storage   storage.Storage
+	storage   *storage.Storage
 	certStore cert.Store
 
 	// Mapping of server UUIDs to the Server instances that manage connections to them.
@@ -61,7 +61,7 @@ type MultiClient struct {
 // It loads all room data from storage and starts managing connections to them.
 func NewMultiClient(
 	logger *slog.Logger,
-	storage storage.Storage,
+	storage *storage.Storage,
 	certStore cert.Store,
 ) (*MultiClient, error) {
 	ctx, ctxCancel := context.WithCancel(context.Background())

@@ -15,11 +15,12 @@ import (
 
 // Storage manages application state storage.
 type Storage struct {
-	db *sql.DB
+	// The underlying SQLite database connection.
+	Db *sql.DB
 }
 
 func (s *Storage) Close() error {
-	return s.db.Close()
+	return s.Db.Close()
 }
 
 // NewStorage creates a new storage instance using the specified DB path.
@@ -80,7 +81,7 @@ func NewStorage(path string) (*Storage, error) {
 	}
 
 	return &Storage{
-		db: db,
+		Db: db,
 	}, nil
 }
 
@@ -100,7 +101,7 @@ func (s *Storage) CreateServer(
 
 	id := uuidRaw.String()
 
-	_, err = s.db.ExecContext(ctx, `
+	_, err = s.Db.ExecContext(ctx, `
 insert into server
 (
 	uuid,
@@ -127,7 +128,7 @@ insert into server
 
 // GetServers returns all server records.
 func (s *Storage) GetServers(ctx context.Context) ([]ServerRecord, error) {
-	rows, err := s.db.QueryContext(ctx, `select * from server`)
+	rows, err := s.Db.QueryContext(ctx, `select * from server`)
 	if err != nil {
 		return nil, fmt.Errorf(`failed to query servers: %w`, err)
 	}
@@ -152,7 +153,7 @@ func (s *Storage) GetServers(ctx context.Context) ([]ServerRecord, error) {
 
 // GetServerByUuid returns the server record with the specified UUID.
 func (s *Storage) GetServerByUuid(ctx context.Context, uuid string) (record ServerRecord, has bool, err error) {
-	row := s.db.QueryRowContext(ctx, `select * from server where uuid = ?`, uuid)
+	row := s.Db.QueryRowContext(ctx, `select * from server where uuid = ?`, uuid)
 	return ScanServerRecord(row)
 }
 
@@ -163,7 +164,7 @@ func (s *Storage) DeleteServerByUuid(
 	ctx context.Context,
 	uuid string,
 ) error {
-	_, err := s.db.ExecContext(ctx, `delete from server where uuid = ?`, uuid)
+	_, err := s.Db.ExecContext(ctx, `delete from server where uuid = ?`, uuid)
 	if err != nil {
 		return fmt.Errorf(`failed to delete server with UUID %q: %w`, uuid, err)
 	}
@@ -178,7 +179,7 @@ func (s *Storage) CreateShare(
 	name string,
 	path string,
 ) error {
-	_, err := s.db.ExecContext(ctx, `insert into share (server, name, path) values (?, ?, ?)`,
+	_, err := s.Db.ExecContext(ctx, `insert into share (server, name, path) values (?, ?, ?)`,
 		serverUuid,
 		name,
 		path,
@@ -188,7 +189,7 @@ func (s *Storage) CreateShare(
 
 // GetSharesByServer returns all share records for the server with the specified UUID.
 func (s *Storage) GetSharesByServer(ctx context.Context, serverUuid string) ([]ShareRecord, error) {
-	rows, err := s.db.QueryContext(ctx, `select * from share where server = ?`, serverUuid)
+	rows, err := s.Db.QueryContext(ctx, `select * from share where server = ?`, serverUuid)
 	if err != nil {
 		return nil, fmt.Errorf(`failed to query shares for server %q: %w`, serverUuid, err)
 	}
@@ -211,7 +212,7 @@ func (s *Storage) GetSharesByServer(ctx context.Context, serverUuid string) ([]S
 }
 
 func (s *Storage) GetShareByServerAndName(ctx context.Context, serverUuid string, name string) (record ShareRecord, has bool, err error) {
-	row := s.db.QueryRowContext(ctx, `select * from share where server = ? and name = ?`, serverUuid, name)
+	row := s.Db.QueryRowContext(ctx, `select * from share where server = ? and name = ?`, serverUuid, name)
 	return ScanShareRecord(row)
 }
 
@@ -222,7 +223,7 @@ func (s *Storage) DeleteShareByServerAndName(
 	serverUuid string,
 	name string,
 ) error {
-	_, err := s.db.ExecContext(ctx, `delete from share where server = ? and name = ?`,
+	_, err := s.Db.ExecContext(ctx, `delete from share where server = ? and name = ?`,
 		serverUuid,
 		name,
 	)
@@ -269,6 +270,6 @@ func (s *Storage) UpdateServer(
 	}
 
 	syntax := fmt.Sprintf(`update server set %s where uuid = ?`, strings.Join(fieldStrs, ", "))
-	_, err := s.db.ExecContext(ctx, syntax, append(vals, uuid)...)
+	_, err := s.Db.ExecContext(ctx, syntax, append(vals, uuid)...)
 	return err
 }

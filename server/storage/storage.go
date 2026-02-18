@@ -16,11 +16,12 @@ var ErrRecordExists = fmt.Errorf("record already exists")
 
 // Storage manages application state storage.
 type Storage struct {
-	db *sql.DB
+	// The underlying SQLite database connection.
+	Db *sql.DB
 }
 
 func (s *Storage) Close() error {
-	return s.db.Close()
+	return s.Db.Close()
 }
 
 // NewStorage creates a new storage instance using the specified DB path.
@@ -81,7 +82,7 @@ func NewStorage(path string) (*Storage, error) {
 	}
 
 	return &Storage{
-		db: db,
+		Db: db,
 	}, nil
 }
 
@@ -90,7 +91,7 @@ func NewStorage(path string) (*Storage, error) {
 func (s *Storage) CreateRoom(ctx context.Context, room common.NormalizedRoomName) error {
 	// TODO Return ErrRecordExists if applicable
 
-	_, err := s.db.ExecContext(ctx, `insert into room (name) values (?)`, room.String())
+	_, err := s.Db.ExecContext(ctx, `insert into room (name) values (?)`, room.String())
 	if err != nil {
 		return fmt.Errorf(`failed to create room %q: %w`, room.String(), err)
 	}
@@ -100,13 +101,13 @@ func (s *Storage) CreateRoom(ctx context.Context, room common.NormalizedRoomName
 // GetRoomByName returns the room record with the specified name, if any.
 // If the room does not exist, `has` will be false.
 func (s *Storage) GetRoomByName(ctx context.Context, room common.NormalizedRoomName) (record RoomRecord, has bool, err error) {
-	row := s.db.QueryRowContext(ctx, `select * from room where name = ?`, room.String())
+	row := s.Db.QueryRowContext(ctx, `select * from room where name = ?`, room.String())
 	return ScanRoomRecord(row)
 }
 
 // GetRooms returns all room records.
 func (s *Storage) GetRooms(ctx context.Context) ([]RoomRecord, error) {
-	rows, err := s.db.QueryContext(ctx, `select * from room`)
+	rows, err := s.Db.QueryContext(ctx, `select * from room`)
 	if err != nil {
 		return nil, fmt.Errorf(`failed to query rooms: %w`, err)
 	}
@@ -136,7 +137,7 @@ func (s *Storage) DeleteRoomByName(
 	ctx context.Context,
 	room common.NormalizedRoomName,
 ) error {
-	_, err := s.db.ExecContext(ctx, `delete from account where room = ?`, room.String())
+	_, err := s.Db.ExecContext(ctx, `delete from account where room = ?`, room.String())
 	if err != nil {
 		return fmt.Errorf(`failed to delete room with name %q: %w`, room.String(), err)
 	}
@@ -152,7 +153,7 @@ func (s *Storage) CreateAccount(
 ) error {
 	// TODO Return ErrRecordExists if applicable
 
-	_, err := s.db.ExecContext(ctx, `insert into account (room, username, password_hash) values (?, ?, ?)`,
+	_, err := s.Db.ExecContext(ctx, `insert into account (room, username, password_hash) values (?, ?, ?)`,
 		room.String(),
 		username.String(),
 		passwordHash,
@@ -166,7 +167,7 @@ func (s *Storage) GetAccountByRoomAndUsername(
 	room common.NormalizedRoomName,
 	username common.NormalizedUsername,
 ) (record AccountRecord, has bool, err error) {
-	row := s.db.QueryRowContext(ctx, `select * from account where room = ? and username = ?`,
+	row := s.Db.QueryRowContext(ctx, `select * from account where room = ? and username = ?`,
 		room.String(),
 		username.String(),
 	)
@@ -175,7 +176,7 @@ func (s *Storage) GetAccountByRoomAndUsername(
 
 // GetAccountsByRoom returns all account records for the specified room.
 func (s *Storage) GetAccountsByRoom(ctx context.Context, room common.NormalizedRoomName) ([]AccountRecord, error) {
-	rows, err := s.db.QueryContext(ctx, `select * from account where room = ?`, room.String())
+	rows, err := s.Db.QueryContext(ctx, `select * from account where room = ?`, room.String())
 	if err != nil {
 		return nil, fmt.Errorf(`failed to query accounts for room %q: %w`, room.String(), err)
 	}
@@ -205,7 +206,7 @@ func (s *Storage) UpdateAccountPasswordHash(
 	username common.NormalizedUsername,
 	passwordHash string,
 ) error {
-	_, err := s.db.ExecContext(ctx, `update account set password_hash = ? where room = ? and username = ?`,
+	_, err := s.Db.ExecContext(ctx, `update account set password_hash = ? where room = ? and username = ?`,
 		passwordHash,
 		room.String(),
 		username.String(),
@@ -227,7 +228,7 @@ func (s *Storage) DeleteAccountByRoomAndUsername(
 	room common.NormalizedRoomName,
 	username common.NormalizedUsername,
 ) error {
-	_, err := s.db.ExecContext(ctx, `delete from account where room = ? and username = ?`,
+	_, err := s.Db.ExecContext(ctx, `delete from account where room = ? and username = ?`,
 		room.String(),
 		username.String(),
 	)
