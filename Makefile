@@ -1,4 +1,4 @@
-.PHONY: help install-tools pb server client rpcclient run-rpcclient
+.PHONY: help install-tools pb pbweb server client rpcclient run-rpcclient
 
 help:
 	echo "Read the Makefile to see options"
@@ -11,6 +11,10 @@ install-tools:
 pb:
 	cd protocol && buf lint
 	cd protocol && buf generate
+
+pbweb:
+	cd webui && npx buf lint
+	cd webui && npx buf generate
 
 server:
 	cd server && go build -o friendnet-server friendnet.org/server/cmd/server

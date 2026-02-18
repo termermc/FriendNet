@@ -12,13 +12,16 @@
 	},
 	"license": "AGPL-3.0-only",
 	"devDependencies": {
+		"@bufbuild/buf": "^1.65.0",
+		"@bufbuild/protoc-gen-es": "^2.11.0",
+		"prettier": "^3.8.1",
 		"solid-devtools": "^0.34.3",
 		"typescript": "^5.7.2",
 		"vite": "^7.1.4",
-		"vite-plugin-solid": "^2.11.8",
-		"prettier": "^3.8.1"
+		"vite-plugin-solid": "^2.11.8"
 	},
 	"dependencies": {
+		"@connectrpc/connect": "^2.1.1",
 		"solid-js": "^1.9.5"
 	}
 }
