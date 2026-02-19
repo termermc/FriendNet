@@ -179,6 +179,8 @@ func (c *Conn) Close() error {
 	}
 	c.isClosed = true
 
+	// TODO Signal to the server that the client is leaving
+
 	_ = c.serverConn.CloseWithReason("closing")
 
 	c.ctxCancel()
