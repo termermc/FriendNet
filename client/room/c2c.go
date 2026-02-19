@@ -6,6 +6,7 @@ import (
 
 	"friendnet.org/common"
 	"friendnet.org/protocol"
+	pb "friendnet.org/protocol/pb/v1"
 	"github.com/quic-go/quic-go"
 )
 
@@ -57,6 +58,9 @@ loop:
 				// Handle C2C message.
 				err = nil
 				switch rawMsg.Type {
+				case pb.MsgType_MSG_TYPE_PING:
+					msg := protocol.ToTyped[*pb.MsgPing](rawMsg)
+					err = c.logic.OnPing(c.Context, c, bidi.ProtoBidi, msg)
 				default:
 					err = bidi.WriteUnimplementedError(rawMsg.Type)
 				}
