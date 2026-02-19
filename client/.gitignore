@@ -1,3 +1,2 @@
 friendnet-client
-client.json
-client_state.json
+client.db*

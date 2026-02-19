@@ -1,7 +1,8 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Client" type="GoApplicationRunConfiguration" factoryName="Go Application">
     <module name="FriendNet" />
-    <working_directory value="$PROJECT_DIR$/rpcclient" />
+    <working_directory value="$PROJECT_DIR$/client" />
+    <parameters value="-datadir ." />
     <kind value="PACKAGE" />
     <package value="friendnet.org/client/cmd/client" />
     <directory value="$PROJECT_DIR$" />
