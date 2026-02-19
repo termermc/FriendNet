@@ -73,7 +73,6 @@ func ScanServerRecord(row common.Scannable) (record ServerRecord, has bool, err 
 }
 
 type ShareRecord struct {
-	Uuid      string
 	Server    string
 	Name      string
 	Path      string
@@ -81,13 +80,12 @@ type ShareRecord struct {
 }
 
 func ScanShareRecord(row common.Scannable) (record ShareRecord, has bool, err error) {
-	var uuid string
 	var server string
 	var name string
 	var path string
 	var createdTs int64
 
-	err = row.Scan(&uuid, &server, &name, &path, &createdTs)
+	err = row.Scan(&server, &name, &path, &createdTs)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return record, false, nil
@@ -95,7 +93,6 @@ func ScanShareRecord(row common.Scannable) (record ShareRecord, has bool, err er
 		return record, false, err
 	}
 
-	record.Uuid = uuid
 	record.Server = server
 	record.Name = name
 	record.Path = path
