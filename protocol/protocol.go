@@ -482,8 +482,14 @@ func (bidi ProtoBidi) WriteUnexpectedMsgTypeError(expected pb.MsgType, actual pb
 }
 
 // WriteInternalError writes an ERR_TYPE_INTERNAL error to the provided bidi stream.
-func (bidi ProtoBidi) WriteInternalError(err error) error {
-	message := err.Error()
+// Uses the error message from the specified error, or a placeholder if it is nil.
+func (bidi ProtoBidi) WriteInternalError(errOrNil error) error {
+	var message string
+	if errOrNil == nil {
+		message = "internal error"
+	} else {
+		message = errOrNil.Error()
+	}
 	return bidi.Write(pb.MsgType_MSG_TYPE_ERROR, &pb.MsgError{
 		Type:    pb.ErrType_ERR_TYPE_INTERNAL,
 		Message: &message,

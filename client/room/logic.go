@@ -21,6 +21,11 @@ type Logic interface {
 	//
 	// S2C, C2C
 	OnPing(ctx context.Context, room *Conn, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgPing]) error
+
+	// OnGetDirFiles handles an incoming get dir files request.
+	//
+	// C2C
+	OnGetDirFiles(ctx context.Context, room *Conn, bidi C2cBidi, msg *protocol.TypedProtoMsg[*pb.MsgGetDirFiles]) error
 }
 
 // LogicImpl implements Logic.
@@ -42,4 +47,8 @@ func (l *LogicImpl) Close() error {
 
 func (l *LogicImpl) OnPing(_ context.Context, _ *Conn, bidi protocol.ProtoBidi, _ *protocol.TypedProtoMsg[*pb.MsgPing]) error {
 	return bidi.Write(pb.MsgType_MSG_TYPE_PONG, &pb.MsgPong{})
+}
+
+func (l *LogicImpl) OnGetDirFiles(_ context.Context, _ *Conn, bidi C2cBidi, _ *protocol.TypedProtoMsg[*pb.MsgGetDirFiles]) error {
+	return bidi.WriteInternalError(nil)
 }

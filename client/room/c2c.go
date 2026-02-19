@@ -61,6 +61,9 @@ loop:
 				case pb.MsgType_MSG_TYPE_PING:
 					msg := protocol.ToTyped[*pb.MsgPing](rawMsg)
 					err = c.logic.OnPing(c.Context, c, bidi.ProtoBidi, msg)
+				case pb.MsgType_MSG_TYPE_GET_DIR_FILES:
+					msg := protocol.ToTyped[*pb.MsgGetDirFiles](rawMsg)
+					err = c.logic.OnGetDirFiles(c.Context, c, bidi, msg)
 				default:
 					err = bidi.WriteUnimplementedError(rawMsg.Type)
 				}

@@ -162,6 +162,7 @@ func NewRoomConn(
 		incomingBidi: make(chan C2cBidi, incomingBidiChanSize),
 	}
 
+	// TODO Close connection if s2c loop exits.
 	go c.c2cLoop()
 	go c.s2cLoop()
 
