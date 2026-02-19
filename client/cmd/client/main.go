@@ -73,9 +73,10 @@ func main() {
 	rpc, err := common.NewRpcServer(
 		logger,
 		common.RpcServerConfig{
-			Address:        rpcAddr,
-			AllowedMethods: []string{"*"},
-			BearerToken:    rpcBearerToken,
+			Address:             rpcAddr,
+			AllowedMethods:      []string{"*"},
+			BearerToken:         rpcBearerToken,
+			CorsAllowAllOrigins: true,
 		},
 		client.NewRpcServer(multi),
 		func(impl *client.RpcServer, options ...connect.HandlerOption) (string, http.Handler) {
