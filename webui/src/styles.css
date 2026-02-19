@@ -222,11 +222,6 @@ select {
 	color: var(--muted);
 }
 
-.user-add {
-	display: flex;
-	gap: 8px;
-}
-
 .panel {
 	background: var(--panel);
 	border-radius: 18px;

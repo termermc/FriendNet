@@ -13,6 +13,7 @@ import { createConnectTransport } from '@connectrpc/connect-web'
 import {
 	ClientRpcService,
 	type FileMeta,
+	type OnlineUserInfo,
 	type ServerInfo,
 	type ShareInfo,
 } from './protobuf'
@@ -73,8 +74,11 @@ const App: Component<AppProps> = (props) => {
 	const [sharesLoading, setSharesLoading] = createSignal<Record<string, boolean>>(
 		{},
 	)
-	const [usersByServer, setUsersByServer] = createSignal<
-		Record<string, string[]>
+	const [onlineUsersByServer, setOnlineUsersByServer] = createSignal<
+		Record<string, OnlineUserInfo[]>
+	>({})
+	const [onlineUsersLoading, setOnlineUsersLoading] = createSignal<
+		Record<string, boolean>
 	>({})
 	const [selectedServerId, setSelectedServerId] = createSignal<string | null>(
 		null,
@@ -98,9 +102,9 @@ const App: Component<AppProps> = (props) => {
 		name: '',
 		path: '',
 	})
-	const [userDrafts, setUserDrafts] = createStore<Record<string, string>>({})
 
 	let dirLoadToken = 0
+	const onlineUsersLoadTokens: Record<string, number> = {}
 
 	const selectedServer = createMemo(
 		() =>
@@ -173,7 +177,11 @@ const App: Component<AppProps> = (props) => {
 			const resp = await client.getServers({})
 			const list = resp.servers ?? []
 			setServers(list)
-			await Promise.all(list.map((server) => loadShares(server.uuid)))
+			await Promise.all(
+				list.map((server) =>
+					Promise.all([loadShares(server.uuid), loadOnlineUsers(server.uuid)]),
+				),
+			)
 		} catch (err) {
 			showNotice('error', `Failed to load servers: ${String(err)}`)
 		} finally {
@@ -224,6 +232,7 @@ const App: Component<AppProps> = (props) => {
 		try {
 			await client.connectServer({ uuid: serverUuid })
 			showNotice('info', 'Server connected.')
+			void loadOnlineUsers(serverUuid)
 		} catch (err) {
 			showNotice('error', `Failed to connect server: ${String(err)}`)
 		}
@@ -233,6 +242,7 @@ const App: Component<AppProps> = (props) => {
 		try {
 			await client.disconnectServer({ uuid: serverUuid })
 			showNotice('info', 'Server disconnected.')
+			void loadOnlineUsers(serverUuid)
 		} catch (err) {
 			showNotice('error', `Failed to disconnect server: ${String(err)}`)
 		}
@@ -273,27 +283,53 @@ const App: Component<AppProps> = (props) => {
 		}
 	}
 
-	const addOnlineUser = (serverUuid: string) => {
-		const draft = userDrafts[serverUuid]?.trim() ?? ''
-		if (!draft) {
-			return
-		}
-		setUsersByServer((prev) => {
-			const current = prev[serverUuid] ?? []
-			if (current.includes(draft)) {
-				return prev
-			}
-			return { ...prev, [serverUuid]: [...current, draft] }
-		})
-		setUserDrafts(serverUuid, '')
-	}
-
 	const selectUser = (serverUuid: string, username: string) => {
 		setSelectedServerId(serverUuid)
 		setSelectedUser(username)
 		setSelectedShareName(null)
 		setDirPath('/')
 		setDirEntries([])
+	}
+
+	const loadOnlineUsers = async (serverUuid: string) => {
+		setOnlineUsersLoading((prev) => ({ ...prev, [serverUuid]: true }))
+		const token = (onlineUsersLoadTokens[serverUuid] ?? 0) + 1
+		onlineUsersLoadTokens[serverUuid] = token
+		setOnlineUsersByServer((prev) => ({ ...prev, [serverUuid]: [] }))
+		try {
+			const stream = client.getOnlineUsers({ serverUuid })
+			const collected: OnlineUserInfo[] = []
+			for await (const msg of stream) {
+				if (onlineUsersLoadTokens[serverUuid] !== token) {
+					break
+				}
+				if (msg.users?.length) {
+					collected.push(...msg.users)
+					const sorted = [...collected].sort((a, b) =>
+						a.username.localeCompare(b.username),
+					)
+					setOnlineUsersByServer((prev) => ({
+						...prev,
+						[serverUuid]: sorted,
+					}))
+				}
+			}
+			if (onlineUsersLoadTokens[serverUuid] === token) {
+				const sorted = [...collected].sort((a, b) =>
+					a.username.localeCompare(b.username),
+				)
+				setOnlineUsersByServer((prev) => ({
+					...prev,
+					[serverUuid]: sorted,
+				}))
+			}
+		} catch (err) {
+			showNotice('error', `Failed to load online users: ${String(err)}`)
+		} finally {
+			if (onlineUsersLoadTokens[serverUuid] === token) {
+				setOnlineUsersLoading((prev) => ({ ...prev, [serverUuid]: false }))
+			}
+		}
 	}
 
 	const selectShare = (serverUuid: string, share: ShareInfo) => {
@@ -528,47 +564,49 @@ const App: Component<AppProps> = (props) => {
 										<div class="server-section">
 											<div class="section-header">
 												<span>Online Users</span>
-											</div>
-											<p class="section-note">
-												Online user listing is not exposed in client RPC yet.
-												Add usernames manually to browse.
-											</p>
-											<div class="user-add">
-												<input
-													type="text"
-													placeholder="username"
-													value={userDrafts[server.uuid] ?? ''}
-													onInput={(event) =>
-														setUserDrafts(server.uuid, event.currentTarget.value)
-													}
-												/>
 												<button
 													class="ghost"
-													onClick={() => addOnlineUser(server.uuid)}
+													onClick={() => void loadOnlineUsers(server.uuid)}
 												>
-													Add
+													Reload
 												</button>
+												<Show when={onlineUsersLoading()[server.uuid]}>
+													<span class="pill">Loading…</span>
+												</Show>
 											</div>
+											<p class="section-note">
+												Online users are fetched from the client RPC.
+											</p>
 											<div class="list">
 												<Show
-													when={(usersByServer()[server.uuid] ?? []).length}
+													when={
+														(onlineUsersByServer()[server.uuid] ?? []).length
+													}
 													fallback={
-														<div class="empty">No users listed.</div>
+														<div class="empty">No users online.</div>
 													}
 												>
-													<For each={usersByServer()[server.uuid] ?? []}>
+													<For
+														each={
+															onlineUsersByServer()[server.uuid] ?? []
+														}
+													>
 														{(user) => (
 															<button
 																class={`list-row ${
-																	selectedUser() === user &&
+																	selectedUser() === user.username &&
 																	selectedServerId() === server.uuid
 																		? 'active'
 																		: ''
 																}`}
-																onClick={() => selectUser(server.uuid, user)}
+																onClick={() =>
+																	selectUser(server.uuid, user.username)
+																}
 															>
 																<div>
-																	<div class="list-title">{user}</div>
+																	<div class="list-title">
+																		{user.username}
+																	</div>
 																	<div class="list-subtitle">
 																		Browse shared files
 																	</div>
