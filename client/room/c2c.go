@@ -3,6 +3,7 @@ package room
 import (
 	"errors"
 	"io"
+	"runtime/debug"
 
 	"friendnet.org/common"
 	"friendnet.org/protocol"
@@ -34,6 +35,7 @@ loop:
 						c.logger.Error("c2c bidi handler panic",
 							"service", "room.Conn",
 							"err", err,
+							"stack", string(debug.Stack()),
 						)
 					}
 				}()

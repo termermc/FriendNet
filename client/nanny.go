@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"runtime/debug"
 	"sync"
 
 	"friendnet.org/client/cert"
@@ -219,6 +220,7 @@ func (n *ConnNanny) daemon() {
 				"room", n.creds.Room,
 				"username", n.creds.Username.String(),
 				"err", rec,
+				"stack", string(debug.Stack()),
 			)
 
 			n.mu.Lock()

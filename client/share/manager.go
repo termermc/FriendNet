@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"sync"
 
 	"friendnet.org/client/storage"
@@ -45,7 +44,8 @@ func NewServerShareManager(serverUuid string, storage *storage.Storage) (*Server
 
 	shareMap := make(map[string]Share, len(records))
 	for _, record := range records {
-		share := NewFsShare(record.Name, os.DirFS(record.Path))
+		var share Share
+		share, err = NewDirShare(record.Name, record.Path)
 		shareMap[record.Name] = share
 	}
 
@@ -115,7 +115,10 @@ func (m *ServerShareManager) Add(ctx context.Context, name string, path string) 
 	}
 
 	// Create instance.
-	share := NewFsShare(name, os.DirFS(path))
+	share, err := NewDirShare(name, path)
+	if err != nil {
+		return nil, fmt.Errorf(`failed to create share instance for share %q: %w`, name, err)
+	}
 	m.shareMap[name] = share
 
 	return share, nil

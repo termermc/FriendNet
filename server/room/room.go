@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"runtime/debug"
 	"sync"
 
 	"friendnet.org/common"
@@ -155,6 +156,8 @@ func (r *Room) Onboard(
 
 	_, has := r.clients[username.String()]
 	if has {
+		// TODO A third phase is needed after authentication, where room info is sent during onboarding, or the connection is closed with a reason.
+		// Right now, the connection assumes it is in the room after authentication finishes.
 		return ErrUsernameAlreadyConnected
 	}
 
@@ -169,6 +172,7 @@ func (r *Room) Onboard(
 					"room", r.Name.String(),
 					"username", username.String(),
 					"err", err,
+					"stack", string(debug.Stack()),
 				)
 			}
 		}()
@@ -188,7 +192,8 @@ func (r *Room) Onboard(
 					"service", "room.Client",
 					"room", r.Name.String(),
 					"username", username.String(),
-					slog.Any("err", err),
+					"err", err,
+					"stack", string(debug.Stack()),
 				)
 			}
 		}()

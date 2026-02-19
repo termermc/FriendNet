@@ -4,6 +4,8 @@ import (
 	"errors"
 	"io"
 	"io/fs"
+	"os"
+	"path/filepath"
 
 	"friendnet.org/common"
 	"friendnet.org/protocol"
@@ -27,6 +29,7 @@ type Share interface {
 
 	// GetFileMeta returns the metadata for a path.
 	// The path may be a file or a directory.
+	// Must be able to handle a request for "/".
 	//
 	// Returns fs.ErrNotExist if the path does not exist.
 	// Returns fs.ErrPermission if access is denied.
@@ -35,6 +38,7 @@ type Share interface {
 	GetFileMeta(path protocol.ProtoPath) (*pb.MsgFileMeta, error)
 
 	// DirFiles returns metadata for all files in the directory at the specified path.
+	// Must be able to handle a request for "/".
 	//
 	// Returns fs.ErrNotExist if the path does not exist.
 	// Returns fs.ErrPermission if access is denied.
@@ -58,33 +62,48 @@ type Share interface {
 	GetFile(path protocol.ProtoPath, offset uint64, limit uint64) (*pb.MsgFileMeta, io.ReadCloser, error)
 }
 
-// FsShare is an implementation of Share backed by an fs.FS instance.
-type FsShare struct {
+// DirShare is an implementation of Share backed by a directory.
+type DirShare struct {
 	name string
+	dir  string
 	fsys fs.FS
 }
 
-var _ Share = (*FsShare)(nil)
+var _ Share = (*DirShare)(nil)
 
-// Close is no-op because FsShare is stateless.
-func (s *FsShare) Close() error {
+// Close is no-op because DirShare is stateless.
+func (s *DirShare) Close() error {
 	return nil
 }
 
-// NewFsShare creates a new FsShare backed by the specified fs.FS instance.
-func NewFsShare(name string, fsys fs.FS) *FsShare {
-	return &FsShare{
-		name: name,
-		fsys: fsys,
+// NewDirShare creates a new DirShare backed by the specified directory.
+func NewDirShare(name string, dir string) (*DirShare, error) {
+	abs, err := filepath.Abs(dir)
+	if err != nil {
+		return nil, err
 	}
+
+	return &DirShare{
+		name: name,
+		dir:  abs,
+		fsys: os.DirFS(abs),
+	}, nil
 }
 
-func (s *FsShare) Name() string {
+func (s *DirShare) Name() string {
 	return s.name
 }
 
-func (s *FsShare) GetFileMeta(path protocol.ProtoPath) (*pb.MsgFileMeta, error) {
-	info, err := fs.Stat(s.fsys, path.String())
+func (s *DirShare) GetFileMeta(path protocol.ProtoPath) (*pb.MsgFileMeta, error) {
+	if path.IsRoot() {
+		return &pb.MsgFileMeta{
+			Name:  "/",
+			IsDir: true,
+			Size:  0,
+		}, nil
+	}
+
+	info, err := fs.Stat(s.fsys, path.String()[1:])
 	if err != nil {
 		// fs.Stat already returns errors compatible with fs.ErrNotExist and fs.ErrPermission.
 		return nil, err
@@ -93,8 +112,15 @@ func (s *FsShare) GetFileMeta(path protocol.ProtoPath) (*pb.MsgFileMeta, error) 
 	return fileInfoToMeta(info), nil
 }
 
-func (s *FsShare) DirFiles(path protocol.ProtoPath) ([]*pb.MsgFileMeta, error) {
-	entries, readDirErr := fs.ReadDir(s.fsys, path.String())
+func (s *DirShare) DirFiles(path protocol.ProtoPath) ([]*pb.MsgFileMeta, error) {
+	var entries []fs.DirEntry
+	var readDirErr error
+	if path.IsRoot() {
+		// DirFS does not support ReadDir on "/", so we do it directly on the directory path.
+		entries, readDirErr = os.ReadDir(s.dir)
+	} else {
+		entries, readDirErr = fs.ReadDir(s.fsys, path.String()[1:])
+	}
 	if readDirErr != nil {
 		return nil, readDirErr
 	}
@@ -111,12 +137,21 @@ func (s *FsShare) DirFiles(path protocol.ProtoPath) ([]*pb.MsgFileMeta, error) {
 	return out, nil
 }
 
-func (s *FsShare) GetFile(
+func (s *DirShare) GetFile(
 	path protocol.ProtoPath,
 	offset uint64,
 	limit uint64,
 ) (*pb.MsgFileMeta, io.ReadCloser, error) {
-	info, err := fs.Stat(s.fsys, path.String())
+	if path.IsRoot() {
+		return &pb.MsgFileMeta{
+			Name:  "/",
+			IsDir: true,
+			Size:  0,
+		}, common.EofReadCloser{}, nil
+	}
+
+	relativePath := path.String()[1:]
+	info, err := fs.Stat(s.fsys, relativePath)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -132,7 +167,7 @@ func (s *FsShare) GetFile(
 		return meta, common.EofReadCloser{}, nil
 	}
 
-	f, err := s.fsys.Open(path.String())
+	f, err := s.fsys.Open(relativePath)
 	if err != nil {
 		return nil, nil, err
 	}

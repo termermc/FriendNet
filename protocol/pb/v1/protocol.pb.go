@@ -62,7 +62,9 @@ const (
 	// All data after the notification message comes from the origin peer.
 	MsgType_MSG_TYPE_INBOUND_PROXY MsgType = 12
 	// [C2C] Request to get files inside a user's directory.
-	// Expected: Repeated message MSG_TYPE_DIR_FILES until stream is closed by receiver.
+	// Expected: Either:
+	//   - Repeated message MSG_TYPE_DIR_FILES until stream is closed by receiver.
+	//   - Message MSG_TYPE_ERROR of ERR_TYPE_FILE_NOT_EXIST.
 	MsgType_MSG_TYPE_GET_DIR_FILES MsgType = 13
 	// [C2C] A possibly non-exhaustive list of files in a directory.
 	MsgType_MSG_TYPE_DIR_FILES MsgType = 14

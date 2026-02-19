@@ -2,7 +2,10 @@ package room
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
+	"io/fs"
 
 	"friendnet.org/client/share"
 	"friendnet.org/protocol"
@@ -41,6 +44,15 @@ func NewLogicImpl(shares *share.ServerShareManager) *LogicImpl {
 	}
 }
 
+func (l *LogicImpl) validatePath(bidi protocol.ProtoBidi, path string) (protocol.ProtoPath, bool) {
+	protoPath, err := protocol.ValidatePath(path)
+	if err != nil {
+		_ = bidi.WriteError(pb.ErrType_ERR_TYPE_INVALID_FIELDS, err.Error())
+		return protocol.ZeroProtoPath, false
+	}
+	return protoPath, true
+}
+
 func (l *LogicImpl) Close() error {
 	return l.shares.Close()
 }
@@ -49,6 +61,76 @@ func (l *LogicImpl) OnPing(_ context.Context, _ *Conn, bidi protocol.ProtoBidi, 
 	return bidi.Write(pb.MsgType_MSG_TYPE_PONG, &pb.MsgPong{})
 }
 
-func (l *LogicImpl) OnGetDirFiles(_ context.Context, _ *Conn, bidi C2cBidi, _ *protocol.TypedProtoMsg[*pb.MsgGetDirFiles]) error {
-	return bidi.WriteInternalError(nil)
+func (l *LogicImpl) sendDirFiles(bidi C2cBidi, files []*pb.MsgFileMeta) error {
+	const pageSize = 50
+
+	// Send paginated.
+	sent := 0
+	for sent < len(files) {
+		end := sent + pageSize
+		if end > len(files) {
+			end = len(files)
+		}
+
+		err := bidi.Write(pb.MsgType_MSG_TYPE_DIR_FILES, &pb.MsgDirFiles{
+			Files: files[sent:end],
+		})
+		if err != nil {
+			return err
+		}
+
+		sent += pageSize
+	}
+
+	return nil
+}
+
+func (l *LogicImpl) OnGetDirFiles(_ context.Context, _ *Conn, bidi C2cBidi, msg *protocol.TypedProtoMsg[*pb.MsgGetDirFiles]) error {
+	req := msg.Payload
+	outerPath, ok := l.validatePath(bidi.ProtoBidi, req.Path)
+	if !ok {
+		return nil
+	}
+
+	if outerPath.IsRoot() {
+		// List all shares.
+		shares := l.shares.GetAll()
+		metas := make([]*pb.MsgFileMeta, len(shares))
+		for i, sh := range shares {
+			metas[i] = &pb.MsgFileMeta{
+				Name:  sh.Name(),
+				IsDir: true,
+				Size:  0,
+			}
+		}
+		return l.sendDirFiles(bidi, metas)
+	}
+
+	// Get path within share.
+	segments := outerPath.ToSegments()
+	shareName := segments[0]
+	sharePath, err := protocol.SegmentsToPath(segments[1:])
+	if err != nil {
+		return err
+	}
+
+	sh, has := l.shares.GetByName(shareName)
+	if !has {
+		return bidi.WriteError(pb.ErrType_ERR_TYPE_FILE_NOT_EXIST, fmt.Sprintf("no such path %q", shareName))
+	}
+
+	files, err := sh.DirFiles(sharePath)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return bidi.WriteError(pb.ErrType_ERR_TYPE_FILE_NOT_EXIST, fmt.Sprintf("no such path %q", shareName))
+		}
+
+		return err
+	}
+
+	if err = l.sendDirFiles(bidi, files); err != nil {
+		return err
+	}
+
+	return nil
 }

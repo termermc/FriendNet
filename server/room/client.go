@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"runtime/debug"
 	"time"
 
 	"friendnet.org/common"
@@ -127,7 +128,8 @@ func (c *Client) ReadLoop(ctx context.Context) error {
 						"service", "room.Client",
 						"room", c.Room.Name.String(),
 						"username", c.Username.String(),
-						slog.Any("err", rec),
+						"err", rec,
+						"stack", string(debug.Stack()),
 					)
 				}
 

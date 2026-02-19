@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"time"
 
+	"friendnet.org/common"
 	pb "friendnet.org/protocol/pb/v1"
 	"github.com/quic-go/quic-go"
 	"google.golang.org/protobuf/proto"
@@ -419,69 +420,25 @@ func wrapBidi(stream *quic.Stream) ProtoBidi {
 	}
 }
 
-// OpenBidiWithMsg opens a new bidirectional stream and sends the specified protocol message on it.
-// Deprecated: Use method on ProtoConn.
-func OpenBidiWithMsg(conn *quic.Conn, typ pb.MsgType, msg proto.Message) (bidi ProtoBidi, err error) {
-	return ToProtoConn(conn).OpenBidiWithMsg(typ, msg)
-}
-
-// WaitForBidi waits for a new bidirectional stream and returns when one is received.
-// Deprecated: Use method on ProtoConn.
-func WaitForBidi(ctx context.Context, conn *quic.Conn) (ProtoBidi, error) {
-	return ToProtoConn(conn).WaitForBidi(ctx)
-}
-
-// HandleBidiRequest waits for a new bidirectional stream, launches a goroutine to handle the stream, then returns immediately.
-// The new goroutine reads the first message, chooses a handler based on the MsgType, then calls it.
-// If the message's type is found in the handlers map, that handler is called.
-// If no appropriate handler is found, fallback is called (if not nil).
-// Any errors that occur during the first message read or calling the handler will call errorHandler.
-//
-// Important: handlers must never be modified after being passed to this function.
-func HandleBidiRequest(ctx context.Context, conn *quic.Conn, handlers map[pb.MsgType]BidiHandler, fallback BidiHandler, errorHandler func(error)) error {
-	bidi, bidiErr := WaitForBidi(ctx, conn)
-	if bidiErr != nil {
-		return fmt.Errorf(`failed to wait for bidi in HandleBidiRequest: %w`, bidiErr)
-	}
-
-	go func() {
-		// TODO Handle timeout.
-
-		// Read first message.
-		msg, err := bidi.Read()
-		if err != nil {
-			errorHandler(fmt.Errorf(`failed to read first proto message in HandleBidiRequest: %w`, err))
-		}
-
-		// Choose appropriate handler.
-		handler, has := handlers[msg.Type]
-		if has {
-			err = handler(conn, bidi, msg)
-		} else if fallback != nil {
-			err = fallback(conn, bidi, msg)
-		} else {
-			// TODO Log unexpected message type.
-			err = nil
-		}
-		if err != nil {
-			errorHandler(err)
-		}
-	}()
-
-	return nil
-}
-
-// WriteUnexpectedMsgTypeError writes an ERR_TYPE_UNEXPECTED_MSG_TYPE error to the provided bidi stream,
-// based on the specified expected and actual message types.
-func (bidi ProtoBidi) WriteUnexpectedMsgTypeError(expected pb.MsgType, actual pb.MsgType) error {
-	message := fmt.Sprintf("expected %s but got %s", expected.String(), actual.String())
+// WriteError writes an error message to the bidi stream.
+// If the message is empty, it will be sent as nil.
+func (bidi ProtoBidi) WriteError(typ pb.ErrType, msg string) error {
 	return bidi.Write(pb.MsgType_MSG_TYPE_ERROR, &pb.MsgError{
-		Type:    pb.ErrType_ERR_TYPE_UNEXPECTED_MSG_TYPE,
-		Message: &message,
+		Type:    typ,
+		Message: common.StrOrNil(msg),
 	})
 }
 
-// WriteInternalError writes an ERR_TYPE_INTERNAL error to the provided bidi stream.
+// WriteUnexpectedMsgTypeError writes an ERR_TYPE_UNEXPECTED_MSG_TYPE error to the bidi stream,
+// based on the specified expected and actual message types.
+func (bidi ProtoBidi) WriteUnexpectedMsgTypeError(expected pb.MsgType, actual pb.MsgType) error {
+	return bidi.WriteError(
+		pb.ErrType_ERR_TYPE_UNEXPECTED_MSG_TYPE,
+		fmt.Sprintf("expected %s but got %s", expected.String(), actual.String()),
+	)
+}
+
+// WriteInternalError writes an ERR_TYPE_INTERNAL error to the bidi stream.
 // Uses the error message from the specified error, or a placeholder if it is nil.
 func (bidi ProtoBidi) WriteInternalError(errOrNil error) error {
 	var message string
@@ -490,20 +447,16 @@ func (bidi ProtoBidi) WriteInternalError(errOrNil error) error {
 	} else {
 		message = errOrNil.Error()
 	}
-	return bidi.Write(pb.MsgType_MSG_TYPE_ERROR, &pb.MsgError{
-		Type:    pb.ErrType_ERR_TYPE_INTERNAL,
-		Message: &message,
-	})
+	return bidi.WriteError(pb.ErrType_ERR_TYPE_INTERNAL, message)
 }
 
-// WriteUnimplementedError writes an ERR_TYPE_UNIMPLEMENTED error to the provided bidi stream,
+// WriteUnimplementedError writes an ERR_TYPE_UNIMPLEMENTED error to the bidi stream,
 // based on the specified message type.
 func (bidi ProtoBidi) WriteUnimplementedError(msgType pb.MsgType) error {
-	message := fmt.Sprintf("handler for %q is unimplemented", msgType.String())
-	return bidi.Write(pb.MsgType_MSG_TYPE_ERROR, &pb.MsgError{
-		Type:    pb.ErrType_ERR_TYPE_UNIMPLEMENTED,
-		Message: &message,
-	})
+	return bidi.WriteError(
+		pb.ErrType_ERR_TYPE_UNIMPLEMENTED,
+		fmt.Sprintf("handler for %q is unimplemented", msgType.String()),
+	)
 }
 
 // CompareProtoVersions compares two protocol versions.

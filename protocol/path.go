@@ -66,6 +66,30 @@ func (u ProtoPath) String() string {
 	return u.string
 }
 
+// ToSegments returns the segments of the protocol path.
+// If the path is "/", returns an empty slice.
+//
+// For example, "/foo/bar" -> []string{"foo", "bar"}
+//
+// If calling on a zero value, panics.
+// If unsure, call ProtoPath.IsZero first.
+func (u ProtoPath) ToSegments() []string {
+	if u.IsZero() {
+		panic("tried to call ToSegments() on a zero ProtoPath")
+	}
+
+	if u.string == "/" {
+		return []string{}
+	}
+
+	return strings.Split(u.string[1:], "/")
+}
+
+// IsRoot returns whether the path is "/".
+func (u ProtoPath) IsRoot() bool {
+	return u.string == "/"
+}
+
 // ZeroProtoPath is the zero value of ProtoPath.
 // It is invalid.
 var ZeroProtoPath = ProtoPath{}
@@ -76,7 +100,7 @@ func ValidatePath(path string) (ProtoPath, error) {
 		return ProtoPath{}, NewPathError(PathErrCodeBlank, path)
 	}
 	if path == "/" {
-		return ZeroProtoPath, nil
+		return UncheckedCreateProtoPath("/"), nil
 	}
 
 	if !utf8.ValidString(path) {
@@ -138,4 +162,30 @@ func ValidatePath(path string) (ProtoPath, error) {
 	}
 
 	return UncheckedCreateProtoPath(path), nil
+}
+
+// SegmentsToPath converts a slice of path segments into a protocol path.
+// Each segment must be valid, according to the rules in the protocol's `README.md` file.
+// Returns a PathError if any segment is invalid.
+func SegmentsToPath(segments []string) (ProtoPath, error) {
+	if len(segments) == 0 {
+		return UncheckedCreateProtoPath("/"), nil
+	}
+
+	outStr := "/" + strings.Join(segments, "/")
+
+	for _, segment := range segments {
+		if !utf8.ValidString(segment) {
+			return ZeroProtoPath, NewPathError(PathErrCodeInvalidUtf8, outStr)
+		}
+		if strings.IndexByte(segment, '\x00') != -1 {
+			return ZeroProtoPath, NewPathError(PathErrCodeNullByte, outStr)
+		}
+
+		if segment == "." || segment == ".." {
+			return ZeroProtoPath, NewPathError(PathErrCodePathContainsDots, outStr)
+		}
+	}
+
+	return UncheckedCreateProtoPath(outStr), nil
 }
