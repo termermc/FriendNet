@@ -93,6 +93,11 @@ func (l *Lobby) Onboard(conn protocol.ProtoConn) {
 		// Pass ownership of connection to the room instance.
 		err = roomInst.Onboard(conn, clientVer, authUsername)
 		if err != nil {
+			if errors.Is(err, room.ErrUsernameAlreadyConnected) {
+				_ = conn.CloseWithReason("username already connected")
+				return
+			}
+
 			l.logger.Error("failed to onboard client to room",
 				"service", "main.Lobby",
 				"room", authRoom.String(),
