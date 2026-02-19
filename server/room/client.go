@@ -155,6 +155,7 @@ func (c *Client) PingLoop(ctx context.Context) {
 					"service", "room.Client",
 					"room", c.Room.Name.String(),
 					"username", c.Username.String(),
+					"err", err,
 				)
 			}
 		}
