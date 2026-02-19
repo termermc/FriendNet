@@ -98,7 +98,7 @@ func (m *ServerShareManager) GetByName(name string) (Share, bool) {
 // If a share with the same name exists, returns ErrShareExists.
 func (m *ServerShareManager) Add(ctx context.Context, name string, path string) (Share, error) {
 	m.mu.Lock()
-	defer m.mu.Lock()
+	defer m.mu.Unlock()
 	if m.isClosed {
 		return nil, ErrServerManagerClosed
 	}
