@@ -60,6 +60,10 @@ type RpcServerConfig struct {
 	// If not null or empty, the following HTTP bearer token will be required to access the RPC interface.
 	// For example, if set to "abc123", the following HTTP header must be set: "Authorization: Bearer abc123".
 	BearerToken string `json:"bearer_token,omitempty"`
+
+	// If true, sets necessary CORS headers to allow cross-origin requests.
+	// You do not need this unless the RPC interface is accessed by web browsers.
+	CorsAllowAllOrigins bool `json:"cors_allow_all_origins"`
 }
 
 // RpcHandlerConstructor is a constructor for creating an RPC handler.
@@ -103,6 +107,8 @@ type RpcServer[T io.Closer] struct {
 
 	httpServer   http.Server
 	httpListener net.Listener
+
+	corsAllowAllOrigins bool
 }
 
 type rpcServerInterceptor struct {
@@ -257,6 +263,8 @@ func NewRpcServer[T io.Closer](
 		Addr: cfg.Address,
 
 		impl: impl,
+
+		corsAllowAllOrigins: cfg.CorsAllowAllOrigins,
 	}
 
 	// Figure out listener protocol.
@@ -365,7 +373,24 @@ func NewRpcServer[T io.Closer](
 		w.WriteHeader(200)
 		_, _ = w.Write([]byte("Hi, you've reached the RPC interface.\nYou can communicate with it using gRPC, gRPC-Web, and ConnectRPC.\nHave fun!\n"))
 	})
-	mux.Handle(handlerPath, handler)
+	mux.HandleFunc(handlerPath, func(w http.ResponseWriter, r *http.Request) {
+		if s.corsAllowAllOrigins {
+			origin := r.Header.Get("Origin")
+			if origin == "" {
+				origin = "*"
+			}
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+		}
+
+		if r.Method == http.MethodOptions {
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "*")
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		handler.ServeHTTP(w, r)
+	})
 
 	httpProtos := &http.Protocols{}
 	httpProtos.SetHTTP1(true)
