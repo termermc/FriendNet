@@ -322,6 +322,47 @@ func (s *RpcServer) GetFileMeta(ctx context.Context, request *v1.GetFileMetaRequ
 	})
 }
 
+func (s *RpcServer) GetOnlineUsers(ctx context.Context, request *v1.GetOnlineUsersRequest, res *connect.ServerStream[v1.GetOnlineUsersResponse]) error {
+	srv, has := s.client.GetByUuid(request.ServerUuid)
+	if !has {
+		return errServerNotFound
+	}
+
+	return srv.Do(ctx, func(ctx context.Context, c *room.Conn) error {
+		stream, err := c.GetOnlineUsers()
+		if err != nil {
+			return err
+		}
+
+		for {
+			var msg *pb.MsgOnlineUsers
+			msg, err = stream.ReadNext()
+			if err != nil {
+				if errors.Is(err, io.EOF) {
+					break
+				}
+
+				return err
+			}
+
+			users := make([]*v1.OnlineUserInfo, len(msg.Users))
+			for i, user := range msg.Users {
+				users[i] = &v1.OnlineUserInfo{
+					Username: user.Username,
+				}
+			}
+			err = res.Send(&v1.GetOnlineUsersResponse{
+				Users: users,
+			})
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
 func NewRpcServer(client *MultiClient) *RpcServer {
 	return &RpcServer{
 		client: client,

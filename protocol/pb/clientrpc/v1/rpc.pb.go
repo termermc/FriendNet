@@ -1457,6 +1457,96 @@ func (x *GetFileMetaResponse) GetMeta() *FileMeta {
 	return nil
 }
 
+type GetOnlineUsersRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The server's UUID.
+	ServerUuid    string `protobuf:"bytes,1,opt,name=server_uuid,json=serverUuid,proto3" json:"server_uuid,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetOnlineUsersRequest) Reset() {
+	*x = GetOnlineUsersRequest{}
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetOnlineUsersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetOnlineUsersRequest) ProtoMessage() {}
+
+func (x *GetOnlineUsersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetOnlineUsersRequest.ProtoReflect.Descriptor instead.
+func (*GetOnlineUsersRequest) Descriptor() ([]byte, []int) {
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *GetOnlineUsersRequest) GetServerUuid() string {
+	if x != nil {
+		return x.ServerUuid
+	}
+	return ""
+}
+
+type GetOnlineUsersResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The users.
+	Users         []*OnlineUserInfo `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetOnlineUsersResponse) Reset() {
+	*x = GetOnlineUsersResponse{}
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetOnlineUsersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetOnlineUsersResponse) ProtoMessage() {}
+
+func (x *GetOnlineUsersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetOnlineUsersResponse.ProtoReflect.Descriptor instead.
+func (*GetOnlineUsersResponse) Descriptor() ([]byte, []int) {
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *GetOnlineUsersResponse) GetUsers() []*OnlineUserInfo {
+	if x != nil {
+		return x.Users
+	}
+	return nil
+}
+
 var File_pb_clientrpc_v1_rpc_proto protoreflect.FileDescriptor
 
 const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
@@ -1551,7 +1641,12 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x12\n" +
 	"\x04path\x18\x03 \x01(\tR\x04path\"D\n" +
 	"\x13GetFileMetaResponse\x12-\n" +
-	"\x04meta\x18\x01 \x01(\v2\x19.pb.clientrpc.v1.FileMetaR\x04meta2\xe4\b\n" +
+	"\x04meta\x18\x01 \x01(\v2\x19.pb.clientrpc.v1.FileMetaR\x04meta\"8\n" +
+	"\x15GetOnlineUsersRequest\x12\x1f\n" +
+	"\vserver_uuid\x18\x01 \x01(\tR\n" +
+	"serverUuid\"O\n" +
+	"\x16GetOnlineUsersResponse\x125\n" +
+	"\x05users\x18\x01 \x03(\v2\x1f.pb.clientrpc.v1.OnlineUserInfoR\x05users2\xcb\t\n" +
 	"\x10ClientRpcService\x12E\n" +
 	"\x04Stop\x12\x1c.pb.clientrpc.v1.StopRequest\x1a\x1d.pb.clientrpc.v1.StopResponse\"\x00\x12W\n" +
 	"\n" +
@@ -1565,7 +1660,8 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\vCreateShare\x12#.pb.clientrpc.v1.CreateShareRequest\x1a$.pb.clientrpc.v1.CreateShareResponse\"\x00\x12Z\n" +
 	"\vDeleteShare\x12#.pb.clientrpc.v1.DeleteShareRequest\x1a$.pb.clientrpc.v1.DeleteShareResponse\"\x00\x12\\\n" +
 	"\vGetDirFiles\x12#.pb.clientrpc.v1.GetDirFilesRequest\x1a$.pb.clientrpc.v1.GetDirFilesResponse\"\x000\x01\x12Z\n" +
-	"\vGetFileMeta\x12#.pb.clientrpc.v1.GetFileMetaRequest\x1a$.pb.clientrpc.v1.GetFileMetaResponse\"\x00B\xb1\x01\n" +
+	"\vGetFileMeta\x12#.pb.clientrpc.v1.GetFileMetaRequest\x1a$.pb.clientrpc.v1.GetFileMetaResponse\"\x00\x12e\n" +
+	"\x0eGetOnlineUsers\x12&.pb.clientrpc.v1.GetOnlineUsersRequest\x1a'.pb.clientrpc.v1.GetOnlineUsersResponse\"\x000\x01B\xb1\x01\n" +
 	"\x13com.pb.clientrpc.v1B\bRpcProtoP\x01Z2friendnet.org/protocol/pb/clientrpc/v1;clientrpcv1\xa2\x02\x03PCX\xaa\x02\x0fPb.Clientrpc.V1\xca\x02\x0fPb\\Clientrpc\\V1\xe2\x02\x1bPb\\Clientrpc\\V1\\GPBMetadata\xea\x02\x11Pb::Clientrpc::V1b\x06proto3"
 
 var (
@@ -1580,7 +1676,7 @@ func file_pb_clientrpc_v1_rpc_proto_rawDescGZIP() []byte {
 	return file_pb_clientrpc_v1_rpc_proto_rawDescData
 }
 
-var file_pb_clientrpc_v1_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
+var file_pb_clientrpc_v1_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
 var file_pb_clientrpc_v1_rpc_proto_goTypes = []any{
 	(*ServerInfo)(nil),               // 0: pb.clientrpc.v1.ServerInfo
 	(*ShareInfo)(nil),                // 1: pb.clientrpc.v1.ShareInfo
@@ -1610,6 +1706,8 @@ var file_pb_clientrpc_v1_rpc_proto_goTypes = []any{
 	(*GetDirFilesResponse)(nil),      // 25: pb.clientrpc.v1.GetDirFilesResponse
 	(*GetFileMetaRequest)(nil),       // 26: pb.clientrpc.v1.GetFileMetaRequest
 	(*GetFileMetaResponse)(nil),      // 27: pb.clientrpc.v1.GetFileMetaResponse
+	(*GetOnlineUsersRequest)(nil),    // 28: pb.clientrpc.v1.GetOnlineUsersRequest
+	(*GetOnlineUsersResponse)(nil),   // 29: pb.clientrpc.v1.GetOnlineUsersResponse
 }
 var file_pb_clientrpc_v1_rpc_proto_depIdxs = []int32{
 	0,  // 0: pb.clientrpc.v1.GetServersResponse.servers:type_name -> pb.clientrpc.v1.ServerInfo
@@ -1619,35 +1717,38 @@ var file_pb_clientrpc_v1_rpc_proto_depIdxs = []int32{
 	1,  // 4: pb.clientrpc.v1.CreateShareResponse.share:type_name -> pb.clientrpc.v1.ShareInfo
 	3,  // 5: pb.clientrpc.v1.GetDirFilesResponse.content:type_name -> pb.clientrpc.v1.FileMeta
 	3,  // 6: pb.clientrpc.v1.GetFileMetaResponse.meta:type_name -> pb.clientrpc.v1.FileMeta
-	4,  // 7: pb.clientrpc.v1.ClientRpcService.Stop:input_type -> pb.clientrpc.v1.StopRequest
-	6,  // 8: pb.clientrpc.v1.ClientRpcService.GetServers:input_type -> pb.clientrpc.v1.GetServersRequest
-	8,  // 9: pb.clientrpc.v1.ClientRpcService.CreateServer:input_type -> pb.clientrpc.v1.CreateServerRequest
-	10, // 10: pb.clientrpc.v1.ClientRpcService.DeleteServer:input_type -> pb.clientrpc.v1.DeleteServerRequest
-	12, // 11: pb.clientrpc.v1.ClientRpcService.ConnectServer:input_type -> pb.clientrpc.v1.ConnectServerRequest
-	14, // 12: pb.clientrpc.v1.ClientRpcService.DisconnectServer:input_type -> pb.clientrpc.v1.DisconnectServerRequest
-	16, // 13: pb.clientrpc.v1.ClientRpcService.UpdateServer:input_type -> pb.clientrpc.v1.UpdateServerRequest
-	18, // 14: pb.clientrpc.v1.ClientRpcService.GetShares:input_type -> pb.clientrpc.v1.GetSharesRequest
-	20, // 15: pb.clientrpc.v1.ClientRpcService.CreateShare:input_type -> pb.clientrpc.v1.CreateShareRequest
-	22, // 16: pb.clientrpc.v1.ClientRpcService.DeleteShare:input_type -> pb.clientrpc.v1.DeleteShareRequest
-	24, // 17: pb.clientrpc.v1.ClientRpcService.GetDirFiles:input_type -> pb.clientrpc.v1.GetDirFilesRequest
-	26, // 18: pb.clientrpc.v1.ClientRpcService.GetFileMeta:input_type -> pb.clientrpc.v1.GetFileMetaRequest
-	5,  // 19: pb.clientrpc.v1.ClientRpcService.Stop:output_type -> pb.clientrpc.v1.StopResponse
-	7,  // 20: pb.clientrpc.v1.ClientRpcService.GetServers:output_type -> pb.clientrpc.v1.GetServersResponse
-	9,  // 21: pb.clientrpc.v1.ClientRpcService.CreateServer:output_type -> pb.clientrpc.v1.CreateServerResponse
-	11, // 22: pb.clientrpc.v1.ClientRpcService.DeleteServer:output_type -> pb.clientrpc.v1.DeleteServerResponse
-	13, // 23: pb.clientrpc.v1.ClientRpcService.ConnectServer:output_type -> pb.clientrpc.v1.ConnectServerResponse
-	15, // 24: pb.clientrpc.v1.ClientRpcService.DisconnectServer:output_type -> pb.clientrpc.v1.DisconnectServerResponse
-	17, // 25: pb.clientrpc.v1.ClientRpcService.UpdateServer:output_type -> pb.clientrpc.v1.UpdateServerResponse
-	19, // 26: pb.clientrpc.v1.ClientRpcService.GetShares:output_type -> pb.clientrpc.v1.GetSharesResponse
-	21, // 27: pb.clientrpc.v1.ClientRpcService.CreateShare:output_type -> pb.clientrpc.v1.CreateShareResponse
-	23, // 28: pb.clientrpc.v1.ClientRpcService.DeleteShare:output_type -> pb.clientrpc.v1.DeleteShareResponse
-	25, // 29: pb.clientrpc.v1.ClientRpcService.GetDirFiles:output_type -> pb.clientrpc.v1.GetDirFilesResponse
-	27, // 30: pb.clientrpc.v1.ClientRpcService.GetFileMeta:output_type -> pb.clientrpc.v1.GetFileMetaResponse
-	19, // [19:31] is the sub-list for method output_type
-	7,  // [7:19] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	2,  // 7: pb.clientrpc.v1.GetOnlineUsersResponse.users:type_name -> pb.clientrpc.v1.OnlineUserInfo
+	4,  // 8: pb.clientrpc.v1.ClientRpcService.Stop:input_type -> pb.clientrpc.v1.StopRequest
+	6,  // 9: pb.clientrpc.v1.ClientRpcService.GetServers:input_type -> pb.clientrpc.v1.GetServersRequest
+	8,  // 10: pb.clientrpc.v1.ClientRpcService.CreateServer:input_type -> pb.clientrpc.v1.CreateServerRequest
+	10, // 11: pb.clientrpc.v1.ClientRpcService.DeleteServer:input_type -> pb.clientrpc.v1.DeleteServerRequest
+	12, // 12: pb.clientrpc.v1.ClientRpcService.ConnectServer:input_type -> pb.clientrpc.v1.ConnectServerRequest
+	14, // 13: pb.clientrpc.v1.ClientRpcService.DisconnectServer:input_type -> pb.clientrpc.v1.DisconnectServerRequest
+	16, // 14: pb.clientrpc.v1.ClientRpcService.UpdateServer:input_type -> pb.clientrpc.v1.UpdateServerRequest
+	18, // 15: pb.clientrpc.v1.ClientRpcService.GetShares:input_type -> pb.clientrpc.v1.GetSharesRequest
+	20, // 16: pb.clientrpc.v1.ClientRpcService.CreateShare:input_type -> pb.clientrpc.v1.CreateShareRequest
+	22, // 17: pb.clientrpc.v1.ClientRpcService.DeleteShare:input_type -> pb.clientrpc.v1.DeleteShareRequest
+	24, // 18: pb.clientrpc.v1.ClientRpcService.GetDirFiles:input_type -> pb.clientrpc.v1.GetDirFilesRequest
+	26, // 19: pb.clientrpc.v1.ClientRpcService.GetFileMeta:input_type -> pb.clientrpc.v1.GetFileMetaRequest
+	28, // 20: pb.clientrpc.v1.ClientRpcService.GetOnlineUsers:input_type -> pb.clientrpc.v1.GetOnlineUsersRequest
+	5,  // 21: pb.clientrpc.v1.ClientRpcService.Stop:output_type -> pb.clientrpc.v1.StopResponse
+	7,  // 22: pb.clientrpc.v1.ClientRpcService.GetServers:output_type -> pb.clientrpc.v1.GetServersResponse
+	9,  // 23: pb.clientrpc.v1.ClientRpcService.CreateServer:output_type -> pb.clientrpc.v1.CreateServerResponse
+	11, // 24: pb.clientrpc.v1.ClientRpcService.DeleteServer:output_type -> pb.clientrpc.v1.DeleteServerResponse
+	13, // 25: pb.clientrpc.v1.ClientRpcService.ConnectServer:output_type -> pb.clientrpc.v1.ConnectServerResponse
+	15, // 26: pb.clientrpc.v1.ClientRpcService.DisconnectServer:output_type -> pb.clientrpc.v1.DisconnectServerResponse
+	17, // 27: pb.clientrpc.v1.ClientRpcService.UpdateServer:output_type -> pb.clientrpc.v1.UpdateServerResponse
+	19, // 28: pb.clientrpc.v1.ClientRpcService.GetShares:output_type -> pb.clientrpc.v1.GetSharesResponse
+	21, // 29: pb.clientrpc.v1.ClientRpcService.CreateShare:output_type -> pb.clientrpc.v1.CreateShareResponse
+	23, // 30: pb.clientrpc.v1.ClientRpcService.DeleteShare:output_type -> pb.clientrpc.v1.DeleteShareResponse
+	25, // 31: pb.clientrpc.v1.ClientRpcService.GetDirFiles:output_type -> pb.clientrpc.v1.GetDirFilesResponse
+	27, // 32: pb.clientrpc.v1.ClientRpcService.GetFileMeta:output_type -> pb.clientrpc.v1.GetFileMetaResponse
+	29, // 33: pb.clientrpc.v1.ClientRpcService.GetOnlineUsers:output_type -> pb.clientrpc.v1.GetOnlineUsersResponse
+	21, // [21:34] is the sub-list for method output_type
+	8,  // [8:21] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_pb_clientrpc_v1_rpc_proto_init() }
@@ -1662,7 +1763,7 @@ func file_pb_clientrpc_v1_rpc_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pb_clientrpc_v1_rpc_proto_rawDesc), len(file_pb_clientrpc_v1_rpc_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   28,
+			NumMessages:   30,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

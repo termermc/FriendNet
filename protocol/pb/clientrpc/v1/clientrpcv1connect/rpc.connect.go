@@ -68,6 +68,9 @@ const (
 	// ClientRpcServiceGetFileMetaProcedure is the fully-qualified name of the ClientRpcService's
 	// GetFileMeta RPC.
 	ClientRpcServiceGetFileMetaProcedure = "/pb.clientrpc.v1.ClientRpcService/GetFileMeta"
+	// ClientRpcServiceGetOnlineUsersProcedure is the fully-qualified name of the ClientRpcService's
+	// GetOnlineUsers RPC.
+	ClientRpcServiceGetOnlineUsersProcedure = "/pb.clientrpc.v1.ClientRpcService/GetOnlineUsers"
 )
 
 // ClientRpcServiceClient is a client for the pb.clientrpc.v1.ClientRpcService service.
@@ -126,6 +129,10 @@ type ClientRpcServiceClient interface {
 	// Returns NOT_FOUND if no such path exists.
 	// Returns UNAVAILABLE if the user is offline or otherwise cannot be reached.
 	GetFileMeta(context.Context, *v1.GetFileMetaRequest) (*v1.GetFileMetaResponse, error)
+	// GetOnlineUsers returns a list of online users in a server.
+	//
+	// Returns NOT_FOUND if no such server exists.
+	GetOnlineUsers(context.Context, *v1.GetOnlineUsersRequest) (*connect.ServerStreamForClient[v1.GetOnlineUsersResponse], error)
 }
 
 // NewClientRpcServiceClient constructs a client for the pb.clientrpc.v1.ClientRpcService service.
@@ -211,6 +218,12 @@ func NewClientRpcServiceClient(httpClient connect.HTTPClient, baseURL string, op
 			connect.WithSchema(clientRpcServiceMethods.ByName("GetFileMeta")),
 			connect.WithClientOptions(opts...),
 		),
+		getOnlineUsers: connect.NewClient[v1.GetOnlineUsersRequest, v1.GetOnlineUsersResponse](
+			httpClient,
+			baseURL+ClientRpcServiceGetOnlineUsersProcedure,
+			connect.WithSchema(clientRpcServiceMethods.ByName("GetOnlineUsers")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -228,6 +241,7 @@ type clientRpcServiceClient struct {
 	deleteShare      *connect.Client[v1.DeleteShareRequest, v1.DeleteShareResponse]
 	getDirFiles      *connect.Client[v1.GetDirFilesRequest, v1.GetDirFilesResponse]
 	getFileMeta      *connect.Client[v1.GetFileMetaRequest, v1.GetFileMetaResponse]
+	getOnlineUsers   *connect.Client[v1.GetOnlineUsersRequest, v1.GetOnlineUsersResponse]
 }
 
 // Stop calls pb.clientrpc.v1.ClientRpcService.Stop.
@@ -334,6 +348,11 @@ func (c *clientRpcServiceClient) GetFileMeta(ctx context.Context, req *v1.GetFil
 	return nil, err
 }
 
+// GetOnlineUsers calls pb.clientrpc.v1.ClientRpcService.GetOnlineUsers.
+func (c *clientRpcServiceClient) GetOnlineUsers(ctx context.Context, req *v1.GetOnlineUsersRequest) (*connect.ServerStreamForClient[v1.GetOnlineUsersResponse], error) {
+	return c.getOnlineUsers.CallServerStream(ctx, connect.NewRequest(req))
+}
+
 // ClientRpcServiceHandler is an implementation of the pb.clientrpc.v1.ClientRpcService service.
 type ClientRpcServiceHandler interface {
 	// Stop shuts down the client.
@@ -390,6 +409,10 @@ type ClientRpcServiceHandler interface {
 	// Returns NOT_FOUND if no such path exists.
 	// Returns UNAVAILABLE if the user is offline or otherwise cannot be reached.
 	GetFileMeta(context.Context, *v1.GetFileMetaRequest) (*v1.GetFileMetaResponse, error)
+	// GetOnlineUsers returns a list of online users in a server.
+	//
+	// Returns NOT_FOUND if no such server exists.
+	GetOnlineUsers(context.Context, *v1.GetOnlineUsersRequest, *connect.ServerStream[v1.GetOnlineUsersResponse]) error
 }
 
 // NewClientRpcServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -471,6 +494,12 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 		connect.WithSchema(clientRpcServiceMethods.ByName("GetFileMeta")),
 		connect.WithHandlerOptions(opts...),
 	)
+	clientRpcServiceGetOnlineUsersHandler := connect.NewServerStreamHandlerSimple(
+		ClientRpcServiceGetOnlineUsersProcedure,
+		svc.GetOnlineUsers,
+		connect.WithSchema(clientRpcServiceMethods.ByName("GetOnlineUsers")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/pb.clientrpc.v1.ClientRpcService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ClientRpcServiceStopProcedure:
@@ -497,6 +526,8 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 			clientRpcServiceGetDirFilesHandler.ServeHTTP(w, r)
 		case ClientRpcServiceGetFileMetaProcedure:
 			clientRpcServiceGetFileMetaHandler.ServeHTTP(w, r)
+		case ClientRpcServiceGetOnlineUsersProcedure:
+			clientRpcServiceGetOnlineUsersHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -552,4 +583,8 @@ func (UnimplementedClientRpcServiceHandler) GetDirFiles(context.Context, *v1.Get
 
 func (UnimplementedClientRpcServiceHandler) GetFileMeta(context.Context, *v1.GetFileMetaRequest) (*v1.GetFileMetaResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.GetFileMeta is not implemented"))
+}
+
+func (UnimplementedClientRpcServiceHandler) GetOnlineUsers(context.Context, *v1.GetOnlineUsersRequest, *connect.ServerStream[v1.GetOnlineUsersResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.GetOnlineUsers is not implemented"))
 }

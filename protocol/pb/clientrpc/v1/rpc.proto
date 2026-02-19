@@ -208,6 +208,15 @@ message GetFileMetaResponse {
     FileMeta meta = 1;
 }
 
+message GetOnlineUsersRequest {
+    // The server's UUID.
+    string server_uuid = 1;
+}
+message GetOnlineUsersResponse {
+    // The users.
+    repeated OnlineUserInfo users = 1;
+}
+
 // ClientRpcService provides an RPC interface to a running FriendNet client.
 // It can query state and perform actions.
 //
@@ -279,4 +288,9 @@ service ClientRpcService {
     // Returns NOT_FOUND if no such path exists.
     // Returns UNAVAILABLE if the user is offline or otherwise cannot be reached.
     rpc GetFileMeta(GetFileMetaRequest) returns (GetFileMetaResponse) {}
+
+    // GetOnlineUsers returns a list of online users in a server.
+    //
+    // Returns NOT_FOUND if no such server exists.
+    rpc GetOnlineUsers(GetOnlineUsersRequest) returns (stream GetOnlineUsersResponse) {}
 }
