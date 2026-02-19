@@ -6,6 +6,7 @@ import (
 	"io/fs"
 
 	"friendnet.org/common"
+	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
 )
 
@@ -31,7 +32,7 @@ type Share interface {
 	// Returns fs.ErrPermission if access is denied.
 	//
 	// May return ErrShareClosed if the share is closed, depending on the implementation.
-	GetFileMeta(path string) (*pb.MsgFileMeta, error)
+	GetFileMeta(path protocol.ProtoPath) (*pb.MsgFileMeta, error)
 
 	// DirFiles returns metadata for all files in the directory at the specified path.
 	//
@@ -39,7 +40,7 @@ type Share interface {
 	// Returns fs.ErrPermission if access is denied.
 	//
 	// May return ErrShareClosed if the share is closed, depending on the implementation.
-	DirFiles(path string) ([]*pb.MsgFileMeta, error)
+	DirFiles(path protocol.ProtoPath) ([]*pb.MsgFileMeta, error)
 
 	// GetFile returns the metadata for a path and a stream of its binary content (if not a directory).
 	// Important: If the file is a directory, the stream will be empty and always return io.EOF.
@@ -54,7 +55,7 @@ type Share interface {
 	// Returns fs.ErrPermission if access is denied.
 	//
 	// May return ErrShareClosed if the share is closed, depending on the implementation.
-	GetFile(path string, offset uint64, limit uint64) (*pb.MsgFileMeta, io.ReadCloser, error)
+	GetFile(path protocol.ProtoPath, offset uint64, limit uint64) (*pb.MsgFileMeta, io.ReadCloser, error)
 }
 
 // FsShare is an implementation of Share backed by an fs.FS instance.
@@ -82,8 +83,8 @@ func (s *FsShare) Name() string {
 	return s.name
 }
 
-func (s *FsShare) GetFileMeta(path string) (*pb.MsgFileMeta, error) {
-	info, err := fs.Stat(s.fsys, path)
+func (s *FsShare) GetFileMeta(path protocol.ProtoPath) (*pb.MsgFileMeta, error) {
+	info, err := fs.Stat(s.fsys, path.String())
 	if err != nil {
 		// fs.Stat already returns errors compatible with fs.ErrNotExist and fs.ErrPermission.
 		return nil, err
@@ -92,8 +93,8 @@ func (s *FsShare) GetFileMeta(path string) (*pb.MsgFileMeta, error) {
 	return fileInfoToMeta(info), nil
 }
 
-func (s *FsShare) DirFiles(path string) ([]*pb.MsgFileMeta, error) {
-	entries, readDirErr := fs.ReadDir(s.fsys, path)
+func (s *FsShare) DirFiles(path protocol.ProtoPath) ([]*pb.MsgFileMeta, error) {
+	entries, readDirErr := fs.ReadDir(s.fsys, path.String())
 	if readDirErr != nil {
 		return nil, readDirErr
 	}
@@ -111,11 +112,11 @@ func (s *FsShare) DirFiles(path string) ([]*pb.MsgFileMeta, error) {
 }
 
 func (s *FsShare) GetFile(
-	path string,
+	path protocol.ProtoPath,
 	offset uint64,
 	limit uint64,
 ) (*pb.MsgFileMeta, io.ReadCloser, error) {
-	info, err := fs.Stat(s.fsys, path)
+	info, err := fs.Stat(s.fsys, path.String())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -131,7 +132,7 @@ func (s *FsShare) GetFile(
 		return meta, common.EofReadCloser{}, nil
 	}
 
-	f, err := s.fsys.Open(path)
+	f, err := s.fsys.Open(path.String())
 	if err != nil {
 		return nil, nil, err
 	}

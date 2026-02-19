@@ -12,3 +12,11 @@ func StrPtrOr(str *string, or string) string {
 	}
 	return *str
 }
+
+// StrOrNil returns a pointer to the specified string if it is not empty, otherwise returns nil.
+func StrOrNil(str string) *string {
+	if str == "" {
+		return nil
+	}
+	return &str
+}

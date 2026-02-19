@@ -137,8 +137,8 @@ Rules:
  - All characters except `/` must be treated as literal parts of the path, not aliases.
    Characters such as `~`, for example, must not be interpreted as aliases.
  - Paths must begin with `/`.
- - Paths must always use `/` as their separator.
  - Paths must always be interpreted as absolute.
+ - Paths must always use `/` as their separator.
  - Paths must not contain any `.` or `..` components.
  - Paths must never end with a `/`, regardless of whether they are pointing to a file or a directory.
 
