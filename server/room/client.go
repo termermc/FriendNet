@@ -10,6 +10,7 @@ import (
 	"friendnet.org/common"
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
+	"github.com/quic-go/quic-go"
 )
 
 // ClientPingInterval is the interval between pings sent to clients.
@@ -151,6 +152,11 @@ func (c *Client) PingLoop(ctx context.Context) {
 			return
 		case <-ticker.C:
 			if _, err := c.Ping(); err != nil {
+				var idleErr *quic.IdleTimeoutError
+				if errors.As(err, &idleErr) {
+					return
+				}
+
 				c.logger.Error("failed to ping client",
 					"service", "room.Client",
 					"room", c.Room.Name.String(),

@@ -11,6 +11,7 @@ import (
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
 	"friendnet.org/server/storage"
+	"github.com/quic-go/quic-go"
 	mcfpassword "github.com/termermc/go-mcf-password"
 )
 
@@ -157,7 +158,7 @@ func (r *Room) Onboard(
 		return ErrUsernameAlreadyConnected
 	}
 
-	r.clients[username.String()] = client
+	r.handleConnect(client)
 
 	// Ping loop.
 	go func() {
@@ -167,16 +168,47 @@ func (r *Room) Onboard(
 					"service", "room.Client",
 					"room", r.Name.String(),
 					"username", username.String(),
-					slog.Any("err", err),
+					"err", err,
 				)
 			}
 		}()
 
 		client.PingLoop(r.Context)
+
+		r.mu.Lock()
+		r.handleDisconnect(client)
+		r.mu.Unlock()
 	}()
 
-	// TODO Read loop
-	// If read loop exits with an error, call some method to do client disconnection and cleanup.
+	// Read loop.
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				r.logger.Error("client read loop panicked",
+					"service", "room.Client",
+					"room", r.Name.String(),
+					"username", username.String(),
+					slog.Any("err", err),
+				)
+			}
+		}()
+
+		if err := client.ReadLoop(r.Context); err != nil {
+			var idleErr *quic.IdleTimeoutError
+			if !errors.Is(err, context.Canceled) && !errors.As(err, &idleErr) {
+				r.logger.Error("client read loop exited with error",
+					"service", "room.Room",
+					"room", r.Name.String(),
+					"username", username.String(),
+					"err", err,
+				)
+			}
+		}
+
+		r.mu.Lock()
+		r.handleDisconnect(client)
+		r.mu.Unlock()
+	}()
 
 	// TODO Broadcast online state
 
@@ -312,11 +344,30 @@ func (r *Room) UpdateAccountPassword(ctx context.Context, username common.Normal
 	return nil
 }
 
+// handleConnect performs logic that needs to be done after a client connects.
+// It returns quickly and does not lock on its own.
+// The caller must lock before calling it.
+func (r *Room) handleConnect(client *Client) {
+	r.clients[client.Username.String()] = client
+
+	r.logger.Info("client connected",
+		"service", "room.Room",
+		"room", r.Name.String(),
+		"username", client.Username.String(),
+	)
+}
+
 // handleDisconnect performs logic that needs to be done after a client disconnects.
 // It returns quickly and does not lock on its own.
 // The caller must lock before calling it.
 func (r *Room) handleDisconnect(client *Client) {
 	delete(r.clients, client.Username.String())
+
+	r.logger.Info("client disconnected",
+		"service", "room.Room",
+		"room", r.Name.String(),
+		"username", client.Username.String(),
+	)
 }
 
 // KickClientByUsername disconnects the client with the specified username.
