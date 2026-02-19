@@ -125,8 +125,41 @@ or sent by the destination client.
 # About Paths
 
 Paths within the protocol are local to users and based on what they choose to share.
-All paths must begin with `/`.
 
 For example: `/shared music/Kevin MacLeod/Monkeys Spinning Monkeys.mp3`
 
 Typically, the first directory in the path will be a shared folder, but the protocol itself has no concept of shares.
+
+Rules:
+ - Paths must not contain any null bytes.
+ - Paths must consist solely of valid UTF-8 characters.
+ - Paths are case-sensitive.
+ - All characters except `/` must be treated as literal parts of the path, not aliases.
+   Characters such as `~`, for example, must not be interpreted as aliases.
+ - Paths must begin with `/`.
+ - Paths must always use `/` as their separator.
+ - Paths must always be interpreted as absolute.
+ - Paths must not contain any `.` or `..` components.
+ - Paths must never end with a `/`, regardless of whether they are pointing to a file or a directory.
+
+   > This is to prevent implementations from guessing that a path is or isn't a directory purely based on the path.
+   > The type or existence of a path cannot be inferred by the path itself, and encouraging those guesses can lead
+   > to strange bugs.
+ - Duplicate separators (such as in a path like `/foo//bar`) are not allowed.
+
+**Implementations must not accept invalid paths.**
+They must always reject them rather than trying to normalize them.
+
+These rules ensure that paths are deterministic.
+
+Examples:
+
+| Incorrect     | Correct           |
+|---------------|-------------------|
+| `/foo/../bar` | `/bar`            |
+| `song.mp3`    | `/music/song.mp3` |
+| ` `           | `/`               |
+| `/pics//cats` | `/pics/cats`      |
+| `/foo/`       | `/foo`            |
+| `\pics\dogs`  | `/pics/dogs`      |
+
