@@ -67,7 +67,12 @@ func NewTransformerStream[T, R any](stream Stream[T], fn func(T) R) TransformerS
 
 func (s TransformerStream[T, R]) ReadNext() (R, error) {
 	val, err := s.stream.ReadNext()
-	return s.fn(val), err
+	if err != nil {
+		var empty R
+		return empty, err
+	}
+
+	return s.fn(val), nil
 }
 
 // ReadCloserWithFunc wraps an io.Reader and a function to close it.
