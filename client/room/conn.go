@@ -163,9 +163,15 @@ func NewRoomConn(
 		incomingBidi: make(chan C2cBidi, incomingBidiChanSize),
 	}
 
-	// TODO Close connection if s2c loop exits.
 	go c.c2cLoop()
-	go c.s2cLoop()
+
+	go func() {
+		c.s2cLoop()
+
+		// S2C loop exited, so the server must have gone away.
+		// Close connection.
+		_ = c.Close()
+	}()
 
 	return c, nil
 }
@@ -212,10 +218,16 @@ func (c *Conn) openC2cBidiWithMsg(
 	})
 	if err != nil {
 		var streamErr *quic.StreamError
+		var appErr *quic.ApplicationError
 		if errors.As(err, &streamErr) {
 			if streamErr.ErrorCode == protocol.ProxyPeerUnreachableStreamErrorCode {
 				return protocol.ProtoBidi{}, protocol.ErrPeerUnreachable
 			}
+		}
+		if errors.As(err, &appErr) {
+			// Other side closed, and we didn't know about it until now.
+			_ = c.Close()
+			return protocol.ProtoBidi{}, ErrRoomConnClosed
 		}
 
 		return protocol.ProtoBidi{}, err
