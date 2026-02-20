@@ -95,6 +95,9 @@ func (c VirtualC2cConn) GetFileMeta(path string) (*pb.MsgFileMeta, error) {
 
 // GetFile returns the metadata for the specified file, and then a stream of its data.
 // If the file is empty or is a directory, the stream will always return io.EOF.
+//
+// It does not check the length of data sent by the remote peer; it is up to the caller
+// to ensure the length is correct and to enforce timeouts.
 func (c VirtualC2cConn) GetFile(req *pb.MsgGetFile) (meta *pb.MsgFileMeta, reader io.ReadCloser, err error) {
 	bidi, err := c.OpenBidiWithMsg(pb.MsgType_MSG_TYPE_GET_FILE, req)
 	if err != nil {
