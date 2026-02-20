@@ -370,8 +370,8 @@ func (r *Room) handleConnect(client *Client) {
 func (r *Room) handleDisconnect(client *Client) {
 	unStr := client.Username.String()
 
-	_, has := r.clients[unStr]
-	if !has {
+	oldClient, has := r.clients[unStr]
+	if !has || oldClient != client {
 		return
 	}
 
