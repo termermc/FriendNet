@@ -5,7 +5,12 @@ import {
 	Show,
 	Suspense,
 } from 'solid-js'
-import { bearerTokenKey, FileServerUrlCtx, RpcClientCtx, rpcUrlKey } from './ctx'
+import {
+	bearerTokenKey,
+	FileServerUrlCtx,
+	RpcClientCtx,
+	rpcUrlKey,
+} from './ctx'
 import App from './App'
 import { createClient, Interceptor } from '@connectrpc/connect'
 import { ClientRpcService } from '../pb/clientrpc/v1/rpc_pb'
@@ -76,6 +81,19 @@ export const Loader: Component = () => {
 		}
 
 		localStorage.setItem(bearerTokenKey, bearerToken)
+	}
+
+	// Clear out params from query.
+	{
+		params.delete('rpc')
+		params.delete('token')
+		let newUrl = window.location.origin + window.location.pathname
+		const newParamStr = params.toString()
+		if (newParamStr) {
+			newUrl += `?${newParamStr}`
+		}
+		newUrl += window.location.hash
+		window.history.replaceState({}, '', newUrl)
 	}
 
 	const client = createClient(

@@ -1,0 +1,25 @@
+.container {
+}
+
+.header {
+	background-color: #282c34;
+    height: 2rem;
+    padding: 0.5rem;
+}
+.headerTitle {
+	font-size: 1.5rem;
+}
+
+.stopButton {
+    cursor: pointer;
+    float: right;
+    border: none;
+    width: auto;
+    height: 100%;
+    padding: 0;
+    background: none;
+}
+.stopButton img {
+    width: 100%;
+    height: 100%;
+}

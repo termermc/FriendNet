@@ -1,8 +1,9 @@
 import type { Component } from 'solid-js'
-import { AppName } from './constant'
+import { Router } from '@solidjs/router'
+import { Layout } from './layout/Layout'
 
 const App: Component = () => {
-	return <h1>{AppName}</h1>
+	return <Router root={(props) => <Layout>{props.children}</Layout>}></Router>
 }
 
 export default App
