@@ -25,15 +25,18 @@ var errShareNotFound = connect.NewError(connect.CodeNotFound, errors.New("share 
 type RpcServer struct {
 	client        *MultiClient
 	fileServerUrl string
+	stopper       func()
 }
 
 func NewRpcServer(
 	client *MultiClient,
 	fileServerUrl string,
+	stopper func(),
 ) *RpcServer {
 	return &RpcServer{
 		client:        client,
 		fileServerUrl: fileServerUrl,
+		stopper:       stopper,
 	}
 }
 
@@ -69,10 +72,8 @@ func (s *RpcServer) shareRecToInfo(share storage.ShareRecord) *v1.ShareInfo {
 	}
 }
 
-func (s *RpcServer) Stop(ctx context.Context, request *v1.StopRequest) (*v1.StopResponse, error) {
-	if err := s.client.Close(); err != nil {
-		return nil, err
-	}
+func (s *RpcServer) Stop(_ context.Context, _ *v1.StopRequest) (*v1.StopResponse, error) {
+	s.stopper()
 
 	return &v1.StopResponse{}, nil
 }

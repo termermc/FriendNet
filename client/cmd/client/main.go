@@ -83,6 +83,8 @@ func main() {
 		panic(fmt.Errorf(`failed to create multi client: %w`, err))
 	}
 
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+
 	rpc, err := common.NewRpcServer(
 		logger,
 		common.RpcServerConfig{
@@ -91,7 +93,11 @@ func main() {
 			BearerToken:         rpcBearerToken,
 			CorsAllowAllOrigins: true,
 		},
-		client.NewRpcServer(multi, fileAddr),
+		client.NewRpcServer(
+			multi,
+			fileAddr,
+			stop,
+		),
 		func(impl *client.RpcServer, options ...connect.HandlerOption) (string, http.Handler) {
 			return clientrpcv1connect.NewClientRpcServiceHandler(impl, options...)
 		},
@@ -108,7 +114,6 @@ func main() {
 
 	// Close client on SIGTERM.
 	var shutdownWg sync.WaitGroup
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	shutdownWg.Go(func() {
 		<-ctx.Done()
