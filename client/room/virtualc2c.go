@@ -106,10 +106,8 @@ func (c VirtualC2cConn) GetFile(req *pb.MsgGetFile) (meta *pb.MsgFileMeta, reade
 		return nil, nil, err
 	}
 
-	msg, err := protocol.SendAndReceiveExpect[*pb.MsgFileMeta](
-		c,
-		pb.MsgType_MSG_TYPE_GET_FILE,
-		req,
+	msg, err := protocol.ReadExpect[*pb.MsgFileMeta](
+		bidi.ProtoStreamReader,
 		pb.MsgType_MSG_TYPE_FILE_META,
 	)
 	if err != nil {
