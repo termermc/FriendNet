@@ -74,7 +74,7 @@ func (l *Lobby) Onboard(conn protocol.ProtoConn) {
 			return
 		}
 
-		authRoom, authUsername, err := l.authenticateClient(
+		authBidi, authRoom, authUsername, err := l.authenticateClient(
 			lobbyCtx,
 			conn,
 		)
@@ -86,15 +86,24 @@ func (l *Lobby) Onboard(conn protocol.ProtoConn) {
 		// Get room instance from the manager.
 		roomInst, has := l.roomMgr.GetRoomByName(authRoom)
 		if !has {
+			_ = authBidi.WriteInternalError(nil)
+			_ = authBidi.Close()
 			_ = conn.CloseWithReason("room not found")
 			return
 		}
 
 		// Pass ownership of connection to the room instance.
-		err = roomInst.Onboard(conn, clientVer, authUsername)
+		// The room will send the success message to the client if successful.
+		err = roomInst.Onboard(authBidi, conn, clientVer, authUsername)
 		if err != nil {
 			if errors.Is(err, room.ErrUsernameAlreadyConnected) {
-				_ = conn.CloseWithReason("username already connected")
+				msg := "username already connected"
+				_ = authBidi.Write(pb.MsgType_MSG_TYPE_AUTH_REJECTED, &pb.MsgAuthRejected{
+					Reason:  pb.AuthRejectionReason_AUTH_REJECTION_REASON_ALREADY_CONNECTED,
+					Message: &msg,
+				})
+				_ = authBidi.Close()
+				_ = conn.CloseWithReason(msg)
 				return
 			}
 
@@ -105,6 +114,8 @@ func (l *Lobby) Onboard(conn protocol.ProtoConn) {
 				"error", err,
 			)
 
+			_ = authBidi.WriteInternalError(err)
+			_ = authBidi.Close()
 			_ = conn.CloseWithReason("internal error")
 			return
 		}
@@ -185,21 +196,31 @@ func (l *Lobby) negotiateClientVersion(
 // authenticateClient performs the authentication phase with the provided connection.
 // If the authentication succeeds, the client's room and username will be returned.
 // Authentication will fail with an error if the client provides invalid credentials.
-// This method still takes care of sending the appropriate reply to the client's authentication request, even if there was an error.
+//
+// This method still takes care of sending the appropriate error reply to the client's authentication request, if any.
+// It will NOT send the success message.
+// It is the duty of the room to send the success message or return another error based on what it knows.
+//
+// The returned authBidi will be closed if an error value is returned.
+// Otherwise, the authBidi will still be open, waiting to be finished.
 func (l *Lobby) authenticateClient(
 	ctx context.Context,
 	conn protocol.ProtoConn,
-) (room common.NormalizedRoomName, username common.NormalizedUsername, finalErr error) {
-	bidi, bidiErr := conn.WaitForBidi(ctx)
+) (authBidi protocol.ProtoBidi, room common.NormalizedRoomName, username common.NormalizedUsername, finalErr error) {
+	isSuccess := false
+	var bidiErr error
+	authBidi, bidiErr = conn.WaitForBidi(ctx)
 	if bidiErr != nil {
-		return room, username, fmt.Errorf("failed to wait for authentication stream: %w", bidiErr)
+		return authBidi, room, username, fmt.Errorf("failed to wait for authentication stream: %w", bidiErr)
 	}
 	defer func() {
-		_ = bidi.Close()
+		if !isSuccess {
+			_ = authBidi.Close()
+		}
 	}()
 
 	finalErr = func() error {
-		msg, err := protocol.ReadExpect[*pb.MsgAuthenticate](bidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_AUTHENTICATE)
+		msg, err := protocol.ReadExpect[*pb.MsgAuthenticate](authBidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_AUTHENTICATE)
 		authMsg := msg.Payload
 
 		invalidCreds := func() error {
@@ -276,20 +297,22 @@ func (l *Lobby) authenticateClient(
 		var rejErr protocol.AuthRejectedError
 		var unexpectedErr protocol.UnexpectedMsgTypeError
 		if errors.As(finalErr, &rejErr) {
-			_ = bidi.Write(pb.MsgType_MSG_TYPE_AUTH_REJECTED, &pb.MsgAuthRejected{
+			_ = authBidi.Write(pb.MsgType_MSG_TYPE_AUTH_REJECTED, &pb.MsgAuthRejected{
 				Reason:  rejErr.Reason,
 				Message: &rejErr.Message,
 			})
 		} else if errors.As(finalErr, &unexpectedErr) {
-			_ = bidi.WriteUnexpectedMsgTypeError(unexpectedErr.Expected, unexpectedErr.Actual)
+			_ = authBidi.WriteUnexpectedMsgTypeError(unexpectedErr.Expected, unexpectedErr.Actual)
 		} else {
-			_ = bidi.WriteInternalError(finalErr)
+			_ = authBidi.WriteInternalError(finalErr)
 		}
 
 		room = common.ZeroNormalizedRoomName
 		username = common.ZeroNormalizedUsername
-		return room, username, finalErr
+		return authBidi, room, username, finalErr
 	}
 
-	return room, username, bidi.Write(pb.MsgType_MSG_TYPE_AUTH_ACCEPTED, &pb.MsgAuthAccepted{})
+	isSuccess = true
+
+	return authBidi, room, username, nil
 }

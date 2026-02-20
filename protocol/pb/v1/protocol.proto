@@ -244,6 +244,9 @@ enum AuthRejectionReason {
 
     // The user is banned and therefore not allowed to connect.
     AUTH_REJECTION_REASON_BANNED = 3;
+
+    // A client with the same username is already connected.
+    AUTH_REJECTION_REASON_ALREADY_CONNECTED = 4;
 }
 
 // Message sent by the server as a reply to PROTO_AUTHENTICATE.

@@ -323,6 +323,8 @@ const (
 	AuthRejectionReason_AUTH_REJECTION_REASON_INVALID_CREDENTIALS AuthRejectionReason = 2
 	// The user is banned and therefore not allowed to connect.
 	AuthRejectionReason_AUTH_REJECTION_REASON_BANNED AuthRejectionReason = 3
+	// A client with the same username is already connected.
+	AuthRejectionReason_AUTH_REJECTION_REASON_ALREADY_CONNECTED AuthRejectionReason = 4
 )
 
 // Enum value maps for AuthRejectionReason.
@@ -331,11 +333,13 @@ var (
 		0: "AUTH_REJECTION_REASON_UNSPECIFIED",
 		2: "AUTH_REJECTION_REASON_INVALID_CREDENTIALS",
 		3: "AUTH_REJECTION_REASON_BANNED",
+		4: "AUTH_REJECTION_REASON_ALREADY_CONNECTED",
 	}
 	AuthRejectionReason_value = map[string]int32{
 		"AUTH_REJECTION_REASON_UNSPECIFIED":         0,
 		"AUTH_REJECTION_REASON_INVALID_CREDENTIALS": 2,
 		"AUTH_REJECTION_REASON_BANNED":              3,
+		"AUTH_REJECTION_REASON_ALREADY_CONNECTED":   4,
 	}
 )
 
@@ -1571,11 +1575,12 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x16VersionRejectionReason\x12(\n" +
 	"$VERSION_REJECTION_REASON_UNSPECIFIED\x10\x00\x12$\n" +
 	" VERSION_REJECTION_REASON_TOO_OLD\x10\x02\x12$\n" +
-	" VERSION_REJECTION_REASON_TOO_NEW\x10\x03*\x8d\x01\n" +
+	" VERSION_REJECTION_REASON_TOO_NEW\x10\x03*\xba\x01\n" +
 	"\x13AuthRejectionReason\x12%\n" +
 	"!AUTH_REJECTION_REASON_UNSPECIFIED\x10\x00\x12-\n" +
 	")AUTH_REJECTION_REASON_INVALID_CREDENTIALS\x10\x02\x12 \n" +
-	"\x1cAUTH_REJECTION_REASON_BANNED\x10\x03Br\n" +
+	"\x1cAUTH_REJECTION_REASON_BANNED\x10\x03\x12+\n" +
+	"'AUTH_REJECTION_REASON_ALREADY_CONNECTED\x10\x04Br\n" +
 	"\tcom.pb.v1B\rProtocolProtoP\x01Z!friendnet.org/protocol/pb/v1;pbv1\xa2\x02\x03PXX\xaa\x02\x05Pb.V1\xca\x02\x05Pb\\V1\xe2\x02\x11Pb\\V1\\GPBMetadata\xea\x02\x06Pb::V1b\x06proto3"
 
 var (

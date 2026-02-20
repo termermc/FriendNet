@@ -131,9 +131,12 @@ func (r *Room) GetAllClients() []*Client {
 // Onboard takes ownership of a connection and adds it to the room.
 // The connection must already have been authenticated.
 //
+// If onboarding is successful, it will write the auth accepted message to authBidi and close it.
+//
 // If there is an existing client with the username, returns ErrUsernameAlreadyConnected.
 // This method will not close the connection if it returns an error; it is the caller's responsibility to close it if an error is returned.
 func (r *Room) Onboard(
+	authBidi protocol.ProtoBidi,
 	conn protocol.ProtoConn,
 	version *pb.ProtoVersion,
 	username common.NormalizedUsername,
@@ -156,12 +159,16 @@ func (r *Room) Onboard(
 
 	_, has := r.clients[username.String()]
 	if has {
-		// TODO A third phase is needed after authentication, where room info is sent during onboarding, or the connection is closed with a reason.
-		// Right now, the connection assumes it is in the room after authentication finishes.
 		return ErrUsernameAlreadyConnected
 	}
 
 	r.handleConnect(client)
+
+	err := authBidi.Write(pb.MsgType_MSG_TYPE_AUTH_ACCEPTED, &pb.MsgAuthAccepted{})
+	if err != nil {
+		return fmt.Errorf("failed to write auth accepted message: %w", err)
+	}
+	_ = authBidi.Close()
 
 	// Ping loop.
 	go func() {
@@ -215,8 +222,6 @@ func (r *Room) Onboard(
 		r.handleDisconnect(client)
 		r.mu.Unlock()
 	}()
-
-	// TODO Broadcast online state
 
 	return nil
 }
