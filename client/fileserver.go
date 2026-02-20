@@ -39,21 +39,28 @@ func NewFileServer(
 
 var _ http.Handler = (*FileServerHandler)(nil)
 
-func (s *FileServerHandler) text(w http.ResponseWriter, r *http.Request, status int, text string) {
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	wroteHeader := false
+	text := func(w http.ResponseWriter, r *http.Request, status int, text string) {
+		if wroteHeader {
+			return
+		}
 
-	switch r.Method {
-	case http.MethodHead, http.MethodOptions:
-		return
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.WriteHeader(status)
+		wroteHeader = true
+
+		switch r.Method {
+		case http.MethodHead, http.MethodOptions:
+			return
+		}
+
+		_, _ = w.Write([]byte(text))
+	}
+	internalError := func(w http.ResponseWriter, r *http.Request, err error) {
+		text(w, r, http.StatusInternalServerError, fmt.Sprintf("internal error:\n\n%v\n", err))
 	}
 
-	_, _ = w.Write([]byte(text))
-}
-func (s *FileServerHandler) internalError(w http.ResponseWriter, r *http.Request, err error) {
-	s.text(w, r, http.StatusInternalServerError, fmt.Sprintf("internal error:\n\n%v\n", err))
-}
-
-func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	const schemeMsg = "Files are served based on the path scheme: /SERVER/USERNAME/PATH"
 	const indexMsg = "Hi, you've reached the peer proxy HTTP server.\n" + schemeMsg + "\nYou can specify ?download=1 to signal browsers to download the file.\nHave fun!\n"
 
@@ -61,7 +68,7 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet, http.MethodHead:
 		break
 	default:
-		s.text(w, r, http.StatusMethodNotAllowed, "method not allowed\n")
+		text(w, r, http.StatusMethodNotAllowed, "method not allowed\n")
 		return
 	}
 
@@ -72,14 +79,14 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Security-Policy", "default-src 'none'; frame-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; sandbox")
 
 	if url.Path == "/" {
-		s.text(w, r, http.StatusOK, indexMsg)
+		text(w, r, http.StatusOK, indexMsg)
 		return
 	}
 
 	parts := strings.Split(strings.TrimSuffix(url.Path[1:], "/"), "/")
 
 	if len(parts) < 3 {
-		s.text(w, r, http.StatusBadRequest, schemeMsg+"\n")
+		text(w, r, http.StatusBadRequest, schemeMsg+"\n")
 		return
 	}
 
@@ -88,19 +95,19 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	pathRaw := "/" + strings.Join(parts[2:], "/")
 	path, err := protocol.ValidatePath(pathRaw)
 	if err != nil {
-		s.text(w, r, http.StatusBadRequest, fmt.Sprintf("invalid path %q: %v\n", pathRaw, err))
+		text(w, r, http.StatusBadRequest, fmt.Sprintf("invalid path %q: %v\n", pathRaw, err))
 		return
 	}
 
 	username, usernameOk := common.NormalizeUsername(usernameRaw)
 	if !usernameOk {
-		s.text(w, r, http.StatusBadRequest, fmt.Sprintf("invalid username %q\n", usernameRaw))
+		text(w, r, http.StatusBadRequest, fmt.Sprintf("invalid username %q\n", usernameRaw))
 		return
 	}
 
 	server, has := s.multi.GetByUuid(serverUuid)
 	if !has {
-		s.text(w, r, http.StatusNotFound, fmt.Sprintf("no such server %q\n", serverUuid))
+		text(w, r, http.StatusNotFound, fmt.Sprintf("no such server %q\n", serverUuid))
 		return
 	}
 
@@ -118,16 +125,9 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil {
 			if errors.Is(err, protocol.ErrPeerUnreachable) {
-				s.text(w, r, http.StatusBadGateway, "peer unreachable\n")
+				text(w, r, http.StatusBadGateway, "peer unreachable\n")
 				return nil
 			}
-
-			s.logger.Error("failed to get file from peer",
-				"service", "client.FileServerHandler",
-				"server", serverUuid,
-				"username", usernameRaw,
-				"path", pathRaw,
-			)
 
 			return err
 		}
@@ -142,7 +142,7 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}()
 
 		if meta.IsDir {
-			s.text(w, r, http.StatusNotImplemented, "path points to a directory\n")
+			text(w, r, http.StatusNotImplemented, "path points to a directory\n")
 			return nil
 		}
 
@@ -164,6 +164,7 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Write it!
+		wroteHeader = true
 		_, err = io.Copy(w, reader)
 		if err != nil {
 			return err
@@ -172,7 +173,14 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return nil
 	})
 	if err != nil {
-		s.internalError(w, r, err)
+		s.logger.Error("failed to get file from peer",
+			"service", "client.FileServerHandler",
+			"server", serverUuid,
+			"username", usernameRaw,
+			"path", pathRaw,
+			"err", err,
+		)
+		internalError(w, r, err)
 		return
 	}
 }
