@@ -86,8 +86,6 @@ type InvalidRpcProtocolError struct {
 
 func (e *InvalidRpcProtocolError) Error() string { return "invalid RPC protocol: " + e.Protocol }
 
-// TODO Move this to common, make it a generic struct to support multiple implementations but keep other logic
-
 // RpcServer implements an RPC server for a FriendNet server.
 // It is a single instance that runs on a single interface.
 type RpcServer[T io.Closer] struct {
