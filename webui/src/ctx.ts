@@ -7,6 +7,11 @@ import { ClientRpcService } from '../pb/clientrpc/v1/rpc_pb'
  */
 export const bearerTokenKey = 'friendnet.token'
 
+/**
+ * The {@link localStorage} key to use for storing the RPC URL.
+ */
+export const rpcUrlKey = 'friendnet.rpc'
+
 export const FileServerUrlCtx = createContext<string>()
 export const RpcClientCtx = createContext<Client<typeof ClientRpcService>>()
 

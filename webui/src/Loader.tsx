@@ -5,7 +5,7 @@ import {
 	Show,
 	Suspense,
 } from 'solid-js'
-import { bearerTokenKey, FileServerUrlCtx, RpcClientCtx } from './ctx'
+import { bearerTokenKey, FileServerUrlCtx, RpcClientCtx, rpcUrlKey } from './ctx'
 import App from './App'
 import { createClient, Interceptor } from '@connectrpc/connect'
 import { ClientRpcService } from '../pb/clientrpc/v1/rpc_pb'
@@ -48,10 +48,16 @@ const NoToken: Component = () => {
 
 export const Loader: Component = () => {
 	const params = new URLSearchParams(window.location.search)
-	let rpcUrl = params.get('rpc')
+	let rpcUrl = localStorage.getItem(rpcUrlKey)
 	if (!rpcUrl) {
-		return <NoRpc />
+		rpcUrl = params.get('rpc')
+		if (!rpcUrl) {
+			return <NoRpc />
+		}
+
+		localStorage.setItem(rpcUrlKey, rpcUrl)
 	}
+
 	if (rpcUrl.startsWith('/')) {
 		rpcUrl = window.location.origin + rpcUrl
 	} else {
