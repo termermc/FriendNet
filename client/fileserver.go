@@ -164,8 +164,9 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Parse range.
+		rangeHeader := r.Header.Get("Range")
 		fileSize := int64(meta.Size)
-		offset, limit, rangeOk := common.ParseHttpRange(r.Header.Get("Range"), fileSize)
+		offset, limit, rangeOk := common.ParseHttpRange(rangeHeader, fileSize)
 		if !rangeOk {
 			text(w, r, http.StatusBadRequest, "invalid range string\n")
 		}
@@ -220,6 +221,10 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				_ = reader.Close()
 			}
 		}()
+
+		if rangeHeader != "" {
+			w.WriteHeader(http.StatusPartialContent)
+		}
 
 		if isHead {
 			return nil
