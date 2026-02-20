@@ -1,14 +1,19 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
+	"time"
 
 	"connectrpc.com/connect"
 	"friendnet.org/client"
@@ -96,6 +101,28 @@ func main() {
 		panic(fmt.Errorf(`failed to create RPC server: %w`, err))
 	}
 
+	fileServer := http.Server{
+		Addr:    fileAddr[7:],
+		Handler: client.NewFileServer(logger, multi),
+	}
+
+	// Close client on SIGTERM.
+	var shutdownWg sync.WaitGroup
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	shutdownWg.Go(func() {
+		<-ctx.Done()
+		logger.Info("shutdown signal received, closing client")
+
+		timeoutCtx, ctxCancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer ctxCancel()
+
+		_ = fileServer.Shutdown(timeoutCtx)
+		_ = rpc.Close()
+		_ = multi.Close()
+		_ = store.Close()
+	})
+
 	var wg sync.WaitGroup
 	wg.Go(func() {
 		logger.Info(`RPC server listening`,
@@ -108,15 +135,18 @@ func main() {
 	})
 	wg.Go(func() {
 		logger.Info(`File server listening`, "addr", fileAddr)
-		listenErr := http.ListenAndServe(fileAddr[7:], client.NewFileServer(logger, multi))
+		listenErr := fileServer.ListenAndServe()
 		if listenErr != nil {
+			if errors.Is(listenErr, http.ErrServerClosed) {
+				return
+			}
 			panic(fmt.Errorf(`file server ended with error: %w`, listenErr))
 		}
 	})
 
 	wg.Wait()
 
-	_ = rpc.Close()
-	_ = multi.Close()
-	_ = store.Close()
+	stop()
+
+	shutdownWg.Wait()
 }

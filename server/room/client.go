@@ -56,6 +56,12 @@ func (c *Client) msgHandler(bidi protocol.ProtoBidi, firstMsg *protocol.UntypedP
 	ctx := context.Background()
 
 	switch firstMsg.Type {
+	case pb.MsgType_MSG_TYPE_BYE:
+		_ = bidi.WriteAck()
+		c.Room.mu.Lock()
+		c.Room.handleDisconnect(c)
+		c.Room.mu.Unlock()
+		return nil
 	case pb.MsgType_MSG_TYPE_PING:
 		return c.handlers.OnPing(ctx, c, bidi, protocol.ToTyped[*pb.MsgPing](firstMsg))
 	case pb.MsgType_MSG_TYPE_OPEN_OUTBOUND_PROXY:
@@ -155,7 +161,8 @@ func (c *Client) PingLoop(ctx context.Context) {
 		case <-ticker.C:
 			if _, err := c.Ping(); err != nil {
 				var idleErr *quic.IdleTimeoutError
-				if errors.As(err, &idleErr) {
+				var appErr *quic.ApplicationError
+				if errors.As(err, &idleErr) || errors.As(err, &appErr) {
 					return
 				}
 

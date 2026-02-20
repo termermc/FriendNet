@@ -200,7 +200,8 @@ func (r *Room) Onboard(
 
 		if err := client.ReadLoop(r.Context); err != nil {
 			var idleErr *quic.IdleTimeoutError
-			if !errors.Is(err, context.Canceled) && !errors.As(err, &idleErr) {
+			var appErr *quic.ApplicationError
+			if !errors.Is(err, context.Canceled) && !errors.As(err, &idleErr) && !errors.As(err, &appErr) {
 				r.logger.Error("client read loop exited with error",
 					"service", "room.Room",
 					"room", r.Name.String(),
@@ -365,8 +366,16 @@ func (r *Room) handleConnect(client *Client) {
 // handleDisconnect performs logic that needs to be done after a client disconnects.
 // It returns quickly and does not lock on its own.
 // The caller must lock before calling it.
+// Duplicate calls for the same Client are no-op.
 func (r *Room) handleDisconnect(client *Client) {
-	delete(r.clients, client.Username.String())
+	unStr := client.Username.String()
+
+	_, has := r.clients[unStr]
+	if !has {
+		return
+	}
+
+	delete(r.clients, unStr)
 
 	r.logger.Info("client disconnected",
 		"service", "room.Room",

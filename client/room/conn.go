@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"sync"
+	"time"
 
 	"friendnet.org/client/cert"
 	"friendnet.org/common"
@@ -179,7 +180,15 @@ func (c *Conn) Close() error {
 	}
 	c.isClosed = true
 
-	// TODO Signal to the server that the client is leaving
+	// Signal to the server that the client is leaving.
+	// Give it 5 seconds to respond before closing the connection.
+	timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	go func() {
+		_, _ = c.serverConn.SendAndReceive(pb.MsgType_MSG_TYPE_BYE, &pb.MsgBye{})
+		cancel()
+	}()
+	<-timeoutCtx.Done()
 
 	_ = c.serverConn.CloseWithReason("closing")
 

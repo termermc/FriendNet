@@ -86,6 +86,10 @@ const (
 	MsgType_MSG_TYPE_GET_ONLINE_USERS MsgType = 18
 	// [S2C] List of online users in the room.
 	MsgType_MSG_TYPE_ONLINE_USERS MsgType = 19
+	// [C2S] Notification to let the server know the client is disconnecting.
+	// The client must not communicate with the server after sending this message.
+	// Expected: Message MSG_TYPE_ACKNOWLEDGED.
+	MsgType_MSG_TYPE_BYE MsgType = 20
 )
 
 // Enum value maps for MsgType.
@@ -111,6 +115,7 @@ var (
 		17: "MSG_TYPE_GET_FILE",
 		18: "MSG_TYPE_GET_ONLINE_USERS",
 		19: "MSG_TYPE_ONLINE_USERS",
+		20: "MSG_TYPE_BYE",
 	}
 	MsgType_value = map[string]int32{
 		"MSG_TYPE_UNSPECIFIED":         0,
@@ -133,6 +138,7 @@ var (
 		"MSG_TYPE_GET_FILE":            17,
 		"MSG_TYPE_GET_ONLINE_USERS":    18,
 		"MSG_TYPE_ONLINE_USERS":        19,
+		"MSG_TYPE_BYE":                 20,
 	}
 )
 
@@ -1423,6 +1429,43 @@ func (x *MsgOnlineUsers) GetUsers() []*OnlineUserInfo {
 	return nil
 }
 
+// See MSG_TYPE_BYE.
+type MsgBye struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MsgBye) Reset() {
+	*x = MsgBye{}
+	mi := &file_pb_v1_protocol_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MsgBye) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgBye) ProtoMessage() {}
+
+func (x *MsgBye) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_v1_protocol_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MsgBye.ProtoReflect.Descriptor instead.
+func (*MsgBye) Descriptor() ([]byte, []int) {
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{21}
+}
+
 var File_pb_v1_protocol_proto protoreflect.FileDescriptor
 
 const file_pb_v1_protocol_proto_rawDesc = "" +
@@ -1486,7 +1529,8 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x0eOnlineUserInfo\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\"=\n" +
 	"\x0eMsgOnlineUsers\x12+\n" +
-	"\x05users\x18\x01 \x03(\v2\x15.pb.v1.OnlineUserInfoR\x05users*\x96\x04\n" +
+	"\x05users\x18\x01 \x03(\v2\x15.pb.v1.OnlineUserInfoR\x05users\"\b\n" +
+	"\x06MsgBye*\xa8\x04\n" +
 	"\aMsgType\x12\x18\n" +
 	"\x14MSG_TYPE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rMSG_TYPE_PING\x10\x01\x12\x11\n" +
@@ -1508,7 +1552,8 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x12MSG_TYPE_FILE_META\x10\x10\x12\x15\n" +
 	"\x11MSG_TYPE_GET_FILE\x10\x11\x12\x1d\n" +
 	"\x19MSG_TYPE_GET_ONLINE_USERS\x10\x12\x12\x19\n" +
-	"\x15MSG_TYPE_ONLINE_USERS\x10\x13*\xeb\x02\n" +
+	"\x15MSG_TYPE_ONLINE_USERS\x10\x13\x12\x10\n" +
+	"\fMSG_TYPE_BYE\x10\x14*\xeb\x02\n" +
 	"\aErrType\x12\x18\n" +
 	"\x14ERR_TYPE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11ERR_TYPE_INTERNAL\x10\x01\x12\x1e\n" +
@@ -1546,7 +1591,7 @@ func file_pb_v1_protocol_proto_rawDescGZIP() []byte {
 }
 
 var file_pb_v1_protocol_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_pb_v1_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_pb_v1_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_pb_v1_protocol_proto_goTypes = []any{
 	(MsgType)(0),                 // 0: pb.v1.MsgType
 	(ErrType)(0),                 // 1: pb.v1.ErrType
@@ -1573,6 +1618,7 @@ var file_pb_v1_protocol_proto_goTypes = []any{
 	(*MsgGetOnlineUsers)(nil),    // 22: pb.v1.MsgGetOnlineUsers
 	(*OnlineUserInfo)(nil),       // 23: pb.v1.OnlineUserInfo
 	(*MsgOnlineUsers)(nil),       // 24: pb.v1.MsgOnlineUsers
+	(*MsgBye)(nil),               // 25: pb.v1.MsgBye
 }
 var file_pb_v1_protocol_proto_depIdxs = []int32{
 	1,  // 0: pb.v1.MsgError.type:type_name -> pb.v1.ErrType
@@ -1604,7 +1650,7 @@ func file_pb_v1_protocol_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pb_v1_protocol_proto_rawDesc), len(file_pb_v1_protocol_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   21,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

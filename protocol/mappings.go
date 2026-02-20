@@ -48,6 +48,8 @@ func MsgTypeToEmptyMsg(typ pb.MsgType) proto.Message {
 		return &pb.MsgGetOnlineUsers{}
 	case pb.MsgType_MSG_TYPE_ONLINE_USERS:
 		return &pb.MsgOnlineUsers{}
+	case pb.MsgType_MSG_TYPE_BYE:
+		return &pb.MsgBye{}
 	default:
 		return nil
 	}

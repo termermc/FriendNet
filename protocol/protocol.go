@@ -420,6 +420,11 @@ func wrapBidi(stream *quic.Stream) ProtoBidi {
 	}
 }
 
+// WriteAck writes an acknowledgement message to the bidi stream.
+func (bidi ProtoBidi) WriteAck() error {
+	return bidi.Write(pb.MsgType_MSG_TYPE_ACKNOWLEDGED, &pb.MsgAcknowledged{})
+}
+
 // WriteError writes an error message to the bidi stream.
 // If the message is empty, it will be sent as nil.
 func (bidi ProtoBidi) WriteError(typ pb.ErrType, msg string) error {
