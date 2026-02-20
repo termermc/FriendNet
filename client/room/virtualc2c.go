@@ -53,6 +53,9 @@ func (c VirtualC2cConn) SendAndReceive(typ pb.MsgType, msg proto.Message) (*prot
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		_ = bidi.Close()
+	}()
 
 	return bidi.Read()
 }
