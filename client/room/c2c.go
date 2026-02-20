@@ -66,6 +66,12 @@ loop:
 				case pb.MsgType_MSG_TYPE_GET_DIR_FILES:
 					msg := protocol.ToTyped[*pb.MsgGetDirFiles](rawMsg)
 					err = c.logic.OnGetDirFiles(c.Context, c, bidi, msg)
+				case pb.MsgType_MSG_TYPE_GET_FILE_META:
+					msg := protocol.ToTyped[*pb.MsgGetFileMeta](rawMsg)
+					err = c.logic.OnGetFileMeta(c.Context, c, bidi, msg)
+				case pb.MsgType_MSG_TYPE_GET_FILE:
+					msg := protocol.ToTyped[*pb.MsgGetFile](rawMsg)
+					err = c.logic.OnGetFile(c.Context, c, bidi, msg)
 				default:
 					err = bidi.WriteUnimplementedError(rawMsg.Type)
 				}

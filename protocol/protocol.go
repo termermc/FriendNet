@@ -429,6 +429,12 @@ func (bidi ProtoBidi) WriteError(typ pb.ErrType, msg string) error {
 	})
 }
 
+// WriteFileNotExistError writes an ERR_TYPE_FILE_NOT_EXIST error to the bidi stream,
+// based on the specified path.
+func (bidi ProtoBidi) WriteFileNotExistError(path string) error {
+	return bidi.WriteError(pb.ErrType_ERR_TYPE_FILE_NOT_EXIST, fmt.Sprintf("no such path %q", path))
+}
+
 // WriteUnexpectedMsgTypeError writes an ERR_TYPE_UNEXPECTED_MSG_TYPE error to the bidi stream,
 // based on the specified expected and actual message types.
 func (bidi ProtoBidi) WriteUnexpectedMsgTypeError(expected pb.MsgType, actual pb.MsgType) error {
