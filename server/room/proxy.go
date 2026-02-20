@@ -101,36 +101,7 @@ func (p *ClientProxy) Close() error {
 }
 
 func (p *ClientProxy) proxyThread(from protocol.ProtoBidi, to protocol.ProtoBidi) error {
-	readBuf := make([]byte, proxyBufSize)
-	var readN int
-	var err error
-
-	for {
-		readN, err = from.Stream.Read(readBuf)
-		if readN == 0 {
-			// Nothing to send.
-			// If there is an error, it will be sent to proxyErr after the loop.
-			break
-		}
-
-		// There is data to send, regardless of whether there was an error.
-		// Make sure the entire amount read is written.
-		wroteN := 0
-		for wroteN < readN {
-			n, writeErr := to.Stream.Write(readBuf[wroteN:readN])
-			if writeErr != nil {
-				err = errors.Join(err, writeErr)
-				break
-			}
-			wroteN += n
-		}
-
-		if err != nil {
-			// Error will be sent to proxyErr after the loop.
-			break
-		}
-	}
-
+	_, err := io.Copy(to.Stream, from.Stream)
 	return err
 }
 
