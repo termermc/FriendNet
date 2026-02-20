@@ -377,6 +377,9 @@ func (r *Room) handleDisconnect(client *Client) {
 
 	delete(r.clients, unStr)
 
+	// In case the connection was not closed, mark it as closed here.
+	_ = client.conn.CloseWithReason("disconnected")
+
 	r.logger.Info("client disconnected",
 		"service", "room.Room",
 		"room", r.Name.String(),
