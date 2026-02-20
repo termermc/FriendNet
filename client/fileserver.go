@@ -78,6 +78,11 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Strict CSP for pages served from peers.
 	w.Header().Set("Content-Security-Policy", "default-src 'none'; frame-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; sandbox")
 
+	// Prevent browser caching.
+	w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
+
 	if url.Path == "/" {
 		text(w, r, http.StatusOK, indexMsg)
 		return
@@ -158,6 +163,10 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Content-Type", mimeType)
 		w.Header().Set("Content-Length", fmt.Sprintf("%d", meta.Size))
+
+		if url.Query().Has("download") {
+			w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, meta.Name))
+		}
 
 		if isHead {
 			return nil
