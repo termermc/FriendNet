@@ -245,7 +245,7 @@ func (c *Conn) Close() error {
 	}()
 	<-timeoutCtx.Done()
 
-	_ = c.serverConn.CloseWithReason("closing")
+	_ = c.serverConn.CloseWithReason("goodbye")
 
 	c.ctxCancel()
 
