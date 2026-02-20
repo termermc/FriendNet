@@ -11,7 +11,7 @@ type LayoutProps = {
 	children: JSX.Element
 }
 
-export const Layout: Component<LayoutProps> = () => {
+export const Layout: Component<LayoutProps> = (props) => {
 	const client = useRpcClient()
 
 	let isStopping = false
@@ -38,7 +38,7 @@ export const Layout: Component<LayoutProps> = () => {
 
 	return (
 		<div class={styles.container}>
-			<div class={styles.header}>
+			<header>
 				<span class={styles.headerTitle}>{AppName}</span>
 
 				<button
@@ -48,7 +48,17 @@ export const Layout: Component<LayoutProps> = () => {
 				>
 					<img src={stopImg} alt="stop" />
 				</button>
-			</div>
+			</header>
+
+			<main>
+				<div class={styles.sidebar}>
+					SIDEBAR
+				</div>
+
+				<div class={styles.content}>
+					CONTENT
+				</div>
+			</main>
 		</div>
 	)
 }
