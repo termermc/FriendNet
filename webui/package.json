@@ -16,7 +16,6 @@
 		"@bufbuild/buf": "^1.65.0",
 		"@bufbuild/protoc-gen-es": "^2.11.0",
 		"prettier": "^3.8.1",
-		"solid-devtools": "^0.34.3",
 		"typescript": "^5.7.2",
 		"vite": "^7.1.4",
 		"vite-plugin-solid": "^2.11.8"
@@ -25,6 +24,7 @@
 		"@bufbuild/protobuf": "^2.11.0",
 		"@connectrpc/connect": "^2.1.1",
 		"@connectrpc/connect-web": "^2.1.1",
+		"@solidjs/router": "^0.15.4",
 		"solid-js": "^1.9.5"
 	}
 }
