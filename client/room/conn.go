@@ -189,9 +189,9 @@ func (c *Conn) Close() error {
 }
 
 // openC2cBidiWithMsg opens a bidi to a destination peer.
-// If the peer is definitely unreachable, returns ErrPeerUnreachable.
+// If the peer is definitely unreachable, returns protocol.ErrPeerUnreachable.
 // It may not return an error if the peer is unreachable immediately, but read methods
-// will most likely return ErrPeerUnreachable later if the peer is unreachable.
+// will most likely return protocol.ErrPeerUnreachable later if the peer is unreachable.
 func (c *Conn) openC2cBidiWithMsg(
 	username common.NormalizedUsername,
 	typ pb.MsgType,
@@ -225,7 +225,7 @@ func (c *Conn) openC2cBidiWithMsg(
 // It does not perform any connection logic, it is simply an adapter for the peer
 // logic inside Conn.
 //
-// Methods on the returned VirtualC2cConn may return ErrPeerUnreachable if the
+// Methods on the returned VirtualC2cConn may return protocol.ErrPeerUnreachable if the
 // desired peer is unavailable.
 func (c *Conn) GetVirtualC2cConn(peer common.NormalizedUsername) VirtualC2cConn {
 	return VirtualC2cConn{

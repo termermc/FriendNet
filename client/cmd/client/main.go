@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 
 	"connectrpc.com/connect"
 	"friendnet.org/client"
@@ -28,9 +30,11 @@ func main() {
 
 	var dataDir string
 	var rpcAddr string
+	var fileAddr string
 
 	flag.StringVar(&dataDir, "datadir", "", "path to server config JSON")
 	flag.StringVar(&rpcAddr, "rpcaddr", "http://127.0.0.1:20039", "RPC server address")
+	flag.StringVar(&fileAddr, "fileaddr", "http://127.0.0.1:20040", "File server address")
 	flag.Parse()
 
 	if dataDir == "" {
@@ -50,6 +54,10 @@ func main() {
 	err = os.MkdirAll(dataDir, 0755)
 	if err != nil {
 		panic(fmt.Errorf(`failed to create data directory: %w`, err))
+	}
+
+	if !strings.HasPrefix(fileAddr, "http://") {
+		panic(fmt.Errorf(`file server address must start with "http://" scheme`))
 	}
 
 	dbDir := filepath.Join(dataDir, "client.db")
@@ -88,13 +96,25 @@ func main() {
 		panic(fmt.Errorf(`failed to create RPC server: %w`, err))
 	}
 
-	logger.Info(`RPC server listening`,
-		"addr", rpcAddr,
-		"bearerToken", rpcBearerToken,
-	)
-	if err = rpc.Serve(); err != nil {
-		panic(fmt.Errorf(`RPC server ended with error: %w`, err))
-	}
+	var wg sync.WaitGroup
+	wg.Go(func() {
+		logger.Info(`RPC server listening`,
+			"addr", rpcAddr,
+			"bearerToken", rpcBearerToken,
+		)
+		if listenErr := rpc.Serve(); listenErr != nil {
+			panic(fmt.Errorf(`RPC server ended with error: %w`, listenErr))
+		}
+	})
+	wg.Go(func() {
+		logger.Info(`File server listening`, "addr", fileAddr)
+		listenErr := http.ListenAndServe(fileAddr[7:], client.NewFileServer(logger, multi))
+		if listenErr != nil {
+			panic(fmt.Errorf(`file server ended with error: %w`, listenErr))
+		}
+	})
+
+	wg.Wait()
 
 	_ = rpc.Close()
 	_ = multi.Close()
