@@ -3,6 +3,7 @@ package room
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"sync"
 	"time"
@@ -14,6 +15,9 @@ import (
 	"github.com/quic-go/quic-go"
 	"google.golang.org/protobuf/proto"
 )
+
+// ServerPingInterval is the interval between pings sent to the server.
+const ServerPingInterval = 10 * time.Second
 
 // ErrRoomConnClosed is returned when trying to interact with a closed room connection.
 var ErrRoomConnClosed = errors.New("room connection closed")
@@ -172,8 +176,53 @@ func NewRoomConn(
 		// Close connection.
 		_ = c.Close()
 	}()
+	go func() {
+		c.pingLoop()
+
+		// Ping loop exited, so the server must have gone away.
+		// Close connection.
+		_ = c.Close()
+	}()
 
 	return c, nil
+}
+
+// Ping sends a ping request to the client and returns the round-trip time.
+func (c *Conn) Ping() (time.Duration, error) {
+	start := time.Now()
+	_, err := c.serverConn.SendAndReceive(pb.MsgType_MSG_TYPE_PING, &pb.MsgPing{
+		SentTs: start.UnixMilli(),
+	})
+	if err != nil {
+		return 0, fmt.Errorf("failed to send ping to server: %w", err)
+	}
+
+	return time.Since(start), nil
+}
+
+func (c *Conn) pingLoop() {
+	ticker := time.NewTicker(ServerPingInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-c.Context.Done():
+			return
+		case <-ticker.C:
+			if _, err := c.Ping(); err != nil {
+				var idleErr *quic.IdleTimeoutError
+				var appErr *quic.ApplicationError
+				if errors.As(err, &idleErr) || errors.As(err, &appErr) {
+					return
+				}
+
+				c.logger.Error("failed to ping server",
+					"service", "room.Conn",
+					"err", err,
+				)
+			}
+			_, _ = c.serverConn.SendAndReceive(pb.MsgType_MSG_TYPE_PING, &pb.MsgPing{})
+		}
+	}
 }
 
 // Close closes the room connection.
