@@ -269,8 +269,9 @@ func (r *ProtoStreamReader) ReadRaw() (*UntypedProtoMsg, error) {
 
 	// Decode message.
 	msg := MsgTypeToEmptyMsg(typ)
-
-	// TODO If msg is nil, return error
+	if msg == nil {
+		return nil, fmt.Errorf(`BUG: got message type %s but there was no message mapping for it`, typ.String())
+	}
 
 	err = proto.Unmarshal(payload, msg)
 	if err != nil {
