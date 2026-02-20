@@ -7,9 +7,12 @@ import (
 	"io"
 	"log/slog"
 	"mime"
+	"net"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"syscall"
 
 	"friendnet.org/client/room"
 	"friendnet.org/common"
@@ -83,21 +86,24 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Pragma", "no-cache")
 	w.Header().Set("Expires", "0")
 
+	// Advertise range support.
+	w.Header().Set("Accept-Ranges", "bytes")
+
 	if url.Path == "/" {
 		text(w, r, http.StatusOK, indexMsg)
 		return
 	}
 
-	parts := strings.Split(strings.TrimSuffix(url.Path[1:], "/"), "/")
+	pathParts := strings.Split(strings.TrimSuffix(url.Path[1:], "/"), "/")
 
-	if len(parts) < 3 {
+	if len(pathParts) < 3 {
 		text(w, r, http.StatusBadRequest, schemeMsg+"\n")
 		return
 	}
 
-	serverUuid := parts[0]
-	usernameRaw := parts[1]
-	pathRaw := "/" + strings.Join(parts[2:], "/")
+	serverUuid := pathParts[0]
+	usernameRaw := pathParts[1]
+	pathRaw := "/" + strings.Join(pathParts[2:], "/")
 	path, err := protocol.ValidatePath(pathRaw)
 	if err != nil {
 		text(w, r, http.StatusBadRequest, fmt.Sprintf("invalid path %q: %v\n", pathRaw, err))
@@ -119,14 +125,83 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err = server.Do(r.Context(), func(ctx context.Context, c *room.Conn) error {
 		peer := c.GetVirtualC2cConn(username)
 
+		// Get metadata before getting file.
+		// This is necessary for range requests.
 		var meta *pb.MsgFileMeta
+		meta, err = peer.GetFileMeta(path)
+		if err != nil {
+			if errors.Is(err, protocol.ErrPeerUnreachable) {
+				text(w, r, http.StatusBadGateway, "peer unreachable\n")
+				return nil
+			}
+
+			var msgErr protocol.ProtoMsgError
+			if errors.As(err, &msgErr) {
+				if msgErr.Msg.Type == pb.ErrType_ERR_TYPE_FILE_NOT_EXIST {
+					text(w, r, http.StatusNotFound, "file not found\n")
+					return nil
+				}
+			}
+
+			return err
+		}
+
+		if meta.IsDir {
+			text(w, r, http.StatusNotImplemented, "path points to a directory\n")
+			return nil
+		}
+
+		fileExt := filepath.Ext(path.String())
+		mimeType := mime.TypeByExtension(fileExt)
+		if mimeType == "" {
+			mimeType = "application/octet-stream"
+		}
+
+		w.Header().Set("Content-Type", mimeType)
+
+		if url.Query().Has("download") {
+			w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, meta.Name))
+		}
+
+		// Parse range.
+		fileSize := int64(meta.Size)
+		offset, limit, rangeOk := common.ParseHttpRange(r.Header.Get("Range"), fileSize)
+		if !rangeOk {
+			text(w, r, http.StatusBadRequest, "invalid range string\n")
+		}
+
+		// Check if range can be satisfied.
+		if offset+limit > fileSize {
+			text(w, r, http.StatusRequestedRangeNotSatisfiable, fmt.Sprintf("requested range not satisfiable\n"))
+		}
+
+		{
+			var end int64
+			if limit == 0 {
+				end = fileSize - 1
+			} else {
+				end = offset + limit - 1
+			}
+			w.Header().Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", offset, end, fileSize))
+		}
+
+		{
+			var contentLen int64
+			if limit == 0 {
+				contentLen = fileSize
+			} else {
+				contentLen = limit
+			}
+
+			w.Header().Set("Content-Length", strconv.FormatInt(contentLen, 10))
+		}
+
 		var reader io.ReadCloser
-		meta, reader, err = peer.GetFile(&pb.MsgGetFile{
+		_, reader, err = peer.GetFile(&pb.MsgGetFile{
 			Path: path.String(),
 
-			// TODO Ranges
-			Offset: 0,
-			Limit:  0,
+			Offset: uint64(offset),
+			Limit:  uint64(limit),
 		})
 		if err != nil {
 			if errors.Is(err, protocol.ErrPeerUnreachable) {
@@ -146,28 +221,6 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}()
 
-		if meta.IsDir {
-			text(w, r, http.StatusNotImplemented, "path points to a directory\n")
-			return nil
-		}
-
-		// TODO Ranges
-
-		// Great, we've got the file.
-		// Now we can set the necessary headers to serve it.
-		fileExt := filepath.Ext(path.String())
-		mimeType := mime.TypeByExtension(fileExt)
-		if mimeType == "" {
-			mimeType = "application/octet-stream"
-		}
-
-		w.Header().Set("Content-Type", mimeType)
-		w.Header().Set("Content-Length", fmt.Sprintf("%d", meta.Size))
-
-		if url.Query().Has("download") {
-			w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, meta.Name))
-		}
-
 		if isHead {
 			return nil
 		}
@@ -182,6 +235,14 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return nil
 	})
 	if err != nil {
+		var opErr *net.OpError
+		if errors.As(err, &opErr) {
+			if errors.Is(opErr.Err, syscall.ECONNRESET) {
+				// Nothing to report, the HTTP client closed the connection.
+				return
+			}
+		}
+
 		s.logger.Error("failed to get file from peer",
 			"service", "client.FileServerHandler",
 			"server", serverUuid,

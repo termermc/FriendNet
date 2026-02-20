@@ -304,6 +304,11 @@ func (s *RpcServer) GetFileMeta(ctx context.Context, request *v1.GetFileMetaRequ
 		return nil, errInvalidUsername
 	}
 
+	path, pathErr := protocol.ValidatePath(request.Path)
+	if pathErr != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, pathErr)
+	}
+
 	srv, has := s.client.GetByUuid(request.ServerUuid)
 	if !has {
 		return nil, errServerNotFound
@@ -311,7 +316,7 @@ func (s *RpcServer) GetFileMeta(ctx context.Context, request *v1.GetFileMetaRequ
 
 	return DoValue(srv.ConnNanny, ctx, func(ctx context.Context, c *room.Conn) (*v1.GetFileMetaResponse, error) {
 		peer := c.GetVirtualC2cConn(username)
-		meta, err := peer.GetFileMeta(request.Path)
+		meta, err := peer.GetFileMeta(path)
 		if err != nil {
 			return nil, err
 		}

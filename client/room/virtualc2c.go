@@ -80,12 +80,12 @@ func (c VirtualC2cConn) GetDirFiles(path string) (protocol.Stream[*pb.MsgDirFile
 }
 
 // GetFileMeta returns the metadata of the specified file.
-func (c VirtualC2cConn) GetFileMeta(path string) (*pb.MsgFileMeta, error) {
+func (c VirtualC2cConn) GetFileMeta(path protocol.ProtoPath) (*pb.MsgFileMeta, error) {
 	msg, err := protocol.SendAndReceiveExpect[*pb.MsgFileMeta](
 		c,
 		pb.MsgType_MSG_TYPE_GET_FILE_META,
 		&pb.MsgGetFileMeta{
-			Path: path,
+			Path: path.String(),
 		},
 		pb.MsgType_MSG_TYPE_FILE_META,
 	)
