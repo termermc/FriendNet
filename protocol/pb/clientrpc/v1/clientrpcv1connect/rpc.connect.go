@@ -35,6 +35,9 @@ const (
 const (
 	// ClientRpcServiceStopProcedure is the fully-qualified name of the ClientRpcService's Stop RPC.
 	ClientRpcServiceStopProcedure = "/pb.clientrpc.v1.ClientRpcService/Stop"
+	// ClientRpcServiceGetClientInfoProcedure is the fully-qualified name of the ClientRpcService's
+	// GetClientInfo RPC.
+	ClientRpcServiceGetClientInfoProcedure = "/pb.clientrpc.v1.ClientRpcService/GetClientInfo"
 	// ClientRpcServiceGetServersProcedure is the fully-qualified name of the ClientRpcService's
 	// GetServers RPC.
 	ClientRpcServiceGetServersProcedure = "/pb.clientrpc.v1.ClientRpcService/GetServers"
@@ -77,6 +80,8 @@ const (
 type ClientRpcServiceClient interface {
 	// Stop shuts down the client.
 	Stop(context.Context, *v1.StopRequest) (*v1.StopResponse, error)
+	// GetClientInfo returns information about the FriendNet client.
+	GetClientInfo(context.Context, *v1.GetClientInfoRequest) (*v1.GetClientInfoResponse, error)
 	// GetServers returns a list of all servers.
 	GetServers(context.Context, *v1.GetServersRequest) (*v1.GetServersResponse, error)
 	// CreateServer creates a new server and automatically connects to it.
@@ -150,6 +155,12 @@ func NewClientRpcServiceClient(httpClient connect.HTTPClient, baseURL string, op
 			httpClient,
 			baseURL+ClientRpcServiceStopProcedure,
 			connect.WithSchema(clientRpcServiceMethods.ByName("Stop")),
+			connect.WithClientOptions(opts...),
+		),
+		getClientInfo: connect.NewClient[v1.GetClientInfoRequest, v1.GetClientInfoResponse](
+			httpClient,
+			baseURL+ClientRpcServiceGetClientInfoProcedure,
+			connect.WithSchema(clientRpcServiceMethods.ByName("GetClientInfo")),
 			connect.WithClientOptions(opts...),
 		),
 		getServers: connect.NewClient[v1.GetServersRequest, v1.GetServersResponse](
@@ -230,6 +241,7 @@ func NewClientRpcServiceClient(httpClient connect.HTTPClient, baseURL string, op
 // clientRpcServiceClient implements ClientRpcServiceClient.
 type clientRpcServiceClient struct {
 	stop             *connect.Client[v1.StopRequest, v1.StopResponse]
+	getClientInfo    *connect.Client[v1.GetClientInfoRequest, v1.GetClientInfoResponse]
 	getServers       *connect.Client[v1.GetServersRequest, v1.GetServersResponse]
 	createServer     *connect.Client[v1.CreateServerRequest, v1.CreateServerResponse]
 	deleteServer     *connect.Client[v1.DeleteServerRequest, v1.DeleteServerResponse]
@@ -247,6 +259,15 @@ type clientRpcServiceClient struct {
 // Stop calls pb.clientrpc.v1.ClientRpcService.Stop.
 func (c *clientRpcServiceClient) Stop(ctx context.Context, req *v1.StopRequest) (*v1.StopResponse, error) {
 	response, err := c.stop.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// GetClientInfo calls pb.clientrpc.v1.ClientRpcService.GetClientInfo.
+func (c *clientRpcServiceClient) GetClientInfo(ctx context.Context, req *v1.GetClientInfoRequest) (*v1.GetClientInfoResponse, error) {
+	response, err := c.getClientInfo.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -357,6 +378,8 @@ func (c *clientRpcServiceClient) GetOnlineUsers(ctx context.Context, req *v1.Get
 type ClientRpcServiceHandler interface {
 	// Stop shuts down the client.
 	Stop(context.Context, *v1.StopRequest) (*v1.StopResponse, error)
+	// GetClientInfo returns information about the FriendNet client.
+	GetClientInfo(context.Context, *v1.GetClientInfoRequest) (*v1.GetClientInfoResponse, error)
 	// GetServers returns a list of all servers.
 	GetServers(context.Context, *v1.GetServersRequest) (*v1.GetServersResponse, error)
 	// CreateServer creates a new server and automatically connects to it.
@@ -426,6 +449,12 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 		ClientRpcServiceStopProcedure,
 		svc.Stop,
 		connect.WithSchema(clientRpcServiceMethods.ByName("Stop")),
+		connect.WithHandlerOptions(opts...),
+	)
+	clientRpcServiceGetClientInfoHandler := connect.NewUnaryHandlerSimple(
+		ClientRpcServiceGetClientInfoProcedure,
+		svc.GetClientInfo,
+		connect.WithSchema(clientRpcServiceMethods.ByName("GetClientInfo")),
 		connect.WithHandlerOptions(opts...),
 	)
 	clientRpcServiceGetServersHandler := connect.NewUnaryHandlerSimple(
@@ -504,6 +533,8 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 		switch r.URL.Path {
 		case ClientRpcServiceStopProcedure:
 			clientRpcServiceStopHandler.ServeHTTP(w, r)
+		case ClientRpcServiceGetClientInfoProcedure:
+			clientRpcServiceGetClientInfoHandler.ServeHTTP(w, r)
 		case ClientRpcServiceGetServersProcedure:
 			clientRpcServiceGetServersHandler.ServeHTTP(w, r)
 		case ClientRpcServiceCreateServerProcedure:
@@ -539,6 +570,10 @@ type UnimplementedClientRpcServiceHandler struct{}
 
 func (UnimplementedClientRpcServiceHandler) Stop(context.Context, *v1.StopRequest) (*v1.StopResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.Stop is not implemented"))
+}
+
+func (UnimplementedClientRpcServiceHandler) GetClientInfo(context.Context, *v1.GetClientInfoRequest) (*v1.GetClientInfoResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.GetClientInfo is not implemented"))
 }
 
 func (UnimplementedClientRpcServiceHandler) GetServers(context.Context, *v1.GetServersRequest) (*v1.GetServersResponse, error) {

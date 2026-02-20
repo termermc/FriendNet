@@ -23,8 +23,25 @@ var errPathNotDir = connect.NewError(connect.CodeInvalidArgument, errors.New("pa
 var errShareNotFound = connect.NewError(connect.CodeNotFound, errors.New("share not found"))
 
 type RpcServer struct {
-	client *MultiClient
+	client        *MultiClient
+	fileServerUrl string
 }
+
+func NewRpcServer(
+	client *MultiClient,
+	fileServerUrl string,
+) *RpcServer {
+	return &RpcServer{
+		client:        client,
+		fileServerUrl: fileServerUrl,
+	}
+}
+
+func (s *RpcServer) Close() error {
+	return nil
+}
+
+var _ clientrpcv1connect.ClientRpcServiceHandler = (*RpcServer)(nil)
 
 func (s *RpcServer) serverToInfo(srv Server) *v1.ServerInfo {
 	return &v1.ServerInfo{
@@ -58,6 +75,12 @@ func (s *RpcServer) Stop(ctx context.Context, request *v1.StopRequest) (*v1.Stop
 	}
 
 	return &v1.StopResponse{}, nil
+}
+
+func (s *RpcServer) GetClientInfo(_ context.Context, _ *v1.GetClientInfoRequest) (*v1.GetClientInfoResponse, error) {
+	return &v1.GetClientInfoResponse{
+		FileServerUrl: s.fileServerUrl,
+	}, nil
 }
 
 func (s *RpcServer) GetServers(ctx context.Context, request *v1.GetServersRequest) (*v1.GetServersResponse, error) {
@@ -367,15 +390,3 @@ func (s *RpcServer) GetOnlineUsers(ctx context.Context, request *v1.GetOnlineUse
 		return nil
 	})
 }
-
-func NewRpcServer(client *MultiClient) *RpcServer {
-	return &RpcServer{
-		client: client,
-	}
-}
-
-func (s *RpcServer) Close() error {
-	return nil
-}
-
-var _ clientrpcv1connect.ClientRpcServiceHandler = (*RpcServer)(nil)

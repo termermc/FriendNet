@@ -66,6 +66,14 @@ message StopResponse {
 
 }
 
+message GetClientInfoRequest {
+
+}
+message GetClientInfoResponse {
+    // The base URL to the HTTP file server.
+    string file_server_url = 1;
+}
+
 message GetServersRequest {
 
 }
@@ -225,6 +233,9 @@ message GetOnlineUsersResponse {
 service ClientRpcService {
     // Stop shuts down the client.
     rpc Stop(StopRequest) returns (StopResponse) {}
+
+    // GetClientInfo returns information about the FriendNet client.
+    rpc GetClientInfo(GetClientInfoRequest) returns (GetClientInfoResponse) {}
 
     // GetServers returns a list of all servers.
     rpc GetServers(GetServersRequest) returns (GetServersResponse) {}

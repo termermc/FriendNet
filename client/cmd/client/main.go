@@ -91,7 +91,7 @@ func main() {
 			BearerToken:         rpcBearerToken,
 			CorsAllowAllOrigins: true,
 		},
-		client.NewRpcServer(multi),
+		client.NewRpcServer(multi, fileAddr),
 		func(impl *client.RpcServer, options ...connect.HandlerOption) (string, http.Handler) {
 			return clientrpcv1connect.NewClientRpcServiceHandler(impl, options...)
 		},
