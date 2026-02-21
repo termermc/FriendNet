@@ -26,7 +26,7 @@ const NoRpc: Component = () => {
 			</p>
 			<p>You can manually enter the URL below:</p>
 			<form method="get" action="">
-				<input type="text" name="rpc" placeholder="RPC URL" />
+				<input type="text" name="rpc" placeholder="http://localhost:20039" />
 				<input type="submit" />
 			</form>
 		</div>
@@ -52,18 +52,20 @@ const NoToken: Component = () => {
 
 export const Loader: Component = () => {
 	const params = new URLSearchParams(window.location.search)
-	let rpcUrl = localStorage.getItem(rpcUrlKey)
-	if (!rpcUrl) {
-		rpcUrl = params.get('rpc')
+	let rpcUrl = params.get('rpc')
+	if (rpcUrl) {
+		localStorage.setItem(rpcUrlKey, rpcUrl)
+	} else {
+		rpcUrl = localStorage.getItem(rpcUrlKey)
 		if (!rpcUrl) {
 			return <NoRpc />
 		}
-
-		localStorage.setItem(rpcUrlKey, rpcUrl)
 	}
 
 	if (rpcUrl.startsWith('/')) {
 		rpcUrl = window.location.origin + rpcUrl
+	} else if (!rpcUrl.startsWith('http://') && !rpcUrl.startsWith('https://')) {
+		return <NoRpc />
 	} else {
 		try {
 			new URL(rpcUrl)
@@ -72,14 +74,14 @@ export const Loader: Component = () => {
 		}
 	}
 
-	let bearerToken = localStorage.getItem(bearerTokenKey)
-	if (!bearerToken) {
-		bearerToken = params.get('token')
+	let bearerToken = params.get('token')
+	if (bearerToken) {
+		localStorage.setItem(bearerTokenKey, bearerToken)
+	} else {
+		bearerToken = localStorage.getItem(bearerTokenKey)
 		if (!bearerToken) {
 			return <NoToken />
 		}
-
-		localStorage.setItem(bearerTokenKey, bearerToken)
 	}
 
 	// Clear out params from query.
