@@ -21,6 +21,8 @@ import (
 	"friendnet.org/client/storage"
 	"friendnet.org/common"
 	"friendnet.org/protocol/pb/clientrpc/v1/clientrpcv1connect"
+	"friendnet.org/webui"
+	"github.com/pkg/browser"
 )
 
 func main() {
@@ -36,10 +38,14 @@ func main() {
 	var dataDir string
 	var rpcAddr string
 	var fileAddr string
+	var uiAddr string
+	var noBrowser bool
 
 	flag.StringVar(&dataDir, "datadir", "", "path to server config JSON")
 	flag.StringVar(&rpcAddr, "rpcaddr", "http://127.0.0.1:20039", "RPC server address")
 	flag.StringVar(&fileAddr, "fileaddr", "http://127.0.0.1:20040", "File server address")
+	flag.StringVar(&uiAddr, "uiaddr", "http://127.0.0.1:20041", "Web UI server address")
+	flag.BoolVar(&noBrowser, "nobrowser", false, "do not open web UI in browser")
 	flag.Parse()
 
 	if dataDir == "" {
@@ -63,6 +69,9 @@ func main() {
 
 	if !strings.HasPrefix(fileAddr, "http://") {
 		panic(fmt.Errorf(`file server address must start with "http://" scheme`))
+	}
+	if !strings.HasPrefix(uiAddr, "http://") {
+		panic(fmt.Errorf(`web UI server address must start with "http://" scheme`))
 	}
 
 	dbDir := filepath.Join(dataDir, "client.db")
@@ -111,6 +120,10 @@ func main() {
 		Addr:    fileAddr[7:],
 		Handler: client.NewFileServer(logger, multi),
 	}
+	uiServer := http.Server{
+		Addr:    uiAddr[7:],
+		Handler: webui.Handler{},
+	}
 
 	// Close client on SIGTERM.
 	var shutdownWg sync.WaitGroup
@@ -122,6 +135,7 @@ func main() {
 		timeoutCtx, ctxCancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer ctxCancel()
 
+		_ = uiServer.Shutdown(timeoutCtx)
 		_ = fileServer.Shutdown(timeoutCtx)
 		_ = rpc.Close()
 		_ = multi.Close()
@@ -146,6 +160,27 @@ func main() {
 				return
 			}
 			panic(fmt.Errorf(`file server ended with error: %w`, listenErr))
+		}
+	})
+	wg.Go(func() {
+		uiUrl := fmt.Sprintf("%s?rpc=%s&token=%s", uiAddr, rpcAddr, rpcBearerToken)
+
+		logger.Info(`Web UI server listening`,
+			"addr", uiAddr,
+			"url", uiUrl,
+		)
+
+		if !noBrowser {
+			// Try to open URL in browser.
+			_ = browser.OpenURL(uiUrl)
+		}
+
+		listenErr := uiServer.ListenAndServe()
+		if listenErr != nil {
+			if errors.Is(listenErr, http.ErrServerClosed) {
+				return
+			}
+			panic(fmt.Errorf(`web UI server ended with error: %w`, listenErr))
 		}
 	})
 
