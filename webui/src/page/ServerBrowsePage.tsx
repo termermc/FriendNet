@@ -69,8 +69,6 @@ const Page: Component = () => {
 		}
 	})
 
-	// TODO In UI, make last segment of path red and underlined if there is an error
-
 	return (
 		<div class={styles.container}>
 			<div class={styles.location}>
@@ -82,7 +80,10 @@ const Page: Component = () => {
 						<A
 							title={seg}
 							href={makeBrowsePath(uuid, username, pathSegments.slice(0, i() + 1).join('/'))}
-							class={styles.segment}
+							classList={{
+								[styles.segment]: true,
+								[styles.error]: i() === pathSegments.length - 1 && error() !== '',
+							}}
 						>{trimStrEllipsis(seg, 20)}</A>
 					)}
 				</For>
