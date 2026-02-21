@@ -50,7 +50,7 @@ func main() {
 
 	if dataDir == "" {
 		var err error
-		dataDir, err = os.UserConfigDir()
+		dataDir, err = GetDataDir()
 		if err != nil {
 			panic(fmt.Errorf(`failed to resolve user data directory: %w`, err))
 		}
