@@ -1,4 +1,4 @@
-.PHONY: help install-tools pb pbweb server client rpcclient run-rpcclient
+.PHONY: help install-tools pb pbweb server client client-windows rpcclient run-rpcclient
 
 help:
 	echo "Read the Makefile to see options"
@@ -21,6 +21,9 @@ server:
 
 client:
 	cd webui && go generate && cd ../client && go build -o friendnet-client friendnet.org/client/cmd/client
+
+client-windows:
+	cd webui && go generate && cd ../client && GOOS=windows GOARCH=amd64 go build -o friendnet-client.exe friendnet.org/client/cmd/client
 
 rpcclient:
 	cd rpcclient && go build -o friendnet-rpcclient friendnet.org/rpcclient/cmd/cli
