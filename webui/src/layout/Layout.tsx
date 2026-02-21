@@ -6,7 +6,7 @@ import stopImg from '../asset/img/stop.svg'
 
 import { useRpcClient } from '../ctx'
 import { AppName } from '../constant'
-import { ServerBrowser } from '../component/ServerBrowser'
+import { ServerBrowser } from './ServerBrowser'
 
 type LayoutProps = {
 	children: JSX.Element

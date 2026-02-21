@@ -122,9 +122,6 @@ export const Loader: Component = () => {
 		// Load initial state.
 		const state = new State()
 		await state.refreshServers(client)
-		for (const server of state.servers()) {
-			await server.refreshOnlineUsers(client)
-		}
 
 		return { clientInfo, state }
 	})

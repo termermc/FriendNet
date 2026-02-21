@@ -154,6 +154,9 @@ export class State {
 			}
 		}
 
+		// Sort by name.
+		newServers.sort((a, b) => a.label().localeCompare(b.label()))
+
 		this.#setServers(newServers)
 	}
 
