@@ -14,7 +14,7 @@
 	flex-direction: row;
 	flex: 1;
 	margin-top: 0.5rem;
-    height: calc(100% - 3rem);
+	height: calc(100% - 3rem);
 }
 
 .container header {

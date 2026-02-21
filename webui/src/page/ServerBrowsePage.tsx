@@ -7,7 +7,13 @@ import { useFileServerUrl, useGlobalState, useRpcClient } from '../ctx'
 import { ConnectError } from '@connectrpc/connect'
 import { A, useLocation, useParams } from '@solidjs/router'
 import { FileMeta } from '../../pb/clientrpc/v1/rpc_pb'
-import { guessFileCategory, makeBrowsePath, makeFileUrl, normalizePath, trimStrEllipsis } from '../util'
+import {
+	guessFileCategory,
+	makeBrowsePath,
+	makeFileUrl,
+	normalizePath,
+	trimStrEllipsis,
+} from '../util'
 
 const Page: Component = () => {
 	const {
@@ -26,7 +32,9 @@ const Page: Component = () => {
 	}
 
 	// Normalize path.
-	const { path, segments: pathSegments } = normalizePath(decodeURIComponent(pathRaw))
+	const { path, segments: pathSegments } = normalizePath(
+		decodeURIComponent(pathRaw),
+	)
 
 	const [files, setFiles] = createSignal<FileMeta[]>([])
 	const [isLoading, setLoading] = createSignal(false)
@@ -73,18 +81,31 @@ const Page: Component = () => {
 		<div class={styles.container}>
 			<div class={styles.location}>
 				<div class={styles.segment}>🖧 {server.name()}</div>
-				<A href={makeBrowsePath(uuid, username, '')} class={styles.segment}>👤 {username}</A>
+				<A
+					href={makeBrowsePath(uuid, username, '')}
+					class={styles.segment}
+				>
+					👤 {username}
+				</A>
 
 				<For each={pathSegments}>
 					{(seg, i) => (
 						<A
 							title={seg}
-							href={makeBrowsePath(uuid, username, pathSegments.slice(0, i() + 1).join('/'))}
+							href={makeBrowsePath(
+								uuid,
+								username,
+								pathSegments.slice(0, i() + 1).join('/'),
+							)}
 							classList={{
 								[styles.segment]: true,
-								[styles.error]: i() === pathSegments.length - 1 && error() !== '',
+								[styles.error]:
+									i() === pathSegments.length - 1 &&
+									error() !== '',
 							}}
-						>{trimStrEllipsis(seg, 20)}</A>
+						>
+							{trimStrEllipsis(seg, 20)}
+						</A>
 					)}
 				</For>
 			</div>
@@ -117,7 +138,14 @@ const Page: Component = () => {
 						<Show when={pathSegments.length !== 0}>
 							<tr>
 								<td>
-									<A href={makeBrowsePath(uuid, username, pathSegments.slice(0, -1).join('/'))} title="Up a directory">
+									<A
+										href={makeBrowsePath(
+											uuid,
+											username,
+											pathSegments.slice(0, -1).join('/'),
+										)}
+										title="Up a directory"
+									>
 										▲ ..
 									</A>
 								</td>
@@ -168,7 +196,10 @@ const Page: Component = () => {
 									? makeBrowsePath(uuid, username, filePath)
 									: dlUrl
 
-								const label = trimStrEllipsis(emoji + ' ' + meta.name, 100)
+								const label = trimStrEllipsis(
+									emoji + ' ' + meta.name,
+									100,
+								)
 
 								return (
 									<tr>
@@ -185,7 +216,11 @@ const Page: Component = () => {
 													</a>
 												}
 											>
-												<A href={url} target={target} title={meta.name}>
+												<A
+													href={url}
+													target={target}
+													title={meta.name}
+												>
 													{label}
 												</A>
 											</Show>

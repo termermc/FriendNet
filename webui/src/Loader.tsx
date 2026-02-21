@@ -26,7 +26,11 @@ const NoRpc: Component = () => {
 			</p>
 			<p>You can manually enter the URL below:</p>
 			<form method="get" action="">
-				<input type="text" name="rpc" placeholder="http://localhost:20039" />
+				<input
+					type="text"
+					name="rpc"
+					placeholder="http://localhost:20039"
+				/>
 				<input type="submit" />
 			</form>
 		</div>
@@ -64,7 +68,10 @@ export const Loader: Component = () => {
 
 	if (rpcUrl.startsWith('/')) {
 		rpcUrl = window.location.origin + rpcUrl
-	} else if (!rpcUrl.startsWith('http://') && !rpcUrl.startsWith('https://')) {
+	} else if (
+		!rpcUrl.startsWith('http://') &&
+		!rpcUrl.startsWith('https://')
+	) {
 		return <NoRpc />
 	} else {
 		try {

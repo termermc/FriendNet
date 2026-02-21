@@ -18,7 +18,11 @@ const OnlineUserEntry: Component<{ server: Server; user: OnlineUser }> = (
 			</div>
 			<div class={styles.onlineUserOptions}>
 				<A
-					href={makeBrowsePath(props.server.uuid, props.user.username, '')}
+					href={makeBrowsePath(
+						props.server.uuid,
+						props.user.username,
+						'',
+					)}
 				>
 					📂 Browse
 				</A>

@@ -128,7 +128,10 @@ export function guessFileCategory(filename: string): FileCategory {
  * @param path The path to normalize.
  * @returns The normalized path and the constituent segments.
  */
-export function normalizePath(path: string): { path: string, segments: string[] } {
+export function normalizePath(path: string): {
+	path: string
+	segments: string[]
+} {
 	let pathRes: string
 	const pathSegments: string[] = []
 	{
@@ -155,7 +158,11 @@ export function normalizePath(path: string): { path: string, segments: string[] 
 	}
 }
 
-export function makeBrowsePath(serverUuid: string, username: string, path: string): string {
+export function makeBrowsePath(
+	serverUuid: string,
+	username: string,
+	path: string,
+): string {
 	if (path === '' || path === '/') {
 		return `/server/${serverUuid}/browse/${username}`
 	}
