@@ -13,7 +13,9 @@
 		"moduleResolution": "bundler",
 		"noEmit": true,
 
-		// Type Checking & Safety
+		"noUnusedLocals": true,
+		"noUncheckedSideEffectImports": true,
+		"noUnusedParameters": true,
 		"strict": true,
 		"types": ["vite/client"]
 	},

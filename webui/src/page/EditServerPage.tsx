@@ -5,8 +5,6 @@ import { useGlobalState, useRpcClient } from '../ctx'
 import { ConnectError } from '@connectrpc/connect'
 import { DefaultServerPort } from '../constant'
 import { useLocation, useParams } from '@solidjs/router'
-import { State } from '../state'
-import { RpcClient } from '../protobuf'
 
 const Page: Component = () => {
 	const { uuid } = useParams<{ uuid: string }>()

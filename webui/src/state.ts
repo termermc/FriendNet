@@ -18,7 +18,7 @@ export class OnlineUser {
 		this.username = info.username
 	}
 
-	updateFromInfo(info: OnlineUserInfo): void {
+	updateFromInfo(_info: OnlineUserInfo): void {
 		// Nothing to do for now.
 	}
 }

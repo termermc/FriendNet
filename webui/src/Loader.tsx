@@ -1,6 +1,5 @@
 import {
 	Component,
-	createSignal,
 	ErrorBoundary,
 	Show,
 	Suspense,
