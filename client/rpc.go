@@ -21,6 +21,7 @@ var errInvalidUsername = connect.NewError(connect.CodeInvalidArgument, errors.Ne
 var errInvalidRoomName = connect.NewError(connect.CodeInvalidArgument, errors.New("invalid room name"))
 var errPathNotDir = connect.NewError(connect.CodeInvalidArgument, errors.New("path is not a directory"))
 var errShareNotFound = connect.NewError(connect.CodeNotFound, errors.New("share not found"))
+var errFileNotFound = connect.NewError(connect.CodeNotFound, errors.New("file not found"))
 
 type RpcServer struct {
 	client        *MultiClient
@@ -300,6 +301,9 @@ func (s *RpcServer) GetDirFiles(ctx context.Context, request *v1.GetDirFilesRequ
 					if protoMsgErr.Msg.Type == pb.ErrType_ERR_TYPE_PATH_NOT_DIRECTORY {
 						return errPathNotDir
 					}
+					if protoMsgErr.Msg.Type == pb.ErrType_ERR_TYPE_FILE_NOT_EXIST {
+						return errFileNotFound
+					}
 				}
 
 				return err
@@ -342,6 +346,13 @@ func (s *RpcServer) GetFileMeta(ctx context.Context, request *v1.GetFileMetaRequ
 		peer := c.GetVirtualC2cConn(username)
 		meta, err := peer.GetFileMeta(path)
 		if err != nil {
+			var protoMsgErr protocol.ProtoMsgError
+			if errors.As(err, &protoMsgErr) {
+				if protoMsgErr.Msg.Type == pb.ErrType_ERR_TYPE_FILE_NOT_EXIST {
+					return nil, errFileNotFound
+				}
+			}
+
 			return nil, err
 		}
 
