@@ -8,6 +8,7 @@ import {
 import {
 	bearerTokenKey,
 	FileServerUrlCtx,
+	GlobalStateCtx,
 	RpcClientCtx,
 	rpcUrlKey,
 } from './ctx'
@@ -16,6 +17,7 @@ import { createClient, Interceptor } from '@connectrpc/connect'
 import { ClientRpcService } from '../pb/clientrpc/v1/rpc_pb'
 import { createConnectTransport } from '@connectrpc/connect-web'
 import { createAsync } from '@solidjs/router'
+import { State } from './state'
 
 const NoRpc: Component = () => {
 	return (
@@ -121,7 +123,9 @@ export const Loader: Component = () => {
 						value={clientInfo()!.fileServerUrl}
 					>
 						<RpcClientCtx.Provider value={client}>
-							<App />
+							<GlobalStateCtx.Provider value={new State()}>
+								<App />
+							</GlobalStateCtx.Provider>
 						</RpcClientCtx.Provider>
 					</FileServerUrlCtx.Provider>
 				</Show>

@@ -6,6 +6,7 @@ import stopImg from '../asset/img/stop.svg'
 
 import { useRpcClient } from '../ctx'
 import { AppName } from '../constant'
+import { ServerBrowser } from '../component/ServerBrowser'
 
 type LayoutProps = {
 	children: JSX.Element
@@ -27,7 +28,7 @@ export const Layout: Component<LayoutProps> = (props) => {
 		try {
 			isStopping = true
 			await client.stop({})
-			alert('Client stopped, you may now close this tab')
+			window.close()
 		} catch (err) {
 			console.error('failed to stop client:', err)
 			alert('Failed to stop client, see console for details')
@@ -52,12 +53,10 @@ export const Layout: Component<LayoutProps> = (props) => {
 
 			<main>
 				<div class={styles.sidebar}>
-					SIDEBAR
+					<ServerBrowser />
 				</div>
 
-				<div class={styles.content}>
-					CONTENT
-				</div>
+				<div class={styles.content}>CONTENT</div>
 			</main>
 		</div>
 	)
