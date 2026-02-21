@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"runtime/debug"
 	"sync"
+	"time"
 
 	"friendnet.org/client/cert"
 	"friendnet.org/client/room"
@@ -27,6 +28,9 @@ const (
 // ConnNanny watches over a connection and manages reconnections, reporting state, etc.
 // It also owns the Logic passed into it, closing it when Close is called.
 type ConnNanny struct {
+	maxWait time.Duration
+	curWait time.Duration
+
 	logger *slog.Logger
 
 	ctx       context.Context
@@ -62,6 +66,9 @@ func NewConnNanny(
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
 	n := &ConnNanny{
+		maxWait: 30 * time.Second,
+		curWait: 0,
+
 		logger: logger,
 
 		ctx:       ctx,
@@ -276,9 +283,17 @@ func (n *ConnNanny) daemon() {
 			n.mu.Lock()
 			// Connection never opened, so we do not to close or recreate openCh.
 			n.state = ConnStateClosed
+
+			// Back off.
+			if n.curWait < n.maxWait {
+				n.curWait += time.Second
+			} else {
+				n.curWait = n.maxWait
+			}
 			n.mu.Unlock()
 
-			// TODO backoff
+			time.Sleep(n.curWait)
+
 			continue
 		}
 
@@ -300,6 +315,7 @@ func (n *ConnNanny) daemon() {
 		default:
 			close(n.openCh)
 		}
+		n.curWait = 0
 		n.mu.Unlock()
 
 		// Wait for connection to end.
