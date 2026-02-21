@@ -57,7 +57,13 @@ export const Layout: Component<LayoutProps> = (props) => {
 				</div>
 
 				<div class={styles.content}>
-					<ErrorBoundary fallback={<h1>Failed to render page content, check console</h1>}>
+					<ErrorBoundary
+						fallback={
+							<h1>
+								Failed to render page content, check console
+							</h1>
+						}
+					>
 						{props.children}
 					</ErrorBoundary>
 				</div>

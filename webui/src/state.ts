@@ -1,6 +1,7 @@
 import { Accessor, createSignal, Setter } from 'solid-js'
 import {
-	CreateServerRequest, CreateShareRequest,
+	CreateServerRequest,
+	CreateShareRequest,
 	OnlineUserInfo,
 	ServerInfo,
 	ShareInfo,
@@ -134,8 +135,14 @@ export class Server {
 	 * @param client The RPC client to use.
 	 * @param req The share creation request.
 	 */
-	async createShare(client: RpcClient, req: Omit<CreateShareRequest, '$typeName' | 'serverUuid'>): Promise<void> {
-		const { share } = await client.createShare({ serverUuid: this.uuid, ...req })
+	async createShare(
+		client: RpcClient,
+		req: Omit<CreateShareRequest, '$typeName' | 'serverUuid'>,
+	): Promise<void> {
+		const { share } = await client.createShare({
+			serverUuid: this.uuid,
+			...req,
+		})
 		this.#setShares([...this.shares(), new ServerShare(share!)])
 	}
 

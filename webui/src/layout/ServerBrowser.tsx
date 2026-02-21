@@ -5,6 +5,7 @@ import styles from './ServerBrowser.module.css'
 import { OnlineUser, Server } from '../state'
 import { A } from '@solidjs/router'
 import { Code, ConnectError } from '@connectrpc/connect'
+import { makeBrowsePath } from '../util'
 
 const OnlineUserEntry: Component<{ server: Server; user: OnlineUser }> = (
 	props,
@@ -17,7 +18,7 @@ const OnlineUserEntry: Component<{ server: Server; user: OnlineUser }> = (
 			</div>
 			<div class={styles.onlineUserOptions}>
 				<A
-					href={`/server/${props.server.uuid}/browse/${props.user.username}`}
+					href={makeBrowsePath(props.server.uuid, props.user.username, '')}
 				>
 					📂 Browse
 				</A>
@@ -40,7 +41,10 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 			if (err instanceof ConnectError && err.code === Code.NotFound) {
 				// Server was probably deleted.
 				state.refreshServers(client).catch((err) => {
-					console.error('failed to refresh servers after apparently server deletion:', err)
+					console.error(
+						'failed to refresh servers after apparently server deletion:',
+						err,
+					)
 				})
 				return
 			}
@@ -130,7 +134,9 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 						</tbody>
 					</table>
 
-					<A href={`/server/${props.server.uuid}/shares`}>📁 Manage Shares</A>
+					<A href={`/server/${props.server.uuid}/shares`}>
+						📁 Manage Shares
+					</A>
 				</div>
 
 				<div class={styles.onlineUsers}>

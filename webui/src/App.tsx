@@ -6,6 +6,8 @@ import { NotFoundPage } from './page/NotFoundPage'
 import { CreateServerPage } from './page/CreateServerPage'
 import { EditServerPage } from './page/EditServerPage'
 import { ServerSharesPage } from './page/ServerSharesPage'
+import { ServerBrowsePage } from './page/ServerBrowsePage'
+import { makeBrowsePath } from './util'
 
 const App: Component = () => {
 	const routes: RouteDefinition[] = [
@@ -25,6 +27,11 @@ const App: Component = () => {
 		{
 			path: '/server/:uuid/shares',
 			component: ServerSharesPage,
+		},
+
+		{
+			path: makeBrowsePath(':uuid', ':username', '*path'),
+			component: ServerBrowsePage,
 		},
 
 		{

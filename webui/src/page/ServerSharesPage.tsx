@@ -18,7 +18,7 @@ const Page: Component = () => {
 	}
 
 	onMount(() => {
-		server.refreshShares(client).catch(err => {
+		server.refreshShares(client).catch((err) => {
 			console.error('failed to refresh shares:', err)
 			alert('Failed to refresh shares, check console')
 		})
@@ -96,13 +96,20 @@ const Page: Component = () => {
 			<h1>Shares for {server.name()}</h1>
 
 			<div class={styles.shares}>
-				<Show when={server.shares().length > 0} fallback={<p>No shares</p>}>
+				<Show
+					when={server.shares().length > 0}
+					fallback={<p>No shares</p>}
+				>
 					<For each={server.shares()}>
 						{(share) => (
 							<div class={styles.share}>
-								Name: {share.name}<br />
-								Path: {share.path}<br />
-								<button onClick={() => doDelete(share.name)}>Delete</button>
+								Name: {share.name}
+								<br />
+								Path: {share.path}
+								<br />
+								<button onClick={() => doDelete(share.name)}>
+									Delete
+								</button>
 							</div>
 						)}
 					</For>
@@ -159,11 +166,7 @@ const Page: Component = () => {
 					</tbody>
 				</table>
 
-				<input
-					type="submit"
-					value="Add Share"
-					disabled={isAdding()}
-				/>
+				<input type="submit" value="Add Share" disabled={isAdding()} />
 			</form>
 		</div>
 	)
