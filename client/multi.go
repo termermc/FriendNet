@@ -54,7 +54,7 @@ type MultiClient struct {
 	certStore cert.Store
 
 	// Mapping of server UUIDs to the Server instances that manage connections to them.
-	servers map[string]Server
+	servers map[string]*Server
 }
 
 // NewMultiClient creates a new MultiClient instance.
@@ -78,11 +78,11 @@ func NewMultiClient(
 		logger:    logger,
 		storage:   storage,
 		certStore: certStore,
-		servers:   make(map[string]Server, len(serverRecs)),
+		servers:   make(map[string]*Server, len(serverRecs)),
 	}
 
 	for _, record := range serverRecs {
-		var inst Server
+		var inst *Server
 		inst, err = c.createServerInstance(record)
 		if err != nil {
 			ctxCancel()
@@ -95,8 +95,8 @@ func NewMultiClient(
 	return c, nil
 }
 
-func (c *MultiClient) snapshotServers() []Server {
-	slice := make([]Server, 0, len(c.servers))
+func (c *MultiClient) snapshotServers() []*Server {
+	slice := make([]*Server, 0, len(c.servers))
 	for _, server := range c.servers {
 		slice = append(slice, server)
 	}
@@ -130,7 +130,7 @@ func (c *MultiClient) Close() error {
 // GetAll returns all server connections under management.
 // Returns an empty slice if the MultiClient is closed.
 // Note that this method creates a new slice each time it is called.
-func (c *MultiClient) GetAll() []Server {
+func (c *MultiClient) GetAll() []*Server {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	if c.isClosed {
@@ -143,30 +143,30 @@ func (c *MultiClient) GetAll() []Server {
 // GetByUuid returns the server connection for the server with the specified UUID and true if found,
 // otherwise empty and false.
 // Returns empty and false if the MultiClient is closed.
-func (c *MultiClient) GetByUuid(uuid string) (Server, bool) {
+func (c *MultiClient) GetByUuid(uuid string) (*Server, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	if c.isClosed {
-		return Server{}, false
+		return nil, false
 	}
 
 	server, has := c.servers[uuid]
 	return server, has
 }
 
-func (c *MultiClient) createServerInstance(record storage.ServerRecord) (Server, error) {
+func (c *MultiClient) createServerInstance(record storage.ServerRecord) (*Server, error) {
 	var shareMgr *share.ServerShareManager
 	shareMgr, err := share.NewServerShareManager(
 		record.Uuid,
 		c.storage,
 	)
 	if err != nil {
-		return Server{}, err
+		return nil, err
 	}
 
 	logic := room.NewLogicImpl(shareMgr)
 
-	return Server{
+	return &Server{
 		Uuid:      record.Uuid,
 		Name:      record.Name,
 		CreatedTs: record.CreatedTs,
@@ -193,11 +193,11 @@ func (c *MultiClient) Create(
 	room common.NormalizedRoomName,
 	username common.NormalizedUsername,
 	password string,
-) (Server, error) {
+) (*Server, error) {
 	c.mu.Lock()
 	if c.isClosed {
 		c.mu.Unlock()
-		return Server{}, ErrMultiClientClosed
+		return nil, ErrMultiClientClosed
 	}
 	c.mu.Unlock()
 
@@ -210,7 +210,7 @@ func (c *MultiClient) Create(
 		password,
 	)
 	if err != nil {
-		return Server{}, fmt.Errorf(`failed to create server %q in storage: %w`, name, err)
+		return nil, fmt.Errorf(`failed to create server %q in storage: %w`, name, err)
 	}
 
 	ok := false
@@ -223,15 +223,15 @@ func (c *MultiClient) Create(
 	// Return record.
 	record, has, err := c.storage.GetServerByUuid(ctx, uuid)
 	if err != nil {
-		return Server{}, fmt.Errorf(`failed to get server record for server %q (UUID: %q): %w`, name, uuid, err)
+		return nil, fmt.Errorf(`failed to get server record for server %q (UUID: %q): %w`, name, uuid, err)
 	}
 	if !has {
-		return Server{}, fmt.Errorf(`newly created server record with UUID %q not found`, uuid)
+		return nil, fmt.Errorf(`newly created server record with UUID %q not found`, uuid)
 	}
 
 	inst, err := c.createServerInstance(record)
 	if err != nil {
-		return Server{}, fmt.Errorf(`failed to create server instance for server %q (UUID: %q): %w`, name, uuid, err)
+		return nil, fmt.Errorf(`failed to create server instance for server %q (UUID: %q): %w`, name, uuid, err)
 	}
 
 	c.mu.Lock()

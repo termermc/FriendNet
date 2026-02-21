@@ -46,7 +46,7 @@ func (s *RpcServer) Close() error {
 
 var _ clientrpcv1connect.ClientRpcServiceHandler = (*RpcServer)(nil)
 
-func (s *RpcServer) serverToInfo(srv Server) *v1.ServerInfo {
+func (s *RpcServer) serverToInfo(srv *Server) *v1.ServerInfo {
 	return &v1.ServerInfo{
 		Uuid:      srv.Uuid,
 		Name:      srv.Name,
