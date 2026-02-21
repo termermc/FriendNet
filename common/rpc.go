@@ -382,7 +382,7 @@ func NewRpcServer[T io.Closer](
 
 		if r.Method == http.MethodOptions {
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "*")
+			w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, connect-protocol-version")
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
