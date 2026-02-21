@@ -1,9 +1,4 @@
-import {
-	Component,
-	ErrorBoundary,
-	Show,
-	Suspense,
-} from 'solid-js'
+import { Component, ErrorBoundary, Show, Suspense } from 'solid-js'
 import {
 	bearerTokenKey,
 	FileServerUrlCtx,
@@ -13,7 +8,10 @@ import {
 } from './ctx'
 import App from './App'
 import { createClient, Interceptor } from '@connectrpc/connect'
-import { ClientRpcService, GetClientInfoResponse } from '../pb/clientrpc/v1/rpc_pb'
+import {
+	ClientRpcService,
+	GetClientInfoResponse,
+} from '../pb/clientrpc/v1/rpc_pb'
 import { createConnectTransport } from '@connectrpc/connect-web'
 import { createAsync } from '@solidjs/router'
 import { State } from './state'
@@ -135,7 +133,9 @@ export const Loader: Component = () => {
 						value={everything()!.clientInfo.fileServerUrl}
 					>
 						<RpcClientCtx.Provider value={client}>
-							<GlobalStateCtx.Provider value={everything()!.state}>
+							<GlobalStateCtx.Provider
+								value={everything()!.state}
+							>
 								<App />
 							</GlobalStateCtx.Provider>
 						</RpcClientCtx.Provider>

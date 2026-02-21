@@ -2,8 +2,9 @@ import { Component, createSignal, For, onCleanup, onMount } from 'solid-js'
 import { useGlobalState, useRpcClient } from '../ctx'
 
 import styles from './ServerBrowser.module.css'
-import { Server, OnlineUser } from '../state'
+import { OnlineUser, Server } from '../state'
 import { A } from '@solidjs/router'
+import { Code, ConnectError } from '@connectrpc/connect'
 
 const OnlineUserEntry: Component<{ server: Server; user: OnlineUser }> = (
 	props,
@@ -36,6 +37,14 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 
 	const refreshUsers = () => {
 		props.server.refreshOnlineUsers(client).catch((err) => {
+			if (err instanceof ConnectError && err.code === Code.NotFound) {
+				// Server was probably deleted.
+				state.refreshServers(client).catch((err) => {
+					console.error('failed to refresh servers after apparently server deletion:', err)
+				})
+				return
+			}
+
 			console.error('failed to refresh online users:', err)
 			alert('Failed to refresh online users, see console for details')
 		})
@@ -58,7 +67,7 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 
 		if (
 			!confirm(
-				`Are you sure you want to delete ${JSON.stringify(props.server.label())}?`,
+				`Are you sure you want to delete ${JSON.stringify(props.server.name())}?`,
 			)
 		) {
 			return
@@ -83,7 +92,7 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 	return (
 		<details open={true} class={styles.server}>
 			<summary>
-				{props.server.label()}
+				{props.server.name()}
 
 				<A
 					title="Edit Server"

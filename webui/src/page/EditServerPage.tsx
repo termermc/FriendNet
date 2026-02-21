@@ -16,7 +16,7 @@ const Page: Component = () => {
 		return <h1>No such server "{uuid}"</h1>
 	}
 
-	const [name, setName] = createSignal(server.label())
+	const [name, setName] = createSignal(server.name())
 	const [address, setAddress] = createSignal(server.address())
 	const [room, setRoom] = createSignal(server.room())
 	const [username, setUsername] = createSignal(server.username())
@@ -57,7 +57,7 @@ const Page: Component = () => {
 
 			setSuccess(true)
 
-			setName(server.label())
+			setName(server.name())
 			setAddress(server.address())
 			setRoom(server.room())
 			setUsername(server.username())

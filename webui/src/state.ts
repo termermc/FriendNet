@@ -3,6 +3,7 @@ import {
 	CreateServerRequest,
 	OnlineUserInfo,
 	ServerInfo,
+	ShareInfo,
 	UpdateServerRequest,
 } from '../pb/clientrpc/v1/rpc_pb'
 import { RpcClient } from './protobuf'
@@ -24,14 +25,33 @@ export class OnlineUser {
 }
 
 /**
+ * Represents a server share.
+ */
+export class ServerShare {
+	readonly name: string
+	readonly path: string
+	readonly createdTs: Date
+
+	constructor(info: ShareInfo) {
+		this.name = info.name
+		this.path = info.path
+		this.createdTs = new Date(Number(info.createdTs) * 1_000)
+	}
+
+	updateFromInfo(_info: ShareInfo): void {
+		// Nothing to do for now.
+	}
+}
+
+/**
  * Represents a FriendNet server.
  */
 export class Server {
 	readonly uuid: string
 	readonly createdTs: Date
 
-	label: Accessor<string>
-	#setLabel: Setter<string>
+	name: Accessor<string>
+	#setName: Setter<string>
 
 	address: Accessor<string>
 	#setAddress: Setter<string>
@@ -45,16 +65,20 @@ export class Server {
 	onlineUsers: Accessor<OnlineUser[]>
 	#setOnlineUsers: Setter<OnlineUser[]>
 
+	shares: Accessor<ServerShare[]>
+	#setShares: Setter<ServerShare[]>
+
 	constructor(info: ServerInfo) {
 		this.uuid = info.uuid
 		this.createdTs = new Date(Number(info.createdTs) * 1_000)
-		;[this.label, this.#setLabel] = createSignal('')
+		;[this.name, this.#setName] = createSignal('')
 		;[this.address, this.#setAddress] = createSignal('')
 		;[this.room, this.#setRoom] = createSignal('')
 		;[this.username, this.#setUsername] = createSignal('')
 		;[this.onlineUsers, this.#setOnlineUsers] = createSignal<OnlineUser[]>(
 			[],
 		)
+		;[this.shares, this.#setShares] = createSignal<ServerShare[]>([])
 
 		this.updateFromInfo(info)
 	}
@@ -83,8 +107,30 @@ export class Server {
 		this.#setOnlineUsers(newUsers)
 	}
 
+	async refreshShares(client: RpcClient): Promise<void> {
+		const res = await client.getShares({ serverUuid: this.uuid })
+
+		const curShares = this.shares()
+		const newShares: ServerShare[] = []
+
+		for (const info of res.shares) {
+			const cur = curShares.find((x) => x.path === info.path)
+			if (cur) {
+				cur.updateFromInfo(info)
+				newShares.push(cur)
+			} else {
+				newShares.push(new ServerShare(info))
+			}
+		}
+
+		// Sort shares alphabetically.
+		newShares.sort((a, b) => a.path.localeCompare(b.path))
+
+		this.#setShares(newShares)
+	}
+
 	updateFromInfo(info: ServerInfo): void {
-		this.#setLabel(info.name)
+		this.#setName(info.name)
 		this.#setAddress(info.address)
 		this.#setRoom(info.room)
 		this.#setUsername(info.username)
@@ -102,7 +148,7 @@ export class Server {
 		await client.updateServer({ uuid: this.uuid, ...req })
 
 		if (req.name != null) {
-			this.#setLabel(req.name)
+			this.#setName(req.name)
 		}
 		if (req.address != null) {
 			this.#setAddress(req.address)
@@ -155,7 +201,7 @@ export class State {
 		}
 
 		// Sort by name.
-		newServers.sort((a, b) => a.label().localeCompare(b.label()))
+		newServers.sort((a, b) => a.name().localeCompare(b.name()))
 
 		this.#setServers(newServers)
 	}
