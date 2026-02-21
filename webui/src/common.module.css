@@ -9,29 +9,30 @@
 }
 
 .errorMessage {
-    font-weight: bold;
+	font-weight: bold;
 	background-color: rgba(255, 0, 0, 0.15);
 	color: white;
 	border: 0.5rem solid red;
-    padding: 1rem;
+	padding: 1rem;
 }
 .successMessage {
-    font-weight: bold;
+	font-weight: bold;
 	background-color: rgba(0, 255, 0, 0.15);
 	color: white;
 	border: 0.5rem solid green;
 }
 
 .form {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
 }
-.form input[type="text"], .form input[type="password"] {
-    width: 100%;
+.form input[type='text'],
+.form input[type='password'] {
+	width: 100%;
 }
 .form table {
-    width: 30rem;
-    margin-bottom: 1rem;
+	width: 30rem;
+	margin-bottom: 1rem;
 }

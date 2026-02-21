@@ -4,6 +4,7 @@ import { Layout } from './layout/Layout'
 import { WelcomePage } from './page/WelcomePage'
 import { NotFoundPage } from './page/NotFoundPage'
 import { CreateServerPage } from './page/CreateServerPage'
+import { EditServerPage } from './page/EditServerPage'
 
 const App: Component = () => {
 	const routes: RouteDefinition[] = [
@@ -15,6 +16,12 @@ const App: Component = () => {
 			path: '/createserver',
 			component: CreateServerPage,
 		},
+
+		{
+			path: '/server/:uuid/edit',
+			component: EditServerPage,
+		},
+
 		{
 			path: '*404',
 			component: NotFoundPage,

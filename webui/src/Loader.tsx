@@ -14,7 +14,7 @@ import {
 } from './ctx'
 import App from './App'
 import { createClient, Interceptor } from '@connectrpc/connect'
-import { ClientRpcService } from '../pb/clientrpc/v1/rpc_pb'
+import { ClientRpcService, GetClientInfoResponse } from '../pb/clientrpc/v1/rpc_pb'
 import { createConnectTransport } from '@connectrpc/connect-web'
 import { createAsync } from '@solidjs/router'
 import { State } from './state'
@@ -111,19 +111,35 @@ export const Loader: Component = () => {
 		}),
 	)
 
-	const clientInfo = createAsync(() => client.getClientInfo({}))
+	type Everything = {
+		clientInfo: GetClientInfoResponse
+		state: State
+	}
+
+	const everything = createAsync(async (): Promise<Everything> => {
+		const clientInfo = await client.getClientInfo({})
+
+		// Load initial state.
+		const state = new State()
+		await state.refreshServers(client)
+		for (const server of state.servers()) {
+			await server.refreshOnlineUsers(client)
+		}
+
+		return { clientInfo, state }
+	})
 
 	return (
 		<Suspense fallback={<div>Loading...</div>}>
 			<ErrorBoundary
 				fallback={<div>Failed to connect to client RPC</div>}
 			>
-				<Show when={clientInfo()}>
+				<Show when={everything()}>
 					<FileServerUrlCtx.Provider
-						value={clientInfo()!.fileServerUrl}
+						value={everything()!.clientInfo.fileServerUrl}
 					>
 						<RpcClientCtx.Provider value={client}>
-							<GlobalStateCtx.Provider value={new State()}>
+							<GlobalStateCtx.Provider value={everything()!.state}>
 								<App />
 							</GlobalStateCtx.Provider>
 						</RpcClientCtx.Provider>

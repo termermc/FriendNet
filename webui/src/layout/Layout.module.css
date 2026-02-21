@@ -56,5 +56,5 @@
 	flex: 1;
 	height: 100%;
 	background-color: var(--panelColor);
-    overflow: auto;
+	overflow: auto;
 }

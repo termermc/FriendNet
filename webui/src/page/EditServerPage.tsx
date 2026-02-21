@@ -4,39 +4,42 @@ import stylesCommon from '../common.module.css'
 import { useGlobalState, useRpcClient } from '../ctx'
 import { ConnectError } from '@connectrpc/connect'
 import { DefaultServerPort } from '../constant'
+import { useLocation, useParams } from '@solidjs/router'
+import { State } from '../state'
+import { RpcClient } from '../protobuf'
 
-export const CreateServerPage: Component = () => {
+const Page: Component = () => {
+	const { uuid } = useParams<{ uuid: string }>()
 	const state = useGlobalState()
 	const client = useRpcClient()
 
-	const [name, setName] = createSignal('')
-	const [address, setAddress] = createSignal('')
-	const [room, setRoom] = createSignal('')
-	const [username, setUsername] = createSignal('')
+	const server = state.getServerByUuid(uuid)
+	if (!server) {
+		return <h1>No such server "{uuid}"</h1>
+	}
+
+	const [name, setName] = createSignal(server.label())
+	const [address, setAddress] = createSignal(server.address())
+	const [room, setRoom] = createSignal(server.room())
+	const [username, setUsername] = createSignal(server.username())
 	const [password, setPassword] = createSignal('')
 
 	const [error, setError] = createSignal('')
-	const [isCreating, setCreating] = createSignal(false)
+	const [isSaving, setSaving] = createSignal(false)
 	const [isSuccess, setSuccess] = createSignal(false)
 	const submit = async function (event: SubmitEvent) {
 		event.preventDefault()
 
-		if (isCreating()) {
+		if (isSaving()) {
 			return
 		}
 
 		setError('')
 		setSuccess(false)
-		setCreating(true)
+		setSaving(true)
 
 		try {
-			if (
-				!name() ||
-				!address() ||
-				!room() ||
-				!username() ||
-				!password()
-			) {
+			if (!name() || !address() || !room() || !username()) {
 				setError('Missing params')
 				return
 			}
@@ -46,30 +49,30 @@ export const CreateServerPage: Component = () => {
 				addr += ':' + DefaultServerPort
 			}
 
-			await state.createServer(client, {
+			await server.update(client, {
 				name: name(),
 				address: addr,
 				room: room(),
 				username: username(),
-				password: password(),
+				password: password() || undefined,
 			})
 
 			setSuccess(true)
 
-			setName('')
-			setAddress('')
-			setRoom('')
-			setUsername('')
+			setName(server.label())
+			setAddress(server.address())
+			setRoom(server.room())
+			setUsername(server.username())
 			setPassword('')
 		} catch (err) {
 			if (err instanceof ConnectError) {
 				setError(err.message)
 			} else {
-				console.error('failed to create server:', err)
+				console.error('failed to update server:', err)
 				setError('Internal error, check console')
 			}
 		} finally {
-			setCreating(false)
+			setSaving(false)
 		}
 	}
 
@@ -84,21 +87,21 @@ export const CreateServerPage: Component = () => {
 				<div class={stylesCommon.errorMessage}>{error()}</div>
 			</Show>
 			<Show when={isSuccess()}>
-				<div class={stylesCommon.successMessage}>Created</div>
+				<div class={stylesCommon.successMessage}>Saved</div>
 			</Show>
 
-			<h1>Create Server</h1>
+			<h1>Edit Server</h1>
 
 			<form onSubmit={submit} class={stylesCommon.form}>
 				<table>
 					<tbody>
 						<tr>
 							<td>
-								<label for="create-server-name">Name</label>
+								<label for="edit-server-name">Name</label>
 							</td>
 							<td>
 								<input
-									id="create-server-name"
+									id="edit-server-name"
 									type="text"
 									placeholder=""
 									value={name()}
@@ -112,13 +115,11 @@ export const CreateServerPage: Component = () => {
 
 						<tr>
 							<td>
-								<label for="create-server-address">
-									Address
-								</label>
+								<label for="edit-server-address">Address</label>
 							</td>
 							<td>
 								<input
-									id="create-server-address"
+									id="edit-server-address"
 									type="text"
 									placeholder="example.com, example.com:20038, etc."
 									value={address()}
@@ -132,11 +133,11 @@ export const CreateServerPage: Component = () => {
 
 						<tr>
 							<td>
-								<label for="create-server-room">Room</label>
+								<label for="edit-server-room">Room</label>
 							</td>
 							<td>
 								<input
-									id="create-server-room"
+									id="edit-server-room"
 									type="text"
 									placeholder=""
 									value={room()}
@@ -150,13 +151,13 @@ export const CreateServerPage: Component = () => {
 
 						<tr>
 							<td>
-								<label for="create-server-username">
+								<label for="edit-server-username">
 									Username
 								</label>
 							</td>
 							<td>
 								<input
-									id="create-server-username"
+									id="edit-server-username"
 									type="text"
 									placeholder=""
 									value={username()}
@@ -170,28 +171,41 @@ export const CreateServerPage: Component = () => {
 
 						<tr>
 							<td>
-								<label for="create-server-password">
+								<label for="edit-server-password">
 									Password
 								</label>
 							</td>
 							<td>
 								<input
-									id="create-server-password"
+									id="edit-server-password"
 									type="password"
-									placeholder=""
+									placeholder="Leave blank to leave unchanged"
 									value={password()}
 									onChange={(e) =>
 										setPassword(e.currentTarget.value)
 									}
-									required={true}
 								/>
 							</td>
 						</tr>
 					</tbody>
 				</table>
 
-				<input type="submit" value="Create" disabled={isCreating()} />
+				<input
+					type="submit"
+					value="Save Changes"
+					disabled={isSaving()}
+				/>
 			</form>
 		</div>
+	)
+}
+
+export const EditServerPage: Component = () => {
+	const loc = useLocation()
+
+	return (
+		<Show when={loc.pathname} keyed>
+			<Page />
+		</Show>
 	)
 }
