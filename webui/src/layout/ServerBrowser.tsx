@@ -129,6 +129,8 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 							</tr>
 						</tbody>
 					</table>
+
+					<A href={`/server/${props.server.uuid}/shares`}>📁 Manage Shares</A>
 				</div>
 
 				<div class={styles.onlineUsers}>

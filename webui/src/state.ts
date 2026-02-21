@@ -1,6 +1,6 @@
 import { Accessor, createSignal, Setter } from 'solid-js'
 import {
-	CreateServerRequest,
+	CreateServerRequest, CreateShareRequest,
 	OnlineUserInfo,
 	ServerInfo,
 	ShareInfo,
@@ -127,6 +127,37 @@ export class Server {
 		newShares.sort((a, b) => a.path.localeCompare(b.path))
 
 		this.#setShares(newShares)
+	}
+
+	/**
+	 * Creates a new share on the server.
+	 * @param client The RPC client to use.
+	 * @param req The share creation request.
+	 */
+	async createShare(client: RpcClient, req: Omit<CreateShareRequest, '$typeName' | 'serverUuid'>): Promise<void> {
+		const { share } = await client.createShare({ serverUuid: this.uuid, ...req })
+		this.#setShares([...this.shares(), new ServerShare(share!)])
+	}
+
+	/**
+	 * Deletes the share with the specified name from the server.
+	 * @param client The RPC client to use.
+	 * @param name The name of the share to delete.
+	 * @returns Whether the share existed.
+	 */
+	async deleteShare(client: RpcClient, name: string): Promise<boolean> {
+		try {
+			await client.deleteShare({ serverUuid: this.uuid, name })
+		} catch (err) {
+			if (err instanceof ConnectError && err.code === Code.NotFound) {
+				return false
+			}
+
+			throw err
+		}
+
+		this.#setShares(this.shares().filter((x) => x.name !== name))
+		return true
 	}
 
 	updateFromInfo(info: ServerInfo): void {

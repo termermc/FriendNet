@@ -1,0 +1,13 @@
+.shares {
+    display: flex;
+    flex-direction: column;
+}
+.share {
+    align-self: center;
+
+    text-align: left;
+    width: 30rem;
+    background-color: rgba(0, 0, 0, 0.1);
+    margin-bottom: 0.5rem;
+    padding: 1rem;
+}

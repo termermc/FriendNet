@@ -5,6 +5,7 @@ import { WelcomePage } from './page/WelcomePage'
 import { NotFoundPage } from './page/NotFoundPage'
 import { CreateServerPage } from './page/CreateServerPage'
 import { EditServerPage } from './page/EditServerPage'
+import { ServerSharesPage } from './page/ServerSharesPage'
 
 const App: Component = () => {
 	const routes: RouteDefinition[] = [
@@ -20,6 +21,10 @@ const App: Component = () => {
 		{
 			path: '/server/:uuid/edit',
 			component: EditServerPage,
+		},
+		{
+			path: '/server/:uuid/shares',
+			component: ServerSharesPage,
 		},
 
 		{

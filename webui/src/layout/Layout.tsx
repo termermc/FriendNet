@@ -1,4 +1,4 @@
-import { Component, JSX } from 'solid-js'
+import { Component, ErrorBoundary, JSX } from 'solid-js'
 
 import styles from './Layout.module.css'
 
@@ -56,7 +56,11 @@ export const Layout: Component<LayoutProps> = (props) => {
 					<ServerBrowser />
 				</div>
 
-				<div class={styles.content}>{props.children}</div>
+				<div class={styles.content}>
+					<ErrorBoundary fallback={<h1>Failed to render page content, check console</h1>}>
+						{props.children}
+					</ErrorBoundary>
+				</div>
 			</main>
 		</div>
 	)
