@@ -1,0 +1,37 @@
+.center {
+	text-align: center;
+}
+.w100 {
+	width: 100%;
+}
+.h100 {
+	height: 100%;
+}
+
+.errorMessage {
+    font-weight: bold;
+	background-color: rgba(255, 0, 0, 0.15);
+	color: white;
+	border: 0.5rem solid red;
+    padding: 1rem;
+}
+.successMessage {
+    font-weight: bold;
+	background-color: rgba(0, 255, 0, 0.15);
+	color: white;
+	border: 0.5rem solid green;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.form input[type="text"], .form input[type="password"] {
+    width: 100%;
+}
+.form table {
+    width: 30rem;
+    margin-bottom: 1rem;
+}

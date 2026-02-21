@@ -56,7 +56,7 @@ export const Layout: Component<LayoutProps> = (props) => {
 					<ServerBrowser />
 				</div>
 
-				<div class={styles.content}>CONTENT</div>
+				<div class={styles.content}>{props.children}</div>
 			</main>
 		</div>
 	)

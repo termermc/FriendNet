@@ -43,6 +43,7 @@ details summary .action {
 	background-color: rgba(0, 128, 0, 0.1);
 	padding: 0.25rem;
 	font-weight: bold;
+	margin-bottom: 0.25rem;
 }
 .onlineUserName {
 	display: block;
@@ -58,7 +59,7 @@ details summary .action {
 	height: 1rem;
 	border-radius: 100%;
 	background-color: green;
-	margin-right: 0.25rem;
+	margin-right: 0.5rem;
 }
 .onlineUserOptions {
 	font-size: 0.85rem;

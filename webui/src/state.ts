@@ -77,6 +77,9 @@ export class Server {
 			}
 		}
 
+		// Sort users alphabetically.
+		newUsers.sort((a, b) => a.username.localeCompare(b.username))
+
 		this.#setOnlineUsers(newUsers)
 	}
 

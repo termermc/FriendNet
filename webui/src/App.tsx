@@ -1,8 +1,26 @@
 import { Component, ErrorBoundary } from 'solid-js'
-import { Router } from '@solidjs/router'
+import { RouteDefinition, Router } from '@solidjs/router'
 import { Layout } from './layout/Layout'
+import { WelcomePage } from './page/WelcomePage'
+import { NotFoundPage } from './page/NotFoundPage'
+import { CreateServerPage } from './page/CreateServerPage'
 
 const App: Component = () => {
+	const routes: RouteDefinition[] = [
+		{
+			path: '/',
+			component: WelcomePage,
+		},
+		{
+			path: '/createserver',
+			component: CreateServerPage,
+		},
+		{
+			path: '*404',
+			component: NotFoundPage,
+		},
+	]
+
 	return (
 		<Router
 			root={(props) => (
@@ -12,7 +30,9 @@ const App: Component = () => {
 					<Layout>{props.children}</Layout>
 				</ErrorBoundary>
 			)}
-		></Router>
+		>
+			{routes}
+		</Router>
 	)
 }
 

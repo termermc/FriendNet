@@ -47,7 +47,7 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 
 	const userRefresher = setInterval(() => {
 		refreshUsers()
-	}, 1_000)
+	}, 5_000)
 	onCleanup(() => clearInterval(userRefresher))
 
 	const [isDeleting, setDeleting] = createSignal(false)
@@ -153,7 +153,6 @@ export const ServerBrowser: Component = () => {
 			<details open={true}>
 				<summary>
 					Servers
-
 					<A
 						title="Create New Server"
 						class={styles.action}
