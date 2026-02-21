@@ -7,7 +7,7 @@ import { useFileServerUrl, useGlobalState, useRpcClient } from '../ctx'
 import { ConnectError } from '@connectrpc/connect'
 import { A, useLocation, useParams } from '@solidjs/router'
 import { FileMeta } from '../../pb/clientrpc/v1/rpc_pb'
-import { guessFileCategory, makeBrowsePath, makeFileUrl, normalizePath } from '../util'
+import { guessFileCategory, makeBrowsePath, makeFileUrl, normalizePath, trimStrEllipsis } from '../util'
 
 const Page: Component = () => {
 	const {
@@ -75,10 +75,16 @@ const Page: Component = () => {
 		<div class={styles.container}>
 			<div class={styles.location}>
 				<div class={styles.segment}>🖧 {server.name()}</div>
-				<div class={styles.segment}>👤 {username}</div>
+				<A href={makeBrowsePath(uuid, username, '')} class={styles.segment}>👤 {username}</A>
 
 				<For each={pathSegments}>
-					{(seg) => <div class={styles.segment}>{seg}</div>}
+					{(seg, i) => (
+						<A
+							title={seg}
+							href={makeBrowsePath(uuid, username, pathSegments.slice(0, i() + 1).join('/'))}
+							class={styles.segment}
+						>{trimStrEllipsis(seg, 20)}</A>
+					)}
 				</For>
 			</div>
 
@@ -126,7 +132,7 @@ const Page: Component = () => {
 									uuid,
 									username,
 									filePath,
-									true,
+									false,
 								)
 
 								let emoji: string
@@ -161,6 +167,8 @@ const Page: Component = () => {
 									? makeBrowsePath(uuid, username, filePath)
 									: dlUrl
 
+								const label = trimStrEllipsis(emoji + ' ' + meta.name, 100)
+
 								return (
 									<tr>
 										<td>
@@ -172,12 +180,12 @@ const Page: Component = () => {
 														target={target}
 														title={meta.name}
 													>
-														{emoji} {meta.name}
+														{label}
 													</a>
 												}
 											>
 												<A href={url} target={target} title={meta.name}>
-													{emoji} {meta.name}
+													{label}
 												</A>
 											</Show>
 										</td>

@@ -156,6 +156,22 @@ export function normalizePath(path: string): { path: string, segments: string[] 
 }
 
 export function makeBrowsePath(serverUuid: string, username: string, path: string): string {
+	if (path === '' || path === '/') {
+		return `/server/${serverUuid}/browse/${username}`
+	}
+
 	const { path: normPath } = normalizePath(path)
 	return `/server/${serverUuid}/browse/${username}${normPath}`
+}
+
+export function trimStrEllipsis(str: string, len: number): string {
+	if (str.length <= len) {
+		return str
+	}
+
+	if (len <= 3) {
+		return '...'.substring(0, len)
+	}
+
+	return str.substring(0, len - 3) + '...'
 }
