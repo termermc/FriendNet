@@ -5,7 +5,9 @@ import styles from './ServerBrowser.module.css'
 import { Server, OnlineUser } from '../state'
 import { A } from '@solidjs/router'
 
-const OnlineUserEntry: Component<{ server: Server, user: OnlineUser }> = (props) => {
+const OnlineUserEntry: Component<{ server: Server; user: OnlineUser }> = (
+	props,
+) => {
 	return (
 		<div class={styles.onlineUser}>
 			<div class={styles.onlineUserName}>
@@ -13,8 +15,16 @@ const OnlineUserEntry: Component<{ server: Server, user: OnlineUser }> = (props)
 				<span>{props.user.username}</span>
 			</div>
 			<div class={styles.onlineUserOptions}>
-				<A href={`/server/${props.server.uuid}/browse/${props.user.username}`}>📂 Browse</A>
-				<A href={`/server/${props.server.uuid}/profile/${props.user.username}`}>👤 Profile</A>
+				<A
+					href={`/server/${props.server.uuid}/browse/${props.user.username}`}
+				>
+					📂 Browse
+				</A>
+				<A
+					href={`/server/${props.server.uuid}/profile/${props.user.username}`}
+				>
+					👤 Profile
+				</A>
 			</div>
 		</div>
 	)
@@ -46,7 +56,11 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 			return
 		}
 
-		if (!confirm(`Are you sure you want to delete ${JSON.stringify(props.server.label())}?`)) {
+		if (
+			!confirm(
+				`Are you sure you want to delete ${JSON.stringify(props.server.label())}?`,
+			)
+		) {
 			return
 		}
 
@@ -54,8 +68,13 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 			setDeleting(true)
 			await state.deleteServer(client, props.server.uuid)
 		} catch (err) {
-			console.error(`failed to delete server ${JSON.stringify(props.server.uuid)}:`, err)
-			alert(`Failed to delete server ${props.server.uuid}, see console for details`)
+			console.error(
+				`failed to delete server ${JSON.stringify(props.server.uuid)}:`,
+				err,
+			)
+			alert(
+				`Failed to delete server ${props.server.uuid}, see console for details`,
+			)
 		} finally {
 			setDeleting(false)
 		}
@@ -70,17 +89,21 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 					title="Edit Server"
 					class={styles.action}
 					href={`/server/${props.server.uuid}/edit`}
-				>📝️</A>
+				>
+					📝️
+				</A>
 				<button
 					title="Delete Server"
 					onClick={doDelete}
 					disabled={isDeleting()}
 					class={styles.action}
-				>🗑️</button>
+				>
+					🗑️
+				</button>
 			</summary>
 
 			<div class={styles.serverContent}>
-			<div class={styles.serverInfo}>
+				<div class={styles.serverInfo}>
 					<table>
 						<tbody>
 							<tr>
@@ -101,7 +124,12 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 
 				<div class={styles.onlineUsers}>
 					<For each={props.server.onlineUsers()}>
-						{(user) => <OnlineUserEntry server={props.server} user={user} />}
+						{(user) => (
+							<OnlineUserEntry
+								server={props.server}
+								user={user}
+							/>
+						)}
 					</For>
 				</div>
 			</div>
@@ -123,7 +151,17 @@ export const ServerBrowser: Component = () => {
 	return (
 		<div class={styles.container}>
 			<details open={true}>
-				<summary>Servers</summary>
+				<summary>
+					Servers
+
+					<A
+						title="Create New Server"
+						class={styles.action}
+						href="/createserver"
+					>
+						➕️
+					</A>
+				</summary>
 
 				<For each={state.servers()}>
 					{(server) => <ServerEntry server={server} />}

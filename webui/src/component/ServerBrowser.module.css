@@ -19,11 +19,11 @@ details summary {
 	cursor: pointer;
 }
 details summary .action {
-    float: right;
-    text-decoration: none;
-    background: none;
-    border: none;
-    cursor: pointer;
+	float: right;
+	text-decoration: none;
+	background: none;
+	border: none;
+	cursor: pointer;
 }
 
 .server {
@@ -41,32 +41,32 @@ details summary .action {
 }
 .onlineUser {
 	background-color: rgba(0, 128, 0, 0.1);
-    padding: 0.25rem;
-    font-weight: bold;
+	padding: 0.25rem;
+	font-weight: bold;
 }
 .onlineUserName {
-    display: block;
-    cursor: default;
+	display: block;
+	cursor: default;
 }
 .onlineUserName span {
-    position: relative;
-    bottom: 0.2rem;
+	position: relative;
+	bottom: 0.2rem;
 }
 .onlineUserStatus {
-    display: inline-block;
-    width: 1rem;
-    height: 1rem;
-    border-radius: 100%;
-    background-color: green;
-    margin-right: 0.25rem;
+	display: inline-block;
+	width: 1rem;
+	height: 1rem;
+	border-radius: 100%;
+	background-color: green;
+	margin-right: 0.25rem;
 }
 .onlineUserOptions {
-    font-size: 0.85rem;
-    margin-top: 0.15rem;
+	font-size: 0.85rem;
+	margin-top: 0.15rem;
 }
 .onlineUserOptions a {
-    background-color: rgba(0, 0, 0, 0.25);
-    text-decoration: none;
-    padding: 0.15rem;
-    margin-right: 0.25rem;
+	background-color: rgba(0, 0, 0, 0.25);
+	text-decoration: none;
+	padding: 0.15rem;
+	margin-right: 0.25rem;
 }
