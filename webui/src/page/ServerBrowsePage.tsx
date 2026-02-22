@@ -220,7 +220,7 @@ const Page: Component = () => {
 													}
 													class={styles.label}
 												>
-													{label}
+													<span>{label}</span>
 												</td>
 											}
 										>
