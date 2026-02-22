@@ -67,7 +67,9 @@ const CatText: Component<CatProps> = (props) => {
 				try {
 					text = await res.text()
 				} catch (_) {}
-				setError(`server return status code ${res.status}: ${text ?? ''}`)
+				setError(
+					`server return status code ${res.status}: ${text ?? ''}`,
+				)
 				return
 			}
 
@@ -82,9 +84,7 @@ const CatText: Component<CatProps> = (props) => {
 
 	return (
 		<div class={styles.catText}>
-			<Switch fallback={
-				<div class={styles.content}>{content()}</div>
-			}>
+			<Switch fallback={<div class={styles.content}>{content()}</div>}>
 				<Match when={isLoading()}>
 					<i>Loading...</i>
 				</Match>
