@@ -78,6 +78,9 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	isHead := r.Method == http.MethodHead
 	url := r.URL
 
+	// Allow fetching files from it.
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	// Strict CSP for pages served from peers.
 	w.Header().Set("Content-Security-Policy", "default-src 'none'; frame-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self' data:; base-uri 'none'; form-action 'none'; sandbox")
 
