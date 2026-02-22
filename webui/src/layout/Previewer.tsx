@@ -63,7 +63,7 @@ const CatText: Component<CatProps> = (props) => {
 		try {
 			const res = await fetch(props.url)
 			if (res.status !== 200) {
-				let text: string
+				let text: string | undefined
 				try {
 					text = await res.text()
 				} catch (_) {}
