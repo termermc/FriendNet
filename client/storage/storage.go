@@ -50,6 +50,7 @@ func NewStorage(path string) (*Storage, error) {
 
 	err = common.DoMigrations(db, []common.Migration{
 		&migration.M20260208InitialSchema{},
+		&migration.M20260222AddLog{},
 	})
 	if err != nil {
 		return nil, fmt.Errorf(`failed to apply client database migrations: %w`, err)

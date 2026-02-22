@@ -273,14 +273,17 @@ func (n *ConnNanny) daemon() {
 			n.creds,
 		)
 		if err != nil {
-			n.logger.Error("failed to create room connection",
-				"address", n.address,
-				"room", n.creds.Room,
-				"username", n.creds.Username.String(),
-				"err", err,
-			)
-
 			n.mu.Lock()
+			// Suppress log messages if the ConnNanny was closed while trying to connect.
+			if !n.isClosed {
+				n.logger.Error("failed to create room connection",
+					"address", n.address,
+					"room", n.creds.Room,
+					"username", n.creds.Username.String(),
+					"err", err,
+				)
+			}
+
 			// Connection never opened, so we do not to close or recreate openCh.
 			n.state = ConnStateClosed
 

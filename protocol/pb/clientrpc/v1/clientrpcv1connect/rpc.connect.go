@@ -33,6 +33,9 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// ClientRpcServiceStreamLogsProcedure is the fully-qualified name of the ClientRpcService's
+	// StreamLogs RPC.
+	ClientRpcServiceStreamLogsProcedure = "/pb.clientrpc.v1.ClientRpcService/StreamLogs"
 	// ClientRpcServiceStopProcedure is the fully-qualified name of the ClientRpcService's Stop RPC.
 	ClientRpcServiceStopProcedure = "/pb.clientrpc.v1.ClientRpcService/Stop"
 	// ClientRpcServiceGetClientInfoProcedure is the fully-qualified name of the ClientRpcService's
@@ -78,6 +81,8 @@ const (
 
 // ClientRpcServiceClient is a client for the pb.clientrpc.v1.ClientRpcService service.
 type ClientRpcServiceClient interface {
+	// StreamLogs returns an ongoing stream of log messages from the client.
+	StreamLogs(context.Context, *v1.StreamLogsRequest) (*connect.ServerStreamForClient[v1.StreamLogsResponse], error)
 	// Stop shuts down the client.
 	Stop(context.Context, *v1.StopRequest) (*v1.StopResponse, error)
 	// GetClientInfo returns information about the FriendNet client.
@@ -151,6 +156,12 @@ func NewClientRpcServiceClient(httpClient connect.HTTPClient, baseURL string, op
 	baseURL = strings.TrimRight(baseURL, "/")
 	clientRpcServiceMethods := v1.File_pb_clientrpc_v1_rpc_proto.Services().ByName("ClientRpcService").Methods()
 	return &clientRpcServiceClient{
+		streamLogs: connect.NewClient[v1.StreamLogsRequest, v1.StreamLogsResponse](
+			httpClient,
+			baseURL+ClientRpcServiceStreamLogsProcedure,
+			connect.WithSchema(clientRpcServiceMethods.ByName("StreamLogs")),
+			connect.WithClientOptions(opts...),
+		),
 		stop: connect.NewClient[v1.StopRequest, v1.StopResponse](
 			httpClient,
 			baseURL+ClientRpcServiceStopProcedure,
@@ -240,6 +251,7 @@ func NewClientRpcServiceClient(httpClient connect.HTTPClient, baseURL string, op
 
 // clientRpcServiceClient implements ClientRpcServiceClient.
 type clientRpcServiceClient struct {
+	streamLogs       *connect.Client[v1.StreamLogsRequest, v1.StreamLogsResponse]
 	stop             *connect.Client[v1.StopRequest, v1.StopResponse]
 	getClientInfo    *connect.Client[v1.GetClientInfoRequest, v1.GetClientInfoResponse]
 	getServers       *connect.Client[v1.GetServersRequest, v1.GetServersResponse]
@@ -254,6 +266,11 @@ type clientRpcServiceClient struct {
 	getDirFiles      *connect.Client[v1.GetDirFilesRequest, v1.GetDirFilesResponse]
 	getFileMeta      *connect.Client[v1.GetFileMetaRequest, v1.GetFileMetaResponse]
 	getOnlineUsers   *connect.Client[v1.GetOnlineUsersRequest, v1.GetOnlineUsersResponse]
+}
+
+// StreamLogs calls pb.clientrpc.v1.ClientRpcService.StreamLogs.
+func (c *clientRpcServiceClient) StreamLogs(ctx context.Context, req *v1.StreamLogsRequest) (*connect.ServerStreamForClient[v1.StreamLogsResponse], error) {
+	return c.streamLogs.CallServerStream(ctx, connect.NewRequest(req))
 }
 
 // Stop calls pb.clientrpc.v1.ClientRpcService.Stop.
@@ -376,6 +393,8 @@ func (c *clientRpcServiceClient) GetOnlineUsers(ctx context.Context, req *v1.Get
 
 // ClientRpcServiceHandler is an implementation of the pb.clientrpc.v1.ClientRpcService service.
 type ClientRpcServiceHandler interface {
+	// StreamLogs returns an ongoing stream of log messages from the client.
+	StreamLogs(context.Context, *v1.StreamLogsRequest, *connect.ServerStream[v1.StreamLogsResponse]) error
 	// Stop shuts down the client.
 	Stop(context.Context, *v1.StopRequest) (*v1.StopResponse, error)
 	// GetClientInfo returns information about the FriendNet client.
@@ -445,6 +464,12 @@ type ClientRpcServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	clientRpcServiceMethods := v1.File_pb_clientrpc_v1_rpc_proto.Services().ByName("ClientRpcService").Methods()
+	clientRpcServiceStreamLogsHandler := connect.NewServerStreamHandlerSimple(
+		ClientRpcServiceStreamLogsProcedure,
+		svc.StreamLogs,
+		connect.WithSchema(clientRpcServiceMethods.ByName("StreamLogs")),
+		connect.WithHandlerOptions(opts...),
+	)
 	clientRpcServiceStopHandler := connect.NewUnaryHandlerSimple(
 		ClientRpcServiceStopProcedure,
 		svc.Stop,
@@ -531,6 +556,8 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 	)
 	return "/pb.clientrpc.v1.ClientRpcService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case ClientRpcServiceStreamLogsProcedure:
+			clientRpcServiceStreamLogsHandler.ServeHTTP(w, r)
 		case ClientRpcServiceStopProcedure:
 			clientRpcServiceStopHandler.ServeHTTP(w, r)
 		case ClientRpcServiceGetClientInfoProcedure:
@@ -567,6 +594,10 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 
 // UnimplementedClientRpcServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedClientRpcServiceHandler struct{}
+
+func (UnimplementedClientRpcServiceHandler) StreamLogs(context.Context, *v1.StreamLogsRequest, *connect.ServerStream[v1.StreamLogsResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.StreamLogs is not implemented"))
+}
 
 func (UnimplementedClientRpcServiceHandler) Stop(context.Context, *v1.StopRequest) (*v1.StopResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.Stop is not implemented"))

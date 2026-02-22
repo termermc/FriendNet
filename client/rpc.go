@@ -7,6 +7,7 @@ import (
 	"io"
 
 	"connectrpc.com/connect"
+	"friendnet.org/client/clog"
 	"friendnet.org/client/room"
 	"friendnet.org/client/storage"
 	"friendnet.org/common"
@@ -24,6 +25,8 @@ var errShareNotFound = connect.NewError(connect.CodeNotFound, errors.New("share 
 var errFileNotFound = connect.NewError(connect.CodeNotFound, errors.New("file not found"))
 
 type RpcServer struct {
+	clogHandler clog.Handler
+
 	client        *MultiClient
 	fileServerUrl string
 	stopper       func()
@@ -71,6 +74,11 @@ func (s *RpcServer) shareRecToInfo(share storage.ShareRecord) *v1.ShareInfo {
 		Path:       share.Path,
 		CreatedTs:  share.CreatedTs.Unix(),
 	}
+}
+
+func (s *RpcServer) StreamLogs(ctx context.Context, request *v1.StreamLogsRequest, conn *connect.ServerStream[v1.StreamLogsResponse]) error {
+	// TODO
+	return nil
 }
 
 func (s *RpcServer) Stop(_ context.Context, _ *v1.StopRequest) (*v1.StopResponse, error) {

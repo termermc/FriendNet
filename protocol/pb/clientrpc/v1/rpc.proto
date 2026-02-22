@@ -4,6 +4,34 @@ option go_package = "friendnet.org/protocol/clientrpc";
 
 package pb.clientrpc.v1;
 
+// LogMessageField is a field within a LogMessage.
+message LogMessageField {
+    // The field's kind.
+    string kind = 1;
+
+    // The field's key.
+    string key = 2;
+
+    // The string representation of the field's value.
+    // The value can be interpreted based on the value of `kind`.
+    string value = 3;
+}
+
+// LogMessage is a structured log message.
+message LogMessage {
+    // The message's UID.
+    string uid = 1;
+
+    // The UNIX millisecond timestamp the log was sent on.
+    int64 created_ts = 2;
+
+    // The textual message.
+    string message = 3;
+
+    // The message's fields.
+    repeated LogMessageField fields = 4;
+}
+
 // Information about a server.
 message ServerInfo {
     // The server's UUID.
@@ -57,6 +85,19 @@ message FileMeta {
     // The file's size, in bytes.
     // Always zero if the file is a folder.
     uint64 size = 3;
+}
+
+message StreamLogsRequest {
+    // Optionally, send existing logs after this timestamp before streaming live logs.
+    // The timestamp is a UNIX millisecond timestamp.
+    optional int64 send_logs_after_ts = 1;
+}
+message StreamLogsResponse {
+    // The logs.
+    // This field usually has only one log message, but in the case of
+    // sending back existing logs, it may have many.
+    // The logs will be ordered by timestamp, ascending.
+    repeated LogMessage logs = 1;
 }
 
 message StopRequest {
@@ -231,6 +272,9 @@ message GetOnlineUsersResponse {
 // If authorization is required but not provided, returns status code UNAUTHENTICATED.
 // If authorization is invalid, returns PERMISSION_DENIED status code.
 service ClientRpcService {
+    // StreamLogs returns an ongoing stream of log messages from the client.
+    rpc StreamLogs(StreamLogsRequest) returns (stream StreamLogsResponse) {}
+
     // Stop shuts down the client.
     rpc Stop(StopRequest) returns (StopResponse) {}
 

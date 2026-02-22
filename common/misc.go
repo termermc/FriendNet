@@ -1,5 +1,10 @@
 package common
 
+import (
+	"crypto/rand"
+	"encoding/base64"
+)
+
 // StrPtr returns a pointer to the specified string.
 func StrPtr(str string) *string {
 	return &str
@@ -19,4 +24,12 @@ func StrOrNil(str string) *string {
 		return nil
 	}
 	return &str
+}
+
+// RandomB64UrlStr returns a random base64 URL string based on random bytes of the specified length.
+// It uses raw encoding, so it does not include padding.
+func RandomB64UrlStr(byteLen int) string {
+	buf := make([]byte, byteLen)
+	_, _ = rand.Read(buf)
+	return base64.RawURLEncoding.EncodeToString(buf)
 }

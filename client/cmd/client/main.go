@@ -18,6 +18,7 @@ import (
 	"connectrpc.com/connect"
 	"friendnet.org/client"
 	"friendnet.org/client/cert"
+	"friendnet.org/client/clog"
 	"friendnet.org/client/storage"
 	"friendnet.org/common"
 	"friendnet.org/protocol/pb/clientrpc/v1/clientrpcv1connect"
@@ -26,14 +27,11 @@ import (
 )
 
 func main() {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	}))
-
-	rpcBearerToken := "abc123"
+	runId := time.Now().UnixMilli()
 
 	// TODO Bearer token stored in DB
 	// TODO Flag to reset bearer token
+	rpcBearerToken := "abc123"
 
 	var dataDir string
 	var rpcAddr string
@@ -80,6 +78,16 @@ func main() {
 	if err != nil {
 		panic(fmt.Errorf(`failed to create storage: %w`, err))
 	}
+
+	// Create logger after storage is initialized, as it depends on migrations being run.
+	logHandler := clog.NewHandler(
+		store.Db,
+		runId,
+		slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		}),
+	)
+	logger := slog.New(logHandler)
 
 	certStore := cert.NewSqliteStore(store.Db)
 
@@ -139,6 +147,7 @@ func main() {
 		_ = fileServer.Shutdown(timeoutCtx)
 		_ = rpc.Close()
 		_ = multi.Close()
+		_ = logHandler.Close()
 		_ = store.Close()
 	})
 
