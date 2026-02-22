@@ -43,3 +43,19 @@ a.segment {
 .files table td a {
 	text-decoration: none;
 }
+
+.label {
+	cursor: pointer;
+}
+.label a {
+	display: inline-block;
+	width: 100%;
+}
+
+.actionsTd {
+	width: 5rem;
+}
+.actions {
+	text-align: right;
+	margin-right: 1rem;
+}

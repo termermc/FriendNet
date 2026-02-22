@@ -7,6 +7,9 @@
 .h100 {
 	height: 100%;
 }
+.displayInlineBlock {
+	display: inline-block;
+}
 
 .errorMessage {
 	font-weight: bold;
@@ -20,6 +23,39 @@
 	background-color: rgba(0, 255, 0, 0.15);
 	color: white;
 	border: 0.5rem solid green;
+}
+
+.sidebarContainer {
+	display: flex;
+	flex-direction: column;
+
+	width: 100%;
+}
+.sidebarContainer summary {
+	width: calc(100% - 0.5rem);
+	height: 1.3rem;
+	overflow: hidden;
+	background-color: #640000;
+	font-weight: bold;
+	margin-bottom: 0.25rem;
+	padding: 0.25rem;
+	cursor: pointer;
+}
+.sidebarContainer summary .action {
+	float: right;
+	text-decoration: none;
+	background: none;
+	border: none;
+	cursor: pointer;
+}
+.sidebarContainer summary span {
+	display: inline-block;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	max-width: calc(100% - 4rem);
+	max-height: 1.3rem;
+	word-break: break-all;
+	white-space: nowrap;
 }
 
 .form {

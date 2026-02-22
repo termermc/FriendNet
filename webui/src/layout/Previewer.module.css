@@ -1,0 +1,39 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+.catContainer {
+	max-width: 100%;
+}
+.catOther {
+	padding: 1rem;
+	width: 100%;
+	text-align: center;
+}
+.catImage img {
+	width: 100%;
+	height: auto;
+}
+.catVideo video,
+.catAudio video {
+	width: 100%;
+	height: auto;
+}
+.catText {
+    max-width: 100%;
+}
+.catText .content {
+    font-size: 0.9rem;
+    text-align: left;
+    max-height: 20rem;
+    max-width: 100%;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.title {
+	text-overflow: ellipsis;
+}

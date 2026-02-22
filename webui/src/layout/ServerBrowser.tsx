@@ -2,6 +2,8 @@ import { Component, createSignal, For, onCleanup, onMount } from 'solid-js'
 import { useGlobalState, useRpcClient } from '../ctx'
 
 import styles from './ServerBrowser.module.css'
+import stylesCommon from '../common.module.css'
+
 import { OnlineUser, Server } from '../state'
 import { A } from '@solidjs/router'
 import { Code, ConnectError } from '@connectrpc/connect'
@@ -98,13 +100,19 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 	}
 
 	return (
-		<details open={true} class={styles.server}>
+		<details
+			open={true}
+			classList={{
+				[styles.server]: true,
+				[stylesCommon.sidebarContainer]: true,
+			}}
+		>
 			<summary>
-				{props.server.name()}
+				<span title={props.server.name()}>{props.server.name()}</span>
 
 				<A
 					title="Edit Server"
-					class={styles.action}
+					class={stylesCommon.action}
 					href={`/server/${props.server.uuid}/edit`}
 				>
 					📝️
@@ -113,7 +121,7 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 					title="Delete Server"
 					onClick={doDelete}
 					disabled={isDeleting()}
-					class={styles.action}
+					class={stylesCommon.action}
 				>
 					🗑️
 				</button>
@@ -125,15 +133,21 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 						<tbody>
 							<tr>
 								<td>Address:</td>
-								<td>{props.server.address()}</td>
+								<td title={props.server.address()}>
+									{props.server.address()}
+								</td>
 							</tr>
 							<tr>
 								<td>Room:</td>
-								<td>{props.server.room()}</td>
+								<td title={props.server.room()}>
+									{props.server.room()}
+								</td>
 							</tr>
 							<tr>
 								<td>Username:</td>
-								<td>{props.server.username()}</td>
+								<td title={props.server.username()}>
+									{props.server.username()}
+								</td>
 							</tr>
 						</tbody>
 					</table>
@@ -171,12 +185,13 @@ export const ServerBrowser: Component = () => {
 
 	return (
 		<div class={styles.container}>
-			<details open={true}>
+			<details open={true} class={stylesCommon.sidebarContainer}>
 				<summary>
-					Servers
+					<span>Servers</span>
+
 					<A
 						title="Create New Server"
-						class={styles.action}
+						class={stylesCommon.action}
 						href="/createserver"
 					>
 						➕️

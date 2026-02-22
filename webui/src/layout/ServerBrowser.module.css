@@ -4,28 +4,6 @@
 	width: 100%;
 }
 
-details {
-	display: flex;
-	flex-direction: column;
-
-	width: 100%;
-}
-details summary {
-	width: calc(100% - 0.5rem);
-	background-color: #640000;
-	font-weight: bold;
-	margin-bottom: 0.25rem;
-	padding: 0.25rem;
-	cursor: pointer;
-}
-details summary .action {
-	float: right;
-	text-decoration: none;
-	background: none;
-	border: none;
-	cursor: pointer;
-}
-
 .server {
 	resize: vertical;
 }
@@ -34,6 +12,7 @@ details summary .action {
 }
 .serverInfo {
 	background-color: rgba(0, 0, 0, 0.1);
+	text-overflow: ellipsis;
 }
 
 .onlineUsers {

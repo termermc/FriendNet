@@ -145,6 +145,10 @@ const Page: Component = () => {
 											pathSegments.slice(0, -1).join('/'),
 										)}
 										title="Up a directory"
+										classList={{
+											[stylesCommon.w100]: true,
+											[stylesCommon.displayInlineBlock]: true,
+										}}
 									>
 										▲ ..
 									</A>
@@ -157,6 +161,13 @@ const Page: Component = () => {
 
 								const filePath = pth + '/' + meta.name
 								const dlUrl = makeFileUrl(
+									fsUrl,
+									uuid,
+									username,
+									filePath,
+									true,
+								)
+								const nonDlUrl = makeFileUrl(
 									fsUrl,
 									uuid,
 									username,
@@ -188,14 +199,6 @@ const Page: Component = () => {
 									}
 								}
 
-								const isLocalRoute = meta.isDir
-								const target = isLocalRoute
-									? undefined
-									: `_blank`
-								const url = meta.isDir
-									? makeBrowsePath(uuid, username, filePath)
-									: dlUrl
-
 								const label = trimStrEllipsis(
 									emoji + ' ' + meta.name,
 									100,
@@ -203,32 +206,51 @@ const Page: Component = () => {
 
 								return (
 									<tr>
-										<td>
-											<Show
-												when={isLocalRoute}
-												fallback={
-													<a
-														href={url}
-														target={target}
-														title={meta.name}
-													>
-														{label}
-													</a>
-												}
+										<Show
+											when={meta.isDir}
+											fallback={
+												<td
+													title={meta.name}
+													onClick={() =>
+														state.previewFile(
+															uuid,
+															username,
+															filePath,
+														)
+													}
+													class={styles.label}
+												>
+													{label}
+												</td>
+											}
+										>
+											<td
+												title={meta.name}
+												class={styles.label}
 											>
 												<A
-													href={url}
-													target={target}
-													title={meta.name}
+													href={makeBrowsePath(
+														uuid,
+														username,
+														filePath,
+													)}
 												>
 													{label}
 												</A>
-											</Show>
-										</td>
-										<td>
-											<Show when={!meta.isDir}>
-												<a href={dlUrl}></a>
-											</Show>
+											</td>
+										</Show>
+										<td class={styles.actionsTd}>
+											<div class={styles.actions}>
+												<Show when={!meta.isDir}>
+													<a
+														href={nonDlUrl}
+														target="_blank"
+													>
+														🔗
+													</a>
+													<a href={dlUrl}>💾</a>
+												</Show>
+											</div>
 										</td>
 									</tr>
 								)

@@ -42,6 +42,7 @@ const App: Component = () => {
 
 	return (
 		<Router
+			explicitLinks={true}
 			root={(props) => (
 				<ErrorBoundary
 					fallback={<h1>Fatal error in web UI, check console</h1>}

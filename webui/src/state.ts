@@ -200,12 +200,48 @@ export class Server {
 	}
 }
 
+/**
+ * Information required to display a file preview.
+ */
+export type PreviewInfo = {
+	serverUuid: string
+	username: string
+	path: string
+}
+
 export class State {
+	previewInfo: Accessor<PreviewInfo | undefined>
+	#setPreviewInfo: Setter<PreviewInfo | undefined>
+
 	servers: Accessor<Server[]>
 	#setServers: Setter<Server[]>
 
 	constructor() {
 		;[this.servers, this.#setServers] = createSignal<Server[]>([])
+		;[this.previewInfo, this.#setPreviewInfo] = createSignal<
+			PreviewInfo | undefined
+		>()
+	}
+
+	/**
+	 * Sets a file to be previewed.
+	 * @param serverUuid The UUID of the server the file is exposed through.
+	 * @param username The username of the user hosting the file.
+	 * @param path The file's path.
+	 */
+	previewFile(serverUuid: string, username: string, path: string): void {
+		this.#setPreviewInfo({
+			serverUuid,
+			username,
+			path,
+		})
+	}
+
+	/**
+	 * Closes the preview viewer, if open.
+	 */
+	closePreview(): void {
+		this.#setPreviewInfo(undefined)
 	}
 
 	/**

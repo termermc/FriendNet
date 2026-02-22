@@ -1,18 +1,20 @@
-import { Component, ErrorBoundary, JSX } from 'solid-js'
+import { Component, ErrorBoundary, JSX, Show } from 'solid-js'
 
 import styles from './Layout.module.css'
 
 import stopImg from '../asset/img/stop.svg'
 
-import { useRpcClient } from '../ctx'
+import { useGlobalState, useRpcClient } from '../ctx'
 import { AppName } from '../constant'
 import { ServerBrowser } from './ServerBrowser'
+import { Previewer } from './Previewer'
 
 type LayoutProps = {
 	children: JSX.Element
 }
 
 export const Layout: Component<LayoutProps> = (props) => {
+	const state = useGlobalState()
 	const client = useRpcClient()
 
 	let isStopping = false
@@ -53,6 +55,10 @@ export const Layout: Component<LayoutProps> = (props) => {
 
 			<main>
 				<div class={styles.sidebar}>
+					<Show when={state.previewInfo()} keyed={true}>
+						<Previewer info={state.previewInfo()!} />
+					</Show>
+
 					<ServerBrowser />
 				</div>
 
