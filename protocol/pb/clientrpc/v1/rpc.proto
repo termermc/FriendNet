@@ -4,15 +4,15 @@ option go_package = "friendnet.org/protocol/clientrpc";
 
 package pb.clientrpc.v1;
 
-// LogMessageField is a field within a LogMessage.
-message LogMessageField {
-    // The field's kind.
+// LogMessageAttr is an attribute within a LogMessage.
+message LogMessageAttr {
+    // The value kind.
     string kind = 1;
 
-    // The field's key.
+    // The key.
     string key = 2;
 
-    // The string representation of the field's value.
+    // The string representation of the value.
     // The value can be interpreted based on the value of `kind`.
     string value = 3;
 }
@@ -28,8 +28,8 @@ message LogMessage {
     // The textual message.
     string message = 3;
 
-    // The message's fields.
-    repeated LogMessageField fields = 4;
+    // The message's attributes.
+    repeated LogMessageAttr attrs = 4;
 }
 
 // Information about a server.

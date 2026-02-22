@@ -21,34 +21,34 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// LogMessageField is a field within a LogMessage.
-type LogMessageField struct {
+// LogMessageAttr is an attribute within a LogMessage.
+type LogMessageAttr struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The field's kind.
+	// The value kind.
 	Kind string `protobuf:"bytes,1,opt,name=kind,proto3" json:"kind,omitempty"`
-	// The field's key.
+	// The key.
 	Key string `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
-	// The string representation of the field's value.
+	// The string representation of the value.
 	// The value can be interpreted based on the value of `kind`.
 	Value         string `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *LogMessageField) Reset() {
-	*x = LogMessageField{}
+func (x *LogMessageAttr) Reset() {
+	*x = LogMessageAttr{}
 	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *LogMessageField) String() string {
+func (x *LogMessageAttr) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*LogMessageField) ProtoMessage() {}
+func (*LogMessageAttr) ProtoMessage() {}
 
-func (x *LogMessageField) ProtoReflect() protoreflect.Message {
+func (x *LogMessageAttr) ProtoReflect() protoreflect.Message {
 	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -60,26 +60,26 @@ func (x *LogMessageField) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use LogMessageField.ProtoReflect.Descriptor instead.
-func (*LogMessageField) Descriptor() ([]byte, []int) {
+// Deprecated: Use LogMessageAttr.ProtoReflect.Descriptor instead.
+func (*LogMessageAttr) Descriptor() ([]byte, []int) {
 	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *LogMessageField) GetKind() string {
+func (x *LogMessageAttr) GetKind() string {
 	if x != nil {
 		return x.Kind
 	}
 	return ""
 }
 
-func (x *LogMessageField) GetKey() string {
+func (x *LogMessageAttr) GetKey() string {
 	if x != nil {
 		return x.Key
 	}
 	return ""
 }
 
-func (x *LogMessageField) GetValue() string {
+func (x *LogMessageAttr) GetValue() string {
 	if x != nil {
 		return x.Value
 	}
@@ -95,8 +95,8 @@ type LogMessage struct {
 	CreatedTs int64 `protobuf:"varint,2,opt,name=created_ts,json=createdTs,proto3" json:"created_ts,omitempty"`
 	// The textual message.
 	Message string `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
-	// The message's fields.
-	Fields        []*LogMessageField `protobuf:"bytes,4,rep,name=fields,proto3" json:"fields,omitempty"`
+	// The message's attributes.
+	Attrs         []*LogMessageAttr `protobuf:"bytes,4,rep,name=attrs,proto3" json:"attrs,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -152,9 +152,9 @@ func (x *LogMessage) GetMessage() string {
 	return ""
 }
 
-func (x *LogMessage) GetFields() []*LogMessageField {
+func (x *LogMessage) GetAttrs() []*LogMessageAttr {
 	if x != nil {
-		return x.Fields
+		return x.Attrs
 	}
 	return nil
 }
@@ -1864,18 +1864,18 @@ var File_pb_clientrpc_v1_rpc_proto protoreflect.FileDescriptor
 
 const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\n" +
-	"\x19pb/clientrpc/v1/rpc.proto\x12\x0fpb.clientrpc.v1\"M\n" +
-	"\x0fLogMessageField\x12\x12\n" +
+	"\x19pb/clientrpc/v1/rpc.proto\x12\x0fpb.clientrpc.v1\"L\n" +
+	"\x0eLogMessageAttr\x12\x12\n" +
 	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x10\n" +
 	"\x03key\x18\x02 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x03 \x01(\tR\x05value\"\x91\x01\n" +
+	"\x05value\x18\x03 \x01(\tR\x05value\"\x8e\x01\n" +
 	"\n" +
 	"LogMessage\x12\x10\n" +
 	"\x03uid\x18\x01 \x01(\tR\x03uid\x12\x1d\n" +
 	"\n" +
 	"created_ts\x18\x02 \x01(\x03R\tcreatedTs\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\x128\n" +
-	"\x06fields\x18\x04 \x03(\v2 .pb.clientrpc.v1.LogMessageFieldR\x06fields\"\x9d\x01\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\x125\n" +
+	"\x05attrs\x18\x04 \x03(\v2\x1f.pb.clientrpc.v1.LogMessageAttrR\x05attrs\"\x9d\x01\n" +
 	"\n" +
 	"ServerInfo\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\tR\x04uuid\x12\x12\n" +
@@ -2013,7 +2013,7 @@ func file_pb_clientrpc_v1_rpc_proto_rawDescGZIP() []byte {
 
 var file_pb_clientrpc_v1_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
 var file_pb_clientrpc_v1_rpc_proto_goTypes = []any{
-	(*LogMessageField)(nil),          // 0: pb.clientrpc.v1.LogMessageField
+	(*LogMessageAttr)(nil),           // 0: pb.clientrpc.v1.LogMessageAttr
 	(*LogMessage)(nil),               // 1: pb.clientrpc.v1.LogMessage
 	(*ServerInfo)(nil),               // 2: pb.clientrpc.v1.ServerInfo
 	(*ShareInfo)(nil),                // 3: pb.clientrpc.v1.ShareInfo
@@ -2051,7 +2051,7 @@ var file_pb_clientrpc_v1_rpc_proto_goTypes = []any{
 	(*GetOnlineUsersResponse)(nil),   // 35: pb.clientrpc.v1.GetOnlineUsersResponse
 }
 var file_pb_clientrpc_v1_rpc_proto_depIdxs = []int32{
-	0,  // 0: pb.clientrpc.v1.LogMessage.fields:type_name -> pb.clientrpc.v1.LogMessageField
+	0,  // 0: pb.clientrpc.v1.LogMessage.attrs:type_name -> pb.clientrpc.v1.LogMessageAttr
 	1,  // 1: pb.clientrpc.v1.StreamLogsResponse.logs:type_name -> pb.clientrpc.v1.LogMessage
 	2,  // 2: pb.clientrpc.v1.GetServersResponse.servers:type_name -> pb.clientrpc.v1.ServerInfo
 	2,  // 3: pb.clientrpc.v1.CreateServerResponse.server:type_name -> pb.clientrpc.v1.ServerInfo

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
+	"time"
 
 	"connectrpc.com/connect"
 	"friendnet.org/client/clog"
@@ -75,10 +77,76 @@ func (s *RpcServer) shareRecToInfo(share storage.ShareRecord) *v1.ShareInfo {
 		CreatedTs:  share.CreatedTs.Unix(),
 	}
 }
+func (s *RpcServer) writeLogMsgPtr(rec clog.MessageRecord, ptr *v1.LogMessage) {
+	attrs := make([]*v1.LogMessageAttr, len(rec.Attrs))
+	for i, attr := range rec.Attrs {
+		attrs[i] = &v1.LogMessageAttr{
+			Kind:  attr.Kind,
+			Key:   attr.Key,
+			Value: attr.Value,
+		}
+	}
+
+	ptr.Uid = rec.Uuid
+	ptr.CreatedTs = rec.CreatedTs.UnixMilli()
+	ptr.Message = rec.Message
+	ptr.Attrs = attrs
+}
 
 func (s *RpcServer) StreamLogs(ctx context.Context, request *v1.StreamLogsRequest, conn *connect.ServerStream[v1.StreamLogsResponse]) error {
-	// TODO
-	return nil
+	sendMany := func(recs []clog.MessageRecord) error {
+		msgs := make([]v1.LogMessage, len(recs))
+		ptrs := make([]*v1.LogMessage, len(recs))
+		for i, rec := range recs {
+			ptr := &msgs[i]
+			s.writeLogMsgPtr(rec, ptr)
+			ptrs[i] = ptr
+		}
+
+		return conn.Send(&v1.StreamLogsResponse{
+			Logs: ptrs,
+		})
+	}
+	sendOne := func(rec clog.MessageRecord) error {
+		ptr := &v1.LogMessage{}
+		s.writeLogMsgPtr(rec, ptr)
+
+		return conn.Send(&v1.StreamLogsResponse{
+			Logs: []*v1.LogMessage{ptr},
+		})
+	}
+
+	pending := make(chan clog.MessageRecord, 100)
+
+	sub := s.clogHandler.Subscribe(func(rec clog.MessageRecord) {
+		pending <- rec
+	})
+	defer s.clogHandler.Unsubscribe(sub)
+
+	// If old logs were requested, send them first.
+	if request.SendLogsAfterTs != nil {
+		ts := time.UnixMilli(*request.SendLogsAfterTs)
+		recs, err := s.clogHandler.GetLogsAfter(ts, slog.LevelDebug)
+		if err != nil {
+			return err
+		}
+
+		if err = sendMany(recs); err != nil {
+			return err
+		}
+	}
+
+	// Send new logs from subscription.
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case rec := <-pending:
+			if err := sendOne(rec); err != nil {
+				return err
+			}
+		}
+	}
 }
 
 func (s *RpcServer) Stop(_ context.Context, _ *v1.StopRequest) (*v1.StopResponse, error) {
@@ -93,7 +161,7 @@ func (s *RpcServer) GetClientInfo(_ context.Context, _ *v1.GetClientInfoRequest)
 	}, nil
 }
 
-func (s *RpcServer) GetServers(ctx context.Context, request *v1.GetServersRequest) (*v1.GetServersResponse, error) {
+func (s *RpcServer) GetServers(_ context.Context, _ *v1.GetServersRequest) (*v1.GetServersResponse, error) {
 	servers := s.client.GetAll()
 
 	infos := make([]*v1.ServerInfo, len(servers))
@@ -146,7 +214,7 @@ func (s *RpcServer) DeleteServer(ctx context.Context, request *v1.DeleteServerRe
 	return &v1.DeleteServerResponse{}, nil
 }
 
-func (s *RpcServer) ConnectServer(ctx context.Context, request *v1.ConnectServerRequest) (*v1.ConnectServerResponse, error) {
+func (s *RpcServer) ConnectServer(_ context.Context, request *v1.ConnectServerRequest) (*v1.ConnectServerResponse, error) {
 	srv, has := s.client.GetByUuid(request.Uuid)
 	if !has {
 		return nil, errServerNotFound
@@ -157,7 +225,7 @@ func (s *RpcServer) ConnectServer(ctx context.Context, request *v1.ConnectServer
 	return &v1.ConnectServerResponse{}, nil
 }
 
-func (s *RpcServer) DisconnectServer(ctx context.Context, request *v1.DisconnectServerRequest) (*v1.DisconnectServerResponse, error) {
+func (s *RpcServer) DisconnectServer(_ context.Context, request *v1.DisconnectServerRequest) (*v1.DisconnectServerResponse, error) {
 	srv, has := s.client.GetByUuid(request.Uuid)
 	if !has {
 		return nil, errServerNotFound
