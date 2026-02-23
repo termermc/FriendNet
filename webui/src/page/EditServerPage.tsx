@@ -168,8 +168,12 @@ const Page: Component = () => {
 
 						<tr>
 							<td>
-								<label for="edit-server-password">
-									Password
+								<label
+									for="edit-server-password"
+									style="cursor:help"
+									title='This is the password to log in with. To change an existing password, click "Change Password" on the server in the server browser.'
+								>
+									Password<sup>🛈</sup>
 								</label>
 							</td>
 							<td>
