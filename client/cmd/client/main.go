@@ -111,6 +111,7 @@ func main() {
 			CorsAllowAllOrigins: true,
 		},
 		client.NewRpcServer(
+			logHandler,
 			multi,
 			fileAddr,
 			stop,

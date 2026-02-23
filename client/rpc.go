@@ -27,19 +27,20 @@ var errShareNotFound = connect.NewError(connect.CodeNotFound, errors.New("share 
 var errFileNotFound = connect.NewError(connect.CodeNotFound, errors.New("file not found"))
 
 type RpcServer struct {
-	clogHandler clog.Handler
-
+	clogHandler   clog.Handler
 	client        *MultiClient
 	fileServerUrl string
 	stopper       func()
 }
 
 func NewRpcServer(
+	clogHandler clog.Handler,
 	client *MultiClient,
 	fileServerUrl string,
 	stopper func(),
 ) *RpcServer {
 	return &RpcServer{
+		clogHandler:   clogHandler,
 		client:        client,
 		fileServerUrl: fileServerUrl,
 		stopper:       stopper,
