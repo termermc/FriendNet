@@ -6,18 +6,15 @@ import {
 	Show,
 	createEffect,
 	createSignal,
-	on,
 	onMount,
 } from 'solid-js'
 import { useGlobalState } from '../ctx'
 import { LogMessage } from '../../pb/clientrpc/v1/rpc_pb'
 import { collect } from '../util'
 
-const INITIAL_BATCH = 200
-const LOAD_BATCH = 200
-const MAX_DOM_ITEMS = 400
-const SCROLL_THRESHOLD_PX = 200
-const AUTO_SCROLL_THRESHOLD_PX = 120
+const pageSize = 200
+const scrollThresholdPx = 200
+const autoScrollThresholdPx = 120
 
 type LogMsgProps = {
 	msg: LogMessage
@@ -41,18 +38,12 @@ const LogMsg: Component<LogMsgProps> = (props) => {
 	)
 }
 
-type UpdateMode = 'preserve' | 'stickBottom' | 'none'
-
-type TrimResult = {
-	logs: LogMessage[]
-	trimmedTop: boolean
-}
-
 export const LogsPage: Component = () => {
 	const state = useGlobalState()
 
 	const [logs, setLogs] = createSignal<LogMessage[]>([])
 	const [hasOlder, setHasOlder] = createSignal(true)
+	const [hasNewer, setHasNewer] = createSignal(true)
 	const [isLoadingTop, setIsLoadingTop] = createSignal(false)
 	const [isLoadingBottom, setIsLoadingBottom] = createSignal(false)
 
@@ -71,14 +62,10 @@ export const LogsPage: Component = () => {
 		return parts.join(' ')
 	}
 
-	const isNearTop = () => {
-		if (!containerElem) {
-			return false
-		}
-		return containerElem.scrollTop <= SCROLL_THRESHOLD_PX
-	}
+	const isNearTop = () =>
+		containerElem ? containerElem.scrollTop <= scrollThresholdPx : false
 
-	const isNearBottom = (threshold = SCROLL_THRESHOLD_PX) => {
+	const isNearBottom = (threshold = scrollThresholdPx) => {
 		if (!containerElem) {
 			return false
 		}
@@ -93,64 +80,8 @@ export const LogsPage: Component = () => {
 		if (!containerElem) {
 			return
 		}
-
 		containerElem.scrollTop =
 			containerElem.scrollHeight - containerElem.clientHeight
-	}
-
-	const updateLogs = (nextLogs: LogMessage[], mode: UpdateMode) => {
-		const container = containerElem
-		let prevScrollTop = 0
-		let prevScrollHeight = 0
-
-		if (container && mode === 'preserve') {
-			prevScrollTop = container.scrollTop
-			prevScrollHeight = container.scrollHeight
-		}
-
-		setLogs(nextLogs)
-
-		if (!container) {
-			return
-		}
-
-		requestAnimationFrame(() => {
-			if (!containerElem) {
-				return
-			}
-
-			if (mode === 'preserve') {
-				const newScrollHeight = containerElem.scrollHeight
-				const delta = newScrollHeight - prevScrollHeight
-				if (delta !== 0) {
-					containerElem.scrollTop = prevScrollTop + delta
-				}
-			} else if (mode === 'stickBottom') {
-				scrollToBottom()
-			}
-		})
-	}
-
-	const trimToMax = (
-		list: LogMessage[],
-		trimFrom: 'top' | 'bottom',
-	): TrimResult => {
-		if (list.length <= MAX_DOM_ITEMS) {
-			return { logs: list, trimmedTop: false }
-		}
-
-		const excess = list.length - MAX_DOM_ITEMS
-		if (trimFrom === 'top') {
-			return {
-				logs: list.slice(excess),
-				trimmedTop: true,
-			}
-		}
-
-		return {
-			logs: list.slice(0, list.length - excess),
-			trimmedTop: false,
-		}
 	}
 
 	const makeUidSet = (list: LogMessage[]): Set<string> => {
@@ -193,12 +124,22 @@ export const LogsPage: Component = () => {
 		}
 	}
 
-	const loadInitial = () => {
-		const beforeTs = BigInt(Date.now()) + 1n
-		const batch = collect(iterateOlder(beforeTs, new Set()), INITIAL_BATCH)
-		batch.reverse()
-		setLogs(batch)
-		setHasOlder(batch.length === INITIAL_BATCH)
+	const seedNow = () => {
+		const nowTs = BigInt(Date.now())
+		const existingUids = new Set<string>()
+
+		const older = collect(iterateOlder(nowTs, existingUids), pageSize)
+		for (const msg of older) {
+			existingUids.add(msg.uid)
+		}
+		older.reverse()
+
+		const newer = collect(iterateNewer(nowTs, existingUids), pageSize)
+		const combined = [...older, ...newer]
+		setLogs(combined)
+		setHasOlder(older.length === pageSize)
+		setHasNewer(newer.length === pageSize)
+
 		requestAnimationFrame(() => scrollToBottom())
 	}
 
@@ -213,10 +154,7 @@ export const LogsPage: Component = () => {
 		const beforeTs =
 			current.length > 0 ? current[0].createdTs : BigInt(Date.now())
 		const existingUids = makeUidSet(current)
-		const batch = collect(
-			iterateOlder(beforeTs, existingUids),
-			LOAD_BATCH,
-		)
+		const batch = collect(iterateOlder(beforeTs, existingUids), pageSize)
 
 		if (batch.length === 0) {
 			setHasOlder(false)
@@ -225,15 +163,27 @@ export const LogsPage: Component = () => {
 		}
 
 		batch.reverse()
-		let next = [...batch, ...current]
-		const trimmed = trimToMax(next, 'bottom')
-		updateLogs(trimmed.logs, 'preserve')
+		const container = containerElem
+		const prevScrollHeight = container?.scrollHeight ?? 0
+		const prevScrollTop = container?.scrollTop ?? 0
+		setLogs([...batch, ...current])
 
+		requestAnimationFrame(() => {
+			if (!containerElem) {
+				return
+			}
+			const delta = containerElem.scrollHeight - prevScrollHeight
+			containerElem.scrollTop = prevScrollTop + delta
+		})
+
+		if (batch.length < pageSize) {
+			setHasOlder(false)
+		}
 		setIsLoadingTop(false)
 	}
 
 	const loadNewer = () => {
-		if (isLoadingBottom()) {
+		if (isLoadingBottom() || !hasNewer()) {
 			return
 		}
 
@@ -243,32 +193,26 @@ export const LogsPage: Component = () => {
 		const afterTs =
 			current.length > 0
 				? current[current.length - 1].createdTs
-				: 0n
+				: BigInt(Date.now())
 		const existingUids = makeUidSet(current)
-		const batch = collect(
-			iterateNewer(afterTs, existingUids),
-			LOAD_BATCH,
-		)
+		const batch = collect(iterateNewer(afterTs, existingUids), pageSize)
 
 		if (batch.length === 0) {
+			setHasNewer(false)
 			setIsLoadingBottom(false)
 			return
 		}
 
-		const shouldStickBottom = isNearBottom(AUTO_SCROLL_THRESHOLD_PX)
-		const trimFrom = shouldStickBottom ? 'top' : 'bottom'
-		let next = [...current, ...batch]
-		const trimmed = trimToMax(next, trimFrom)
-		const mode: UpdateMode = shouldStickBottom
-			? 'stickBottom'
-			: trimmed.trimmedTop
-				? 'preserve'
-				: 'none'
-		updateLogs(trimmed.logs, mode)
-		if (trimmed.trimmedTop) {
-			setHasOlder(true)
+		const stickToBottom = isNearBottom(autoScrollThresholdPx)
+		setLogs([...current, ...batch])
+
+		if (stickToBottom) {
+			requestAnimationFrame(() => scrollToBottom())
 		}
 
+		if (batch.length < pageSize) {
+			setHasNewer(false)
+		}
 		setIsLoadingBottom(false)
 	}
 
@@ -276,54 +220,41 @@ export const LogsPage: Component = () => {
 		if (isNearTop()) {
 			loadOlder()
 		}
-
 		if (isNearBottom()) {
 			loadNewer()
 		}
 	}
 
 	onMount(() => {
-		loadInitial()
+		seedNow()
 	})
 
-	createEffect(
-		on(
-			() => state.log.latestLog(),
-			(latest) => {
-				if (!latest) {
-					return
-				}
+	createEffect(() => {
+		state.log.logCount()
+		if (logs().length === 0) {
+			seedNow()
+		}
+	})
 
-				const current = logs()
-				if (current.length > 0) {
-					const last = current[current.length - 1]
-					if (last.uid === latest.uid) {
-						return
-					}
-				}
+	createEffect(() => {
+		const latest = state.log.latestLog()
+		if (!latest) {
+			return
+		}
 
-				if (current.some((msg) => msg.uid === latest.uid)) {
-					return
-				}
+		const current = logs()
+		if (current.some((msg) => msg.uid === latest.uid)) {
+			return
+		}
 
-				const shouldStickBottom = isNearBottom(AUTO_SCROLL_THRESHOLD_PX)
-				const trimFrom = shouldStickBottom ? 'top' : 'bottom'
-				let next = [...current, latest]
-				const trimmed = trimToMax(next, trimFrom)
-				const mode: UpdateMode = shouldStickBottom
-					? 'stickBottom'
-					: trimmed.trimmedTop
-						? 'preserve'
-						: 'none'
+		const stickToBottom = isNearBottom(autoScrollThresholdPx)
+		setLogs([...current, latest])
+		setHasNewer(true)
 
-				updateLogs(trimmed.logs, mode)
-				if (trimmed.trimmedTop) {
-					setHasOlder(true)
-				}
-			},
-			{ defer: true },
-		),
-	)
+		if (stickToBottom) {
+			requestAnimationFrame(() => scrollToBottom())
+		}
+	})
 
 	return (
 		<div
@@ -346,6 +277,9 @@ export const LogsPage: Component = () => {
 				</For>
 				<Show when={isLoadingBottom()}>
 					<div class={styles.marker}>Loading newer logs...</div>
+				</Show>
+				<Show when={!hasNewer() && logs().length > 0}>
+					<div class={styles.marker}>Latest log</div>
 				</Show>
 			</div>
 		</div>
