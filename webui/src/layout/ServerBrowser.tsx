@@ -7,7 +7,7 @@ import stylesCommon from '../common.module.css'
 import { OnlineUser, Server } from '../state'
 import { A } from '@solidjs/router'
 import { Code, ConnectError } from '@connectrpc/connect'
-import { makeBrowsePath } from '../util'
+import { makeBrowsePath, sleep } from '../util'
 
 const OnlineUserEntry: Component<{ server: Server; user: OnlineUser }> = (
 	props,
@@ -41,8 +41,10 @@ const OnlineUserEntry: Component<{ server: Server; user: OnlineUser }> = (
 const ServerEntry: Component<{ server: Server }> = (props) => {
 	const state = useGlobalState()
 
-	const refreshUsers = () => {
-		props.server.refreshOnlineUsers().catch((err) => {
+	const refreshUsers = async () => {
+		try {
+			await props.server.refreshOnlineUsers()
+		} catch (err) {
 			if (err instanceof ConnectError && err.code === Code.NotFound) {
 				// Server was probably deleted.
 				state.refreshServers().catch((err) => {
@@ -56,17 +58,21 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 
 			console.error('failed to refresh online users:', err)
 			alert('Failed to refresh online users, see console for details')
-		})
+		}
 	}
 
-	onMount(() => {
-		refreshUsers()
+	onMount(async () => {
+		await refreshUsers()
 	})
 
-	const userRefresher = setInterval(() => {
-		refreshUsers()
-	}, 5_000)
-	onCleanup(() => clearInterval(userRefresher))
+	let runRefresher = true
+	;(async () => {
+		while (runRefresher) {
+			await sleep(5_000)
+			await refreshUsers()
+		}
+	})()
+	onCleanup(() => runRefresher = false)
 
 	const [isDeleting, setDeleting] = createSignal(false)
 	const doDelete = async () => {
