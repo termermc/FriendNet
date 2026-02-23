@@ -86,7 +86,7 @@ export const CreateServerPage: Component = () => {
 				<div class={stylesCommon.successMessage}>Created</div>
 			</Show>
 
-			<h1>Create Server</h1>
+			<h1>Add Server</h1>
 
 			<form onSubmit={submit} class={stylesCommon.form}>
 				<table>
@@ -189,7 +189,7 @@ export const CreateServerPage: Component = () => {
 					</tbody>
 				</table>
 
-				<input type="submit" value="Create" disabled={isCreating()} />
+				<input type="submit" value="Add Server" disabled={isCreating()} />
 			</form>
 		</div>
 	)

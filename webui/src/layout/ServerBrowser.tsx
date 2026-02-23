@@ -188,7 +188,7 @@ export const ServerBrowser: Component = () => {
 					<span>Servers</span>
 
 					<A
-						title="Create New Server"
+						title="Add New Server"
 						class={stylesCommon.action}
 						href="/createserver"
 					>
