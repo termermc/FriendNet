@@ -255,7 +255,8 @@ export class LogManager {
 	 * @private
 	 */
 	async #daemon() {
-		let lastMsgTs = 0n
+		// Start with the last hour of logs.
+		let lastMsgTs = BigInt(Date.now() - (60 * 60 * 1_000))
 
 		// noinspection InfiniteLoopJS
 		while (true) {
