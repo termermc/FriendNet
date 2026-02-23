@@ -108,6 +108,7 @@ export class Server {
 				}
 			}
 		}
+		console.log('ENDED!')
 
 		// Sort users alphabetically.
 		newUsers.sort((a, b) => a.username.localeCompare(b.username))
