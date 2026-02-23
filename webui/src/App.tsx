@@ -8,6 +8,7 @@ import { EditServerPage } from './page/EditServerPage'
 import { ServerSharesPage } from './page/ServerSharesPage'
 import { ServerBrowsePage } from './page/ServerBrowsePage'
 import { makeBrowsePath } from './util'
+import { LogsPage } from './page/LogsPage'
 
 const App: Component = () => {
 	const routes: RouteDefinition[] = [
@@ -15,6 +16,12 @@ const App: Component = () => {
 			path: '/',
 			component: WelcomePage,
 		},
+
+		{
+			path: '/logs',
+			component: LogsPage,
+		},
+
 		{
 			path: '/createserver',
 			component: CreateServerPage,
