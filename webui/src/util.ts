@@ -136,6 +136,8 @@ export function guessFileCategory(filename: string): FileCategory {
 		case 'log':
 		case 'cfg':
 		case 'conf':
+		case 'css':
+		case 'scss':
 			return 'text'
 		default:
 			return 'other'
