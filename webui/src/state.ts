@@ -1,7 +1,7 @@
 import { Accessor, createSignal, Setter } from 'solid-js'
 import {
 	CreateServerRequest,
-	CreateShareRequest,
+	CreateShareRequest, LogMessage, LogMessageAttr,
 	OnlineUserInfo,
 	ServerInfo,
 	ShareInfo,
@@ -9,6 +9,7 @@ import {
 } from '../pb/clientrpc/v1/rpc_pb'
 import { RpcClient } from './protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
+import { sleep } from './util'
 
 /**
  * Represents an online user within a server room.
@@ -48,6 +49,8 @@ export class ServerShare {
  * Represents a FriendNet server.
  */
 export class Server {
+	readonly #client: RpcClient
+
 	readonly uuid: string
 	readonly createdTs: Date
 
@@ -69,7 +72,9 @@ export class Server {
 	shares: Accessor<ServerShare[]>
 	#setShares: Setter<ServerShare[]>
 
-	constructor(info: ServerInfo) {
+	constructor(client: RpcClient, info: ServerInfo) {
+		this.#client = client
+
 		this.uuid = info.uuid
 		this.createdTs = new Date(Number(info.createdTs) * 1_000)
 		;[this.name, this.#setName] = createSignal('')
@@ -84,8 +89,8 @@ export class Server {
 		this.updateFromInfo(info)
 	}
 
-	async refreshOnlineUsers(client: RpcClient): Promise<void> {
-		const res = client.getOnlineUsers({ serverUuid: this.uuid })
+	async refreshOnlineUsers(): Promise<void> {
+		const res = this.#client.getOnlineUsers({ serverUuid: this.uuid })
 
 		const curUsers = this.onlineUsers()
 		const newUsers: OnlineUser[] = []
@@ -108,8 +113,8 @@ export class Server {
 		this.#setOnlineUsers(newUsers)
 	}
 
-	async refreshShares(client: RpcClient): Promise<void> {
-		const res = await client.getShares({ serverUuid: this.uuid })
+	async refreshShares(): Promise<void> {
+		const res = await this.#client.getShares({ serverUuid: this.uuid })
 
 		const curShares = this.shares()
 		const newShares: ServerShare[] = []
@@ -132,14 +137,10 @@ export class Server {
 
 	/**
 	 * Creates a new share on the server.
-	 * @param client The RPC client to use.
 	 * @param req The share creation request.
 	 */
-	async createShare(
-		client: RpcClient,
-		req: Omit<CreateShareRequest, '$typeName' | 'serverUuid'>,
-	): Promise<void> {
-		const { share } = await client.createShare({
+	async createShare(req: Omit<CreateShareRequest, '$typeName' | 'serverUuid'>): Promise<void> {
+		const { share } = await this.#client.createShare({
 			serverUuid: this.uuid,
 			...req,
 		})
@@ -148,13 +149,12 @@ export class Server {
 
 	/**
 	 * Deletes the share with the specified name from the server.
-	 * @param client The RPC client to use.
 	 * @param name The name of the share to delete.
 	 * @returns Whether the share existed.
 	 */
-	async deleteShare(client: RpcClient, name: string): Promise<boolean> {
+	async deleteShare(name: string): Promise<boolean> {
 		try {
-			await client.deleteShare({ serverUuid: this.uuid, name })
+			await this.#client.deleteShare({ serverUuid: this.uuid, name })
 		} catch (err) {
 			if (err instanceof ConnectError && err.code === Code.NotFound) {
 				return false
@@ -176,14 +176,10 @@ export class Server {
 
 	/**
 	 * Updates the server's info.
-	 * @param client The RPC client to use.
 	 * @param req The values to update.
 	 */
-	async update(
-		client: RpcClient,
-		req: Omit<UpdateServerRequest, '$typeName' | 'uuid'>,
-	): Promise<void> {
-		await client.updateServer({ uuid: this.uuid, ...req })
+	async update(req: Omit<UpdateServerRequest, '$typeName' | 'uuid'>): Promise<void> {
+		await this.#client.updateServer({ uuid: this.uuid, ...req })
 
 		if (req.name != null) {
 			this.#setName(req.name)
@@ -209,14 +205,163 @@ export type PreviewInfo = {
 	path: string
 }
 
+/**
+ * Manages streaming and querying client logs.
+ * It automatically streams logs from the client RPC in the background and makes them available.
+ */
+export class LogManager {
+	/**
+	 * The latest log message.
+	 * It is updated when new logs come in, so it is a good way to be notified of new messages.
+	 */
+	readonly latestLog: Accessor<LogMessage | undefined>
+	readonly #setLatestLog: Setter<LogMessage | undefined>
+
+	#client: RpcClient
+
+	#bucketGranularity = 60 * 1_000
+	#buckets = new Map<number, LogMessage[]>()
+
+	constructor(client: RpcClient) {
+		this.#client = client
+
+		;[this.latestLog, this.#setLatestLog] = createSignal<LogMessage | undefined>()
+
+		// noinspection JSIgnoredPromiseFromCall
+		this.#daemon()
+	}
+
+	attrsToObject(attrs: LogMessageAttr[]): Record<string, any> {
+		const res: Record<string, any> = {}
+		for (const attr of attrs) {
+			switch (attr.kind) {
+				case 'Bool':
+				case 'Float64':
+				case 'Int64':
+				case 'Uint64':
+					res[attr.key] = JSON.parse(attr.value)
+					break
+				default:
+					res[attr.key] = attr.value
+			}
+		}
+		return res
+	}
+
+	/**
+	 * The daemon that streams messages.
+	 * Should only be run once, by the constructor.
+	 * It will never throw.
+	 * @private
+	 */
+	async #daemon() {
+		let lastMsgTs = 0n
+
+		// noinspection InfiniteLoopJS
+		while (true) {
+			const stream = this.#client.streamLogs({
+				sendLogsAfterTs: lastMsgTs,
+			})
+
+			try {
+				for await (const res of stream) {
+					for (const msg of res.logs) {
+						const wasDuplicate = this.#insert(msg, true)
+						if (!wasDuplicate) {
+							lastMsgTs = msg.createdTs
+							this.#setLatestLog(msg)
+
+							// Log message to console.
+							console.log('[CLIENT]', msg.message, this.attrsToObject(msg.attrs))
+						}
+					}
+				}
+			} catch (err) {
+				console.error('error streaming logs:', err)
+				await sleep(1_000)
+			}
+		}
+	}
+
+	#tsToBucketNum(ts: bigint | number): number {
+		return Number(ts) / this.#bucketGranularity
+	}
+
+	/**
+	 * Inserts a new log message.
+	 * @param msg The message.
+	 * @param skipBucketSort Whether to skip sorting the bucket after insertion.
+	 * This should be false unless you know that the inserted message will be the
+	 * newest in the bucket (such as a newly streamed log message).
+	 * @returns Whether the message already existed.
+	 */
+	#insert(msg: LogMessage, skipBucketSort: boolean): boolean {
+		const bucketNum = this.#tsToBucketNum(msg.createdTs)
+		const bucket = this.#buckets.get(bucketNum)
+		if (bucket) {
+			// Check if it already exists.
+			for (const bucketMsg of bucket) {
+				if (bucketMsg.uid === msg.uid) {
+					// Skip inserting duplicate.
+					return true
+				}
+			}
+
+			bucket.push(msg)
+
+			if (!skipBucketSort) {
+				bucket.sort((a, b) => Number(a.createdTs - b.createdTs))
+			}
+		} else {
+			// New bucket.
+			this.#buckets.set(bucketNum, [msg])
+		}
+
+		return false
+	}
+
+	/**
+	 * Returns an iterator of log messages between min and max (both inclusive).
+	 * @param min The minimum timestamp.
+	 * @param max The maximum timestamp.
+	 * @returns All log messages between min and max (both inclusive).
+	 */
+	*iterateRange(min: Date, max: Date): Generator<LogMessage, void, void> {
+		const minBucketNum = this.#tsToBucketNum(min.getTime())
+		const maxBucketNum = this.#tsToBucketNum(max.getTime())
+
+		for (let i = minBucketNum; i <= maxBucketNum; i++) {
+			const bucket = this.#buckets.get(i)
+			if (!bucket) {
+				continue
+			}
+
+			for (const msg of bucket) {
+				yield msg
+			}
+		}
+	}
+}
+
 export class State {
-	previewInfo: Accessor<PreviewInfo | undefined>
-	#setPreviewInfo: Setter<PreviewInfo | undefined>
+	readonly #client: RpcClient
 
-	servers: Accessor<Server[]>
-	#setServers: Setter<Server[]>
+	/**
+	 * The global {@link LogManager} instance.
+	 */
+	readonly log: LogManager
 
-	constructor() {
+	readonly previewInfo: Accessor<PreviewInfo | undefined>
+	readonly #setPreviewInfo: Setter<PreviewInfo | undefined>
+
+	readonly servers: Accessor<Server[]>
+	readonly #setServers: Setter<Server[]>
+
+	constructor(client: RpcClient) {
+		this.#client = client
+
+		this.log = new LogManager(client)
+
 		;[this.servers, this.#setServers] = createSignal<Server[]>([])
 		;[this.previewInfo, this.#setPreviewInfo] = createSignal<
 			PreviewInfo | undefined
@@ -256,10 +401,9 @@ export class State {
 	/**
 	 * Refreshes the list of servers.
 	 * Any existing servers whose information was updated will be updated in-place.
-	 * @param client The RPC client to use.
 	 */
-	async refreshServers(client: RpcClient): Promise<void> {
-		const { servers } = await client.getServers({})
+	async refreshServers(): Promise<void> {
+		const { servers } = await this.#client.getServers({})
 
 		const curServers = this.servers()
 		const newServers: Server[] = []
@@ -270,7 +414,7 @@ export class State {
 				cur.updateFromInfo(info)
 				newServers.push(cur)
 			} else {
-				newServers.push(new Server(info))
+				newServers.push(new Server(this.#client, info))
 			}
 		}
 
@@ -282,30 +426,25 @@ export class State {
 
 	/**
 	 * Creates a new server and adds it to the list.
-	 * @param client The RPC client to use.
 	 * @param req The create server request.
 	 * @returns The newly created server's UUID.
 	 */
-	async createServer(
-		client: RpcClient,
-		req: Omit<CreateServerRequest, '$typeName'>,
-	): Promise<string> {
-		const res = await client.createServer(req)
+	async createServer(req: Omit<CreateServerRequest, '$typeName'>): Promise<string> {
+		const res = await this.#client.createServer(req)
 
-		this.#setServers([...this.servers(), new Server(res.server!)])
+		this.#setServers([...this.servers(), new Server(this.#client, res.server!)])
 
 		return res.server!.uuid
 	}
 
 	/**
 	 * Deletes the server with the specified UUID from the list.
-	 * @param client The RPC client to use.
 	 * @param uuid The UUID of the server to delete.
 	 * @returns Whether the server existed.
 	 */
-	async deleteServer(client: RpcClient, uuid: string): Promise<boolean> {
+	async deleteServer(uuid: string): Promise<boolean> {
 		try {
-			await client.deleteServer({ uuid })
+			await this.#client.deleteServer({ uuid })
 			this.#setServers(this.servers().filter((x) => x.uuid !== uuid))
 			return true
 		} catch (err) {

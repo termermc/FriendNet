@@ -3,14 +3,13 @@ import { Component, createSignal, For, onMount, Show } from 'solid-js'
 import styles from './ServerSharesPage.module.css'
 import stylesCommon from '../common.module.css'
 
-import { useGlobalState, useRpcClient } from '../ctx'
+import { useGlobalState } from '../ctx'
 import { ConnectError } from '@connectrpc/connect'
 import { useLocation, useParams } from '@solidjs/router'
 
 const Page: Component = () => {
 	const { uuid } = useParams<{ uuid: string }>()
 	const state = useGlobalState()
-	const client = useRpcClient()
 
 	const server = state.getServerByUuid(uuid)
 	if (!server) {
@@ -18,7 +17,7 @@ const Page: Component = () => {
 	}
 
 	onMount(() => {
-		server.refreshShares(client).catch((err) => {
+		server.refreshShares().catch((err) => {
 			console.error('failed to refresh shares:', err)
 			alert('Failed to refresh shares, check console')
 		})
@@ -47,7 +46,7 @@ const Page: Component = () => {
 				return
 			}
 
-			await server.createShare(client, {
+			await server.createShare({
 				name: name(),
 				path: path(),
 			})
@@ -80,7 +79,7 @@ const Page: Component = () => {
 
 		deletingNames.add(name)
 		try {
-			await server.deleteShare(client, name)
+			await server.deleteShare(name)
 		} finally {
 			deletingNames.delete(name)
 		}

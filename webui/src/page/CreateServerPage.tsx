@@ -1,13 +1,12 @@
 import { Component, createSignal, Show } from 'solid-js'
 
 import stylesCommon from '../common.module.css'
-import { useGlobalState, useRpcClient } from '../ctx'
+import { useGlobalState } from '../ctx'
 import { ConnectError } from '@connectrpc/connect'
 import { DefaultServerPort } from '../constant'
 
 export const CreateServerPage: Component = () => {
 	const state = useGlobalState()
-	const client = useRpcClient()
 
 	const [name, setName] = createSignal('')
 	const [address, setAddress] = createSignal('')
@@ -46,7 +45,7 @@ export const CreateServerPage: Component = () => {
 				addr += ':' + DefaultServerPort
 			}
 
-			await state.createServer(client, {
+			await state.createServer({
 				name: name(),
 				address: addr,
 				room: room(),

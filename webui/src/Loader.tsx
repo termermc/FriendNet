@@ -126,8 +126,8 @@ export const Loader: Component = () => {
 		const clientInfo = await client.getClientInfo({})
 
 		// Load initial state.
-		const state = new State()
-		await state.refreshServers(client)
+		const state = new State(client)
+		await state.refreshServers()
 
 		return { clientInfo, state }
 	})

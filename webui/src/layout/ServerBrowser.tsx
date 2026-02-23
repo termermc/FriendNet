@@ -1,5 +1,5 @@
 import { Component, createSignal, For, onCleanup, onMount } from 'solid-js'
-import { useGlobalState, useRpcClient } from '../ctx'
+import { useGlobalState } from '../ctx'
 
 import styles from './ServerBrowser.module.css'
 import stylesCommon from '../common.module.css'
@@ -40,13 +40,12 @@ const OnlineUserEntry: Component<{ server: Server; user: OnlineUser }> = (
 
 const ServerEntry: Component<{ server: Server }> = (props) => {
 	const state = useGlobalState()
-	const client = useRpcClient()
 
 	const refreshUsers = () => {
-		props.server.refreshOnlineUsers(client).catch((err) => {
+		props.server.refreshOnlineUsers().catch((err) => {
 			if (err instanceof ConnectError && err.code === Code.NotFound) {
 				// Server was probably deleted.
-				state.refreshServers(client).catch((err) => {
+				state.refreshServers().catch((err) => {
 					console.error(
 						'failed to refresh servers after apparently server deletion:',
 						err,
@@ -85,7 +84,7 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 
 		try {
 			setDeleting(true)
-			await state.deleteServer(client, props.server.uuid)
+			await state.deleteServer(props.server.uuid)
 		} catch (err) {
 			console.error(
 				`failed to delete server ${JSON.stringify(props.server.uuid)}:`,
@@ -174,10 +173,9 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 
 export const ServerBrowser: Component = () => {
 	const state = useGlobalState()
-	const client = useRpcClient()
 
 	onMount(() => {
-		state.refreshServers(client).catch((err) => {
+		state.refreshServers().catch((err) => {
 			console.error('failed to refresh servers:', err)
 			alert('Failed to refresh servers, see console for details')
 		})

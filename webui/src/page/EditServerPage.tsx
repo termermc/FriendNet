@@ -1,7 +1,7 @@
 import { Component, createSignal, Show } from 'solid-js'
 
 import stylesCommon from '../common.module.css'
-import { useGlobalState, useRpcClient } from '../ctx'
+import { useGlobalState } from '../ctx'
 import { ConnectError } from '@connectrpc/connect'
 import { DefaultServerPort } from '../constant'
 import { useLocation, useParams } from '@solidjs/router'
@@ -9,7 +9,6 @@ import { useLocation, useParams } from '@solidjs/router'
 const Page: Component = () => {
 	const { uuid } = useParams<{ uuid: string }>()
 	const state = useGlobalState()
-	const client = useRpcClient()
 
 	const server = state.getServerByUuid(uuid)
 	if (!server) {
@@ -47,7 +46,7 @@ const Page: Component = () => {
 				addr += ':' + DefaultServerPort
 			}
 
-			await server.update(client, {
+			await server.update({
 				name: name(),
 				address: addr,
 				room: room(),

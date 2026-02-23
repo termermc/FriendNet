@@ -1,4 +1,12 @@
 /**
+ * Sleeps for a specified number of milliseconds.
+ * @param ms The milliseconds to sleep.
+ */
+export function sleep(ms: number) {
+	return new Promise<void>(res => setTimeout(res, ms))
+}
+
+/**
  * Makes a URL to a shared file.
  * @param base The file server base URL.
  * @param serverUuid The server UUID.
@@ -181,4 +189,38 @@ export function trimStrEllipsis(str: string, len: number): string {
 	}
 
 	return str.substring(0, len - 3) + '...'
+}
+
+/**
+ * Takes in a generator and collects it into an array.
+ * @param gen The generator.
+ * @param preallocate The number of elements to preallocate in the array.
+ * @returns The array of values.
+ */
+export function collect<T>(gen: Generator<T, any, any>, preallocate: number = 0): T[] {
+	if (preallocate <= 0) {
+		const res: T[] = []
+		for (const val of gen) {
+			res.push(val)
+		}
+		return res
+	}
+
+	const res = new Array<T>(preallocate)
+
+	let i = 0
+	for (const val of gen) {
+		if (i < preallocate) {
+			res[i] = val
+		} else {
+			res.push(val)
+		}
+		i++
+	}
+
+	if (i < preallocate) {
+		res.length = i
+	}
+
+	return res
 }
