@@ -91,6 +91,63 @@ enum MsgType {
     // The client must not communicate with the server after sending this message.
     // Expected: Message MSG_TYPE_ACKNOWLEDGED.
     MSG_TYPE_BYE = 20;
+
+    // [C2S] Advertises a connection method for clients to direct connect to the sender.
+    // Expected: Message MSG_TYPE_ADVERTISE_CONN_METHOD_RESULT.
+    MSG_TYPE_ADVERTISE_CONN_METHOD = 21;
+
+    // [S2C] The result of the server attempting to direct connect to a client.
+    MSG_TYPE_ADVERTISE_CONN_METHOD_RESULT = 22;
+
+    // [C2S] Requests removal of a previously advertised direct connect method.
+    // If the method was already removed or never existed, it does nothing.
+    // Expected: Message MSG_TYPE_ACKNOWLEDGED.
+    MSG_TYPE_REMOVE_CONN_METHOD = 23;
+
+    // [C2C] Requests another client to connect to the sender.
+    // Typically used to establish a direct connection for future C2C messages.
+    // The client should reply only after a connection attempt succeeds or fails.
+    // Expected: Message MSG_TYPE_DIRECT_CONN_RESULT.
+    MSG_TYPE_CONNECT_TO_ME = 24;
+
+    // [C2C] The result of a client attempting to direct connect to another client.
+    MSG_TYPE_DIRECT_CONN_RESULT = 25;
+
+    // [C2S] Requests the client's public IP.
+    // Expected: Message MSG_TYPE_PUBLIC_IP.
+    MSG_TYPE_GET_PUBLIC_IP = 26;
+
+    // [S2C] A client's public IP information.
+    MSG_TYPE_PUBLIC_IP = 27;
+
+    // [C2S] Requests an online client's advertised connection methods.
+    // Expected: Either:
+    //  - Message CLIENT_CONN_METHODS.
+    //  - Message MSG_TYPE_ERROR of ERR_TYPE_CLIENT_NOT_ONLINE if the client is not online.
+    MSG_TYPE_GET_CLIENT_CONN_METHODS = 28;
+
+    // [S2C] Connection methods for an online client.
+    MSG_TYPE_CLIENT_CONN_METHODS = 29;
+
+    // [C2S] Requests a token to be used for a direct connect handshake with another client.
+    // Expected: Message MSG_TYPE_DIRECT_CONN_HANDSHAKE_TOKEN.
+    // TODO Include the room and origin and target in the token so that it cannot be stolen by the recipient and used to impersonate the sender.
+    // TODO Token must be only able to be used once and have an expiration built-in.
+    // TODO The token should probably be an encrypted value, and uses should be stored temporarily in-memory.
+    // TODO That will prevent creating a million different tokens without using them.
+    // TODO Disallow creating a token whose sender is self.
+    MSG_TYPE_GET_DIRECT_CONN_HANDSHAKE_TOKEN = 30;
+
+    // [S2C] A direct connect handshake token.
+    MSG_TYPE_DIRECT_CONN_HANDSHAKE_TOKEN = 31;
+
+    // [C2S] Requests redemption of a direct connect handshake token.
+    // It is used to validate an incoming direct connect handshake.
+    MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN = 32;
+
+    // [S2C] Whether a direct connect handshake token was valid, and if so,
+    // information about the client who sent the token.
+    MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN_RESULT = 33;
 }
 
 // Ping message.
@@ -149,6 +206,9 @@ enum ErrType {
 
     // A path did not point to a directory.
     ERR_TYPE_PATH_NOT_DIRECTORY = 11;
+
+    // The client is not online.
+    ERR_TYPE_CLIENT_NOT_ONLINE = 12;
 }
 
 // An error, usually sent by the server.
@@ -335,4 +395,162 @@ message MsgOnlineUsers {
 
 // See MSG_TYPE_BYE.
 message MsgBye {
+}
+
+// ConnMethodType is an enum of possible direct connection types.
+enum ConnMethodType {
+    // Do not use.
+    CONN_METHOD_TYPE_UNSPECIFIED = 0;
+
+    // Direct IP connection.
+    // Addresses are formatted as: IP:PORT
+    CONN_METHOD_TYPE_IP = 1;
+
+    // Yggdrasil connection.
+    // Addresses are formatted as: YGGDRASIL_IP:PORT
+    CONN_METHOD_TYPE_YGGDRASIL = 2;
+}
+
+// See MSG_TYPE_ADVERTISE_CONN_METHOD.
+message MsgAdvertiseConnMethod {
+    // The method type.
+    ConnMethodType type = 1;
+
+    // The method address.
+    // The format is defined by the type.
+    string address = 2;
+
+    // The priority to assign to the method.
+    // Higher means more preferred.
+    // Negative numbers are allowed.
+    int32 priority = 3;
+}
+
+// ConnResult is an enum of possible results of a direct connection attempt.
+enum ConnResult {
+    // Do not use.
+    CONN_RESULT_UNSPECIFIED = 0;
+
+    // Connection succeeded.
+    CONN_RESULT_OK = 1;
+
+    // An internal error occurred while attempting the connection.
+    CONN_RESULT_INTERNAL_ERROR = 2;
+
+    // Connection timed out.
+    CONN_RESULT_TIMED_OUT = 3;
+
+    // Connection was refused.
+    CONN_RESULT_CONN_REFUSED = 4;
+
+    // The connection method is not supported.
+    CONN_RESULT_METHOD_NOT_SUPPORTED = 5;
+
+    // A connection succeeded, but the handshake failed.
+    CONN_RESULT_HANDSHAKE_FAILED = 6;
+}
+
+// See MSG_TYPE_ADVERTISE_CONN_METHOD_RESULT.
+message MsgAdvertiseConnMethodResult {
+    // The result.
+    ConnResult result = 1;
+
+    // The method ID assigned by the server.
+    // This will be set even if result was not CONN_RESULT_OK.
+    string id = 2;
+}
+
+// See MSG_TYPE_REMOVE_CONN_METHOD.
+message MsgRemoveConnMethod {
+    // The method ID.
+    string id = 1;
+}
+
+// See MSG_TYPE_CONNECT_TO_ME.
+message MsgConnectToMe {
+}
+
+// See MSG_TYPE_DIRECT_CONN_RESULT.
+message MsgDirectConnResult {
+    // The result.
+    ConnResult result = 1;
+}
+
+// See MSG_TYPE_GET_PUBLIC_IP.
+message MsgGetPublicIp {
+}
+
+// See MSG_TYPE_PUBLIC_IP.
+message MsgPublicIp {
+    // The client's public IP address, according to the server.
+    string public_ip = 1;
+}
+
+// See MSG_TYPE_GET_CLIENT_CONN_METHODS.
+message MsgGetClientConnMethods {
+    // The client's username.
+    string username = 1;
+}
+
+// ConnMethod is a direct connect method.
+message ConnMethod {
+    // The method ID.
+    string id = 1;
+
+    // The method type.
+    ConnMethodType type = 2;
+
+    // The method address.
+    // The format is defined by the type.
+    string address = 3;
+
+    // The priority to assign to the method.
+    // Higher means more preferred.
+    // Negative numbers are allowed.
+    int32 priority = 4;
+
+    // Whether the connection method was verified to work by the server.
+    bool is_server_verified = 5;
+}
+
+// See MSG_TYPE_CLIENT_CONN_METHODS.
+message MsgClientConnMethods {
+    // The client's advertised direct connect methods.
+    repeated ConnMethod methods = 1;
+}
+
+// See MSG_TYPE_GET_DIRECT_CONN_HANDSHAKE_TOKEN.
+message MsgGetDirectConnHandshakeToken {
+    // The username of the client to connect to.
+    string username = 1;
+}
+
+// See MSG_TYPE_DIRECT_CONN_HANDSHAKE_TOKEN.
+message MsgDirectConnHandshakeToken {
+    // The token.
+    string token = 1;
+}
+
+// See MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN.
+message MsgRedeemConnHandshakeToken {
+    // The token to redeem.
+    string token = 1;
+}
+
+// See MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN_RESULT.
+message MsgRedeemConnHandshakeTokenResult {
+    // Whether the token was valid.
+    // If false, all other fields will be empty.
+    bool is_valid = 1;
+
+    // Whether the token sender is the server itself.
+    // This is for testing direct connect methods.
+    // If true, username and room will be empty.
+    bool is_server = 2;
+
+    // The token sender's username.
+    string username = 3;
+
+    // The token sender's room.
+    string room = 4;
 }

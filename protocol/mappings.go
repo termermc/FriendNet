@@ -50,6 +50,32 @@ func MsgTypeToEmptyMsg(typ pb.MsgType) proto.Message {
 		return &pb.MsgOnlineUsers{}
 	case pb.MsgType_MSG_TYPE_BYE:
 		return &pb.MsgBye{}
+	case pb.MsgType_MSG_TYPE_ADVERTISE_CONN_METHOD:
+		return &pb.MsgAdvertiseConnMethod{}
+	case pb.MsgType_MSG_TYPE_ADVERTISE_CONN_METHOD_RESULT:
+		return &pb.MsgAdvertiseConnMethodResult{}
+	case pb.MsgType_MSG_TYPE_REMOVE_CONN_METHOD:
+		return &pb.MsgRemoveConnMethod{}
+	case pb.MsgType_MSG_TYPE_CONNECT_TO_ME:
+		return &pb.MsgConnectToMe{}
+	case pb.MsgType_MSG_TYPE_DIRECT_CONN_RESULT:
+		return &pb.MsgDirectConnResult{}
+	case pb.MsgType_MSG_TYPE_GET_PUBLIC_IP:
+		return &pb.MsgGetPublicIp{}
+	case pb.MsgType_MSG_TYPE_PUBLIC_IP:
+		return &pb.MsgPublicIp{}
+	case pb.MsgType_MSG_TYPE_GET_CLIENT_CONN_METHODS:
+		return &pb.MsgGetClientConnMethods{}
+	case pb.MsgType_MSG_TYPE_CLIENT_CONN_METHODS:
+		return &pb.MsgClientConnMethods{}
+	case pb.MsgType_MSG_TYPE_GET_DIRECT_CONN_HANDSHAKE_TOKEN:
+		return &pb.MsgGetDirectConnHandshakeToken{}
+	case pb.MsgType_MSG_TYPE_DIRECT_CONN_HANDSHAKE_TOKEN:
+		return &pb.MsgDirectConnHandshakeToken{}
+	case pb.MsgType_MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN:
+		return &pb.MsgRedeemConnHandshakeToken{}
+	case pb.MsgType_MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN_RESULT:
+		return &pb.MsgRedeemConnHandshakeTokenResult{}
 	default:
 		return nil
 	}
