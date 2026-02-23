@@ -76,6 +76,10 @@ func MsgTypeToEmptyMsg(typ pb.MsgType) proto.Message {
 		return &pb.MsgRedeemConnHandshakeToken{}
 	case pb.MsgType_MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN_RESULT:
 		return &pb.MsgRedeemConnHandshakeTokenResult{}
+	case pb.MsgType_MSG_TYPE_DIRECT_CONN_HANDSHAKE:
+		return &pb.MsgDirectConnHandshake{}
+	case pb.MsgType_MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT:
+		return &pb.MsgDirectConnHandshakeResult{}
 	default:
 		return nil
 	}

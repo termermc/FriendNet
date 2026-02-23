@@ -130,10 +130,17 @@ const (
 	MsgType_MSG_TYPE_DIRECT_CONN_HANDSHAKE_TOKEN MsgType = 31
 	// [C2S] Requests redemption of a direct connect handshake token.
 	// It is used to validate an incoming direct connect handshake.
+	// Expected: Message MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN_RESULT.
 	MsgType_MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN MsgType = 32
 	// [S2C] Whether a direct connect handshake token was valid, and if so,
 	// information about the client who sent the token.
 	MsgType_MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN_RESULT MsgType = 33
+	// [C2C, S2C] The handshake sent to direct connect to a client.
+	// This is the first message that must be sent when direct connecting to a client.
+	// Expected: Message MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT, followed by disconnection if not successful.
+	MsgType_MSG_TYPE_DIRECT_CONN_HANDSHAKE MsgType = 34
+	// [C2C, C2S] The result of the direct connect handshake.
+	MsgType_MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT MsgType = 35
 )
 
 // Enum value maps for MsgType.
@@ -173,6 +180,8 @@ var (
 		31: "MSG_TYPE_DIRECT_CONN_HANDSHAKE_TOKEN",
 		32: "MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN",
 		33: "MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN_RESULT",
+		34: "MSG_TYPE_DIRECT_CONN_HANDSHAKE",
+		35: "MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT",
 	}
 	MsgType_value = map[string]int32{
 		"MSG_TYPE_UNSPECIFIED":                        0,
@@ -209,6 +218,8 @@ var (
 		"MSG_TYPE_DIRECT_CONN_HANDSHAKE_TOKEN":        31,
 		"MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN":        32,
 		"MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN_RESULT": 33,
+		"MSG_TYPE_DIRECT_CONN_HANDSHAKE":              34,
+		"MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT":       35,
 	}
 )
 
@@ -566,6 +577,66 @@ func (x ConnResult) Number() protoreflect.EnumNumber {
 // Deprecated: Use ConnResult.Descriptor instead.
 func (ConnResult) EnumDescriptor() ([]byte, []int) {
 	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{5}
+}
+
+type DirectConnHandshakeResult int32
+
+const (
+	// No reason specified.
+	DirectConnHandshakeResult_DIRECT_CONN_HANDSHAKE_RESULT_UNSPECIFIED DirectConnHandshakeResult = 0
+	// The handshake succeeded.
+	DirectConnHandshakeResult_DIRECT_CONN_HANDSHAKE_RESULT_OK DirectConnHandshakeResult = 1
+	// The sender's token was invalid.
+	DirectConnHandshakeResult_DIRECT_CONN_HANDSHAKE_RESULT_TOKEN_INVALID DirectConnHandshakeResult = 2
+	// The handshake failed due to an internal error.
+	DirectConnHandshakeResult_DIRECT_CONN_HANDSHAKE_RESULT_INTERNAL_ERROR DirectConnHandshakeResult = 3
+	// The sender's token was valid, but the client wants to close the connection anyway.
+	DirectConnHandshakeResult_DIRECT_CONN_HANDSHAKE_RESULT_KTHXBYE DirectConnHandshakeResult = 4
+)
+
+// Enum value maps for DirectConnHandshakeResult.
+var (
+	DirectConnHandshakeResult_name = map[int32]string{
+		0: "DIRECT_CONN_HANDSHAKE_RESULT_UNSPECIFIED",
+		1: "DIRECT_CONN_HANDSHAKE_RESULT_OK",
+		2: "DIRECT_CONN_HANDSHAKE_RESULT_TOKEN_INVALID",
+		3: "DIRECT_CONN_HANDSHAKE_RESULT_INTERNAL_ERROR",
+		4: "DIRECT_CONN_HANDSHAKE_RESULT_KTHXBYE",
+	}
+	DirectConnHandshakeResult_value = map[string]int32{
+		"DIRECT_CONN_HANDSHAKE_RESULT_UNSPECIFIED":    0,
+		"DIRECT_CONN_HANDSHAKE_RESULT_OK":             1,
+		"DIRECT_CONN_HANDSHAKE_RESULT_TOKEN_INVALID":  2,
+		"DIRECT_CONN_HANDSHAKE_RESULT_INTERNAL_ERROR": 3,
+		"DIRECT_CONN_HANDSHAKE_RESULT_KTHXBYE":        4,
+	}
+)
+
+func (x DirectConnHandshakeResult) Enum() *DirectConnHandshakeResult {
+	p := new(DirectConnHandshakeResult)
+	*p = x
+	return p
+}
+
+func (x DirectConnHandshakeResult) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (DirectConnHandshakeResult) Descriptor() protoreflect.EnumDescriptor {
+	return file_pb_v1_protocol_proto_enumTypes[6].Descriptor()
+}
+
+func (DirectConnHandshakeResult) Type() protoreflect.EnumType {
+	return &file_pb_v1_protocol_proto_enumTypes[6]
+}
+
+func (x DirectConnHandshakeResult) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use DirectConnHandshakeResult.Descriptor instead.
+func (DirectConnHandshakeResult) EnumDescriptor() ([]byte, []int) {
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{6}
 }
 
 // Ping message.
@@ -2394,6 +2465,99 @@ func (x *MsgRedeemConnHandshakeTokenResult) GetRoom() string {
 	return ""
 }
 
+// See MSG_TYPE_DIRECT_CONN_HANDSHAKE.
+type MsgDirectConnHandshake struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The token to authenticate the sender.
+	Token         string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MsgDirectConnHandshake) Reset() {
+	*x = MsgDirectConnHandshake{}
+	mi := &file_pb_v1_protocol_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MsgDirectConnHandshake) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgDirectConnHandshake) ProtoMessage() {}
+
+func (x *MsgDirectConnHandshake) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_v1_protocol_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MsgDirectConnHandshake.ProtoReflect.Descriptor instead.
+func (*MsgDirectConnHandshake) Descriptor() ([]byte, []int) {
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *MsgDirectConnHandshake) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+// See MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT.
+type MsgDirectConnHandshakeResult struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The result.
+	// If the sender was the server, or not DIRECT_CONN_HANDSHAKE_RESULT_OK, the connection will soon be closed.
+	Result        DirectConnHandshakeResult `protobuf:"varint,1,opt,name=result,proto3,enum=pb.v1.DirectConnHandshakeResult" json:"result,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MsgDirectConnHandshakeResult) Reset() {
+	*x = MsgDirectConnHandshakeResult{}
+	mi := &file_pb_v1_protocol_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MsgDirectConnHandshakeResult) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgDirectConnHandshakeResult) ProtoMessage() {}
+
+func (x *MsgDirectConnHandshakeResult) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_v1_protocol_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MsgDirectConnHandshakeResult.ProtoReflect.Descriptor instead.
+func (*MsgDirectConnHandshakeResult) Descriptor() ([]byte, []int) {
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *MsgDirectConnHandshakeResult) GetResult() DirectConnHandshakeResult {
+	if x != nil {
+		return x.Result
+	}
+	return DirectConnHandshakeResult_DIRECT_CONN_HANDSHAKE_RESULT_UNSPECIFIED
+}
+
 var File_pb_v1_protocol_proto protoreflect.FileDescriptor
 
 const file_pb_v1_protocol_proto_rawDesc = "" +
@@ -2495,7 +2659,11 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\bis_valid\x18\x01 \x01(\bR\aisValid\x12\x1b\n" +
 	"\tis_server\x18\x02 \x01(\bR\bisServer\x12\x1a\n" +
 	"\busername\x18\x03 \x01(\tR\busername\x12\x12\n" +
-	"\x04room\x18\x04 \x01(\tR\x04room*\x84\b\n" +
+	"\x04room\x18\x04 \x01(\tR\x04room\".\n" +
+	"\x16MsgDirectConnHandshake\x12\x14\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\"X\n" +
+	"\x1cMsgDirectConnHandshakeResult\x128\n" +
+	"\x06result\x18\x01 \x01(\x0e2 .pb.v1.DirectConnHandshakeResultR\x06result*\xd3\b\n" +
 	"\aMsgType\x12\x18\n" +
 	"\x14MSG_TYPE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rMSG_TYPE_PING\x10\x01\x12\x11\n" +
@@ -2531,7 +2699,9 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"(MSG_TYPE_GET_DIRECT_CONN_HANDSHAKE_TOKEN\x10\x1e\x12(\n" +
 	"$MSG_TYPE_DIRECT_CONN_HANDSHAKE_TOKEN\x10\x1f\x12(\n" +
 	"$MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN\x10 \x12/\n" +
-	"+MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN_RESULT\x10!*\x8b\x03\n" +
+	"+MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN_RESULT\x10!\x12\"\n" +
+	"\x1eMSG_TYPE_DIRECT_CONN_HANDSHAKE\x10\"\x12)\n" +
+	"%MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT\x10#*\x8b\x03\n" +
 	"\aErrType\x12\x18\n" +
 	"\x14ERR_TYPE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11ERR_TYPE_INTERNAL\x10\x01\x12\x1e\n" +
@@ -2568,7 +2738,13 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x15CONN_RESULT_TIMED_OUT\x10\x03\x12\x1c\n" +
 	"\x18CONN_RESULT_CONN_REFUSED\x10\x04\x12$\n" +
 	" CONN_RESULT_METHOD_NOT_SUPPORTED\x10\x05\x12 \n" +
-	"\x1cCONN_RESULT_HANDSHAKE_FAILED\x10\x06Br\n" +
+	"\x1cCONN_RESULT_HANDSHAKE_FAILED\x10\x06*\xf9\x01\n" +
+	"\x19DirectConnHandshakeResult\x12,\n" +
+	"(DIRECT_CONN_HANDSHAKE_RESULT_UNSPECIFIED\x10\x00\x12#\n" +
+	"\x1fDIRECT_CONN_HANDSHAKE_RESULT_OK\x10\x01\x12.\n" +
+	"*DIRECT_CONN_HANDSHAKE_RESULT_TOKEN_INVALID\x10\x02\x12/\n" +
+	"+DIRECT_CONN_HANDSHAKE_RESULT_INTERNAL_ERROR\x10\x03\x12(\n" +
+	"$DIRECT_CONN_HANDSHAKE_RESULT_KTHXBYE\x10\x04Br\n" +
 	"\tcom.pb.v1B\rProtocolProtoP\x01Z!friendnet.org/protocol/pb/v1;pbv1\xa2\x02\x03PXX\xaa\x02\x05Pb.V1\xca\x02\x05Pb\\V1\xe2\x02\x11Pb\\V1\\GPBMetadata\xea\x02\x06Pb::V1b\x06proto3"
 
 var (
@@ -2583,8 +2759,8 @@ func file_pb_v1_protocol_proto_rawDescGZIP() []byte {
 	return file_pb_v1_protocol_proto_rawDescData
 }
 
-var file_pb_v1_protocol_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
-var file_pb_v1_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
+var file_pb_v1_protocol_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
+var file_pb_v1_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
 var file_pb_v1_protocol_proto_goTypes = []any{
 	(MsgType)(0),                              // 0: pb.v1.MsgType
 	(ErrType)(0),                              // 1: pb.v1.ErrType
@@ -2592,62 +2768,66 @@ var file_pb_v1_protocol_proto_goTypes = []any{
 	(AuthRejectionReason)(0),                  // 3: pb.v1.AuthRejectionReason
 	(ConnMethodType)(0),                       // 4: pb.v1.ConnMethodType
 	(ConnResult)(0),                           // 5: pb.v1.ConnResult
-	(*MsgPing)(nil),                           // 6: pb.v1.MsgPing
-	(*MsgPong)(nil),                           // 7: pb.v1.MsgPong
-	(*MsgAcknowledged)(nil),                   // 8: pb.v1.MsgAcknowledged
-	(*MsgError)(nil),                          // 9: pb.v1.MsgError
-	(*ProtoVersion)(nil),                      // 10: pb.v1.ProtoVersion
-	(*MsgVersion)(nil),                        // 11: pb.v1.MsgVersion
-	(*MsgVersionAccepted)(nil),                // 12: pb.v1.MsgVersionAccepted
-	(*MsgVersionRejected)(nil),                // 13: pb.v1.MsgVersionRejected
-	(*MsgAuthenticate)(nil),                   // 14: pb.v1.MsgAuthenticate
-	(*MsgAuthAccepted)(nil),                   // 15: pb.v1.MsgAuthAccepted
-	(*MsgAuthRejected)(nil),                   // 16: pb.v1.MsgAuthRejected
-	(*MsgOpenOutboundProxy)(nil),              // 17: pb.v1.MsgOpenOutboundProxy
-	(*MsgInboundProxy)(nil),                   // 18: pb.v1.MsgInboundProxy
-	(*MsgGetDirFiles)(nil),                    // 19: pb.v1.MsgGetDirFiles
-	(*MsgDirFiles)(nil),                       // 20: pb.v1.MsgDirFiles
-	(*MsgGetFileMeta)(nil),                    // 21: pb.v1.MsgGetFileMeta
-	(*MsgFileMeta)(nil),                       // 22: pb.v1.MsgFileMeta
-	(*MsgGetFile)(nil),                        // 23: pb.v1.MsgGetFile
-	(*MsgGetOnlineUsers)(nil),                 // 24: pb.v1.MsgGetOnlineUsers
-	(*OnlineUserInfo)(nil),                    // 25: pb.v1.OnlineUserInfo
-	(*MsgOnlineUsers)(nil),                    // 26: pb.v1.MsgOnlineUsers
-	(*MsgBye)(nil),                            // 27: pb.v1.MsgBye
-	(*MsgAdvertiseConnMethod)(nil),            // 28: pb.v1.MsgAdvertiseConnMethod
-	(*MsgAdvertiseConnMethodResult)(nil),      // 29: pb.v1.MsgAdvertiseConnMethodResult
-	(*MsgRemoveConnMethod)(nil),               // 30: pb.v1.MsgRemoveConnMethod
-	(*MsgConnectToMe)(nil),                    // 31: pb.v1.MsgConnectToMe
-	(*MsgDirectConnResult)(nil),               // 32: pb.v1.MsgDirectConnResult
-	(*MsgGetPublicIp)(nil),                    // 33: pb.v1.MsgGetPublicIp
-	(*MsgPublicIp)(nil),                       // 34: pb.v1.MsgPublicIp
-	(*MsgGetClientConnMethods)(nil),           // 35: pb.v1.MsgGetClientConnMethods
-	(*ConnMethod)(nil),                        // 36: pb.v1.ConnMethod
-	(*MsgClientConnMethods)(nil),              // 37: pb.v1.MsgClientConnMethods
-	(*MsgGetDirectConnHandshakeToken)(nil),    // 38: pb.v1.MsgGetDirectConnHandshakeToken
-	(*MsgDirectConnHandshakeToken)(nil),       // 39: pb.v1.MsgDirectConnHandshakeToken
-	(*MsgRedeemConnHandshakeToken)(nil),       // 40: pb.v1.MsgRedeemConnHandshakeToken
-	(*MsgRedeemConnHandshakeTokenResult)(nil), // 41: pb.v1.MsgRedeemConnHandshakeTokenResult
+	(DirectConnHandshakeResult)(0),            // 6: pb.v1.DirectConnHandshakeResult
+	(*MsgPing)(nil),                           // 7: pb.v1.MsgPing
+	(*MsgPong)(nil),                           // 8: pb.v1.MsgPong
+	(*MsgAcknowledged)(nil),                   // 9: pb.v1.MsgAcknowledged
+	(*MsgError)(nil),                          // 10: pb.v1.MsgError
+	(*ProtoVersion)(nil),                      // 11: pb.v1.ProtoVersion
+	(*MsgVersion)(nil),                        // 12: pb.v1.MsgVersion
+	(*MsgVersionAccepted)(nil),                // 13: pb.v1.MsgVersionAccepted
+	(*MsgVersionRejected)(nil),                // 14: pb.v1.MsgVersionRejected
+	(*MsgAuthenticate)(nil),                   // 15: pb.v1.MsgAuthenticate
+	(*MsgAuthAccepted)(nil),                   // 16: pb.v1.MsgAuthAccepted
+	(*MsgAuthRejected)(nil),                   // 17: pb.v1.MsgAuthRejected
+	(*MsgOpenOutboundProxy)(nil),              // 18: pb.v1.MsgOpenOutboundProxy
+	(*MsgInboundProxy)(nil),                   // 19: pb.v1.MsgInboundProxy
+	(*MsgGetDirFiles)(nil),                    // 20: pb.v1.MsgGetDirFiles
+	(*MsgDirFiles)(nil),                       // 21: pb.v1.MsgDirFiles
+	(*MsgGetFileMeta)(nil),                    // 22: pb.v1.MsgGetFileMeta
+	(*MsgFileMeta)(nil),                       // 23: pb.v1.MsgFileMeta
+	(*MsgGetFile)(nil),                        // 24: pb.v1.MsgGetFile
+	(*MsgGetOnlineUsers)(nil),                 // 25: pb.v1.MsgGetOnlineUsers
+	(*OnlineUserInfo)(nil),                    // 26: pb.v1.OnlineUserInfo
+	(*MsgOnlineUsers)(nil),                    // 27: pb.v1.MsgOnlineUsers
+	(*MsgBye)(nil),                            // 28: pb.v1.MsgBye
+	(*MsgAdvertiseConnMethod)(nil),            // 29: pb.v1.MsgAdvertiseConnMethod
+	(*MsgAdvertiseConnMethodResult)(nil),      // 30: pb.v1.MsgAdvertiseConnMethodResult
+	(*MsgRemoveConnMethod)(nil),               // 31: pb.v1.MsgRemoveConnMethod
+	(*MsgConnectToMe)(nil),                    // 32: pb.v1.MsgConnectToMe
+	(*MsgDirectConnResult)(nil),               // 33: pb.v1.MsgDirectConnResult
+	(*MsgGetPublicIp)(nil),                    // 34: pb.v1.MsgGetPublicIp
+	(*MsgPublicIp)(nil),                       // 35: pb.v1.MsgPublicIp
+	(*MsgGetClientConnMethods)(nil),           // 36: pb.v1.MsgGetClientConnMethods
+	(*ConnMethod)(nil),                        // 37: pb.v1.ConnMethod
+	(*MsgClientConnMethods)(nil),              // 38: pb.v1.MsgClientConnMethods
+	(*MsgGetDirectConnHandshakeToken)(nil),    // 39: pb.v1.MsgGetDirectConnHandshakeToken
+	(*MsgDirectConnHandshakeToken)(nil),       // 40: pb.v1.MsgDirectConnHandshakeToken
+	(*MsgRedeemConnHandshakeToken)(nil),       // 41: pb.v1.MsgRedeemConnHandshakeToken
+	(*MsgRedeemConnHandshakeTokenResult)(nil), // 42: pb.v1.MsgRedeemConnHandshakeTokenResult
+	(*MsgDirectConnHandshake)(nil),            // 43: pb.v1.MsgDirectConnHandshake
+	(*MsgDirectConnHandshakeResult)(nil),      // 44: pb.v1.MsgDirectConnHandshakeResult
 }
 var file_pb_v1_protocol_proto_depIdxs = []int32{
 	1,  // 0: pb.v1.MsgError.type:type_name -> pb.v1.ErrType
-	10, // 1: pb.v1.MsgVersion.version:type_name -> pb.v1.ProtoVersion
-	10, // 2: pb.v1.MsgVersionAccepted.version:type_name -> pb.v1.ProtoVersion
-	10, // 3: pb.v1.MsgVersionRejected.version:type_name -> pb.v1.ProtoVersion
+	11, // 1: pb.v1.MsgVersion.version:type_name -> pb.v1.ProtoVersion
+	11, // 2: pb.v1.MsgVersionAccepted.version:type_name -> pb.v1.ProtoVersion
+	11, // 3: pb.v1.MsgVersionRejected.version:type_name -> pb.v1.ProtoVersion
 	2,  // 4: pb.v1.MsgVersionRejected.reason:type_name -> pb.v1.VersionRejectionReason
 	3,  // 5: pb.v1.MsgAuthRejected.reason:type_name -> pb.v1.AuthRejectionReason
-	22, // 6: pb.v1.MsgDirFiles.files:type_name -> pb.v1.MsgFileMeta
-	25, // 7: pb.v1.MsgOnlineUsers.users:type_name -> pb.v1.OnlineUserInfo
+	23, // 6: pb.v1.MsgDirFiles.files:type_name -> pb.v1.MsgFileMeta
+	26, // 7: pb.v1.MsgOnlineUsers.users:type_name -> pb.v1.OnlineUserInfo
 	4,  // 8: pb.v1.MsgAdvertiseConnMethod.type:type_name -> pb.v1.ConnMethodType
 	5,  // 9: pb.v1.MsgAdvertiseConnMethodResult.result:type_name -> pb.v1.ConnResult
 	5,  // 10: pb.v1.MsgDirectConnResult.result:type_name -> pb.v1.ConnResult
 	4,  // 11: pb.v1.ConnMethod.type:type_name -> pb.v1.ConnMethodType
-	36, // 12: pb.v1.MsgClientConnMethods.methods:type_name -> pb.v1.ConnMethod
-	13, // [13:13] is the sub-list for method output_type
-	13, // [13:13] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	37, // 12: pb.v1.MsgClientConnMethods.methods:type_name -> pb.v1.ConnMethod
+	6,  // 13: pb.v1.MsgDirectConnHandshakeResult.result:type_name -> pb.v1.DirectConnHandshakeResult
+	14, // [14:14] is the sub-list for method output_type
+	14, // [14:14] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_pb_v1_protocol_proto_init() }
@@ -2663,8 +2843,8 @@ func file_pb_v1_protocol_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pb_v1_protocol_proto_rawDesc), len(file_pb_v1_protocol_proto_rawDesc)),
-			NumEnums:      6,
-			NumMessages:   36,
+			NumEnums:      7,
+			NumMessages:   38,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

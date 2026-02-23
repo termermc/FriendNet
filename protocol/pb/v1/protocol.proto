@@ -143,11 +143,20 @@ enum MsgType {
 
     // [C2S] Requests redemption of a direct connect handshake token.
     // It is used to validate an incoming direct connect handshake.
+    // Expected: Message MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN_RESULT.
     MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN = 32;
 
     // [S2C] Whether a direct connect handshake token was valid, and if so,
     // information about the client who sent the token.
     MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN_RESULT = 33;
+
+    // [C2C, S2C] The handshake sent to direct connect to a client.
+    // This is the first message that must be sent when direct connecting to a client.
+    // Expected: Message MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT, followed by disconnection if not successful.
+    MSG_TYPE_DIRECT_CONN_HANDSHAKE = 34;
+
+    // [C2C, C2S] The result of the direct connect handshake.
+    MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT = 35;
 }
 
 // Ping message.
@@ -553,4 +562,34 @@ message MsgRedeemConnHandshakeTokenResult {
 
     // The token sender's room.
     string room = 4;
+}
+
+// See MSG_TYPE_DIRECT_CONN_HANDSHAKE.
+message MsgDirectConnHandshake {
+    // The token to authenticate the sender.
+    string token = 1;
+}
+
+enum DirectConnHandshakeResult {
+    // No reason specified.
+    DIRECT_CONN_HANDSHAKE_RESULT_UNSPECIFIED = 0;
+
+    // The handshake succeeded.
+    DIRECT_CONN_HANDSHAKE_RESULT_OK = 1;
+
+    // The sender's token was invalid.
+    DIRECT_CONN_HANDSHAKE_RESULT_TOKEN_INVALID = 2;
+
+    // The handshake failed due to an internal error.
+    DIRECT_CONN_HANDSHAKE_RESULT_INTERNAL_ERROR = 3;
+
+    // The sender's token was valid, but the client wants to close the connection anyway.
+    DIRECT_CONN_HANDSHAKE_RESULT_KTHXBYE = 4;
+}
+
+// See MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT.
+message MsgDirectConnHandshakeResult {
+    // The result.
+    // If the sender was the server, or not DIRECT_CONN_HANDSHAKE_RESULT_OK, the connection will soon be closed.
+    DirectConnHandshakeResult result = 1;
 }
