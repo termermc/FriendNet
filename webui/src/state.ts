@@ -307,7 +307,7 @@ export class LogManager {
 	}
 
 	#tsToBucketNum(ts: bigint | number): number {
-		return Number(ts) / this.#bucketGranularity
+		return Math.floor(Number(ts) / this.#bucketGranularity)
 	}
 
 	/**
@@ -392,7 +392,7 @@ export class LogManager {
 			return
 		}
 
-		let bucketNum = Math.min(
+		let bucketNum = Math.max(
 			this.#minBucket,
 			this.#tsToBucketNum(after.getTime()),
 		)
@@ -422,7 +422,7 @@ export class LogManager {
 			return
 		}
 
-		let bucketNum = Math.max(
+		let bucketNum = Math.min(
 			this.#maxBucket,
 			this.#tsToBucketNum(before.getTime()),
 		)
