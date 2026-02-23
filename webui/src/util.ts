@@ -12,20 +12,31 @@ export function sleep(ms: number) {
  * @param serverUuid The server UUID.
  * @param username The peer's username.
  * @param path The path to the file.
- * @param download Whether to download the file instead of viewing it.
+ * @param options Extra options.
  */
 export function makeFileUrl(
 	base: string,
 	serverUuid: string,
 	username: string,
 	path: string,
-	download: boolean,
+	options: {
+		download?: boolean
+		allowCache?: boolean
+	} = {},
 ): string {
 	if (path.startsWith('/')) {
 		path = path.substring(1)
 	}
 
-	return `${base}/${serverUuid}/${username}/${path}${download ? '?download=1' : ''}`
+	const query = new URLSearchParams()
+	if (options.allowCache) {
+		query.set('allowCache', '1')
+	}
+	if (options.download) {
+		query.set('download', '1')
+	}
+
+	return `${base}/${serverUuid}/${username}/${path}?${query}`
 }
 
 /**

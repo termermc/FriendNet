@@ -25,7 +25,9 @@ const CatOther: Component<CatProps> = (props) => {
 		props.info.serverUuid,
 		props.info.username,
 		props.info.path,
-		true,
+		{
+			download: true,
+		},
 	)
 
 	return (
@@ -111,7 +113,9 @@ const CatAudio: Component<CatProps> = (props) => {
 				props.info.serverUuid,
 				props.info.username,
 				`${props.dir}/${name}`,
-				false,
+				{
+					allowCache: true,
+				}
 			)
 			try {
 				const res = await fetch(url)
@@ -161,7 +165,6 @@ export const Previewer: Component<PreviewerProps> = (props) => {
 		info.serverUuid,
 		info.username,
 		info.path,
-		false,
 	)
 
 	const cat = guessFileCategory(filename)

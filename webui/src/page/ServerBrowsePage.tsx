@@ -165,14 +165,15 @@ const Page: Component = () => {
 									uuid,
 									username,
 									filePath,
-									true,
+									{
+										download: true,
+									},
 								)
 								const nonDlUrl = makeFileUrl(
 									fsUrl,
 									uuid,
 									username,
 									filePath,
-									false,
 								)
 
 								let emoji: string
