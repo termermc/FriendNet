@@ -3,7 +3,7 @@
  * @param ms The milliseconds to sleep.
  */
 export function sleep(ms: number) {
-	return new Promise<void>(res => setTimeout(res, ms))
+	return new Promise<void>((res) => setTimeout(res, ms))
 }
 
 /**
@@ -194,31 +194,50 @@ export function trimStrEllipsis(str: string, len: number): string {
 /**
  * Takes in a generator and collects it into an array.
  * @param gen The generator.
+ * @param limit The maximum number of elements to collect. If undefined, collects all elements.
  * @param preallocate The number of elements to preallocate in the array.
  * @returns The array of values.
  */
-export function collect<T>(gen: Generator<T, any, any>, preallocate: number = 0): T[] {
+export function collect<T>(
+	gen: Generator<T>,
+	limit: number | undefined = undefined,
+	preallocate: number = 0,
+): T[] {
+	if (limit === 0) {
+		return []
+	}
+
 	if (preallocate <= 0) {
 		const res: T[] = []
+		let count = 0
 		for (const val of gen) {
 			res.push(val)
+			count++
+			if (count === limit) {
+				break
+			}
 		}
 		return res
 	}
 
-	const res = new Array<T>(preallocate)
+	const preallocateCount =
+		limit == null ? preallocate : Math.min(preallocate, limit)
+	const res = new Array<T>(preallocateCount)
 
 	let i = 0
 	for (const val of gen) {
-		if (i < preallocate) {
+		if (i < preallocateCount) {
 			res[i] = val
 		} else {
 			res.push(val)
 		}
 		i++
+		if (i === limit) {
+			break
+		}
 	}
 
-	if (i < preallocate) {
+	if (i < preallocateCount) {
 		res.length = i
 	}
 

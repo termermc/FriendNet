@@ -1,7 +1,9 @@
 import { Accessor, createSignal, Setter } from 'solid-js'
 import {
 	CreateServerRequest,
-	CreateShareRequest, LogMessage, LogMessageAttr,
+	CreateShareRequest,
+	LogMessage,
+	LogMessageAttr,
 	OnlineUserInfo,
 	ServerInfo,
 	ShareInfo,
@@ -139,7 +141,9 @@ export class Server {
 	 * Creates a new share on the server.
 	 * @param req The share creation request.
 	 */
-	async createShare(req: Omit<CreateShareRequest, '$typeName' | 'serverUuid'>): Promise<void> {
+	async createShare(
+		req: Omit<CreateShareRequest, '$typeName' | 'serverUuid'>,
+	): Promise<void> {
 		const { share } = await this.#client.createShare({
 			serverUuid: this.uuid,
 			...req,
@@ -178,7 +182,9 @@ export class Server {
 	 * Updates the server's info.
 	 * @param req The values to update.
 	 */
-	async update(req: Omit<UpdateServerRequest, '$typeName' | 'uuid'>): Promise<void> {
+	async update(
+		req: Omit<UpdateServerRequest, '$typeName' | 'uuid'>,
+	): Promise<void> {
 		await this.#client.updateServer({ uuid: this.uuid, ...req })
 
 		if (req.name != null) {
@@ -217,15 +223,26 @@ export class LogManager {
 	readonly latestLog: Accessor<LogMessage | undefined>
 	readonly #setLatestLog: Setter<LogMessage | undefined>
 
+	/**
+	 * The total number of log messages currently in memory.
+	 */
+	readonly logCount: Accessor<number>
+	readonly #setLogCount: Setter<number>
+
 	#client: RpcClient
+
+	#minBucket = -1
+	#maxBucket = -1
 
 	#bucketGranularity = 60 * 1_000
 	#buckets = new Map<number, LogMessage[]>()
 
 	constructor(client: RpcClient) {
 		this.#client = client
-
-		;[this.latestLog, this.#setLatestLog] = createSignal<LogMessage | undefined>()
+		;[this.latestLog, this.#setLatestLog] = createSignal<
+			LogMessage | undefined
+		>()
+		;[this.logCount, this.#setLogCount] = createSignal(0)
 
 		// noinspection JSIgnoredPromiseFromCall
 		this.#daemon()
@@ -256,7 +273,7 @@ export class LogManager {
 	 */
 	async #daemon() {
 		// Start with the last hour of logs.
-		let lastMsgTs = BigInt(Date.now() - (60 * 60 * 1_000))
+		let lastMsgTs = BigInt(Date.now() - 60 * 60 * 1_000)
 
 		// noinspection InfiniteLoopJS
 		while (true) {
@@ -270,10 +287,15 @@ export class LogManager {
 						const wasDuplicate = this.#insert(msg, true)
 						if (!wasDuplicate) {
 							lastMsgTs = msg.createdTs
+							this.#setLogCount(this.logCount() + 1)
 							this.#setLatestLog(msg)
 
 							// Log message to console.
-							console.log('[CLIENT]', msg.message, this.attrsToObject(msg.attrs))
+							console.log(
+								'[CLIENT]',
+								msg.message,
+								this.attrsToObject(msg.attrs),
+							)
 						}
 					}
 				}
@@ -316,6 +338,13 @@ export class LogManager {
 		} else {
 			// New bucket.
 			this.#buckets.set(bucketNum, [msg])
+
+			if (this.#minBucket === -1) {
+				this.#minBucket = bucketNum
+			}
+			if (bucketNum > this.#maxBucket) {
+				this.#maxBucket = bucketNum
+			}
 		}
 
 		return false
@@ -328,17 +357,87 @@ export class LogManager {
 	 * @returns All log messages between min and max (both inclusive).
 	 */
 	*iterateRange(min: Date, max: Date): Generator<LogMessage, void, void> {
-		const minBucketNum = this.#tsToBucketNum(min.getTime())
-		const maxBucketNum = this.#tsToBucketNum(max.getTime())
+		if (this.#minBucket === -1 || this.#maxBucket === -1) {
+			return
+		}
+
+		const minBucketNum = Math.max(
+			this.#tsToBucketNum(min.getTime()),
+			this.#minBucket,
+		)
+		const maxBucketNum = Math.min(
+			this.#tsToBucketNum(max.getTime()),
+			this.#maxBucket,
+		)
 
 		for (let i = minBucketNum; i <= maxBucketNum; i++) {
 			const bucket = this.#buckets.get(i)
-			if (!bucket) {
+			if (bucket == null) {
 				continue
 			}
 
 			for (const msg of bucket) {
 				yield msg
+			}
+		}
+	}
+
+	/**
+	 * Returns an iterator of log messages after the specified timestamp.
+	 * @param after The timestamp to start iterating from.
+	 * @returns All log messages after the timestamp.
+	 */
+	*iterateAfter(after: Date): Generator<LogMessage, void, void> {
+		if (this.#minBucket === -1 || this.#maxBucket === -1) {
+			return
+		}
+
+		let bucketNum = Math.min(
+			this.#minBucket,
+			this.#tsToBucketNum(after.getTime()),
+		)
+
+		let count = 0
+		while (bucketNum <= this.#maxBucket) {
+			const bucket = this.#buckets.get(bucketNum)
+			bucketNum++
+			if (bucket == null) {
+				continue
+			}
+
+			for (let i = 0; i < bucket.length; i++) {
+				yield bucket[i]
+				count++
+			}
+		}
+	}
+
+	/**
+	 * Returns an iterator of log messages backwards before the specified timestamp.
+	 * @param before The timestamp to start iterating backwards from.
+	 * @returns All log messages backwards before the timestamp.
+	 */
+	*iterateBefore(before: Date): Generator<LogMessage, void, void> {
+		if (this.#minBucket === -1 || this.#maxBucket === -1) {
+			return
+		}
+
+		let bucketNum = Math.max(
+			this.#maxBucket,
+			this.#tsToBucketNum(before.getTime()),
+		)
+
+		let count = 0
+		while (bucketNum >= this.#minBucket) {
+			const bucket = this.#buckets.get(bucketNum)
+			bucketNum--
+			if (bucket == null) {
+				continue
+			}
+
+			for (let i = 0; i < bucket.length; i++) {
+				yield bucket[bucket.length - i - 1]
+				count++
 			}
 		}
 	}
@@ -362,7 +461,6 @@ export class State {
 		this.#client = client
 
 		this.log = new LogManager(client)
-
 		;[this.servers, this.#setServers] = createSignal<Server[]>([])
 		;[this.previewInfo, this.#setPreviewInfo] = createSignal<
 			PreviewInfo | undefined
@@ -430,10 +528,15 @@ export class State {
 	 * @param req The create server request.
 	 * @returns The newly created server's UUID.
 	 */
-	async createServer(req: Omit<CreateServerRequest, '$typeName'>): Promise<string> {
+	async createServer(
+		req: Omit<CreateServerRequest, '$typeName'>,
+	): Promise<string> {
 		const res = await this.#client.createServer(req)
 
-		this.#setServers([...this.servers(), new Server(this.#client, res.server!)])
+		this.#setServers([
+			...this.servers(),
+			new Server(this.#client, res.server!),
+		])
 
 		return res.server!.uuid
 	}
