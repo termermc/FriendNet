@@ -57,7 +57,6 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 			}
 
 			console.error('failed to refresh online users:', err)
-			alert('Failed to refresh online users, see console for details')
 		}
 	}
 

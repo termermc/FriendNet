@@ -12,3 +12,8 @@ export const UserProfilePath = '/__profile/index.html'
  * The default port for servers.
  */
 export const DefaultServerPort = 20038
+
+/**
+ * The timeout to use for RPC requests.
+ */
+export const RpcTimeoutMs = 10_000

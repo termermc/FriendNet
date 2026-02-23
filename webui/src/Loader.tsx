@@ -15,6 +15,7 @@ import {
 import { createConnectTransport } from '@connectrpc/connect-web'
 import { createAsync } from '@solidjs/router'
 import { State } from './state'
+import { RpcTimeoutMs } from './constant'
 
 const NoRpc: Component = () => {
 	return (
@@ -107,6 +108,16 @@ export const Loader: Component = () => {
 	const client = createClient(
 		ClientRpcService,
 		createConnectTransport({
+			fetch: (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+				const abort = new AbortController()
+				setTimeout(() => abort.abort(), RpcTimeoutMs)
+
+				return fetch(input, {
+					...init,
+					keepalive: false,
+					signal: abort.signal,
+				})
+			},
 			baseUrl: rpcUrl,
 			interceptors: [
 				((next) => async (req) => {
