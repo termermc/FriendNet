@@ -26,6 +26,23 @@
 .headerTitle {
 	font-size: 1.5rem;
 	font-weight: bold;
+
+    padding-right: 1rem;
+    margin-right: 1rem;
+    border-right: 0.1rem solid rgba(0, 0, 0, 0.25);
+}
+
+.options {
+    display: inline-block;
+    position: relative;
+    bottom: 0.15rem;
+}
+.option {
+    display: inline-block;
+    background-color: rgba(0, 0, 0, 0.25);
+    text-decoration: none;
+    padding: 0.25rem;
+    font-size: 0.9rem;
 }
 
 .stopButton {

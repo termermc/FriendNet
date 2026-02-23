@@ -8,6 +8,7 @@ import { useGlobalState, useRpcClient } from '../ctx'
 import { AppName } from '../constant'
 import { ServerBrowser } from './ServerBrowser'
 import { Previewer } from './Previewer'
+import { A } from '@solidjs/router'
 
 type LayoutProps = {
 	children: JSX.Element
@@ -43,6 +44,10 @@ export const Layout: Component<LayoutProps> = (props) => {
 		<div class={styles.container}>
 			<header>
 				<span class={styles.headerTitle}>{AppName}</span>
+
+				<div class={styles.options}>
+					<A href="/logs" class={styles.option}>🔎 Log Viewer</A>
+				</div>
 
 				<button
 					class={styles.stopButton}
