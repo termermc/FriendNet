@@ -36,4 +36,4 @@ package-lock.json
 yarn.lock
 server
 
-src/protobuf
+src/pb
