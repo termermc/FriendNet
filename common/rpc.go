@@ -11,6 +11,7 @@ import (
 	"net/netip"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -372,6 +373,16 @@ func NewRpcServer[T io.Closer](
 		_, _ = w.Write([]byte("Hi, you've reached the RPC interface.\nYou can communicate with it using gRPC, gRPC-Web, and ConnectRPC.\nHave fun!\n"))
 	})
 	mux.HandleFunc(handlerPath, func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rec := recover(); rec != nil {
+				logger.Error("panic in RCP handler",
+					"service", "common.RpcServer",
+					"err", rec,
+					"stack", string(debug.Stack()),
+				)
+			}
+		}()
+
 		if s.corsAllowAllOrigins {
 			origin := r.Header.Get("Origin")
 			if origin == "" {
