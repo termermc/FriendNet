@@ -277,7 +277,9 @@ func (s *RpcServer) UpdateAccountPassword(ctx context.Context, req *v1.UpdateAcc
 		return nil, errAccountNotFound
 	}
 
-	err = r.UpdateAccountPassword(ctx, username, req.Password)
+	pass, wasGen := s.getOrGenPass(req.Password)
+
+	err = r.UpdateAccountPassword(ctx, username, pass)
 	if err != nil {
 		if errors.Is(err, room.ErrNoSuchAccount) {
 			return nil, errAccountNotFound
@@ -285,5 +287,12 @@ func (s *RpcServer) UpdateAccountPassword(ctx context.Context, req *v1.UpdateAcc
 		return nil, err
 	}
 
-	return nil, nil
+	var passOrNil *string
+	if wasGen {
+		passOrNil = &pass
+	}
+
+	return &v1.UpdateAccountPasswordResponse{
+		GeneratedPassword: passOrNil,
+	}, nil
 }
