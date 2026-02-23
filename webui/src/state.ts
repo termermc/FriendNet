@@ -474,6 +474,11 @@ export class State {
 	 * @param path The file's path.
 	 */
 	previewFile(serverUuid: string, username: string, path: string): void {
+		const cur = this.previewInfo()
+		if (cur != null && cur.serverUuid === serverUuid && cur.username === username && cur.path === path) {
+			return
+		}
+
 		this.#setPreviewInfo({
 			serverUuid,
 			username,
