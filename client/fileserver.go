@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"friendnet.org/client/room"
 	"friendnet.org/common"
@@ -84,10 +85,14 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Strict CSP for pages served from peers.
 	w.Header().Set("Content-Security-Policy", "default-src 'none'; frame-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self' data:; base-uri 'none'; form-action 'none'; sandbox")
 
-	// Prevent browser caching.
-	w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
-	w.Header().Set("Pragma", "no-cache")
-	w.Header().Set("Expires", "0")
+	if url.Query().Has("allowCache") {
+		w.Header().Set("Cache-Control", "private, max-age=600, must-revalidate")
+		w.Header().Set("Expires", time.Now().Add(10*time.Minute).Format(http.TimeFormat))
+	} else {
+		w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+		w.Header().Set("Pragma", "no-cache")
+		w.Header().Set("Expires", "0")
+	}
 
 	// Advertise range support.
 	w.Header().Set("Accept-Ranges", "bytes")
