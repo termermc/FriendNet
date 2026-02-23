@@ -266,6 +266,20 @@ message GetOnlineUsersResponse {
     repeated OnlineUserInfo users = 1;
 }
 
+message ChangeAccountPasswordRequest {
+    // The server's UUID.
+    string server_uuid = 1;
+
+    // The account's current password.
+    string current_password = 2;
+
+    // The account's new password.
+    string new_password = 3;
+}
+message ChangeAccountPasswordResponse {
+
+}
+
 // ClientRpcService provides an RPC interface to a running FriendNet client.
 // It can query state and perform actions.
 //
@@ -348,4 +362,15 @@ service ClientRpcService {
     //
     // Returns NOT_FOUND if no such server exists.
     rpc GetOnlineUsers(GetOnlineUsersRequest) returns (stream GetOnlineUsersResponse) {}
+
+    // ChangeAccountPassword changes the password for a server account.
+    // It requests that the server update the password, as opposed to just changing which password to log in with.
+    // If you only want to update which password to log in with, use UpdateServer instead.
+    //
+    // If successful, this call updates the password to log in with, so a call to UpdateServer is not necessary.
+    //
+    // Returns NOT_FOUND if no such server exists.
+    // Returns INVALID_ARGUMENT if the new password was not allowed (too short, too long, etc.).
+    // Returns PERMISSION_DENIED if the current password was incorrect.
+    rpc ChangeAccountPassword(ChangeAccountPasswordRequest) returns (ChangeAccountPasswordResponse) {}
 }

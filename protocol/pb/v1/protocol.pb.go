@@ -141,6 +141,8 @@ const (
 	MsgType_MSG_TYPE_DIRECT_CONN_HANDSHAKE MsgType = 34
 	// [C2C, C2S] The result of the direct connect handshake.
 	MsgType_MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT MsgType = 35
+	// [C2S] Requests changing the client's account password.
+	MsgType_MSG_TYPE_CHANGE_ACCOUNT_PASSWORD MsgType = 36
 )
 
 // Enum value maps for MsgType.
@@ -182,6 +184,7 @@ var (
 		33: "MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN_RESULT",
 		34: "MSG_TYPE_DIRECT_CONN_HANDSHAKE",
 		35: "MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT",
+		36: "MSG_TYPE_CHANGE_ACCOUNT_PASSWORD",
 	}
 	MsgType_value = map[string]int32{
 		"MSG_TYPE_UNSPECIFIED":                        0,
@@ -220,6 +223,7 @@ var (
 		"MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN_RESULT": 33,
 		"MSG_TYPE_DIRECT_CONN_HANDSHAKE":              34,
 		"MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT":       35,
+		"MSG_TYPE_CHANGE_ACCOUNT_PASSWORD":            36,
 	}
 )
 
@@ -2663,7 +2667,7 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x16MsgDirectConnHandshake\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\"X\n" +
 	"\x1cMsgDirectConnHandshakeResult\x128\n" +
-	"\x06result\x18\x01 \x01(\x0e2 .pb.v1.DirectConnHandshakeResultR\x06result*\xd3\b\n" +
+	"\x06result\x18\x01 \x01(\x0e2 .pb.v1.DirectConnHandshakeResultR\x06result*\xf9\b\n" +
 	"\aMsgType\x12\x18\n" +
 	"\x14MSG_TYPE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rMSG_TYPE_PING\x10\x01\x12\x11\n" +
@@ -2701,7 +2705,8 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"$MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN\x10 \x12/\n" +
 	"+MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN_RESULT\x10!\x12\"\n" +
 	"\x1eMSG_TYPE_DIRECT_CONN_HANDSHAKE\x10\"\x12)\n" +
-	"%MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT\x10#*\x8b\x03\n" +
+	"%MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT\x10#\x12$\n" +
+	" MSG_TYPE_CHANGE_ACCOUNT_PASSWORD\x10$*\x8b\x03\n" +
 	"\aErrType\x12\x18\n" +
 	"\x14ERR_TYPE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11ERR_TYPE_INTERNAL\x10\x01\x12\x1e\n" +

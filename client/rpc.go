@@ -479,3 +479,8 @@ func (s *RpcServer) GetOnlineUsers(ctx context.Context, request *v1.GetOnlineUse
 		return nil
 	})
 }
+
+func (s *RpcServer) ChangeAccountPassword(ctx context.Context, request *v1.ChangeAccountPasswordRequest) (*v1.ChangeAccountPasswordResponse, error) {
+	//TODO implement me
+	panic("implement me")
+}

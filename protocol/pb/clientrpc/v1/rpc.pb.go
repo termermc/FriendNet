@@ -1860,6 +1860,105 @@ func (x *GetOnlineUsersResponse) GetUsers() []*OnlineUserInfo {
 	return nil
 }
 
+type ChangeAccountPasswordRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The server's UUID.
+	ServerUuid string `protobuf:"bytes,1,opt,name=server_uuid,json=serverUuid,proto3" json:"server_uuid,omitempty"`
+	// The account's current password.
+	CurrentPassword string `protobuf:"bytes,2,opt,name=current_password,json=currentPassword,proto3" json:"current_password,omitempty"`
+	// The account's new password.
+	NewPassword   string `protobuf:"bytes,3,opt,name=new_password,json=newPassword,proto3" json:"new_password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChangeAccountPasswordRequest) Reset() {
+	*x = ChangeAccountPasswordRequest{}
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChangeAccountPasswordRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangeAccountPasswordRequest) ProtoMessage() {}
+
+func (x *ChangeAccountPasswordRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangeAccountPasswordRequest.ProtoReflect.Descriptor instead.
+func (*ChangeAccountPasswordRequest) Descriptor() ([]byte, []int) {
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *ChangeAccountPasswordRequest) GetServerUuid() string {
+	if x != nil {
+		return x.ServerUuid
+	}
+	return ""
+}
+
+func (x *ChangeAccountPasswordRequest) GetCurrentPassword() string {
+	if x != nil {
+		return x.CurrentPassword
+	}
+	return ""
+}
+
+func (x *ChangeAccountPasswordRequest) GetNewPassword() string {
+	if x != nil {
+		return x.NewPassword
+	}
+	return ""
+}
+
+type ChangeAccountPasswordResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChangeAccountPasswordResponse) Reset() {
+	*x = ChangeAccountPasswordResponse{}
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChangeAccountPasswordResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangeAccountPasswordResponse) ProtoMessage() {}
+
+func (x *ChangeAccountPasswordResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangeAccountPasswordResponse.ProtoReflect.Descriptor instead.
+func (*ChangeAccountPasswordResponse) Descriptor() ([]byte, []int) {
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{37}
+}
+
 var File_pb_clientrpc_v1_rpc_proto protoreflect.FileDescriptor
 
 const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
@@ -1978,7 +2077,13 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\vserver_uuid\x18\x01 \x01(\tR\n" +
 	"serverUuid\"O\n" +
 	"\x16GetOnlineUsersResponse\x125\n" +
-	"\x05users\x18\x01 \x03(\v2\x1f.pb.clientrpc.v1.OnlineUserInfoR\x05users2\x88\v\n" +
+	"\x05users\x18\x01 \x03(\v2\x1f.pb.clientrpc.v1.OnlineUserInfoR\x05users\"\x8d\x01\n" +
+	"\x1cChangeAccountPasswordRequest\x12\x1f\n" +
+	"\vserver_uuid\x18\x01 \x01(\tR\n" +
+	"serverUuid\x12)\n" +
+	"\x10current_password\x18\x02 \x01(\tR\x0fcurrentPassword\x12!\n" +
+	"\fnew_password\x18\x03 \x01(\tR\vnewPassword\"\x1f\n" +
+	"\x1dChangeAccountPasswordResponse2\x82\f\n" +
 	"\x10ClientRpcService\x12Y\n" +
 	"\n" +
 	"StreamLogs\x12\".pb.clientrpc.v1.StreamLogsRequest\x1a#.pb.clientrpc.v1.StreamLogsResponse\"\x000\x01\x12E\n" +
@@ -1996,7 +2101,8 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\vDeleteShare\x12#.pb.clientrpc.v1.DeleteShareRequest\x1a$.pb.clientrpc.v1.DeleteShareResponse\"\x00\x12\\\n" +
 	"\vGetDirFiles\x12#.pb.clientrpc.v1.GetDirFilesRequest\x1a$.pb.clientrpc.v1.GetDirFilesResponse\"\x000\x01\x12Z\n" +
 	"\vGetFileMeta\x12#.pb.clientrpc.v1.GetFileMetaRequest\x1a$.pb.clientrpc.v1.GetFileMetaResponse\"\x00\x12e\n" +
-	"\x0eGetOnlineUsers\x12&.pb.clientrpc.v1.GetOnlineUsersRequest\x1a'.pb.clientrpc.v1.GetOnlineUsersResponse\"\x000\x01B\xb1\x01\n" +
+	"\x0eGetOnlineUsers\x12&.pb.clientrpc.v1.GetOnlineUsersRequest\x1a'.pb.clientrpc.v1.GetOnlineUsersResponse\"\x000\x01\x12x\n" +
+	"\x15ChangeAccountPassword\x12-.pb.clientrpc.v1.ChangeAccountPasswordRequest\x1a..pb.clientrpc.v1.ChangeAccountPasswordResponse\"\x00B\xb1\x01\n" +
 	"\x13com.pb.clientrpc.v1B\bRpcProtoP\x01Z2friendnet.org/protocol/pb/clientrpc/v1;clientrpcv1\xa2\x02\x03PCX\xaa\x02\x0fPb.Clientrpc.V1\xca\x02\x0fPb\\Clientrpc\\V1\xe2\x02\x1bPb\\Clientrpc\\V1\\GPBMetadata\xea\x02\x11Pb::Clientrpc::V1b\x06proto3"
 
 var (
@@ -2011,44 +2117,46 @@ func file_pb_clientrpc_v1_rpc_proto_rawDescGZIP() []byte {
 	return file_pb_clientrpc_v1_rpc_proto_rawDescData
 }
 
-var file_pb_clientrpc_v1_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
+var file_pb_clientrpc_v1_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
 var file_pb_clientrpc_v1_rpc_proto_goTypes = []any{
-	(*LogMessageAttr)(nil),           // 0: pb.clientrpc.v1.LogMessageAttr
-	(*LogMessage)(nil),               // 1: pb.clientrpc.v1.LogMessage
-	(*ServerInfo)(nil),               // 2: pb.clientrpc.v1.ServerInfo
-	(*ShareInfo)(nil),                // 3: pb.clientrpc.v1.ShareInfo
-	(*OnlineUserInfo)(nil),           // 4: pb.clientrpc.v1.OnlineUserInfo
-	(*FileMeta)(nil),                 // 5: pb.clientrpc.v1.FileMeta
-	(*StreamLogsRequest)(nil),        // 6: pb.clientrpc.v1.StreamLogsRequest
-	(*StreamLogsResponse)(nil),       // 7: pb.clientrpc.v1.StreamLogsResponse
-	(*StopRequest)(nil),              // 8: pb.clientrpc.v1.StopRequest
-	(*StopResponse)(nil),             // 9: pb.clientrpc.v1.StopResponse
-	(*GetClientInfoRequest)(nil),     // 10: pb.clientrpc.v1.GetClientInfoRequest
-	(*GetClientInfoResponse)(nil),    // 11: pb.clientrpc.v1.GetClientInfoResponse
-	(*GetServersRequest)(nil),        // 12: pb.clientrpc.v1.GetServersRequest
-	(*GetServersResponse)(nil),       // 13: pb.clientrpc.v1.GetServersResponse
-	(*CreateServerRequest)(nil),      // 14: pb.clientrpc.v1.CreateServerRequest
-	(*CreateServerResponse)(nil),     // 15: pb.clientrpc.v1.CreateServerResponse
-	(*DeleteServerRequest)(nil),      // 16: pb.clientrpc.v1.DeleteServerRequest
-	(*DeleteServerResponse)(nil),     // 17: pb.clientrpc.v1.DeleteServerResponse
-	(*ConnectServerRequest)(nil),     // 18: pb.clientrpc.v1.ConnectServerRequest
-	(*ConnectServerResponse)(nil),    // 19: pb.clientrpc.v1.ConnectServerResponse
-	(*DisconnectServerRequest)(nil),  // 20: pb.clientrpc.v1.DisconnectServerRequest
-	(*DisconnectServerResponse)(nil), // 21: pb.clientrpc.v1.DisconnectServerResponse
-	(*UpdateServerRequest)(nil),      // 22: pb.clientrpc.v1.UpdateServerRequest
-	(*UpdateServerResponse)(nil),     // 23: pb.clientrpc.v1.UpdateServerResponse
-	(*GetSharesRequest)(nil),         // 24: pb.clientrpc.v1.GetSharesRequest
-	(*GetSharesResponse)(nil),        // 25: pb.clientrpc.v1.GetSharesResponse
-	(*CreateShareRequest)(nil),       // 26: pb.clientrpc.v1.CreateShareRequest
-	(*CreateShareResponse)(nil),      // 27: pb.clientrpc.v1.CreateShareResponse
-	(*DeleteShareRequest)(nil),       // 28: pb.clientrpc.v1.DeleteShareRequest
-	(*DeleteShareResponse)(nil),      // 29: pb.clientrpc.v1.DeleteShareResponse
-	(*GetDirFilesRequest)(nil),       // 30: pb.clientrpc.v1.GetDirFilesRequest
-	(*GetDirFilesResponse)(nil),      // 31: pb.clientrpc.v1.GetDirFilesResponse
-	(*GetFileMetaRequest)(nil),       // 32: pb.clientrpc.v1.GetFileMetaRequest
-	(*GetFileMetaResponse)(nil),      // 33: pb.clientrpc.v1.GetFileMetaResponse
-	(*GetOnlineUsersRequest)(nil),    // 34: pb.clientrpc.v1.GetOnlineUsersRequest
-	(*GetOnlineUsersResponse)(nil),   // 35: pb.clientrpc.v1.GetOnlineUsersResponse
+	(*LogMessageAttr)(nil),                // 0: pb.clientrpc.v1.LogMessageAttr
+	(*LogMessage)(nil),                    // 1: pb.clientrpc.v1.LogMessage
+	(*ServerInfo)(nil),                    // 2: pb.clientrpc.v1.ServerInfo
+	(*ShareInfo)(nil),                     // 3: pb.clientrpc.v1.ShareInfo
+	(*OnlineUserInfo)(nil),                // 4: pb.clientrpc.v1.OnlineUserInfo
+	(*FileMeta)(nil),                      // 5: pb.clientrpc.v1.FileMeta
+	(*StreamLogsRequest)(nil),             // 6: pb.clientrpc.v1.StreamLogsRequest
+	(*StreamLogsResponse)(nil),            // 7: pb.clientrpc.v1.StreamLogsResponse
+	(*StopRequest)(nil),                   // 8: pb.clientrpc.v1.StopRequest
+	(*StopResponse)(nil),                  // 9: pb.clientrpc.v1.StopResponse
+	(*GetClientInfoRequest)(nil),          // 10: pb.clientrpc.v1.GetClientInfoRequest
+	(*GetClientInfoResponse)(nil),         // 11: pb.clientrpc.v1.GetClientInfoResponse
+	(*GetServersRequest)(nil),             // 12: pb.clientrpc.v1.GetServersRequest
+	(*GetServersResponse)(nil),            // 13: pb.clientrpc.v1.GetServersResponse
+	(*CreateServerRequest)(nil),           // 14: pb.clientrpc.v1.CreateServerRequest
+	(*CreateServerResponse)(nil),          // 15: pb.clientrpc.v1.CreateServerResponse
+	(*DeleteServerRequest)(nil),           // 16: pb.clientrpc.v1.DeleteServerRequest
+	(*DeleteServerResponse)(nil),          // 17: pb.clientrpc.v1.DeleteServerResponse
+	(*ConnectServerRequest)(nil),          // 18: pb.clientrpc.v1.ConnectServerRequest
+	(*ConnectServerResponse)(nil),         // 19: pb.clientrpc.v1.ConnectServerResponse
+	(*DisconnectServerRequest)(nil),       // 20: pb.clientrpc.v1.DisconnectServerRequest
+	(*DisconnectServerResponse)(nil),      // 21: pb.clientrpc.v1.DisconnectServerResponse
+	(*UpdateServerRequest)(nil),           // 22: pb.clientrpc.v1.UpdateServerRequest
+	(*UpdateServerResponse)(nil),          // 23: pb.clientrpc.v1.UpdateServerResponse
+	(*GetSharesRequest)(nil),              // 24: pb.clientrpc.v1.GetSharesRequest
+	(*GetSharesResponse)(nil),             // 25: pb.clientrpc.v1.GetSharesResponse
+	(*CreateShareRequest)(nil),            // 26: pb.clientrpc.v1.CreateShareRequest
+	(*CreateShareResponse)(nil),           // 27: pb.clientrpc.v1.CreateShareResponse
+	(*DeleteShareRequest)(nil),            // 28: pb.clientrpc.v1.DeleteShareRequest
+	(*DeleteShareResponse)(nil),           // 29: pb.clientrpc.v1.DeleteShareResponse
+	(*GetDirFilesRequest)(nil),            // 30: pb.clientrpc.v1.GetDirFilesRequest
+	(*GetDirFilesResponse)(nil),           // 31: pb.clientrpc.v1.GetDirFilesResponse
+	(*GetFileMetaRequest)(nil),            // 32: pb.clientrpc.v1.GetFileMetaRequest
+	(*GetFileMetaResponse)(nil),           // 33: pb.clientrpc.v1.GetFileMetaResponse
+	(*GetOnlineUsersRequest)(nil),         // 34: pb.clientrpc.v1.GetOnlineUsersRequest
+	(*GetOnlineUsersResponse)(nil),        // 35: pb.clientrpc.v1.GetOnlineUsersResponse
+	(*ChangeAccountPasswordRequest)(nil),  // 36: pb.clientrpc.v1.ChangeAccountPasswordRequest
+	(*ChangeAccountPasswordResponse)(nil), // 37: pb.clientrpc.v1.ChangeAccountPasswordResponse
 }
 var file_pb_clientrpc_v1_rpc_proto_depIdxs = []int32{
 	0,  // 0: pb.clientrpc.v1.LogMessage.attrs:type_name -> pb.clientrpc.v1.LogMessageAttr
@@ -2076,23 +2184,25 @@ var file_pb_clientrpc_v1_rpc_proto_depIdxs = []int32{
 	30, // 22: pb.clientrpc.v1.ClientRpcService.GetDirFiles:input_type -> pb.clientrpc.v1.GetDirFilesRequest
 	32, // 23: pb.clientrpc.v1.ClientRpcService.GetFileMeta:input_type -> pb.clientrpc.v1.GetFileMetaRequest
 	34, // 24: pb.clientrpc.v1.ClientRpcService.GetOnlineUsers:input_type -> pb.clientrpc.v1.GetOnlineUsersRequest
-	7,  // 25: pb.clientrpc.v1.ClientRpcService.StreamLogs:output_type -> pb.clientrpc.v1.StreamLogsResponse
-	9,  // 26: pb.clientrpc.v1.ClientRpcService.Stop:output_type -> pb.clientrpc.v1.StopResponse
-	11, // 27: pb.clientrpc.v1.ClientRpcService.GetClientInfo:output_type -> pb.clientrpc.v1.GetClientInfoResponse
-	13, // 28: pb.clientrpc.v1.ClientRpcService.GetServers:output_type -> pb.clientrpc.v1.GetServersResponse
-	15, // 29: pb.clientrpc.v1.ClientRpcService.CreateServer:output_type -> pb.clientrpc.v1.CreateServerResponse
-	17, // 30: pb.clientrpc.v1.ClientRpcService.DeleteServer:output_type -> pb.clientrpc.v1.DeleteServerResponse
-	19, // 31: pb.clientrpc.v1.ClientRpcService.ConnectServer:output_type -> pb.clientrpc.v1.ConnectServerResponse
-	21, // 32: pb.clientrpc.v1.ClientRpcService.DisconnectServer:output_type -> pb.clientrpc.v1.DisconnectServerResponse
-	23, // 33: pb.clientrpc.v1.ClientRpcService.UpdateServer:output_type -> pb.clientrpc.v1.UpdateServerResponse
-	25, // 34: pb.clientrpc.v1.ClientRpcService.GetShares:output_type -> pb.clientrpc.v1.GetSharesResponse
-	27, // 35: pb.clientrpc.v1.ClientRpcService.CreateShare:output_type -> pb.clientrpc.v1.CreateShareResponse
-	29, // 36: pb.clientrpc.v1.ClientRpcService.DeleteShare:output_type -> pb.clientrpc.v1.DeleteShareResponse
-	31, // 37: pb.clientrpc.v1.ClientRpcService.GetDirFiles:output_type -> pb.clientrpc.v1.GetDirFilesResponse
-	33, // 38: pb.clientrpc.v1.ClientRpcService.GetFileMeta:output_type -> pb.clientrpc.v1.GetFileMetaResponse
-	35, // 39: pb.clientrpc.v1.ClientRpcService.GetOnlineUsers:output_type -> pb.clientrpc.v1.GetOnlineUsersResponse
-	25, // [25:40] is the sub-list for method output_type
-	10, // [10:25] is the sub-list for method input_type
+	36, // 25: pb.clientrpc.v1.ClientRpcService.ChangeAccountPassword:input_type -> pb.clientrpc.v1.ChangeAccountPasswordRequest
+	7,  // 26: pb.clientrpc.v1.ClientRpcService.StreamLogs:output_type -> pb.clientrpc.v1.StreamLogsResponse
+	9,  // 27: pb.clientrpc.v1.ClientRpcService.Stop:output_type -> pb.clientrpc.v1.StopResponse
+	11, // 28: pb.clientrpc.v1.ClientRpcService.GetClientInfo:output_type -> pb.clientrpc.v1.GetClientInfoResponse
+	13, // 29: pb.clientrpc.v1.ClientRpcService.GetServers:output_type -> pb.clientrpc.v1.GetServersResponse
+	15, // 30: pb.clientrpc.v1.ClientRpcService.CreateServer:output_type -> pb.clientrpc.v1.CreateServerResponse
+	17, // 31: pb.clientrpc.v1.ClientRpcService.DeleteServer:output_type -> pb.clientrpc.v1.DeleteServerResponse
+	19, // 32: pb.clientrpc.v1.ClientRpcService.ConnectServer:output_type -> pb.clientrpc.v1.ConnectServerResponse
+	21, // 33: pb.clientrpc.v1.ClientRpcService.DisconnectServer:output_type -> pb.clientrpc.v1.DisconnectServerResponse
+	23, // 34: pb.clientrpc.v1.ClientRpcService.UpdateServer:output_type -> pb.clientrpc.v1.UpdateServerResponse
+	25, // 35: pb.clientrpc.v1.ClientRpcService.GetShares:output_type -> pb.clientrpc.v1.GetSharesResponse
+	27, // 36: pb.clientrpc.v1.ClientRpcService.CreateShare:output_type -> pb.clientrpc.v1.CreateShareResponse
+	29, // 37: pb.clientrpc.v1.ClientRpcService.DeleteShare:output_type -> pb.clientrpc.v1.DeleteShareResponse
+	31, // 38: pb.clientrpc.v1.ClientRpcService.GetDirFiles:output_type -> pb.clientrpc.v1.GetDirFilesResponse
+	33, // 39: pb.clientrpc.v1.ClientRpcService.GetFileMeta:output_type -> pb.clientrpc.v1.GetFileMetaResponse
+	35, // 40: pb.clientrpc.v1.ClientRpcService.GetOnlineUsers:output_type -> pb.clientrpc.v1.GetOnlineUsersResponse
+	37, // 41: pb.clientrpc.v1.ClientRpcService.ChangeAccountPassword:output_type -> pb.clientrpc.v1.ChangeAccountPasswordResponse
+	26, // [26:42] is the sub-list for method output_type
+	10, // [10:26] is the sub-list for method input_type
 	10, // [10:10] is the sub-list for extension type_name
 	10, // [10:10] is the sub-list for extension extendee
 	0,  // [0:10] is the sub-list for field type_name
@@ -2111,7 +2221,7 @@ func file_pb_clientrpc_v1_rpc_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pb_clientrpc_v1_rpc_proto_rawDesc), len(file_pb_clientrpc_v1_rpc_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   36,
+			NumMessages:   38,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

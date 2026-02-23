@@ -77,6 +77,9 @@ const (
 	// ClientRpcServiceGetOnlineUsersProcedure is the fully-qualified name of the ClientRpcService's
 	// GetOnlineUsers RPC.
 	ClientRpcServiceGetOnlineUsersProcedure = "/pb.clientrpc.v1.ClientRpcService/GetOnlineUsers"
+	// ClientRpcServiceChangeAccountPasswordProcedure is the fully-qualified name of the
+	// ClientRpcService's ChangeAccountPassword RPC.
+	ClientRpcServiceChangeAccountPasswordProcedure = "/pb.clientrpc.v1.ClientRpcService/ChangeAccountPassword"
 )
 
 // ClientRpcServiceClient is a client for the pb.clientrpc.v1.ClientRpcService service.
@@ -143,6 +146,16 @@ type ClientRpcServiceClient interface {
 	//
 	// Returns NOT_FOUND if no such server exists.
 	GetOnlineUsers(context.Context, *v1.GetOnlineUsersRequest) (*connect.ServerStreamForClient[v1.GetOnlineUsersResponse], error)
+	// ChangeAccountPassword changes the password for a server account.
+	// It requests that the server update the password, as opposed to just changing which password to log in with.
+	// If you only want to update which password to log in with, use UpdateServer instead.
+	//
+	// If successful, this call updates the password to log in with, so a call to UpdateServer is not necessary.
+	//
+	// Returns NOT_FOUND if no such server exists.
+	// Returns INVALID_ARGUMENT if the new password was not allowed (too short, too long, etc.).
+	// Returns PERMISSION_DENIED if the current password was incorrect.
+	ChangeAccountPassword(context.Context, *v1.ChangeAccountPasswordRequest) (*v1.ChangeAccountPasswordResponse, error)
 }
 
 // NewClientRpcServiceClient constructs a client for the pb.clientrpc.v1.ClientRpcService service.
@@ -246,26 +259,33 @@ func NewClientRpcServiceClient(httpClient connect.HTTPClient, baseURL string, op
 			connect.WithSchema(clientRpcServiceMethods.ByName("GetOnlineUsers")),
 			connect.WithClientOptions(opts...),
 		),
+		changeAccountPassword: connect.NewClient[v1.ChangeAccountPasswordRequest, v1.ChangeAccountPasswordResponse](
+			httpClient,
+			baseURL+ClientRpcServiceChangeAccountPasswordProcedure,
+			connect.WithSchema(clientRpcServiceMethods.ByName("ChangeAccountPassword")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // clientRpcServiceClient implements ClientRpcServiceClient.
 type clientRpcServiceClient struct {
-	streamLogs       *connect.Client[v1.StreamLogsRequest, v1.StreamLogsResponse]
-	stop             *connect.Client[v1.StopRequest, v1.StopResponse]
-	getClientInfo    *connect.Client[v1.GetClientInfoRequest, v1.GetClientInfoResponse]
-	getServers       *connect.Client[v1.GetServersRequest, v1.GetServersResponse]
-	createServer     *connect.Client[v1.CreateServerRequest, v1.CreateServerResponse]
-	deleteServer     *connect.Client[v1.DeleteServerRequest, v1.DeleteServerResponse]
-	connectServer    *connect.Client[v1.ConnectServerRequest, v1.ConnectServerResponse]
-	disconnectServer *connect.Client[v1.DisconnectServerRequest, v1.DisconnectServerResponse]
-	updateServer     *connect.Client[v1.UpdateServerRequest, v1.UpdateServerResponse]
-	getShares        *connect.Client[v1.GetSharesRequest, v1.GetSharesResponse]
-	createShare      *connect.Client[v1.CreateShareRequest, v1.CreateShareResponse]
-	deleteShare      *connect.Client[v1.DeleteShareRequest, v1.DeleteShareResponse]
-	getDirFiles      *connect.Client[v1.GetDirFilesRequest, v1.GetDirFilesResponse]
-	getFileMeta      *connect.Client[v1.GetFileMetaRequest, v1.GetFileMetaResponse]
-	getOnlineUsers   *connect.Client[v1.GetOnlineUsersRequest, v1.GetOnlineUsersResponse]
+	streamLogs            *connect.Client[v1.StreamLogsRequest, v1.StreamLogsResponse]
+	stop                  *connect.Client[v1.StopRequest, v1.StopResponse]
+	getClientInfo         *connect.Client[v1.GetClientInfoRequest, v1.GetClientInfoResponse]
+	getServers            *connect.Client[v1.GetServersRequest, v1.GetServersResponse]
+	createServer          *connect.Client[v1.CreateServerRequest, v1.CreateServerResponse]
+	deleteServer          *connect.Client[v1.DeleteServerRequest, v1.DeleteServerResponse]
+	connectServer         *connect.Client[v1.ConnectServerRequest, v1.ConnectServerResponse]
+	disconnectServer      *connect.Client[v1.DisconnectServerRequest, v1.DisconnectServerResponse]
+	updateServer          *connect.Client[v1.UpdateServerRequest, v1.UpdateServerResponse]
+	getShares             *connect.Client[v1.GetSharesRequest, v1.GetSharesResponse]
+	createShare           *connect.Client[v1.CreateShareRequest, v1.CreateShareResponse]
+	deleteShare           *connect.Client[v1.DeleteShareRequest, v1.DeleteShareResponse]
+	getDirFiles           *connect.Client[v1.GetDirFilesRequest, v1.GetDirFilesResponse]
+	getFileMeta           *connect.Client[v1.GetFileMetaRequest, v1.GetFileMetaResponse]
+	getOnlineUsers        *connect.Client[v1.GetOnlineUsersRequest, v1.GetOnlineUsersResponse]
+	changeAccountPassword *connect.Client[v1.ChangeAccountPasswordRequest, v1.ChangeAccountPasswordResponse]
 }
 
 // StreamLogs calls pb.clientrpc.v1.ClientRpcService.StreamLogs.
@@ -391,6 +411,15 @@ func (c *clientRpcServiceClient) GetOnlineUsers(ctx context.Context, req *v1.Get
 	return c.getOnlineUsers.CallServerStream(ctx, connect.NewRequest(req))
 }
 
+// ChangeAccountPassword calls pb.clientrpc.v1.ClientRpcService.ChangeAccountPassword.
+func (c *clientRpcServiceClient) ChangeAccountPassword(ctx context.Context, req *v1.ChangeAccountPasswordRequest) (*v1.ChangeAccountPasswordResponse, error) {
+	response, err := c.changeAccountPassword.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // ClientRpcServiceHandler is an implementation of the pb.clientrpc.v1.ClientRpcService service.
 type ClientRpcServiceHandler interface {
 	// StreamLogs returns an ongoing stream of log messages from the client.
@@ -455,6 +484,16 @@ type ClientRpcServiceHandler interface {
 	//
 	// Returns NOT_FOUND if no such server exists.
 	GetOnlineUsers(context.Context, *v1.GetOnlineUsersRequest, *connect.ServerStream[v1.GetOnlineUsersResponse]) error
+	// ChangeAccountPassword changes the password for a server account.
+	// It requests that the server update the password, as opposed to just changing which password to log in with.
+	// If you only want to update which password to log in with, use UpdateServer instead.
+	//
+	// If successful, this call updates the password to log in with, so a call to UpdateServer is not necessary.
+	//
+	// Returns NOT_FOUND if no such server exists.
+	// Returns INVALID_ARGUMENT if the new password was not allowed (too short, too long, etc.).
+	// Returns PERMISSION_DENIED if the current password was incorrect.
+	ChangeAccountPassword(context.Context, *v1.ChangeAccountPasswordRequest) (*v1.ChangeAccountPasswordResponse, error)
 }
 
 // NewClientRpcServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -554,6 +593,12 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 		connect.WithSchema(clientRpcServiceMethods.ByName("GetOnlineUsers")),
 		connect.WithHandlerOptions(opts...),
 	)
+	clientRpcServiceChangeAccountPasswordHandler := connect.NewUnaryHandlerSimple(
+		ClientRpcServiceChangeAccountPasswordProcedure,
+		svc.ChangeAccountPassword,
+		connect.WithSchema(clientRpcServiceMethods.ByName("ChangeAccountPassword")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/pb.clientrpc.v1.ClientRpcService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ClientRpcServiceStreamLogsProcedure:
@@ -586,6 +631,8 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 			clientRpcServiceGetFileMetaHandler.ServeHTTP(w, r)
 		case ClientRpcServiceGetOnlineUsersProcedure:
 			clientRpcServiceGetOnlineUsersHandler.ServeHTTP(w, r)
+		case ClientRpcServiceChangeAccountPasswordProcedure:
+			clientRpcServiceChangeAccountPasswordHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -653,4 +700,8 @@ func (UnimplementedClientRpcServiceHandler) GetFileMeta(context.Context, *v1.Get
 
 func (UnimplementedClientRpcServiceHandler) GetOnlineUsers(context.Context, *v1.GetOnlineUsersRequest, *connect.ServerStream[v1.GetOnlineUsersResponse]) error {
 	return connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.GetOnlineUsers is not implemented"))
+}
+
+func (UnimplementedClientRpcServiceHandler) ChangeAccountPassword(context.Context, *v1.ChangeAccountPasswordRequest) (*v1.ChangeAccountPasswordResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.ChangeAccountPassword is not implemented"))
 }

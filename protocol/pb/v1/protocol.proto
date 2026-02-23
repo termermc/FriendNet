@@ -157,6 +157,9 @@ enum MsgType {
 
     // [C2C, C2S] The result of the direct connect handshake.
     MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT = 35;
+
+    // [C2S] Requests changing the client's account password.
+    MSG_TYPE_CHANGE_ACCOUNT_PASSWORD = 36;
 }
 
 // Ping message.
