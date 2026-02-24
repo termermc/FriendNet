@@ -51,6 +51,7 @@ func NewStorage(path string) (*Storage, error) {
 	err = common.DoMigrations(db, []common.Migration{
 		&migration.M20260208InitialSchema{},
 		&migration.M20260222AddLog{},
+		&migration.M20260223AddClientCerts{},
 	})
 	if err != nil {
 		return nil, fmt.Errorf(`failed to apply client database migrations: %w`, err)
@@ -273,4 +274,26 @@ func (s *Storage) UpdateServer(
 	syntax := fmt.Sprintf(`update server set %s where uuid = ?`, strings.Join(fieldStrs, ", "))
 	_, err := s.Db.ExecContext(ctx, syntax, append(vals, uuid)...)
 	return err
+}
+
+// SetClientHttpsCert sets the certificate to use for HTTPS for the client.
+func (s *Storage) SetClientHttpsCert(ctx context.Context, certPem []byte, keyPem []byte) error {
+	_, err := s.Db.ExecContext(ctx, `insert or replace into client_cert (uuid, cert_pem, key_pem) values ('', ?, ?)`, certPem, keyPem)
+	return err
+}
+
+// GetClientHttpsCert returns the certificate to use for HTTPS for the client.
+// If it is not found, returns sql.ErrNoRows.
+func (s *Storage) GetClientHttpsCert(ctx context.Context) (certPem []byte, keyPem []byte, err error) {
+	row := s.Db.QueryRowContext(ctx, `select cert_pem, key_pem from client_cert where uuid = ''`)
+	err = row.Scan(&certPem, &keyPem)
+	return certPem, keyPem, err
+}
+
+// GetCertForServer returns the certificate and private key for the server with the specified UUID.
+// If it is not found, returns sql.ErrNoRows.
+func (s *Storage) GetCertForServer(ctx context.Context, serverUuid string) (certPem []byte, keyPem []byte, err error) {
+	row := s.Db.QueryRowContext(ctx, `select cert_pem, key_pem from client_cert where server = ?`, serverUuid)
+	err = row.Scan(&certPem, &keyPem)
+	return certPem, keyPem, err
 }

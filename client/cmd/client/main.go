@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"database/sql"
 	"errors"
 	"flag"
 	"fmt"
@@ -130,6 +131,10 @@ func main() {
 		return
 	}
 
+	if !mc.CheckPlatform() || !mc.CheckNSS() {
+		logger.Warn("The FriendNet client root CA is not installed on your system. You should install it by running the client with the -installca option.")
+	}
+
 	certStore := cert.NewSqliteStore(store.Db)
 
 	multi, err := client.NewMultiClient(
@@ -143,11 +148,23 @@ func main() {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 
-	httpsCertPem, httpsCertKey, err := mc.GenCert([]string{uiUrl.Hostname(), fileUrl.Hostname()})
+	httpsCertPem, httpsKeyPem, err := store.GetClientHttpsCert(ctx)
 	if err != nil {
-		panic(fmt.Errorf(`failed to generate HTTPS certificate: %w`, err))
+		if errors.Is(err, sql.ErrNoRows) {
+			httpsCertPem, httpsKeyPem, err = mc.GenCert([]string{uiUrl.Hostname(), fileUrl.Hostname()})
+			if err != nil {
+				panic(fmt.Errorf(`failed to generate HTTPS certificate: %w`, err))
+			}
+			err = store.SetClientHttpsCert(ctx, httpsCertPem, httpsKeyPem)
+			if err != nil {
+				panic(fmt.Errorf(`failed to store HTTPS certificate: %w`, err))
+			}
+		} else {
+			panic(fmt.Errorf(`failed to retrieve HTTPS certificate: %w`, err))
+		}
 	}
-	httpsKeyPair, err := tls.X509KeyPair(httpsCertPem, httpsCertKey)
+
+	httpsKeyPair, err := tls.X509KeyPair(httpsCertPem, httpsKeyPem)
 	if err != nil {
 		panic(fmt.Errorf(`failed to parse HTTPS certificate key pair: %w`, err))
 	}

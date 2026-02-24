@@ -80,23 +80,6 @@ func NewMkCert(caRootDir string) (*MkCert, error) {
 }
 
 func (m *MkCert) GenCert(hostnames []string) (certPem []byte, privKeyPem []byte, err error) {
-	var warning bool
-	if storeEnabled("system") && !m.CheckPlatform() {
-		warning = true
-		log.Println("Note: the local CA is not installed in the system trust store.")
-	}
-	if storeEnabled("nss") && hasNSS && CertutilInstallHelp != "" && !m.CheckNSS() {
-		warning = true
-		log.Printf("Note: the local CA is not installed in the %s trust store.", NSSBrowsers)
-	}
-	if storeEnabled("java") && hasJava && !m.checkJava() {
-		warning = true
-		log.Println("Note: the local CA is not installed in the Java trust store.")
-	}
-	if warning {
-		log.Println("Run flag \"-installca\" for certificates to be trusted automatically")
-	}
-
 	hostnameRegexp := regexp.MustCompile(`(?i)^(\*\.)?[0-9a-z_-]([0-9a-z._-]*[0-9a-z_-])?$`)
 	for i, name := range hostnames {
 		if ip := net.ParseIP(name); ip != nil {

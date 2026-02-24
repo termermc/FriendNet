@@ -100,3 +100,35 @@ func ScanShareRecord(row common.Scannable) (record ShareRecord, has bool, err er
 
 	return record, true, nil
 }
+
+type ClientCertRecord struct {
+	Uuid      string
+	CertPem   []byte
+	KeyPem    []byte
+	Server    string
+	CreatedTs time.Time
+}
+
+func ScanClientCertRecord(row common.Scannable) (record ClientCertRecord, has bool, err error) {
+	var uuid string
+	var certPem []byte
+	var keyPem []byte
+	var server string
+	var createdTs int64
+
+	err = row.Scan(&uuid, &certPem, &keyPem, &server, &createdTs)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return record, false, nil
+		}
+		return record, false, err
+	}
+
+	record.Uuid = uuid
+	record.CertPem = certPem
+	record.KeyPem = keyPem
+	record.Server = server
+	record.CreatedTs = time.Unix(createdTs, 0)
+
+	return record, true, nil
+}
