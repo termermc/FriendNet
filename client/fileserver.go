@@ -19,6 +19,7 @@ import (
 	"friendnet.org/common"
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
+	"golang.org/x/net/http2"
 )
 
 // TODO Protect with some kind of token?
@@ -254,6 +255,11 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				// Nothing to report, the HTTP client closed the connection.
 				return
 			}
+		}
+
+		var goAwayErr http2.GoAwayError
+		if errors.As(err, &goAwayErr) {
+			return
 		}
 
 		s.logger.Error("failed to get file from peer",

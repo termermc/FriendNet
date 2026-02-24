@@ -114,7 +114,6 @@ export const Loader: Component = () => {
 
 				return fetch(input, {
 					...init,
-					keepalive: false,
 					signal: abort.signal,
 				})
 			},
