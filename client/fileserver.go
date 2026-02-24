@@ -258,8 +258,11 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		var goAwayErr http2.GoAwayError
-		var streamErr *quic.StreamError
-		if errors.As(err, &goAwayErr) || errors.As(err, &streamErr) {
+		var h2StreamErr http2.StreamError
+		var qStreamErr *quic.StreamError
+		if errors.As(err, &goAwayErr) ||
+			errors.As(err, &h2StreamErr) ||
+			errors.As(err, &qStreamErr) {
 			return
 		}
 
