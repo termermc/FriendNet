@@ -7,6 +7,7 @@ require (
 	friendnet.org/common v0.0.0
 	friendnet.org/protocol v0.0.0
 	friendnet.org/webui v0.0.0
+	friendnet.org/mkcert v0.0.0
 	github.com/google/uuid v1.6.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/puzpuzpuz/xsync/v4 v4.4.0
@@ -34,4 +35,5 @@ replace (
 	friendnet.org/common => ../common
 	friendnet.org/protocol => ../protocol
 	friendnet.org/webui => ../webui
+	friendnet.org/mkcert => ../mkcert
 )

@@ -75,6 +75,7 @@ func main() {
 			func(impl *server.RpcServer, options ...connect.HandlerOption) (string, http.Handler) {
 				return serverrpcv1connect.NewServerRpcServiceHandler(impl, options...)
 			},
+			nil,
 		)
 		if err != nil {
 			logger.Error(

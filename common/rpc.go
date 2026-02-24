@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
@@ -217,6 +218,7 @@ func NewRpcServer[T io.Closer](
 	cfg RpcServerConfig,
 	impl T,
 	constructor RpcHandlerConstructor[T],
+	tlsCfg *tls.Config,
 ) (*RpcServer[T], error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -273,8 +275,17 @@ func NewRpcServer[T io.Closer](
 		return nil, fmt.Errorf(`RPC server address %q is missing a protocol (should be something like "http://127.0.0.1:8080" or "unix:///tmp/server.sock")`, cfg.Address)
 	}
 	proto := strings.ToLower(cfg.Address[:protoIdx])
+	if proto == "https" {
+		if tlsCfg == nil {
+			return nil, fmt.Errorf(`RPC server address %q is using HTTPS but no TLS configuration provided`, cfg.Address)
+		}
+	} else {
+		tlsCfg = nil
+	}
 	protoAddr := cfg.Address[protoIdx+3:]
 	switch proto {
+	case "https":
+		fallthrough
 	case "http":
 		// Create basic HTTP listener.
 		var err error
@@ -405,11 +416,15 @@ func NewRpcServer[T io.Closer](
 	httpProtos := &http.Protocols{}
 	httpProtos.SetHTTP1(true)
 	httpProtos.SetHTTP2(true)
-	httpProtos.SetUnencryptedHTTP2(true)
+
+	if proto != "https" {
+		httpProtos.SetUnencryptedHTTP2(true)
+	}
 
 	s.httpServer = http.Server{
 		Handler:   mux,
 		Protocols: httpProtos,
+		TLSConfig: tlsCfg,
 	}
 	s.httpListener = listener
 
@@ -431,7 +446,12 @@ func (s *RpcServer[T]) Serve() error {
 		_ = s.Close()
 	}()
 
-	err := s.httpServer.Serve(s.httpListener)
+	var err error
+	if s.httpServer.TLSConfig == nil {
+		err = s.httpServer.Serve(s.httpListener)
+	} else {
+		err = s.httpServer.ServeTLS(s.httpListener, "", "")
+	}
 	if errors.Is(err, http.ErrServerClosed) {
 		return nil
 	}

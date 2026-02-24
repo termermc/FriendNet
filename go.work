@@ -7,4 +7,5 @@ use (
 	./rpcclient
 	./server
 	./webui
+	./mkcert
 )

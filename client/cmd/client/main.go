@@ -2,15 +2,16 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"flag"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -21,6 +22,7 @@ import (
 	"friendnet.org/client/clog"
 	"friendnet.org/client/storage"
 	"friendnet.org/common"
+	"friendnet.org/mkcert"
 	"friendnet.org/protocol/pb/clientrpc/v1/clientrpcv1connect"
 	"friendnet.org/webui"
 	"github.com/pkg/browser"
@@ -38,12 +40,16 @@ func main() {
 	var fileAddr string
 	var uiAddr string
 	var noBrowser bool
+	var installCa bool
+	var uninstallCa bool
 
 	flag.StringVar(&dataDir, "datadir", "", "path to server config JSON")
-	flag.StringVar(&rpcAddr, "rpcaddr", "http://127.0.0.1:20039", "RPC server address")
-	flag.StringVar(&fileAddr, "fileaddr", "http://127.0.0.1:20040", "File server address")
-	flag.StringVar(&uiAddr, "uiaddr", "http://127.0.0.1:20041", "Web UI server address")
+	flag.StringVar(&rpcAddr, "rpcaddr", "https://localhost:20039", "RPC server address")
+	flag.StringVar(&fileAddr, "fileaddr", "https://localhost:20040", "File server address")
+	flag.StringVar(&uiAddr, "uiaddr", "https://localhost:20041", "Web UI server address")
 	flag.BoolVar(&noBrowser, "nobrowser", false, "do not open web UI in browser")
+	flag.BoolVar(&installCa, "installca", false, "if set, tries to install the client's root CA for HTTPS on the web UI")
+	flag.BoolVar(&uninstallCa, "uninstallca", false, "if set, tries to uninstall the client's root CA")
 	flag.Parse()
 
 	if dataDir == "" {
@@ -65,11 +71,25 @@ func main() {
 		panic(fmt.Errorf(`failed to create data directory: %w`, err))
 	}
 
-	if !strings.HasPrefix(fileAddr, "http://") {
-		panic(fmt.Errorf(`file server address must start with "http://" scheme`))
+	rpcUrl, err := url.Parse(rpcAddr)
+	if err != nil {
+		panic(fmt.Errorf(`failed to parse RPC server address %q: %w`, rpcAddr, err))
 	}
-	if !strings.HasPrefix(uiAddr, "http://") {
-		panic(fmt.Errorf(`web UI server address must start with "http://" scheme`))
+
+	fileUrl, err := url.Parse(fileAddr)
+	if err != nil {
+		panic(fmt.Errorf(`failed to parse file server address %q: %w`, fileAddr, err))
+	}
+	if fileUrl.Scheme != "https" {
+		panic(fmt.Errorf(`file server address must start with "https://" scheme`))
+	}
+
+	uiUrl, err := url.Parse(uiAddr)
+	if err != nil {
+		panic(fmt.Errorf(`failed to parse web UI server address %q: %w`, uiAddr, err))
+	}
+	if uiUrl.Scheme != "https" {
+		panic(fmt.Errorf(`web UI server address must start with "https://" scheme`))
 	}
 
 	dbDir := filepath.Join(dataDir, "client.db")
@@ -89,6 +109,27 @@ func main() {
 	)
 	logger := slog.New(logHandler)
 
+	mc, err := mkcert.NewMkCert(dataDir)
+	if err != nil {
+		logger.Error(`failed to initialize mkcert`, "err", err)
+		os.Exit(1)
+	}
+
+	if installCa {
+		if err = mc.Install(); err != nil {
+			logger.Error(`failed to install client root CA`, "err", err)
+			os.Exit(1)
+		}
+		return
+	}
+	if uninstallCa {
+		if err = mc.Uninstall(); err != nil {
+			logger.Error(`failed to uninstall client root CA`, "err", err)
+			os.Exit(1)
+		}
+		return
+	}
+
 	certStore := cert.NewSqliteStore(store.Db)
 
 	multi, err := client.NewMultiClient(
@@ -101,6 +142,23 @@ func main() {
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+
+	httpsCertPem, httpsCertKey, err := mc.GenCert([]string{uiUrl.Hostname(), fileUrl.Hostname()})
+	if err != nil {
+		panic(fmt.Errorf(`failed to generate HTTPS certificate: %w`, err))
+	}
+	httpsKeyPair, err := tls.X509KeyPair(httpsCertPem, httpsCertKey)
+	if err != nil {
+		panic(fmt.Errorf(`failed to parse HTTPS certificate key pair: %w`, err))
+	}
+	httpsTlsCfg := &tls.Config{
+		Certificates: []tls.Certificate{httpsKeyPair},
+	}
+
+	var rpcTls *tls.Config
+	if rpcUrl.Scheme == "https" {
+		rpcTls = httpsTlsCfg
+	}
 
 	rpc, err := common.NewRpcServer(
 		logger,
@@ -119,19 +177,27 @@ func main() {
 		func(impl *client.RpcServer, options ...connect.HandlerOption) (string, http.Handler) {
 			return clientrpcv1connect.NewClientRpcServiceHandler(impl, options...)
 		},
+		rpcTls,
 	)
 	if err != nil {
 		_ = multi.Close()
 		panic(fmt.Errorf(`failed to create RPC server: %w`, err))
 	}
 
+	httpProto := &http.Protocols{}
+	httpProto.SetHTTP2(true)
+	httpProto.SetHTTP1(true)
 	fileServer := http.Server{
-		Addr:    fileAddr[7:],
-		Handler: client.NewFileServer(logger, multi),
+		Addr:      fileUrl.Host,
+		Handler:   client.NewFileServer(logger, multi),
+		TLSConfig: httpsTlsCfg,
+		Protocols: httpProto,
 	}
 	uiServer := http.Server{
-		Addr:    uiAddr[7:],
-		Handler: webui.Handler{},
+		Addr:      uiUrl.Host,
+		Handler:   webui.Handler{},
+		TLSConfig: httpsTlsCfg,
+		Protocols: httpProto,
 	}
 
 	// Close client on SIGTERM.
@@ -164,7 +230,7 @@ func main() {
 	})
 	wg.Go(func() {
 		logger.Info(`File server listening`, "addr", fileAddr)
-		listenErr := fileServer.ListenAndServe()
+		listenErr := fileServer.ListenAndServeTLS("", "")
 		if listenErr != nil {
 			if errors.Is(listenErr, http.ErrServerClosed) {
 				return
@@ -185,7 +251,7 @@ func main() {
 			_ = browser.OpenURL(uiUrl)
 		}
 
-		listenErr := uiServer.ListenAndServe()
+		listenErr := uiServer.ListenAndServeTLS("", "")
 		if listenErr != nil {
 			if errors.Is(listenErr, http.ErrServerClosed) {
 				return
