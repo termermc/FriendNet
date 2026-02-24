@@ -30,7 +30,7 @@ const NoRpc: Component = () => {
 				<input
 					type="text"
 					name="rpc"
-					placeholder="http://localhost:20039"
+					placeholder="https://localhost:20039"
 				/>
 				<input type="submit" />
 			</form>
