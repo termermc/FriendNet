@@ -5,9 +5,9 @@ go 1.25.7
 require (
 	connectrpc.com/connect v1.19.1
 	friendnet.org/common v0.0.0
+	friendnet.org/mkcert v0.0.0
 	friendnet.org/protocol v0.0.0
 	friendnet.org/webui v0.0.0
-	friendnet.org/mkcert v0.0.0
 	github.com/google/uuid v1.6.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/puzpuzpuz/xsync/v4 v4.4.0
@@ -26,6 +26,7 @@ require (
 	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
+	howett.net/plist v1.0.0 // indirect
 	modernc.org/libc v1.67.6 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
@@ -33,7 +34,7 @@ require (
 
 replace (
 	friendnet.org/common => ../common
+	friendnet.org/mkcert => ../mkcert
 	friendnet.org/protocol => ../protocol
 	friendnet.org/webui => ../webui
-	friendnet.org/mkcert => ../mkcert
 )

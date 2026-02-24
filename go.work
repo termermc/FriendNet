@@ -3,9 +3,9 @@ go 1.25.7
 use (
 	./client
 	./common
+	./mkcert
 	./protocol
 	./rpcclient
 	./server
 	./webui
-	./mkcert
 )

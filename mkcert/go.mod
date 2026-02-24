@@ -1,14 +1,17 @@
 module friendnet.org/mkcert
 
-go 1.25.6
+go 1.25.7
 
 require (
-	golang.org/x/net v0.0.0-20220421235706-1d1ef9303861
+	friendnet.org/common v0.0.0
+	golang.org/x/net v0.50.0
 	howett.net/plist v1.0.0
-	software.sslmate.com/src/go-pkcs12 v0.2.0
 )
 
 require (
-	golang.org/x/crypto v0.0.0-20220331220935-ae2d96664a29 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	connectrpc.com/connect v1.19.1 // indirect
+	golang.org/x/text v0.34.0 // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
 )
+
+replace friendnet.org/common => ../common
