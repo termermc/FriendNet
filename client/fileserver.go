@@ -19,6 +19,7 @@ import (
 	"friendnet.org/common"
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
+	"github.com/quic-go/quic-go"
 	"golang.org/x/net/http2"
 )
 
@@ -256,9 +257,9 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-
 		var goAwayErr http2.GoAwayError
-		if errors.As(err, &goAwayErr) {
+		var streamErr *quic.StreamError
+		if errors.As(err, &goAwayErr) || errors.As(err, &streamErr) {
 			return
 		}
 
