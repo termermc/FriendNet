@@ -2,6 +2,7 @@ package room
 
 import (
 	"context"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -15,6 +16,40 @@ import (
 	"github.com/quic-go/quic-go"
 	"google.golang.org/protobuf/proto"
 )
+
+// DirectConfig is the configuration for making direct connections to clients.
+type DirectConfig struct {
+	// Whether to disable direct connect entirely.
+	// If true, all other fields will be ignored.
+	Disable bool
+
+	// The certificate to use for the direct connect server.
+	// Required if Disable is not true.
+	Cert x509.Certificate
+
+	// The initial addresses to listen on.
+	// Each address must be in the format `IPv4:PORT`, `[IPv6]:PORT`, `IPv4`, `[IPv6]`.
+	// Must specify at least one.
+	// Can use addresses like `0.0.0.0` and `[::]` (with or without port) to listen on all interfaces.
+	// Any addresses without a port will have a port assigned to them.
+	Addresses []string
+
+	// Whether to disable probing the machine for IPs to advertise.
+	// It does not advertise private IPs unless AdvertisePrivateIps is true.
+	DisableProbeIpsToAdvertise bool
+
+	// Whether to advertise private IPs (like 192.168.0.0/16, 172.16.0.0/12, 10.0.0.0/8).
+	// Has no effect if ProbeIpsToAdvertise is false.
+	// This only makes sense when multiple clients are on the same LAN or VPN.
+	AdvertisePrivateIps bool
+
+	// Whether to disable public IP discovery via the server.
+	// By default, the client will try to discover its public IP by asking the server for it.
+	DisablePublicIpDiscovery bool
+
+	// Whether to disable UPnP.
+	DisableUPnP bool
+}
 
 // ServerPingInterval is the interval between pings sent to the server.
 const ServerPingInterval = 10 * time.Second
@@ -68,6 +103,18 @@ type Conn struct {
 
 	serverConn   protocol.ProtoConn
 	incomingBidi chan C2cBidi
+
+	// Direct connections to room clients.
+	// The connections could have been outgoing or incoming,
+	// but they are treated the same once established.
+	directConns map[common.NormalizedUsername]protocol.ProtoConn
+
+	// A cache of direct connect methods for room clients.
+	// Values must never be an empty slice.
+	// If no methods are available for a client, do not set a value.
+	// TODO Don't have individual method lifetimes, just periodically clear the cache.
+	// TODO Make the cache clear time configurable, or 0 to disable.
+	directConnMethods map[common.NormalizedUsername][]*pb.ConnMethod
 }
 
 // negotiateVersion negotiates the protocol version with the server.

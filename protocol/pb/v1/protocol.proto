@@ -415,11 +415,12 @@ enum ConnMethodType {
     CONN_METHOD_TYPE_UNSPECIFIED = 0;
 
     // Direct IP connection.
-    // Addresses are formatted as: IP:PORT
+    // Addresses are formatted as: `IP:PORT`.
+    // IPv6 is surrounded by square brackets, like `[IPv6]:PORT`.
     CONN_METHOD_TYPE_IP = 1;
 
     // Yggdrasil connection.
-    // Addresses are formatted as: YGGDRASIL_IP:PORT
+    // Addresses are formatted as: `[YGGDRASIL_IP]:PORT`.
     CONN_METHOD_TYPE_YGGDRASIL = 2;
 }
 
