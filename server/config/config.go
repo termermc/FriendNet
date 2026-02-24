@@ -36,8 +36,8 @@ type ServerConfig struct {
 // Default is the default server configuration.
 var Default = &ServerConfig{
 	Listen: []string{
-		"127.0.0.1:20038",
-		"[::1]:20038",
+		"0.0.0.0:20038",
+		"[::]:20038",
 	},
 	DbPath:  "server.db",
 	PemPath: "server.pem",
