@@ -2,8 +2,11 @@ package room
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
+	"hash/fnv"
 	"net/netip"
+	"unsafe"
 
 	"friendnet.org/client/direct"
 	"friendnet.org/common"
@@ -31,6 +34,52 @@ func (c *Conn) redeemDirectHandshakeToken(token string) (*pb.MsgRedeemConnHandsh
 	}
 
 	return msg.Payload, nil
+}
+
+func (c *Conn) mkMethodId(addrPort netip.AddrPort) string {
+	addrStr := addrPort.String()
+	hasher := fnv.New64a()
+	_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(addrStr), len(addrStr)))
+	b64 := base64.RawURLEncoding.EncodeToString(hasher.Sum(nil))
+
+	return c.directPart.CreateMethodId(b64)
+}
+
+// mkAdConnMethod returns a message that can be used to advertise a direct connection method.
+// publicIp will be ignored if invalid/empty.
+//
+// Priorities:
+// 2 = public IP
+// 1 = default
+// 0 = private IP
+// -1 = Yggdrasil
+func (c *Conn) mkAdConnMethod(publicIp netip.Addr, addrPort netip.AddrPort) *pb.MsgAdvertiseConnMethod {
+	addr := addrPort.Addr()
+	isYggdrasil := common.YggdrasilPrefix.Contains(addr)
+
+	var methodType pb.ConnMethodType
+	var priority int32
+	if isYggdrasil {
+		priority = -1
+		methodType = pb.ConnMethodType_CONN_METHOD_TYPE_YGGDRASIL
+	} else {
+		if publicIp.IsValid() && addr == publicIp {
+			priority = 2
+		} else if addr.IsPrivate() {
+			priority = 0
+		} else {
+			priority = 1
+		}
+
+		methodType = pb.ConnMethodType_CONN_METHOD_TYPE_IP
+	}
+
+	return &pb.MsgAdvertiseConnMethod{
+		Id:       c.directPart.CreateMethodId(c.mkMethodId(addrPort)),
+		Type:     methodType,
+		Address:  addrPort.String(),
+		Priority: priority,
+	}
 }
 
 func (c *Conn) runDirectAdsAndLoop() {
@@ -76,38 +125,7 @@ func (c *Conn) runDirectAdsAndLoop() {
 	// Advertise known servers.
 	servers := mgr.GetServers()
 	for _, server := range servers {
-		addrPort := server.AddrPort
-		addr := addrPort.Addr()
-		isYggdrasil := common.YggdrasilPrefix.Contains(addr)
-
-		// Priorities:
-		// 2 = public IP
-		// 1 = default
-		// 0 = private IP
-		// -1 = Yggdrasil
-
-		var methodType pb.ConnMethodType
-		var priority int32
-		if isYggdrasil {
-			priority = -1
-			methodType = pb.ConnMethodType_CONN_METHOD_TYPE_YGGDRASIL
-		} else {
-			if publicIp.IsValid() && addr == publicIp {
-				priority = 2
-			} else if addr.IsPrivate() {
-				priority = 0
-			} else {
-				priority = 1
-			}
-
-			methodType = pb.ConnMethodType_CONN_METHOD_TYPE_IP
-		}
-
-		method := &pb.MsgAdvertiseConnMethod{
-			Type:     methodType,
-			Address:  addrPort.String(),
-			Priority: priority,
-		}
+		method := c.mkAdConnMethod(publicIp, server.AddrPort)
 
 		// Advertise in the background.
 		go func() {
@@ -116,7 +134,7 @@ func (c *Conn) runDirectAdsAndLoop() {
 					c.logger.Error("direct advertisement goroutine panicked",
 						"service", "room.Conn",
 						"room", c.RoomName.String(),
-						"addr", addrPort.String(),
+						"addr", server.AddrPort.String(),
 						"err", rec,
 					)
 				}
@@ -136,9 +154,9 @@ func (c *Conn) runDirectAdsAndLoop() {
 				c.logger.Error("failed to advertise direct connection method",
 					"service", "room.Conn",
 					"room", c.RoomName.String(),
-					"method_type", methodType.String(),
-					"address", addrPort.String(),
-					"priority", priority,
+					"method_type", method.Type.String(),
+					"address", server.AddrPort.String(),
+					"priority", method.Priority,
 					"err", err,
 				)
 				return
@@ -149,14 +167,14 @@ func (c *Conn) runDirectAdsAndLoop() {
 				c.logger.Error("server said it could not connect to advertised address",
 					"service", "room.Conn",
 					"room", c.RoomName.String(),
-					"method_type", methodType.String(),
-					"address", addrPort.String(),
-					"priority", priority,
+					"method_type", method.Type.String(),
+					"address", server.AddrPort.String(),
+					"priority", method.Priority,
 					"result", result.String(),
 				)
 			}
 
-			// TODO If ok, record the method.
+			// TODO If ok, record the method in Conn struct.
 			// Later on, if we have any verified methods, we can ask a client to connect to us as a direct connect method.
 		}()
 	}
