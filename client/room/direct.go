@@ -274,6 +274,8 @@ func (c *Conn) incomingDirectConnHandler(incomingConn *direct.IncomingDirectConn
 		_ = existing.CloseWithReason("new connection from same client")
 	}
 
+	// TODO Ping loop
+
 	// Handle authenticated connection.
 	go func() {
 		defer func() {
