@@ -52,6 +52,7 @@ func NewStorage(path string) (*Storage, error) {
 		&migration.M20260208InitialSchema{},
 		&migration.M20260222AddLog{},
 		&migration.M20260223AddClientCerts{},
+		&migration.M20260225AddSettingKv{},
 	})
 	if err != nil {
 		return nil, fmt.Errorf(`failed to apply client database migrations: %w`, err)

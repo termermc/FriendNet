@@ -21,6 +21,7 @@ import (
 	"friendnet.org/client"
 	"friendnet.org/client/cert"
 	"friendnet.org/client/clog"
+	"friendnet.org/client/direct"
 	"friendnet.org/client/storage"
 	"friendnet.org/common"
 	"friendnet.org/mkcert"
@@ -137,10 +138,17 @@ func main() {
 
 	certStore := cert.NewSqliteStore(store.Db)
 
+	directMgr, err := direct.NewManager()
+	if err != nil {
+		logger.Error(`failed to create direct manager`, "err", err)
+		os.Exit(1)
+	}
+
 	multi, err := client.NewMultiClient(
 		logger,
 		store,
 		certStore,
+		directMgr,
 	)
 	if err != nil {
 		panic(fmt.Errorf(`failed to create multi client: %w`, err))

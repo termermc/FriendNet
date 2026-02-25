@@ -6,7 +6,27 @@ import (
 	"net/netip"
 	"strings"
 	"time"
+
+	"friendnet.org/client/storage"
 )
+
+const SettingDisable = "direct_server_disable"
+const SettingKeyPem = "direct_server_key_pem"
+const SettingCertPem = "direct_server_cert_pem"
+const SettingAddrs = "direct_server_addresses"
+const SettingDefaultPort = "direct_server_default_port"
+const SettingDisableProbeIpsToAdvertise = "direct_server_disable_probe_ips_to_advertise"
+const SettingAdvertisePrivateIps = "direct_server_advertise_private_ips"
+const SettingDisablePublicIpDiscovery = "direct_server_disable_public_ip_discovery"
+const SettingDisableUPnP = "direct_server_disable_upnp"
+const SettingUpnpTimeoutMs = "direct_server_upnp_timeout_ms"
+
+const DefaultDirectPort = 20048
+
+func ConfigFromSettings(store *storage.Storage) (*Config, error) {
+	// TODO
+	return nil, nil
+}
 
 var anyIpv4 = netip.MustParseAddr("0.0.0.0")
 var anyIpv6 = netip.MustParseAddr("::")
@@ -124,8 +144,8 @@ func (cfg Config) Validate() (addrs map[netip.AddrPort]struct{}, err error) {
 
 				_, hasAnyPort := anyIpv6Ports[port]
 				if !hasAnyPort {
-					// This is a specific address with a specific port, like "[::1]:20038".
-					// There is an equivalent address like "[::]:20038" present, so this can be removed.
+					// This is a specific address with a specific port, like "[::1]:20048".
+					// There is an equivalent address like "[::]:20048" present, so this can be removed.
 					delete(addrs, addrPort)
 					continue
 				}
@@ -139,8 +159,8 @@ func (cfg Config) Validate() (addrs map[netip.AddrPort]struct{}, err error) {
 
 				_, hasAnyPort := anyIpv4Ports[port]
 				if !hasAnyPort {
-					// This is a specific address with a specific port, like "127.0.0.1:20038".
-					// There is an equivalent address like "0.0.0.0:20038" present, so this can be removed.
+					// This is a specific address with a specific port, like "127.0.0.1:20048".
+					// There is an equivalent address like "0.0.0.0:20048" present, so this can be removed.
 					delete(addrs, addrPort)
 					continue
 				}
