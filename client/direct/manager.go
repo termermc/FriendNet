@@ -118,8 +118,8 @@ func (m *Manager) startServers() {
 		func() {
 			ipStr, err := router.GetIpAndForwardPort(timeoutCtx, defaultPort)
 			if err != nil {
-				if !errors.Is(err, context.DeadlineExceeded) ||
-					!errors.Is(err, context.Canceled) {
+				if errors.Is(err, context.DeadlineExceeded) ||
+					errors.Is(err, context.Canceled) {
 					m.logger.Warn("UPnP public IP discovery and forwarding timed out",
 						"service", "direct.Manager",
 					)
@@ -163,7 +163,41 @@ func (m *Manager) startServers() {
 				}
 
 				for _, oldAddr := range ifaceAddrs {
-					addr := netip.MustParseAddr(oldAddr.String())
+					oldStr := oldAddr.String()
+					if slashIdx := strings.IndexRune(oldStr, '/'); slashIdx != -1 {
+						oldStr = oldStr[:slashIdx]
+					}
+
+					var addr netip.Addr
+					if colonIdx := strings.IndexRune(oldStr, ':'); colonIdx != -1 {
+						// First try to parse as IPv6.
+						addr, err = netip.ParseAddr(oldStr)
+						if err != nil {
+							// Not IPv6, try to parse without port.
+							addr, err = netip.ParseAddr(oldStr[:colonIdx])
+							if err != nil {
+								continue
+							}
+
+							goto check
+						}
+
+						goto check
+					}
+
+					addr, err = netip.ParseAddr(oldStr)
+					if err != nil {
+						continue
+					}
+
+				check:
+					if addr.IsLoopback() ||
+						addr.IsLinkLocalUnicast() ||
+						addr.IsLinkLocalMulticast() ||
+						addr.IsInterfaceLocalMulticast() ||
+						addr.IsMulticast() {
+						continue
+					}
 					if addr.IsPrivate() && !m.cfg.AdvertisePrivateIps {
 						continue
 					}
