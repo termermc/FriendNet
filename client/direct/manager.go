@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net"
 	"net/netip"
+	"strings"
 	"sync"
 
 	"friendnet.org/protocol"
@@ -91,8 +92,48 @@ func (m *Manager) IsDisabled() bool {
 	return m.cfg.Disable
 }
 
+func (m *Manager) getPartByMethodId(methodId string) (part *Partition, has bool) {
+	colonIdx := strings.IndexRune(methodId, ':')
+	if colonIdx == -1 {
+		return nil, false
+	}
+
+	partId := methodId[:colonIdx]
+
+	m.mu.RLock()
+	part, has = m.partitions[partId]
+	m.mu.RUnlock()
+
+	return part, has
+}
+
+// CreatePartition creates a new partition with the specified ID.
+// If a partition with the same ID already exists, returns ErrPartitionExists.
+func (m *Manager) CreatePartition(id string) (*Partition, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	_, has := m.partitions[id]
+	if has {
+		return nil, ErrPartitionExists
+	}
+
+	ctx, ctxCancel := context.WithCancel(m.ctx)
+	partition := &Partition{
+		ctx:       ctx,
+		ctxCancel: ctxCancel,
+
+		id:       id,
+		m:        m,
+		connChan: make(chan *IncomingDirectConn),
+	}
+	m.partitions[id] = partition
+	return partition, nil
+}
+
 // IncomingDirectConn is an incoming direct connection.
 // Struct instances must not be used after calling any of the methods except for RemoteAddr.
+// The method ID field of the handshake can be ignored because it was already used to determine the correct partition.
 type IncomingDirectConn struct {
 	conn protocol.ProtoConn
 
@@ -176,7 +217,16 @@ type Partition struct {
 	connChan chan *IncomingDirectConn
 }
 
+// Close closes the partition and stops listening for incoming connections.
+// It should be called when the connection that owns the partition is closed.
 func (p *Partition) Close() error {
+	select {
+	case <-p.ctx.Done():
+		// Already closed, either by a previous call to Close or the Manager being closed.
+		return nil
+	default:
+	}
+
 	close(p.connChan)
 	p.ctxCancel()
 
@@ -185,6 +235,12 @@ func (p *Partition) Close() error {
 	p.m.mu.Unlock()
 
 	return nil
+}
+
+// CreateMethodId returns a direct connection method ID using the specified ID string that also encodes the partition into it.
+// Creating method IDs with this function is required for incoming connections to be routed to the correct partition.
+func (p *Partition) CreateMethodId(id string) string {
+	return p.id + ":" + id
 }
 
 func (p *Partition) sendConn(conn *IncomingDirectConn) {
