@@ -79,11 +79,12 @@ func NewClientProxy(
 // Subsequent calls are no-op.
 func (p *ClientProxy) Close() error {
 	p.mu.Lock()
-	defer p.mu.Unlock()
 	if p.isClosed {
+		p.mu.Unlock()
 		return nil
 	}
 	p.isClosed = true
+	p.mu.Unlock()
 
 	p.ctxCancel()
 

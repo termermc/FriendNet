@@ -9,66 +9,109 @@ import (
 	pb "friendnet.org/protocol/pb/v1"
 )
 
-// ClientMessageHandlersImpl implements all handlers in ClientMessageHandlers.
-var ClientMessageHandlersImpl = ClientMessageHandlers{
-	OnPing: func(ctx context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgPing]) error {
-		return bidi.Write(pb.MsgType_MSG_TYPE_PONG, &pb.MsgPong{
-			SentTs: time.Now().Unix(),
-		})
-	},
+// Logic exposes handlers for incoming C2S messages.
+//
+// Each handler is provided with the information it needs to return a response.
+// Handlers must not hold references to the bidi or connection outside the handler.
+// Handlers do not need to close bidis; they are closed by the caller after the handler returns.
+type Logic interface {
+	// OnPing handles an incoming ping request.
+	// Implementations must write a MSG_TYPE_PONG before returning.
+	OnPing(
+		ctx context.Context,
+		client *Client,
+		bidi protocol.ProtoBidi,
+		msg *protocol.TypedProtoMsg[*pb.MsgPing],
+	) error
 
-	OnGetOnlineUsers: func(ctx context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgGetOnlineUsers]) error {
-		const pageSize = 50
+	// OnOpenOutboundProxy handles an open outbound proxy request.
+	// Implementations must follow the documentation on MSG_TYPE_OPEN_OUTBOUND_PROXY.
+	OnOpenOutboundProxy(
+		ctx context.Context,
+		client *Client,
+		bidi protocol.ProtoBidi,
+		msg *protocol.TypedProtoMsg[*pb.MsgOpenOutboundProxy],
+	) error
 
-		// Snapshot clients and get their statuses.
-		clients := client.Room.GetAllClients()
-		statuses := make([]*pb.OnlineUserInfo, len(clients))
-		for i, client := range clients {
-			statuses[i] = &pb.OnlineUserInfo{
-				Username: client.Username.String(),
-			}
-		}
+	// OnGetOnlineUsers handles an incoming get online users request.
+	// Implementations must write one or more MSG_TYPE_ONLINE_USERS messages before returning.
+	OnGetOnlineUsers(
+		ctx context.Context,
+		client *Client,
+		bidi protocol.ProtoBidi,
+		msg *protocol.TypedProtoMsg[*pb.MsgGetOnlineUsers],
+	) error
+}
 
-		// Send pages of statuses.
-		sent := 0
-		for sent < len(clients) {
-			end := sent + pageSize
-			if end > len(clients) {
-				end = len(clients)
-			}
+type LogicImpl struct {
+}
 
-			err := bidi.Write(pb.MsgType_MSG_TYPE_ONLINE_USERS, &pb.MsgOnlineUsers{
-				Users: statuses[sent:end],
-			})
-			if err != nil {
-				return err
-			}
+var _ Logic = (*LogicImpl)(nil)
 
-			// We could have sent less than pageSize, but in that case it would break anyway, so we don't care about being accurate here.
-			sent += pageSize
-		}
+func NewLogicImpl() *LogicImpl {
+	return &LogicImpl{}
+}
 
+func (l LogicImpl) OnPing(_ context.Context, _ *Client, bidi protocol.ProtoBidi, _ *protocol.TypedProtoMsg[*pb.MsgPing]) error {
+	return bidi.Write(pb.MsgType_MSG_TYPE_PONG, &pb.MsgPong{
+		SentTs: time.Now().Unix(),
+	})
+}
+
+func (l LogicImpl) OnOpenOutboundProxy(_ context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgOpenOutboundProxy]) error {
+	// Validate username.
+	targetUsername, usernameValid := common.NormalizeUsername(msg.Payload.TargetUsername)
+	if !usernameValid {
+		bidi.Stream.CancelRead(protocol.ProxyPeerUnreachableStreamErrorCode)
 		return nil
-	},
+	}
 
-	OnOpenOutboundProxy: func(ctx context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgOpenOutboundProxy]) error {
-		// Validate username.
-		targetUsername, usernameValid := common.NormalizeUsername(msg.Payload.TargetUsername)
-		if !usernameValid {
-			bidi.Stream.CancelRead(protocol.ProxyPeerUnreachableStreamErrorCode)
-			return nil
+	proxy, err := NewClientProxy(
+		client.Room,
+		client.Username,
+		targetUsername,
+		bidi,
+	)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = proxy.Close()
+	}()
+
+	return proxy.Run()
+}
+
+func (l LogicImpl) OnGetOnlineUsers(_ context.Context, client *Client, bidi protocol.ProtoBidi, _ *protocol.TypedProtoMsg[*pb.MsgGetOnlineUsers]) error {
+	const pageSize = 50
+
+	// Snapshot clients and get their statuses.
+	clients := client.Room.GetAllClients()
+	statuses := make([]*pb.OnlineUserInfo, len(clients))
+	for i, c := range clients {
+		statuses[i] = &pb.OnlineUserInfo{
+			Username: c.Username.String(),
+		}
+	}
+
+	// Send pages of statuses.
+	sent := 0
+	for sent < len(clients) {
+		end := sent + pageSize
+		if end > len(clients) {
+			end = len(clients)
 		}
 
-		proxy, err := NewClientProxy(
-			client.Room,
-			client.Username,
-			targetUsername,
-			bidi,
-		)
+		err := bidi.Write(pb.MsgType_MSG_TYPE_ONLINE_USERS, &pb.MsgOnlineUsers{
+			Users: statuses[sent:end],
+		})
 		if err != nil {
 			return err
 		}
 
-		return proxy.Run()
-	},
+		// We could have sent less than pageSize, but in that case it would break anyway, so we don't care about being accurate here.
+		sent += pageSize
+	}
+
+	return nil
 }

@@ -21,8 +21,8 @@ type Manager struct {
 	mu       sync.RWMutex
 	isClosed bool
 
-	storage               *storage.Storage
-	clientMessageHandlers ClientMessageHandlers
+	storage *storage.Storage
+	logic   Logic
 
 	// Key is the string value of a common.NormalizedRoomName.
 	rooms map[string]*Room
@@ -34,13 +34,13 @@ func NewManager(
 	ctx context.Context,
 	logger *slog.Logger,
 	storage *storage.Storage,
-	clientMessageHandlers ClientMessageHandlers,
+	logic Logic,
 ) (*Manager, error) {
 	m := &Manager{
-		logger:                logger,
-		storage:               storage,
-		clientMessageHandlers: clientMessageHandlers,
-		rooms:                 make(map[string]*Room),
+		logger:  logger,
+		storage: storage,
+		logic:   logic,
+		rooms:   make(map[string]*Room),
 	}
 
 	// Load rooms from storage.
@@ -53,7 +53,7 @@ func NewManager(
 			logger,
 			storage,
 			room.Name,
-			clientMessageHandlers,
+			logic,
 		)
 	}
 
@@ -128,7 +128,7 @@ func (m *Manager) CreateRoom(ctx context.Context, name common.NormalizedRoomName
 		m.logger,
 		m.storage,
 		name,
-		m.clientMessageHandlers,
+		m.logic,
 	)
 	m.rooms[name.String()] = room
 

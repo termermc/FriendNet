@@ -25,7 +25,7 @@ type Client struct {
 	Room     *Room
 	Username common.NormalizedUsername
 
-	handlers ClientMessageHandlers
+	logic Logic
 }
 
 // NewClient creates a new room client.
@@ -37,7 +37,7 @@ func NewClient(
 	room *Room,
 	username common.NormalizedUsername,
 
-	handlers ClientMessageHandlers,
+	logic Logic,
 ) *Client {
 	return &Client{
 		logger: logger,
@@ -47,7 +47,7 @@ func NewClient(
 		Room:     room,
 		Username: username,
 
-		handlers: handlers,
+		logic: logic,
 	}
 }
 
@@ -62,11 +62,11 @@ func (c *Client) msgHandler(bidi protocol.ProtoBidi, firstMsg *protocol.UntypedP
 		c.Room.mu.Unlock()
 		return nil
 	case pb.MsgType_MSG_TYPE_PING:
-		return c.handlers.OnPing(ctx, c, bidi, protocol.ToTyped[*pb.MsgPing](firstMsg))
+		return c.logic.OnPing(ctx, c, bidi, protocol.ToTyped[*pb.MsgPing](firstMsg))
 	case pb.MsgType_MSG_TYPE_OPEN_OUTBOUND_PROXY:
-		return c.handlers.OnOpenOutboundProxy(ctx, c, bidi, protocol.ToTyped[*pb.MsgOpenOutboundProxy](firstMsg))
+		return c.logic.OnOpenOutboundProxy(ctx, c, bidi, protocol.ToTyped[*pb.MsgOpenOutboundProxy](firstMsg))
 	case pb.MsgType_MSG_TYPE_GET_ONLINE_USERS:
-		return c.handlers.OnGetOnlineUsers(ctx, c, bidi, protocol.ToTyped[*pb.MsgGetOnlineUsers](firstMsg))
+		return c.logic.OnGetOnlineUsers(ctx, c, bidi, protocol.ToTyped[*pb.MsgGetOnlineUsers](firstMsg))
 
 	default:
 		c.logger.Error("client sent unknown message type",

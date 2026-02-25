@@ -40,7 +40,8 @@ type Room struct {
 	Context   context.Context
 	ctxCancel context.CancelFunc
 
-	clientMessageHandlers ClientMessageHandlers
+	logic Logic
+
 	// Key is the string value of a common.NormalizedUsername.
 	clients map[string]*Client
 }
@@ -51,18 +52,18 @@ func NewRoom(
 	logger *slog.Logger,
 	storage *storage.Storage,
 	name common.NormalizedRoomName,
-	clientMessageHandlers ClientMessageHandlers,
+	logic Logic,
 ) *Room {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
 	return &Room{
-		logger:                logger,
-		storage:               storage,
-		Name:                  name,
-		Context:               ctx,
-		ctxCancel:             ctxCancel,
-		clientMessageHandlers: clientMessageHandlers,
-		clients:               make(map[string]*Client),
+		logger:    logger,
+		storage:   storage,
+		Name:      name,
+		Context:   ctx,
+		ctxCancel: ctxCancel,
+		logic:     logic,
+		clients:   make(map[string]*Client),
 	}
 }
 
@@ -154,7 +155,7 @@ func (r *Room) Onboard(
 		version,
 		r,
 		username,
-		r.clientMessageHandlers,
+		r.logic,
 	)
 
 	_, has := r.clients[username.String()]

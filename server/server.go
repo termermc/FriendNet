@@ -50,7 +50,7 @@ func NewServer(
 
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
-	roomMgr, err := room.NewManager(ctx, logger, storage, room.ClientMessageHandlersImpl)
+	roomMgr, err := room.NewManager(ctx, logger, storage, room.NewLogicImpl())
 	if err != nil {
 		ctxCancel()
 		return nil, err
