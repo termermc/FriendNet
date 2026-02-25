@@ -173,14 +173,12 @@ func (l *Lobby) negotiateClientVersion(
 	}()
 	if finalErr != nil {
 		// Write appropriate error reply to bidi before closure.
-		var rejErr protocol.VersionRejectedError
-		var unexpectedErr protocol.UnexpectedMsgTypeError
-		if errors.As(finalErr, &rejErr) {
+		if rejErr, ok := errors.AsType[protocol.VersionRejectedError](finalErr); ok {
 			_ = bidi.Write(pb.MsgType_MSG_TYPE_VERSION_REJECTED, &pb.MsgVersionRejected{
 				Reason:  rejErr.Reason,
 				Message: &rejErr.Message,
 			})
-		} else if errors.As(finalErr, &unexpectedErr) {
+		} else if unexpectedErr, ok := errors.AsType[protocol.UnexpectedMsgTypeError](finalErr); ok {
 			_ = bidi.WriteUnexpectedMsgTypeError(unexpectedErr.Expected, unexpectedErr.Actual)
 		} else {
 			_ = bidi.WriteInternalError(finalErr)
@@ -294,14 +292,12 @@ func (l *Lobby) authenticateClient(
 	}()
 	if finalErr != nil {
 		// Write appropriate error reply to bidi before closure.
-		var rejErr protocol.AuthRejectedError
-		var unexpectedErr protocol.UnexpectedMsgTypeError
-		if errors.As(finalErr, &rejErr) {
+		if rejErr, ok := errors.AsType[protocol.AuthRejectedError](finalErr); ok {
 			_ = authBidi.Write(pb.MsgType_MSG_TYPE_AUTH_REJECTED, &pb.MsgAuthRejected{
 				Reason:  rejErr.Reason,
 				Message: &rejErr.Message,
 			})
-		} else if errors.As(finalErr, &unexpectedErr) {
+		} else if unexpectedErr, ok := errors.AsType[protocol.UnexpectedMsgTypeError](finalErr); ok {
 			_ = authBidi.WriteUnexpectedMsgTypeError(unexpectedErr.Expected, unexpectedErr.Actual)
 		} else {
 			_ = authBidi.WriteInternalError(finalErr)

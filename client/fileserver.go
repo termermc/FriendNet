@@ -145,8 +145,7 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return nil
 			}
 
-			var msgErr protocol.ProtoMsgError
-			if errors.As(err, &msgErr) {
+			if msgErr, ok := errors.AsType[protocol.ProtoMsgError](err); ok {
 				if msgErr.Msg.Type == pb.ErrType_ERR_TYPE_FILE_NOT_EXIST {
 					text(w, r, http.StatusNotFound, "file not found\n")
 					return nil
@@ -250,19 +249,15 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return nil
 	})
 	if err != nil {
-		var opErr *net.OpError
-		if errors.As(err, &opErr) {
+		if opErr, ok := errors.AsType[*net.OpError](err); ok {
 			if errors.Is(opErr.Err, syscall.ECONNRESET) {
 				// Nothing to report, the HTTP client closed the connection.
 				return
 			}
 		}
-		var goAwayErr http2.GoAwayError
 		var h2StreamErr http2.StreamError
 		var qStreamErr *quic.StreamError
-		if errors.As(err, &goAwayErr) ||
-			errors.As(err, &h2StreamErr) ||
-			errors.As(err, &qStreamErr) {
+		if _, ok := errors.AsType[http2.GoAwayError](err); ok || errors.As(err, &h2StreamErr) || errors.As(err, &qStreamErr) {
 			return
 		}
 

@@ -373,8 +373,7 @@ func (s *RpcServer) GetDirFiles(ctx context.Context, request *v1.GetDirFilesRequ
 					break
 				}
 
-				var protoMsgErr protocol.ProtoMsgError
-				if errors.As(err, &protoMsgErr) {
+				if protoMsgErr, ok := errors.AsType[protocol.ProtoMsgError](err); ok {
 					if protoMsgErr.Msg.Type == pb.ErrType_ERR_TYPE_PATH_NOT_DIRECTORY {
 						return errPathNotDir
 					}
@@ -423,8 +422,7 @@ func (s *RpcServer) GetFileMeta(ctx context.Context, request *v1.GetFileMetaRequ
 		peer := c.GetVirtualC2cConn(username)
 		meta, err := peer.GetFileMeta(path)
 		if err != nil {
-			var protoMsgErr protocol.ProtoMsgError
-			if errors.As(err, &protoMsgErr) {
+			if protoMsgErr, ok := errors.AsType[protocol.ProtoMsgError](err); ok {
 				if protoMsgErr.Msg.Type == pb.ErrType_ERR_TYPE_FILE_NOT_EXIST {
 					return nil, errFileNotFound
 				}

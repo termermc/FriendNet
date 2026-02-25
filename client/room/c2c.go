@@ -2,7 +2,6 @@ package room
 
 import (
 	"errors"
-	"io"
 	"runtime/debug"
 
 	"friendnet.org/common"
@@ -45,11 +44,10 @@ loop:
 
 				rawMsg, err := bidi.Read()
 				if err != nil {
-					if errors.Is(err, io.EOF) {
+					if protocol.IsErrorConnCloseOrCancel(err) {
 						return
 					}
-					var streamErr *quic.StreamError
-					if errors.As(err, &streamErr) {
+					if _, ok := errors.AsType[*quic.StreamError](err); ok {
 						return
 					}
 

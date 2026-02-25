@@ -38,8 +38,7 @@ func (c *Conn) s2cLoop() {
 				if errors.Is(err, io.EOF) {
 					return
 				}
-				var streamErr *quic.StreamError
-				if errors.As(err, &streamErr) {
+				if _, ok := errors.AsType[*quic.StreamError](err); ok {
 					return
 				}
 

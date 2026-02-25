@@ -245,9 +245,7 @@ func (c *Conn) pingLoop() {
 			return
 		case <-ticker.C:
 			if _, err := c.Ping(); err != nil {
-				var idleErr *quic.IdleTimeoutError
-				var appErr *quic.ApplicationError
-				if errors.As(err, &idleErr) || errors.As(err, &appErr) {
+				if protocol.IsErrorConnCloseOrCancel(err) {
 					return
 				}
 
@@ -304,14 +302,12 @@ func (c *Conn) openC2cBidiWithMsg(
 		TargetUsername: username.String(),
 	})
 	if err != nil {
-		var streamErr *quic.StreamError
-		var appErr *quic.ApplicationError
-		if errors.As(err, &streamErr) {
+		if streamErr, ok := errors.AsType[*quic.StreamError](err); ok {
 			if streamErr.ErrorCode == protocol.ProxyPeerUnreachableStreamErrorCode {
 				return protocol.ProtoBidi{}, protocol.ErrPeerUnreachable
 			}
 		}
-		if errors.As(err, &appErr) {
+		if _, ok := errors.AsType[*quic.ApplicationError](err); ok {
 			// Other side closed, and we didn't know about it until now.
 			_ = c.Close()
 			return protocol.ProtoBidi{}, ErrRoomConnClosed

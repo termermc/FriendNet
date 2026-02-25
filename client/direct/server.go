@@ -171,8 +171,7 @@ func (s *Server) connHandler(conn protocol.ProtoConn) {
 			return
 		}
 
-		var unexpectedErr protocol.UnexpectedMsgTypeError
-		if errors.As(err, &unexpectedErr) {
+		if unexpectedErr, ok := errors.AsType[protocol.UnexpectedMsgTypeError](err); ok {
 			s.logger.Error("received unexpected message type during direct conn handshake",
 				"service", "direct.Server",
 				"expected_type", unexpectedErr.Expected.String(),

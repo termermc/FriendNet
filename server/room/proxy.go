@@ -139,8 +139,7 @@ func (p *ClientProxy) Run() error {
 		}
 
 		// Stream was canceled by the other end.
-		var streamErr *quic.StreamError
-		if errors.As(err, &streamErr) {
+		if _, ok := errors.AsType[*quic.StreamError](err); ok {
 			return nil
 		}
 

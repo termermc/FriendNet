@@ -252,8 +252,7 @@ func (l *LogicImpl) OnGetFile(_ context.Context, _ *Conn, bidi C2cBidi, msg *pro
 
 	_, err = io.Copy(bidi.ProtoBidi.Stream, reader)
 	if err != nil {
-		var streamErr *quic.StreamError
-		if errors.As(err, &streamErr) {
+		if _, is := errors.AsType[*quic.StreamError](err); is {
 			// If the other side closed, we can just quit.
 			return nil
 		}
