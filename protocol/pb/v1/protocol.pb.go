@@ -466,10 +466,11 @@ const (
 	// Do not use.
 	ConnMethodType_CONN_METHOD_TYPE_UNSPECIFIED ConnMethodType = 0
 	// Direct IP connection.
-	// Addresses are formatted as: IP:PORT
+	// Addresses are formatted as: `IP:PORT`.
+	// IPv6 is surrounded by square brackets, like `[IPv6]:PORT`.
 	ConnMethodType_CONN_METHOD_TYPE_IP ConnMethodType = 1
 	// Yggdrasil connection.
-	// Addresses are formatted as: YGGDRASIL_IP:PORT
+	// Addresses are formatted as: `[YGGDRASIL_IP]:PORT`.
 	ConnMethodType_CONN_METHOD_TYPE_YGGDRASIL ConnMethodType = 2
 )
 
@@ -532,6 +533,9 @@ const (
 	ConnResult_CONN_RESULT_METHOD_NOT_SUPPORTED ConnResult = 5
 	// A connection succeeded, but the handshake failed.
 	ConnResult_CONN_RESULT_HANDSHAKE_FAILED ConnResult = 6
+	// The party chose not to try to connect.
+	// This could be returned in a reply to MSG_TYPE_CONNECT_TO_ME if the client has disabled direct connections.
+	ConnResult_CONN_RESULT_DID_NOT_TRY ConnResult = 7
 )
 
 // Enum value maps for ConnResult.
@@ -544,6 +548,7 @@ var (
 		4: "CONN_RESULT_CONN_REFUSED",
 		5: "CONN_RESULT_METHOD_NOT_SUPPORTED",
 		6: "CONN_RESULT_HANDSHAKE_FAILED",
+		7: "CONN_RESULT_DID_NOT_TRY",
 	}
 	ConnResult_value = map[string]int32{
 		"CONN_RESULT_UNSPECIFIED":          0,
@@ -553,6 +558,7 @@ var (
 		"CONN_RESULT_CONN_REFUSED":         4,
 		"CONN_RESULT_METHOD_NOT_SUPPORTED": 5,
 		"CONN_RESULT_HANDSHAKE_FAILED":     6,
+		"CONN_RESULT_DID_NOT_TRY":          7,
 	}
 )
 
@@ -1746,15 +1752,18 @@ func (*MsgBye) Descriptor() ([]byte, []int) {
 // See MSG_TYPE_ADVERTISE_CONN_METHOD.
 type MsgAdvertiseConnMethod struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// The method ID.
+	// This can be any arbitrary string and is not checked for uniqueness.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// The method type.
-	Type ConnMethodType `protobuf:"varint,1,opt,name=type,proto3,enum=pb.v1.ConnMethodType" json:"type,omitempty"`
+	Type ConnMethodType `protobuf:"varint,2,opt,name=type,proto3,enum=pb.v1.ConnMethodType" json:"type,omitempty"`
 	// The method address.
 	// The format is defined by the type.
-	Address string `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
+	Address string `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`
 	// The priority to assign to the method.
 	// Higher means more preferred.
 	// Negative numbers are allowed.
-	Priority      int32 `protobuf:"varint,3,opt,name=priority,proto3" json:"priority,omitempty"`
+	Priority      int32 `protobuf:"varint,4,opt,name=priority,proto3" json:"priority,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1789,6 +1798,13 @@ func (*MsgAdvertiseConnMethod) Descriptor() ([]byte, []int) {
 	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{22}
 }
 
+func (x *MsgAdvertiseConnMethod) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
 func (x *MsgAdvertiseConnMethod) GetType() ConnMethodType {
 	if x != nil {
 		return x.Type
@@ -1814,10 +1830,7 @@ func (x *MsgAdvertiseConnMethod) GetPriority() int32 {
 type MsgAdvertiseConnMethodResult struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The result.
-	Result ConnResult `protobuf:"varint,1,opt,name=result,proto3,enum=pb.v1.ConnResult" json:"result,omitempty"`
-	// The method ID assigned by the server.
-	// This will be set even if result was not CONN_RESULT_OK.
-	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	Result        ConnResult `protobuf:"varint,1,opt,name=result,proto3,enum=pb.v1.ConnResult" json:"result,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1857,13 +1870,6 @@ func (x *MsgAdvertiseConnMethodResult) GetResult() ConnResult {
 		return x.Result
 	}
 	return ConnResult_CONN_RESULT_UNSPECIFIED
-}
-
-func (x *MsgAdvertiseConnMethodResult) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
 }
 
 // See MSG_TYPE_REMOVE_CONN_METHOD.
@@ -2472,8 +2478,12 @@ func (x *MsgRedeemConnHandshakeTokenResult) GetRoom() string {
 // See MSG_TYPE_DIRECT_CONN_HANDSHAKE.
 type MsgDirectConnHandshake struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// The connection method the sender is using.
+	// This can be used to let the direct connect server
+	// know where the connection is coming from.
+	MethodId string `protobuf:"bytes,1,opt,name=method_id,json=methodId,proto3" json:"method_id,omitempty"`
 	// The token to authenticate the sender.
-	Token         string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	Token         string `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2506,6 +2516,13 @@ func (x *MsgDirectConnHandshake) ProtoReflect() protoreflect.Message {
 // Deprecated: Use MsgDirectConnHandshake.ProtoReflect.Descriptor instead.
 func (*MsgDirectConnHandshake) Descriptor() ([]byte, []int) {
 	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *MsgDirectConnHandshake) GetMethodId() string {
+	if x != nil {
+		return x.MethodId
+	}
+	return ""
 }
 
 func (x *MsgDirectConnHandshake) GetToken() string {
@@ -2626,14 +2643,14 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\busername\x18\x01 \x01(\tR\busername\"=\n" +
 	"\x0eMsgOnlineUsers\x12+\n" +
 	"\x05users\x18\x01 \x03(\v2\x15.pb.v1.OnlineUserInfoR\x05users\"\b\n" +
-	"\x06MsgBye\"y\n" +
-	"\x16MsgAdvertiseConnMethod\x12)\n" +
-	"\x04type\x18\x01 \x01(\x0e2\x15.pb.v1.ConnMethodTypeR\x04type\x12\x18\n" +
-	"\aaddress\x18\x02 \x01(\tR\aaddress\x12\x1a\n" +
-	"\bpriority\x18\x03 \x01(\x05R\bpriority\"Y\n" +
+	"\x06MsgBye\"\x89\x01\n" +
+	"\x16MsgAdvertiseConnMethod\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12)\n" +
+	"\x04type\x18\x02 \x01(\x0e2\x15.pb.v1.ConnMethodTypeR\x04type\x12\x18\n" +
+	"\aaddress\x18\x03 \x01(\tR\aaddress\x12\x1a\n" +
+	"\bpriority\x18\x04 \x01(\x05R\bpriority\"I\n" +
 	"\x1cMsgAdvertiseConnMethodResult\x12)\n" +
-	"\x06result\x18\x01 \x01(\x0e2\x11.pb.v1.ConnResultR\x06result\x12\x0e\n" +
-	"\x02id\x18\x02 \x01(\tR\x02id\"%\n" +
+	"\x06result\x18\x01 \x01(\x0e2\x11.pb.v1.ConnResultR\x06result\"%\n" +
 	"\x13MsgRemoveConnMethod\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x10\n" +
 	"\x0eMsgConnectToMe\"@\n" +
@@ -2663,9 +2680,10 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\bis_valid\x18\x01 \x01(\bR\aisValid\x12\x1b\n" +
 	"\tis_server\x18\x02 \x01(\bR\bisServer\x12\x1a\n" +
 	"\busername\x18\x03 \x01(\tR\busername\x12\x12\n" +
-	"\x04room\x18\x04 \x01(\tR\x04room\".\n" +
-	"\x16MsgDirectConnHandshake\x12\x14\n" +
-	"\x05token\x18\x01 \x01(\tR\x05token\"X\n" +
+	"\x04room\x18\x04 \x01(\tR\x04room\"K\n" +
+	"\x16MsgDirectConnHandshake\x12\x1b\n" +
+	"\tmethod_id\x18\x01 \x01(\tR\bmethodId\x12\x14\n" +
+	"\x05token\x18\x02 \x01(\tR\x05token\"X\n" +
 	"\x1cMsgDirectConnHandshakeResult\x128\n" +
 	"\x06result\x18\x01 \x01(\x0e2 .pb.v1.DirectConnHandshakeResultR\x06result*\xf9\b\n" +
 	"\aMsgType\x12\x18\n" +
@@ -2734,7 +2752,7 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x0eConnMethodType\x12 \n" +
 	"\x1cCONN_METHOD_TYPE_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13CONN_METHOD_TYPE_IP\x10\x01\x12\x1e\n" +
-	"\x1aCONN_METHOD_TYPE_YGGDRASIL\x10\x02*\xde\x01\n" +
+	"\x1aCONN_METHOD_TYPE_YGGDRASIL\x10\x02*\xfb\x01\n" +
 	"\n" +
 	"ConnResult\x12\x1b\n" +
 	"\x17CONN_RESULT_UNSPECIFIED\x10\x00\x12\x12\n" +
@@ -2743,7 +2761,8 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x15CONN_RESULT_TIMED_OUT\x10\x03\x12\x1c\n" +
 	"\x18CONN_RESULT_CONN_REFUSED\x10\x04\x12$\n" +
 	" CONN_RESULT_METHOD_NOT_SUPPORTED\x10\x05\x12 \n" +
-	"\x1cCONN_RESULT_HANDSHAKE_FAILED\x10\x06*\xf9\x01\n" +
+	"\x1cCONN_RESULT_HANDSHAKE_FAILED\x10\x06\x12\x1b\n" +
+	"\x17CONN_RESULT_DID_NOT_TRY\x10\a*\xf9\x01\n" +
 	"\x19DirectConnHandshakeResult\x12,\n" +
 	"(DIRECT_CONN_HANDSHAKE_RESULT_UNSPECIFIED\x10\x00\x12#\n" +
 	"\x1fDIRECT_CONN_HANDSHAKE_RESULT_OK\x10\x01\x12.\n" +

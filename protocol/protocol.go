@@ -85,6 +85,9 @@ func ToTyped[T proto.Message](msg *UntypedProtoMsg) *TypedProtoMsg[T] {
 // ProtoConn is a protocol connection.
 // You can send and receive bidi streams from it.
 type ProtoConn interface {
+	// RemoteAddr returns the remote address of the connection.
+	RemoteAddr() net.Addr
+
 	// CloseWithReason closes the connection with the specified reason.
 	// It will try to send a close message to the other side, but delivery is not guaranteed.
 	CloseWithReason(string) error
@@ -113,6 +116,10 @@ var _ ProtoConn = &ProtoConnImpl{}
 // ToProtoConn wraps a QUIC connection to provide protocol-specific methods.
 func ToProtoConn(conn *quic.Conn) ProtoConn {
 	return &ProtoConnImpl{conn}
+}
+
+func (conn *ProtoConnImpl) RemoteAddr() net.Addr {
+	return conn.Inner.RemoteAddr()
 }
 
 func (conn *ProtoConnImpl) CloseWithReason(reason string) error {
@@ -567,4 +574,19 @@ func NewQuicProtoListener(listenAddr string, tlsCfg *tls.Config) (ProtoListener,
 	}
 
 	return &QuicProtoListener{listener}, nil
+}
+
+// IsErrorConnCloseOrCancel returns whether the specified error can broadly be considered a connection close or cancel error.
+// This covers QUIC idle errors and application errors (which represent an abandoned connection and an intentionally closed connection, respectively).
+// IMPORTANT: It does NOT count quic.StreamError as a connection close error, as it signals that a *stream* was deliberately closed, not a connection.
+//
+// It also covers common context cancel and deadline errors, as well as io.EOF.
+func IsErrorConnCloseOrCancel(err error) bool {
+	var idleErr *quic.IdleTimeoutError
+	var appErr *quic.ApplicationError
+	return errors.Is(err, context.Canceled) ||
+		errors.Is(err, context.DeadlineExceeded) ||
+		errors.Is(err, io.EOF) ||
+		errors.As(err, &idleErr) ||
+		errors.As(err, &appErr)
 }

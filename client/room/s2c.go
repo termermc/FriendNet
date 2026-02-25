@@ -1,7 +1,6 @@
 package room
 
 import (
-	"context"
 	"errors"
 	"io"
 
@@ -15,12 +14,7 @@ func (c *Conn) s2cLoop() {
 	for {
 		bidi, waitErr := c.serverConn.WaitForBidi(c.Context)
 		if waitErr != nil {
-			var idleErr *quic.IdleTimeoutError
-			var appErr *quic.ApplicationError
-			if errors.Is(waitErr, context.Canceled) ||
-				errors.Is(waitErr, io.EOF) ||
-				errors.As(waitErr, &idleErr) ||
-				errors.As(waitErr, &appErr) {
+			if protocol.IsErrorConnCloseOrCancel(waitErr) {
 				return
 			}
 

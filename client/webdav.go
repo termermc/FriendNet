@@ -18,7 +18,6 @@ import (
 
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
-	"github.com/puzpuzpuz/xsync/v4"
 	"golang.org/x/net/webdav"
 )
 

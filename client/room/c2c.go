@@ -39,6 +39,9 @@ loop:
 						)
 					}
 				}()
+				defer func() {
+					_ = bidi.Close()
+				}()
 
 				rawMsg, err := bidi.Read()
 				if err != nil {
@@ -82,8 +85,6 @@ loop:
 						"err", err,
 					)
 				}
-
-				_ = bidi.Close()
 			}()
 		}
 	}
