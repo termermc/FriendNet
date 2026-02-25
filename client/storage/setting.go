@@ -57,6 +57,7 @@ func (s *Storage) GetSettingOrPutFunc(ctx context.Context, key string, fn func()
 			if err != nil {
 				return "", err
 			}
+			return def, nil
 		}
 
 		return "", err
@@ -76,6 +77,7 @@ func (s *Storage) GetSettingOrPut(ctx context.Context, key string, def string) (
 			if err != nil {
 				return "", err
 			}
+			return def, nil
 		}
 
 		return "", err
