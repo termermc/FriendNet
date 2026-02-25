@@ -71,6 +71,9 @@ func NewManager(
 
 		cfg:          cfg,
 		cfgAddrPorts: addrPorts,
+
+		servers:    make(map[netip.AddrPort]*Server),
+		partitions: make(map[string]*Partition),
 	}
 
 	if !cfg.Disable {
