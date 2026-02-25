@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"net"
 
 	"friendnet.org/common"
 	"friendnet.org/protocol"
@@ -29,6 +30,11 @@ func (c VirtualC2cConn) lockCheck() error {
 		return ErrRoomConnClosed
 	}
 	return nil
+}
+
+// RemoteAddr is no-op.
+func (c VirtualC2cConn) RemoteAddr() net.Addr {
+	return &net.TCPAddr{IP: net.IPv4zero, Port: 0, Zone: ""}
 }
 
 // CloseWithReason is no-op.
