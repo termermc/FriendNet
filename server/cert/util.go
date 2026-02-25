@@ -4,6 +4,8 @@ import (
 	"crypto/tls"
 	"fmt"
 	"os"
+
+	"friendnet.org/common"
 )
 
 // ReadOrCreatePem reads a PEM file from the specified path, or generates a new one at that path if it does not exist.
@@ -17,7 +19,7 @@ func ReadOrCreatePem(path string, commonName string) (tls.Certificate, error) {
 			return nil, err
 		}
 
-		pemFile, err = GenSelfSignedPem(commonName)
+		pemFile, err = common.GenSelfSignedPem(commonName)
 		if err != nil {
 			return nil, err
 		}
