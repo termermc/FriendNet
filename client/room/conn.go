@@ -220,6 +220,8 @@ func NewRoomConn(
 		_ = c.Close()
 	}()
 
+	go c.runDirectAdsAndLoop()
+
 	return c, nil
 }
 

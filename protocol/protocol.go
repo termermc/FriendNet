@@ -241,7 +241,7 @@ func (r *ProtoStreamReader) ReadRaw() (*UntypedProtoMsg, error) {
 				}
 			}
 
-			if err == io.EOF && headerRead == len(header) {
+			if errors.Is(err, io.EOF) && headerRead == len(header) {
 				break
 			}
 			return nil, fmt.Errorf(`failed to read protocol message header: %w`, err)
