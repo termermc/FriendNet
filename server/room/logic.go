@@ -2,6 +2,7 @@ package room
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"friendnet.org/common"
@@ -40,6 +41,13 @@ type Logic interface {
 		client *Client,
 		bidi protocol.ProtoBidi,
 		msg *protocol.TypedProtoMsg[*pb.MsgGetOnlineUsers],
+	) error
+
+	OnGetPublicIp(
+		ctx context.Context,
+		client *Client,
+		bidi protocol.ProtoBidi,
+		msg *protocol.TypedProtoMsg[*pb.MsgGetPublicIp],
 	) error
 }
 
@@ -114,4 +122,19 @@ func (l LogicImpl) OnGetOnlineUsers(_ context.Context, client *Client, bidi prot
 	}
 
 	return nil
+}
+
+func (l LogicImpl) OnGetPublicIp(ctx context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgGetPublicIp]) error {
+	remote := client.RemoteAddr().String()
+
+	var addr string
+	if colonIdx := strings.IndexRune(remote, ':'); colonIdx != -1 {
+		addr = remote[:colonIdx]
+	} else {
+		addr = remote
+	}
+
+	return bidi.Write(pb.MsgType_MSG_TYPE_PUBLIC_IP, &pb.MsgPublicIp{
+		PublicIp: addr,
+	})
 }

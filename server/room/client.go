@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"runtime/debug"
 	"time"
 
@@ -67,6 +68,8 @@ func (c *Client) msgHandler(bidi protocol.ProtoBidi, firstMsg *protocol.UntypedP
 		return c.logic.OnOpenOutboundProxy(ctx, c, bidi, protocol.ToTyped[*pb.MsgOpenOutboundProxy](firstMsg))
 	case pb.MsgType_MSG_TYPE_GET_ONLINE_USERS:
 		return c.logic.OnGetOnlineUsers(ctx, c, bidi, protocol.ToTyped[*pb.MsgGetOnlineUsers](firstMsg))
+	case pb.MsgType_MSG_TYPE_GET_PUBLIC_IP:
+		return c.logic.OnGetPublicIp(ctx, c, bidi, protocol.ToTyped[*pb.MsgGetPublicIp](firstMsg))
 
 	default:
 		c.logger.Error("client sent unknown message type",
@@ -110,6 +113,11 @@ func (c *Client) bidiHandler(bidi protocol.ProtoBidi) {
 
 		_ = bidi.WriteInternalError(err)
 	}
+}
+
+// RemoteAddr returns the remote address of the client.
+func (c *Client) RemoteAddr() net.Addr {
+	return c.conn.RemoteAddr()
 }
 
 // ReadLoop runs the client message read loop.
