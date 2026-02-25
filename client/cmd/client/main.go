@@ -138,7 +138,12 @@ func main() {
 
 	certStore := cert.NewSqliteStore(store.Db)
 
-	directMgr, err := direct.NewManager()
+	directCfg, err := direct.ConfigFromSettings(context.Background(), store)
+	if err != nil {
+		logger.Error(`failed to load direct configuration`, "err", err)
+		os.Exit(1)
+	}
+	directMgr, err := direct.NewManager(logger, directCfg)
 	if err != nil {
 		logger.Error(`failed to create direct manager`, "err", err)
 		os.Exit(1)

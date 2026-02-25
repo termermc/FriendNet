@@ -41,7 +41,7 @@ type Manager struct {
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 
-	cfg          Config
+	cfg          *Config
 	cfgAddrPorts map[netip.AddrPort]struct{}
 
 	// All currently listening servers.
@@ -54,7 +54,7 @@ type Manager struct {
 
 func NewManager(
 	logger *slog.Logger,
-	cfg Config,
+	cfg *Config,
 ) (*Manager, error) {
 	addrPorts, err := cfg.Validate()
 	if err != nil {

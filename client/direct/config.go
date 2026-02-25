@@ -1,18 +1,23 @@
 package direct
 
 import (
+	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"net/netip"
 	"strings"
 	"time"
 
 	"friendnet.org/client/storage"
+	"friendnet.org/common"
 )
 
+// CommonName is the common name used in self-signed direct server certificates.
+const CommonName = "friendnet-direct-server"
+
 const SettingDisable = "direct_server_disable"
-const SettingKeyPem = "direct_server_key_pem"
-const SettingCertPem = "direct_server_cert_pem"
+const SettingKeypairPem = "direct_server_keypair_pem"
 const SettingAddrs = "direct_server_addresses"
 const SettingDefaultPort = "direct_server_default_port"
 const SettingDisableProbeIpsToAdvertise = "direct_server_disable_probe_ips_to_advertise"
@@ -22,10 +27,77 @@ const SettingDisableUPnP = "direct_server_disable_upnp"
 const SettingUpnpTimeoutMs = "direct_server_upnp_timeout_ms"
 
 const DefaultDirectPort = 20048
+const DefaultUpnpTimeout = 10 * time.Second
 
-func ConfigFromSettings(store *storage.Storage) (*Config, error) {
-	// TODO
-	return nil, nil
+// ConfigFromSettings loads the configuration from the settings.
+func ConfigFromSettings(ctx context.Context, store *storage.Storage) (*Config, error) {
+	var err error
+	var disable bool
+	var keypairPem string
+	var addrsJson string
+	var defaultPort int64
+	var disableProbeIpsToAdvertise bool
+	var advertisePrivateIps bool
+	var disablePublicIpDiscovery bool
+	var disableUpnp bool
+	var upnpTimeoutMs int64
+
+	if disable, err = store.GetSettingBoolOrPut(ctx, SettingDisable, false); err != nil {
+		return nil, err
+	}
+	if keypairPem, err = store.GetSettingOrPutFunc(ctx, SettingKeypairPem, func() (string, error) {
+		bytes, certErr := common.GenSelfSignedPem(CommonName)
+		if certErr != nil {
+			return "", certErr
+		}
+		return string(bytes), nil
+	}); err != nil {
+		return nil, err
+	}
+	if addrsJson, err = store.GetSettingOrPut(ctx, SettingAddrs, "[]"); err != nil {
+		return nil, err
+	}
+	if defaultPort, err = store.GetSettingIntOrPut(ctx, SettingDefaultPort, DefaultDirectPort); err != nil {
+		return nil, err
+	}
+	if disableProbeIpsToAdvertise, err = store.GetSettingBoolOrPut(ctx, SettingDisableProbeIpsToAdvertise, false); err != nil {
+		return nil, err
+	}
+	if advertisePrivateIps, err = store.GetSettingBoolOrPut(ctx, SettingAdvertisePrivateIps, false); err != nil {
+		return nil, err
+	}
+	if disablePublicIpDiscovery, err = store.GetSettingBoolOrPut(ctx, SettingDisablePublicIpDiscovery, false); err != nil {
+		return nil, err
+	}
+	if disableUpnp, err = store.GetSettingBoolOrPut(ctx, SettingDisableUPnP, false); err != nil {
+		return nil, err
+	}
+	if upnpTimeoutMs, err = store.GetSettingIntOrPut(ctx, SettingUpnpTimeoutMs, int64(DefaultUpnpTimeout/time.Millisecond)); err != nil {
+		return nil, err
+	}
+
+	var addrs []string
+	if err = json.Unmarshal([]byte(addrsJson), &addrs); err != nil {
+		return nil, err
+	}
+
+	keypairPemBytes := []byte(keypairPem)
+	cert, err := tls.X509KeyPair(keypairPemBytes, keypairPemBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Config{
+		Disable:                    disable,
+		Cert:                       cert,
+		Addresses:                  addrs,
+		DefaultPort:                uint16(defaultPort),
+		DisableProbeIpsToAdvertise: disableProbeIpsToAdvertise,
+		AdvertisePrivateIps:        advertisePrivateIps,
+		DisablePublicIpDiscovery:   disablePublicIpDiscovery,
+		DisableUPnP:                disableUpnp,
+		UpnpTimeout:                time.Duration(upnpTimeoutMs) * time.Millisecond,
+	}, nil
 }
 
 var anyIpv4 = netip.MustParseAddr("0.0.0.0")
