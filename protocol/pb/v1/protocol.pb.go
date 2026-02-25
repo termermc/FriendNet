@@ -1753,7 +1753,7 @@ func (*MsgBye) Descriptor() ([]byte, []int) {
 type MsgAdvertiseConnMethod struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The method ID.
-	// This can be any arbitrary string and is not checked for uniqueness.
+	// This can be any arbitrary string, as long as it is unique for the connection.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// The method type.
 	Type ConnMethodType `protobuf:"varint,2,opt,name=type,proto3,enum=pb.v1.ConnMethodType" json:"type,omitempty"`
@@ -1829,8 +1829,11 @@ func (x *MsgAdvertiseConnMethod) GetPriority() int32 {
 // See MSG_TYPE_ADVERTISE_CONN_METHOD_RESULT.
 type MsgAdvertiseConnMethodResult struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The result.
-	Result        ConnResult `protobuf:"varint,1,opt,name=result,proto3,enum=pb.v1.ConnResult" json:"result,omitempty"`
+	// Whether the method ID already exists.
+	// If true, the result will be unset.
+	AlreadyExists bool `protobuf:"varint,1,opt,name=already_exists,json=alreadyExists,proto3" json:"already_exists,omitempty"`
+	// The connection test result.
+	TestResult    ConnResult `protobuf:"varint,2,opt,name=test_result,json=testResult,proto3,enum=pb.v1.ConnResult" json:"test_result,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1865,9 +1868,16 @@ func (*MsgAdvertiseConnMethodResult) Descriptor() ([]byte, []int) {
 	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{23}
 }
 
-func (x *MsgAdvertiseConnMethodResult) GetResult() ConnResult {
+func (x *MsgAdvertiseConnMethodResult) GetAlreadyExists() bool {
 	if x != nil {
-		return x.Result
+		return x.AlreadyExists
+	}
+	return false
+}
+
+func (x *MsgAdvertiseConnMethodResult) GetTestResult() ConnResult {
+	if x != nil {
+		return x.TestResult
 	}
 	return ConnResult_CONN_RESULT_UNSPECIFIED
 }
@@ -2648,9 +2658,11 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12)\n" +
 	"\x04type\x18\x02 \x01(\x0e2\x15.pb.v1.ConnMethodTypeR\x04type\x12\x18\n" +
 	"\aaddress\x18\x03 \x01(\tR\aaddress\x12\x1a\n" +
-	"\bpriority\x18\x04 \x01(\x05R\bpriority\"I\n" +
-	"\x1cMsgAdvertiseConnMethodResult\x12)\n" +
-	"\x06result\x18\x01 \x01(\x0e2\x11.pb.v1.ConnResultR\x06result\"%\n" +
+	"\bpriority\x18\x04 \x01(\x05R\bpriority\"y\n" +
+	"\x1cMsgAdvertiseConnMethodResult\x12%\n" +
+	"\x0ealready_exists\x18\x01 \x01(\bR\ralreadyExists\x122\n" +
+	"\vtest_result\x18\x02 \x01(\x0e2\x11.pb.v1.ConnResultR\n" +
+	"testResult\"%\n" +
 	"\x13MsgRemoveConnMethod\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x10\n" +
 	"\x0eMsgConnectToMe\"@\n" +
@@ -2842,7 +2854,7 @@ var file_pb_v1_protocol_proto_depIdxs = []int32{
 	23, // 6: pb.v1.MsgDirFiles.files:type_name -> pb.v1.MsgFileMeta
 	26, // 7: pb.v1.MsgOnlineUsers.users:type_name -> pb.v1.OnlineUserInfo
 	4,  // 8: pb.v1.MsgAdvertiseConnMethod.type:type_name -> pb.v1.ConnMethodType
-	5,  // 9: pb.v1.MsgAdvertiseConnMethodResult.result:type_name -> pb.v1.ConnResult
+	5,  // 9: pb.v1.MsgAdvertiseConnMethodResult.test_result:type_name -> pb.v1.ConnResult
 	5,  // 10: pb.v1.MsgDirectConnResult.result:type_name -> pb.v1.ConnResult
 	4,  // 11: pb.v1.ConnMethod.type:type_name -> pb.v1.ConnMethodType
 	37, // 12: pb.v1.MsgClientConnMethods.methods:type_name -> pb.v1.ConnMethod

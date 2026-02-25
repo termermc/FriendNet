@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"friendnet.org/client/cert"
+	"friendnet.org/client/direct"
 	"friendnet.org/client/room"
 	"friendnet.org/common"
 )
@@ -43,10 +44,12 @@ type ConnNanny struct {
 	mu       sync.RWMutex
 	isClosed bool
 
-	certStore cert.Store
-	address   string
-	creds     room.Credentials
-	logic     room.Logic
+	certStore      cert.Store
+	directMgr      *direct.Manager
+	directPartName string
+	address        string
+	creds          room.Credentials
+	logic          room.Logic
 
 	shouldReconnect bool
 	connOrNil       *room.Conn
@@ -56,9 +59,16 @@ type ConnNanny struct {
 
 // NewConnNanny creates a new ConnNanny with the specified server address and credentials.
 // It automatically starts trying to connect after instantiation.
+//
+// The directPartitionName value must be unique among open ConnNanny instances that use the same direct.Manager.
+// It could be a server UUID, or something else unique to the connection.
+// If an open ConnNanny instance has the name "abc" and this function is called with directPartitionName "abc",
+// the connection it manages will fail to open.
 func NewConnNanny(
 	logger *slog.Logger,
 	certStore cert.Store,
+	directMgr *direct.Manager,
+	directPartitionName string,
 	address string,
 	creds room.Credentials,
 	logic room.Logic,
@@ -74,10 +84,12 @@ func NewConnNanny(
 		ctx:       ctx,
 		ctxCancel: ctxCancel,
 
-		certStore: certStore,
-		address:   address,
-		creds:     creds,
-		logic:     logic,
+		certStore:      certStore,
+		directMgr:      directMgr,
+		directPartName: directPartitionName,
+		address:        address,
+		creds:          creds,
+		logic:          logic,
 
 		openCh: make(chan struct{}),
 
@@ -269,6 +281,8 @@ func (n *ConnNanny) daemon() {
 			n.logger,
 			n.logic,
 			n.certStore,
+			n.directMgr,
+			n.directPartName,
 			n.address,
 			n.creds,
 		)

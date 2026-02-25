@@ -2,14 +2,20 @@ package direct
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"log/slog"
+	"math/rand/v2"
 	"net"
 	"net/netip"
 	"strings"
 	"sync"
+	"time"
+	"unsafe"
 
+	"friendnet.org/client/router"
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
 )
@@ -57,7 +63,7 @@ func NewManager(
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	return &Manager{
+	m := &Manager{
 		logger: logger,
 
 		ctx:       ctx,
@@ -65,23 +71,154 @@ func NewManager(
 
 		cfg:          cfg,
 		cfgAddrPorts: addrPorts,
-	}, nil
+	}
+
+	if !cfg.Disable {
+		// Start servers in the background.
+		// We don't want UPnP and slow listening operations to stall startup.
+		go m.startServers()
+	}
+
+	return m, nil
+}
+
+func (m *Manager) lockAndRemoveServer(addrPort netip.AddrPort) {
+	m.mu.Lock()
+	_, has := m.servers[addrPort]
+	if has {
+		delete(m.servers, addrPort)
+	}
+	m.mu.Unlock()
+
+	// TODO Broadcast to some kind of listeners or partitions that the server is gone.
+}
+
+func (m *Manager) startServers() {
+	addrPorts := m.cfgAddrPorts
+
+	defaultPort := m.cfg.DefaultPort
+	if defaultPort == 0 {
+		const minPort = 1024
+		defaultPort = uint16(rand.IntN(65535-minPort) + minPort)
+	}
+
+	var publicIp netip.Addr
+
+	if !m.cfg.DisableUPnP {
+		timeout := m.cfg.UpnpTimeout
+		if timeout == 0 {
+			timeout = 10 * time.Second
+		}
+
+		timeoutCtx, cancel := context.WithTimeout(m.ctx, timeout)
+
+		ipStr, err := router.GetIpAndForwardPort(timeoutCtx, defaultPort)
+		if err != nil &&
+			!errors.Is(err, context.DeadlineExceeded) &&
+			!errors.Is(err, context.Canceled) {
+			m.logger.Warn("UPnP public IP discovery and forwarding failed",
+				"service", "direct.Manager",
+				"err", err,
+			)
+		}
+
+		publicIp, err = netip.ParseAddr(ipStr)
+		if err != nil {
+			m.logger.Error("UPnP public IP discovery succeeded, but the public IP it discovered could not be parsed",
+				"service", "direct.Manager",
+				"ip", ipStr,
+				"err", err,
+			)
+		}
+
+		cancel()
+	}
+
+	var probedIps []netip.Addr
+	if !m.cfg.DisableProbeIpsToAdvertise {
+		ifaces, err := net.Interfaces()
+		if err == nil {
+			for _, iface := range ifaces {
+				ifaceAddrs, addrsErr := iface.Addrs()
+				if addrsErr != nil {
+					m.logger.Error("failed to get interface addresses",
+						"service", "direct.Manager",
+						"interface", iface.Name,
+						"err", addrsErr,
+					)
+					continue
+				}
+
+				for _, oldAddr := range ifaceAddrs {
+					addr := netip.MustParseAddr(oldAddr.String())
+					if addr.IsPrivate() && !m.cfg.AdvertisePrivateIps {
+						continue
+					}
+
+					probedIps = append(probedIps, addr)
+				}
+			}
+		} else {
+			m.logger.Error("failed to get network interfaces to discover client IPs",
+				"service", "direct.Manager",
+				"err", err,
+			)
+		}
+	}
+
+	// Collect addresses to listen on and advertise.
+	listenAddrPorts := make([]netip.AddrPort, 0, 1+len(addrPorts)+len(probedIps))
+	if publicIp.IsValid() {
+		listenAddrPorts = append(listenAddrPorts, netip.AddrPortFrom(publicIp, defaultPort))
+	}
+	for addrPort := range addrPorts {
+		if addrPort.Port() == 0 {
+			listenAddrPorts = append(listenAddrPorts, netip.AddrPortFrom(addrPort.Addr(), defaultPort))
+		} else {
+			listenAddrPorts = append(listenAddrPorts, addrPort)
+		}
+	}
+	for _, addr := range probedIps {
+		addrPort := netip.AddrPortFrom(addr, defaultPort)
+		listenAddrPorts = append(listenAddrPorts, addrPort)
+	}
+
+	// Create servers for each address.
+	servers := make([]*Server, 0, len(listenAddrPorts))
+	for _, addrPort := range listenAddrPorts {
+		server, err := NewServer(m.logger, m.ctx, m, addrPort, m.cfg.Cert)
+		if err != nil {
+			m.logger.Error("failed to create direct server",
+				"service", "direct.Manager",
+				"addr", addrPort.String(),
+				"err", err,
+			)
+			continue
+		}
+
+		servers = append(servers, server)
+	}
+
+	// Add them to map.
+	m.mu.Lock()
+	for _, server := range servers {
+		m.servers[server.AddrPort] = server
+	}
+	m.mu.Unlock()
 }
 
 // Close closes the manager and all the servers it manages.
 func (m *Manager) Close() error {
 	m.mu.Lock()
 	if m.isClosed {
-		defer m.mu.Unlock()
+		m.mu.Unlock()
 		return nil
 	}
 	m.isClosed = true
+	m.mu.Unlock()
 
-	// TODO Collect servers
-
-	defer m.mu.Unlock()
-
-	// TODO Close listeners
+	// Canceling will automatically close servers and partitions.
+	m.ctxCancel()
 
 	return nil
 }
@@ -90,6 +227,75 @@ func (m *Manager) Close() error {
 // Disabled does not mean closed, although a disabled manager
 func (m *Manager) IsDisabled() bool {
 	return m.cfg.Disable
+}
+
+// NotifyIpAvailable notifies the Manager that an IP address is available for use.
+// If there is not already a direct server running on that IP with the default port,
+// a new one will be started for it in the background.
+//
+// This method can be used by connections after finding out their public IP from a server.
+func (m *Manager) NotifyIpAvailable(ip netip.Addr) {
+	if m.cfg.Disable {
+		return
+	}
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	if m.isClosed {
+		return
+	}
+
+	_, has := m.servers[netip.AddrPortFrom(ip, m.cfg.DefaultPort)]
+	if has {
+		return
+	}
+
+	go func() {
+		addrPort := netip.AddrPortFrom(ip, m.cfg.DefaultPort)
+		server, err := NewServer(m.logger, m.ctx, m, addrPort, m.cfg.Cert)
+		if err != nil {
+			m.logger.Error("failed to start direct server after IP notification",
+				"service", "direct.Manager",
+				"ip", ip.String(),
+				"addr", addrPort.String(),
+				"err", err,
+			)
+			return
+		}
+
+		m.mu.Lock()
+		// Check again, just in case there are concurrent calls.
+		_, has = m.servers[addrPort]
+		if has {
+			m.mu.Unlock()
+			_ = server.Close()
+			return
+		}
+		m.servers[server.AddrPort] = server
+		m.mu.Unlock()
+	}()
+}
+
+// GetServers returns all currently running direct servers.
+// If the manager is closed or disabled, returns empty.
+// Note that this method creates a new slice each time it is called.
+func (m *Manager) GetServers() []*Server {
+	if m.cfg.Disable {
+		return nil
+	}
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.isClosed {
+		return nil
+	}
+
+	res := make([]*Server, 0, len(m.servers))
+	for _, server := range m.servers {
+		res = append(res, server)
+	}
+	return res
 }
 
 func (m *Manager) getPartByMethodId(methodId string) (part *Partition, has bool) {
@@ -107,13 +313,18 @@ func (m *Manager) getPartByMethodId(methodId string) (part *Partition, has bool)
 	return part, has
 }
 
-// CreatePartition creates a new partition with the specified ID.
+// CreatePartition creates a new partition, using a hash of name as the partition ID.
 // If a partition with the same ID already exists, returns ErrPartitionExists.
-func (m *Manager) CreatePartition(id string) (*Partition, error) {
+func (m *Manager) CreatePartition(name string) (*Partition, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	_, has := m.partitions[id]
+	// Create ID from hash of IDs.
+	hasher := fnv.New64a()
+	_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(name), len(name)))
+	hash := base64.RawURLEncoding.EncodeToString(hasher.Sum(nil))
+
+	_, has := m.partitions[hash]
 	if has {
 		return nil, ErrPartitionExists
 	}
@@ -123,11 +334,11 @@ func (m *Manager) CreatePartition(id string) (*Partition, error) {
 		ctx:       ctx,
 		ctxCancel: ctxCancel,
 
-		id:       id,
+		id:       hash,
 		m:        m,
 		connChan: make(chan *IncomingDirectConn),
 	}
-	m.partitions[id] = partition
+	m.partitions[hash] = partition
 	return partition, nil
 }
 
@@ -243,6 +454,8 @@ func (p *Partition) CreateMethodId(id string) string {
 	return p.id + ":" + id
 }
 
+// sendConn sends a new incoming direct connection to the partition.
+// This method will block until the connection is received.
 func (p *Partition) sendConn(conn *IncomingDirectConn) {
 	select {
 	case <-p.ctx.Done():

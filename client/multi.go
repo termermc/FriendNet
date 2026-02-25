@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"friendnet.org/client/cert"
+	"friendnet.org/client/direct"
 	"friendnet.org/client/room"
 	"friendnet.org/client/share"
 	"friendnet.org/client/storage"
@@ -52,6 +53,7 @@ type MultiClient struct {
 	logger    *slog.Logger
 	storage   *storage.Storage
 	certStore cert.Store
+	directMgr *direct.Manager
 
 	// Mapping of server UUIDs to the Server instances that manage connections to them.
 	servers map[string]*Server
@@ -63,6 +65,7 @@ func NewMultiClient(
 	logger *slog.Logger,
 	storage *storage.Storage,
 	certStore cert.Store,
+	directMgr *direct.Manager,
 ) (*MultiClient, error) {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
@@ -78,6 +81,7 @@ func NewMultiClient(
 		logger:    logger,
 		storage:   storage,
 		certStore: certStore,
+		directMgr: directMgr,
 		servers:   make(map[string]*Server, len(serverRecs)),
 	}
 
@@ -174,6 +178,8 @@ func (c *MultiClient) createServerInstance(record storage.ServerRecord) (*Server
 		ConnNanny: NewConnNanny(
 			c.logger,
 			c.certStore,
+			c.directMgr,
+			record.Uuid,
 			record.Address,
 			room.Credentials{
 				Room:     record.Room,

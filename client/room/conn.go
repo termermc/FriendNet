@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"friendnet.org/client/cert"
+	"friendnet.org/client/direct"
 	"friendnet.org/common"
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
@@ -69,8 +70,11 @@ type Conn struct {
 	serverConn   protocol.ProtoConn
 	incomingBidi chan C2cBidi
 
-	// The configuration for direct connections.
-	directCfg DirectConfig
+	// The direct server manager.
+	directMgr *direct.Manager
+
+	// The direct connect server partition.
+	directPart *direct.Partition
 
 	// Direct connections to room clients.
 	// The connections could have been outgoing or incoming,
@@ -137,19 +141,19 @@ func authenticate(serverConn protocol.ProtoConn, creds Credentials) error {
 // NewRoomConn establishes a room connection.
 // If the server rejects the client's protocol version, returns a protocol.VersionRejectedError.
 // If the server rejects the client's credentials, returns a protocol.AuthRejectedError.
+//
+// The directPartitionName value must be unique among open Conn instances that use the same direct.Manager.
+// It could be a server UUID, or something else unique to the connection.
+// If an open Conn instance has the name "abc" and this function is called with directPartitionName "abc", it will return an error.
 func NewRoomConn(
 	logger *slog.Logger,
 	logic Logic,
 	certStore cert.Store,
+	directMgr *direct.Manager,
+	directPartitionName string,
 	address string,
 	creds Credentials,
-	directCfg DirectConfig,
 ) (*Conn, error) {
-	directAddrs, validateErr := directCfg.Validate()
-	if validateErr != nil {
-		return nil, validateErr
-	}
-
 	clientVer := protocol.CurrentProtocolVersion
 
 	ctx, ctxCancel := context.WithCancel(context.Background())
@@ -165,6 +169,12 @@ func NewRoomConn(
 		return nil, err
 	}
 	err = authenticate(conn, creds)
+	if err != nil {
+		ctxCancel()
+		return nil, err
+	}
+
+	directPart, err := directMgr.CreatePartition(directPartitionName)
 	if err != nil {
 		ctxCancel()
 		return nil, err
@@ -187,13 +197,10 @@ func NewRoomConn(
 		serverConn:   conn,
 		incomingBidi: make(chan C2cBidi, incomingBidiChanSize),
 
+		directMgr:         directMgr,
+		directPart:        directPart,
 		directConns:       make(map[common.NormalizedUsername]protocol.ProtoConn),
 		directConnMethods: make(map[common.NormalizedUsername][]*pb.ConnMethod),
-		directCfg:         directCfg,
-	}
-
-	if !directCfg.Disable {
-		go c.startDirectServersAndAds(directAddrs)
 	}
 
 	go c.c2cLoop()
@@ -263,6 +270,8 @@ func (c *Conn) Close() error {
 		return nil
 	}
 	c.isClosed = true
+
+	_ = c.directPart.Close()
 
 	// Signal to the server that the client is leaving.
 	// Give it 5 seconds to respond before closing the connection.

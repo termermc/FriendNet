@@ -427,7 +427,7 @@ enum ConnMethodType {
 // See MSG_TYPE_ADVERTISE_CONN_METHOD.
 message MsgAdvertiseConnMethod {
     // The method ID.
-    // This can be any arbitrary string and is not checked for uniqueness.
+    // This can be any arbitrary string, as long as it is unique for the connection.
     string id = 1;
 
     // The method type.
@@ -473,8 +473,12 @@ enum ConnResult {
 
 // See MSG_TYPE_ADVERTISE_CONN_METHOD_RESULT.
 message MsgAdvertiseConnMethodResult {
-    // The result.
-    ConnResult result = 1;
+    // Whether the method ID already exists.
+    // If true, the result will be unset.
+    bool already_exists = 1;
+
+    // The connection test result.
+    ConnResult test_result = 2;
 }
 
 // See MSG_TYPE_REMOVE_CONN_METHOD.
