@@ -115,24 +115,34 @@ func (m *Manager) startServers() {
 
 		timeoutCtx, cancel := context.WithTimeout(m.ctx, timeout)
 
-		ipStr, err := router.GetIpAndForwardPort(timeoutCtx, defaultPort)
-		if err != nil &&
-			!errors.Is(err, context.DeadlineExceeded) &&
-			!errors.Is(err, context.Canceled) {
-			m.logger.Warn("UPnP public IP discovery and forwarding failed",
-				"service", "direct.Manager",
-				"err", err,
-			)
-		}
+		func() {
+			ipStr, err := router.GetIpAndForwardPort(timeoutCtx, defaultPort)
+			if err != nil {
+				if !errors.Is(err, context.DeadlineExceeded) ||
+					!errors.Is(err, context.Canceled) {
+					m.logger.Warn("UPnP public IP discovery and forwarding timed out",
+						"service", "direct.Manager",
+					)
+					return
+				}
 
-		publicIp, err = netip.ParseAddr(ipStr)
-		if err != nil {
-			m.logger.Error("UPnP public IP discovery succeeded, but the public IP it discovered could not be parsed",
-				"service", "direct.Manager",
-				"ip", ipStr,
-				"err", err,
-			)
-		}
+				m.logger.Warn("UPnP public IP discovery and forwarding failed",
+					"service", "direct.Manager",
+					"err", err,
+				)
+				return
+			}
+
+			publicIp, err = netip.ParseAddr(ipStr)
+			if err != nil {
+				m.logger.Error("UPnP public IP discovery succeeded, but the public IP it discovered could not be parsed",
+					"service", "direct.Manager",
+					"ip", ipStr,
+					"err", err,
+				)
+				return
+			}
+		}()
 
 		cancel()
 	}
