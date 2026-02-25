@@ -229,6 +229,12 @@ func (m *Manager) IsDisabled() bool {
 	return m.cfg.Disable
 }
 
+// IsPublicIpDiscoveryDisabled is whether clients should disable public IP discovery via the server.
+// By default, clients will try to discover the machine's public IP by asking the server for it.
+func (m *Manager) IsPublicIpDiscoveryDisabled() bool {
+	return m.cfg.DisablePublicIpDiscovery
+}
+
 // NotifyIpAvailable notifies the Manager that an IP address is available for use.
 // If there is not already a direct server running on that IP with the default port,
 // a new one will be started for it in the background.

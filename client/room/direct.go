@@ -91,36 +91,38 @@ func (c *Conn) runDirectAdsAndLoop() {
 
 	var publicIp netip.Addr
 
-	// Ask for public IP from the server and notify the manager of it.
-	func() {
-		msg, err := protocol.SendAndReceiveExpect[*pb.MsgPublicIp](
-			c.serverConn,
-			pb.MsgType_MSG_TYPE_GET_PUBLIC_IP,
-			&pb.MsgGetPublicIp{},
-			pb.MsgType_MSG_TYPE_PUBLIC_IP,
-		)
-		if err != nil {
-			c.logger.Error("failed to get public IP from server",
-				"service", "room.Conn",
-				"room", c.RoomName.String(),
-				"err", err,
+	if !mgr.IsPublicIpDiscoveryDisabled() {
+		// Ask for public IP from the server and notify the manager of it.
+		func() {
+			msg, err := protocol.SendAndReceiveExpect[*pb.MsgPublicIp](
+				c.serverConn,
+				pb.MsgType_MSG_TYPE_GET_PUBLIC_IP,
+				&pb.MsgGetPublicIp{},
+				pb.MsgType_MSG_TYPE_PUBLIC_IP,
 			)
-			return
-		}
+			if err != nil {
+				c.logger.Error("failed to get public IP from server",
+					"service", "room.Conn",
+					"room", c.RoomName.String(),
+					"err", err,
+				)
+				return
+			}
 
-		publicIp, err = netip.ParseAddr(msg.Payload.PublicIp)
-		if err != nil {
-			c.logger.Error("failed to parse public IP from server",
-				"service", "room.Conn",
-				"room", c.RoomName.String(),
-				"ip", msg.Payload.PublicIp,
-				"err", err,
-			)
-			return
-		}
+			publicIp, err = netip.ParseAddr(msg.Payload.PublicIp)
+			if err != nil {
+				c.logger.Error("failed to parse public IP from server",
+					"service", "room.Conn",
+					"room", c.RoomName.String(),
+					"ip", msg.Payload.PublicIp,
+					"err", err,
+				)
+				return
+			}
 
-		mgr.NotifyIpAvailable(publicIp)
-	}()
+			mgr.NotifyIpAvailable(publicIp)
+		}()
+	}
 
 	// Advertise known servers.
 	servers := mgr.GetServers()
