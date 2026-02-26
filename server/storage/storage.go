@@ -137,7 +137,7 @@ func (s *Storage) DeleteRoomByName(
 	ctx context.Context,
 	room common.NormalizedRoomName,
 ) error {
-	_, err := s.Db.ExecContext(ctx, `delete from account where room = ?`, room.String())
+	_, err := s.Db.ExecContext(ctx, `delete from room where name = ?`, room.String())
 	if err != nil {
 		return fmt.Errorf(`failed to delete room with name %q: %w`, room.String(), err)
 	}
