@@ -120,7 +120,6 @@ const (
 	MsgType_MSG_TYPE_CLIENT_CONN_METHODS MsgType = 29
 	// [C2S] Requests a token to be used for a direct connect handshake with another client.
 	// Expected: Message MSG_TYPE_DIRECT_CONN_HANDSHAKE_TOKEN.
-	// TODO Disallow creating a token whose sender is self.
 	MsgType_MSG_TYPE_GET_DIRECT_CONN_HANDSHAKE_TOKEN MsgType = 30
 	// [S2C] A direct connect handshake token.
 	MsgType_MSG_TYPE_DIRECT_CONN_HANDSHAKE_TOKEN MsgType = 31
