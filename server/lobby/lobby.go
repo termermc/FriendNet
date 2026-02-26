@@ -219,6 +219,9 @@ func (l *Lobby) authenticateClient(
 
 	finalErr = func() error {
 		msg, err := protocol.ReadExpect[*pb.MsgAuthenticate](authBidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_AUTHENTICATE)
+		if err != nil {
+			return err
+		}
 		authMsg := msg.Payload
 
 		invalidCreds := func() error {
