@@ -145,6 +145,7 @@ func CreateDirectConnection(
 		conn = ToProtoConn(qConn)
 
 		isOk := false
+		const timedOutMsg = "test timed out"
 		go func() {
 			<-ctx.Done()
 			if isOk {
@@ -157,7 +158,7 @@ func CreateDirectConnection(
 				return
 			}
 			if errors.Is(ctxErr, context.DeadlineExceeded) {
-				_ = conn.CloseWithReason("timed out")
+				_ = conn.CloseWithReason(timedOutMsg)
 				return
 			}
 
@@ -172,6 +173,11 @@ func CreateDirectConnection(
 			pb.MsgType_MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT,
 		)
 		if hsErr != nil {
+			if appErr, ok := errors.AsType[*quic.ApplicationError](hsErr); ok {
+				if appErr.ErrorMessage == timedOutMsg {
+					return nil, context.DeadlineExceeded
+				}
+			}
 			return nil, fmt.Errorf(`handshake failed when direct connecting to %q: %w`, address, hsErr)
 		}
 

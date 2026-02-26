@@ -162,7 +162,7 @@ func (c *Conn) runDirectAdsAndLoop() {
 			}
 
 			result := msg.Payload.TestResult
-			if result != pb.ConnResult_CONN_RESULT_OK {
+			if result == pb.ConnResult_CONN_RESULT_OK {
 				c.logger.Info("server verified advertised address",
 					"service", "room.Conn",
 					"room", c.RoomName.String(),
