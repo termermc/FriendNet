@@ -218,3 +218,15 @@ func (c *Client) Ping() (time.Duration, error) {
 
 	return time.Since(start), nil
 }
+
+// GetConnMethods returns a copy of the client's connection methods.
+// Note that this method creates a new slice each time it is called.
+func (c *Client) GetConnMethods() []*pb.ConnMethod {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	slice := make([]*pb.ConnMethod, 0, len(c.connMethods))
+	for _, method := range c.connMethods {
+		slice = append(slice, method)
+	}
+	return slice
+}

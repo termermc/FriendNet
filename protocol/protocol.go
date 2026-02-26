@@ -442,6 +442,14 @@ func (bidi ProtoBidi) WriteError(typ pb.ErrType, msg string) error {
 	})
 }
 
+// WriteClientNotOnlineError writes an ERR_TYPE_CLIENT_NOT_ONLINE error to the bidi stream,
+// based on the specified username.
+func (bidi ProtoBidi) WriteClientNotOnlineError(username common.NormalizedUsername) error {
+	return bidi.WriteError(pb.ErrType_ERR_TYPE_CLIENT_NOT_ONLINE,
+		"client "+username.String()+" is not online",
+	)
+}
+
 // WriteFileNotExistError writes an ERR_TYPE_FILE_NOT_EXIST error to the bidi stream,
 // based on the specified path.
 func (bidi ProtoBidi) WriteFileNotExistError(path string) error {

@@ -71,6 +71,15 @@ type Logic interface {
 		msg *protocol.TypedProtoMsg[*pb.MsgGetPublicIp],
 	) error
 
+	// OnGetClientConnMethods handles an incoming get client connection methods request.
+	// Implementations must follow the documentation on MSG_TYPE_GET_CLIENT_CONN_METHODS.
+	OnGetClientConnMethods(
+		ctx context.Context,
+		client *Client,
+		bidi protocol.ProtoBidi,
+		msg *protocol.TypedProtoMsg[*pb.MsgGetClientConnMethods],
+	) error
+
 	// OnGetDirectConnHandshakeToken handles an incoming get direct connection handshake token request.
 	// Implementations must follow the documentation on MSG_TYPE_GET_DIRECT_CONN_HANDSHAKE_TOKEN.
 	OnGetDirectConnHandshakeToken(
@@ -254,6 +263,22 @@ func (l LogicImpl) OnGetPublicIp(_ context.Context, client *Client, bidi protoco
 
 	return bidi.Write(pb.MsgType_MSG_TYPE_PUBLIC_IP, &pb.MsgPublicIp{
 		PublicIp: addr,
+	})
+}
+
+func (l LogicImpl) OnGetClientConnMethods(_ context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgGetClientConnMethods]) error {
+	username, usernameOk := common.NormalizeUsername(msg.Payload.Username)
+	if !usernameOk {
+		return bidi.WriteError(pb.ErrType_ERR_TYPE_INVALID_FIELDS, "invalid username")
+	}
+
+	client, has := client.Room.GetClientByUsername(username)
+	if !has {
+		return bidi.WriteClientNotOnlineError(username)
+	}
+
+	return bidi.Write(pb.MsgType_MSG_TYPE_CLIENT_CONN_METHODS, &pb.MsgClientConnMethods{
+		Methods: client.GetConnMethods(),
 	})
 }
 
