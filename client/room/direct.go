@@ -238,6 +238,26 @@ func (c *Conn) runDirectAdsAndLoop() {
 			}()
 		}
 	}()
+
+	// For the rest of the loop, accept direct connections.
+	for {
+		conn, err := c.directPart.AcceptConn()
+		if err != nil {
+			if errors.Is(err, direct.ErrPartitionClosed) {
+				// No more connections to accept.
+				return
+			}
+
+			c.logger.Error("failed to accept direct connection",
+				"service", "room.Conn",
+				"room", c.RoomName.String(),
+				"err", err,
+			)
+			continue
+		}
+
+		go c.incomingDirectConnHandler(conn)
+	}
 }
 
 func (c *Conn) incomingDirectConnHandler(incomingConn *direct.IncomingDirectConn) {
@@ -249,6 +269,7 @@ func (c *Conn) incomingDirectConnHandler(incomingConn *direct.IncomingDirectConn
 			"token", incomingConn.Handshake.Token,
 			"remote_addr", incomingConn.RemoteAddr().String(),
 		)
+		_ = incomingConn.InternalError()
 		return
 	}
 
