@@ -7,7 +7,7 @@ import (
 
 // MsgTypeToEmptyMsg returns the appropriate empty message for the specified message type.
 // The result can be unmarshalled with proto.UnmarshalMerge.
-// The type is unknown, returns nil.
+// If the type is unknown, returns nil.
 func MsgTypeToEmptyMsg(typ pb.MsgType) proto.Message {
 	switch typ {
 	case pb.MsgType_MSG_TYPE_PING:
@@ -80,6 +80,8 @@ func MsgTypeToEmptyMsg(typ pb.MsgType) proto.Message {
 		return &pb.MsgDirectConnHandshake{}
 	case pb.MsgType_MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT:
 		return &pb.MsgDirectConnHandshakeResult{}
+	case pb.MsgType_MSG_TYPE_CHANGE_ACCOUNT_PASSWORD:
+		return &pb.MsgChangeAccountPassword{}
 	default:
 		return nil
 	}

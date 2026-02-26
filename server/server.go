@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"sync"
 
+	"friendnet.org/common/password"
 	"friendnet.org/protocol"
 	"friendnet.org/server/direct"
 	"friendnet.org/server/lobby"
@@ -45,6 +46,7 @@ func NewServer(
 	logger *slog.Logger,
 	storage *storage.Storage,
 	connMethodSupport direct.ConnMethodSupport,
+	passReqs password.Requirements,
 ) (*Server, error) {
 	if storage == nil {
 		panic("storage cannot be nil")
@@ -57,6 +59,7 @@ func NewServer(
 		logger,
 		storage,
 		connMethodSupport,
+		passReqs,
 		room.NewLogicImpl(logger),
 	)
 	if err != nil {

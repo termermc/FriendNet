@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"friendnet.org/common"
+	"friendnet.org/common/password"
 	"friendnet.org/server/direct"
 	"friendnet.org/server/storage"
 )
@@ -24,6 +25,7 @@ type Manager struct {
 
 	storage           *storage.Storage
 	connMethodSupport direct.ConnMethodSupport
+	passReqs          password.Requirements
 
 	logic Logic
 
@@ -38,6 +40,7 @@ func NewManager(
 	logger *slog.Logger,
 	storage *storage.Storage,
 	connMethodSupport direct.ConnMethodSupport,
+	passReqs password.Requirements,
 	logic Logic,
 ) (*Manager, error) {
 	m := &Manager{
@@ -45,6 +48,7 @@ func NewManager(
 
 		storage:           storage,
 		connMethodSupport: connMethodSupport,
+		passReqs:          passReqs,
 
 		logic: logic,
 
@@ -61,6 +65,7 @@ func NewManager(
 			logger,
 			storage,
 			connMethodSupport,
+			passReqs,
 			room.Name,
 			logic,
 		)
@@ -138,6 +143,7 @@ func (m *Manager) CreateRoom(ctx context.Context, name common.NormalizedRoomName
 		m.logger,
 		m.storage,
 		m.connMethodSupport,
+		m.passReqs,
 		name,
 		m.logic,
 	)

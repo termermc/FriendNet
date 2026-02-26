@@ -89,6 +89,8 @@ func (c *Client) msgHandler(bidi protocol.ProtoBidi, firstMsg *protocol.UntypedP
 		return c.logic.OnGetDirectConnHandshakeToken(ctx, c, bidi, protocol.ToTyped[*pb.MsgGetDirectConnHandshakeToken](firstMsg))
 	case pb.MsgType_MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN:
 		return c.logic.OnRedeemConnHandshakeToken(ctx, c, bidi, protocol.ToTyped[*pb.MsgRedeemConnHandshakeToken](firstMsg))
+	case pb.MsgType_MSG_TYPE_CHANGE_ACCOUNT_PASSWORD:
+		return c.logic.OnChangeAccountPassword(ctx, c, bidi, protocol.ToTyped[*pb.MsgChangeAccountPassword](firstMsg))
 
 	default:
 		c.logger.Error("client sent unknown message type",

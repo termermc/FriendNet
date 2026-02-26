@@ -13,6 +13,7 @@ import (
 
 	"connectrpc.com/connect"
 	"friendnet.org/common"
+	"friendnet.org/common/password"
 	"friendnet.org/protocol"
 	"friendnet.org/protocol/pb/serverrpc/v1/serverrpcv1connect"
 	"friendnet.org/server"
@@ -65,7 +66,19 @@ func main() {
 		)
 	}
 
-	srv, err := server.NewServer(logger, storageInst, connMethodSupport)
+	// Server-wide password requirements.
+	passReqs := password.NewRequirements(
+		password.WithMinLen(8),
+		password.WithMaxLen(64),
+		password.WithCannotContainUsername(),
+	)
+
+	srv, err := server.NewServer(
+		logger,
+		storageInst,
+		connMethodSupport,
+		passReqs,
+	)
 	if err != nil {
 		logger.Error("failed to create server", "err", err)
 		os.Exit(1)

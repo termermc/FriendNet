@@ -155,6 +155,10 @@ enum MsgType {
     MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT = 35;
 
     // [C2S] Requests changing the client's account password.
+    // Expected: Either:
+    //  - Message MSG_TYPE_ACKNOWLEDGED if successful.
+    //  - Message MSG_TYPE_ERROR of ERR_TYPE_PERMISSION_DENIED if the specified current password is incorrect.
+    //  - Message MSG_TYPE_ERROR of ERR_TYPE_INVALID_FIELDS if the new password is empty or otherwise does not follow the server's password requirements.
     MSG_TYPE_CHANGE_ACCOUNT_PASSWORD = 36;
 }
 
@@ -609,4 +613,14 @@ message MsgDirectConnHandshakeResult {
     // The result.
     // If the sender was the server, or not DIRECT_CONN_HANDSHAKE_RESULT_OK, the connection will soon be closed.
     DirectConnHandshakeResult result = 1;
+}
+
+// See MSG_TYPE_CHANGE_ACCOUNT_PASSWORD.
+message MsgChangeAccountPassword {
+    // The client's current account password.
+    string current_password = 1;
+
+    // The new password.
+    // Must not be empty.
+    string new_password = 2;
 }

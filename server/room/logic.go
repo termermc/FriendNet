@@ -2,11 +2,13 @@ package room
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"strings"
 	"time"
 
 	"friendnet.org/common"
+	"friendnet.org/common/password"
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
 )
@@ -96,6 +98,15 @@ type Logic interface {
 		client *Client,
 		bidi protocol.ProtoBidi,
 		msg *protocol.TypedProtoMsg[*pb.MsgRedeemConnHandshakeToken],
+	) error
+
+	// OnChangeAccountPassword handles an incoming change account password request.
+	// Implementations must follow the documentation on MSG_TYPE_CHANGE_ACCOUNT_PASSWORD.
+	OnChangeAccountPassword(
+		ctx context.Context,
+		client *Client,
+		bidi protocol.ProtoBidi,
+		msg *protocol.TypedProtoMsg[*pb.MsgChangeAccountPassword],
 	) error
 }
 
@@ -305,4 +316,28 @@ func (l LogicImpl) OnRedeemConnHandshakeToken(_ context.Context, client *Client,
 		pb.MsgType_MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN_RESULT,
 		client.Room.TokenManager.Redeem(client.Username, msg.Payload.Token),
 	)
+}
+
+func (l LogicImpl) OnChangeAccountPassword(ctx context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgChangeAccountPassword]) error {
+	curPass := msg.Payload.CurrentPassword
+	newPass := msg.Payload.NewPassword
+
+	matches, err := client.Room.VerifyAccountPassword(ctx, client.Username, curPass)
+	if err != nil {
+		return err
+	}
+
+	if !matches {
+		return bidi.WriteError(pb.ErrType_ERR_TYPE_PERMISSION_DENIED, "incorrect current password")
+	}
+
+	err = client.Room.UpdateAccountPassword(ctx, client.Username, newPass)
+	if err != nil {
+		if passErr, ok := errors.AsType[password.Error](err); ok {
+			return bidi.WriteError(pb.ErrType_ERR_TYPE_INVALID_FIELDS, passErr.Error())
+		}
+		return err
+	}
+
+	return bidi.WriteAck()
 }

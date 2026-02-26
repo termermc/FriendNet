@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"friendnet.org/common"
+	pass "friendnet.org/common/password"
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
 	"friendnet.org/server/direct"
@@ -33,6 +34,7 @@ type Room struct {
 
 	storage           *storage.Storage
 	connMethodSupport direct.ConnMethodSupport
+	passReqs          pass.Requirements
 
 	// The room's name.
 	Name common.NormalizedRoomName
@@ -57,6 +59,7 @@ func NewRoom(
 	logger *slog.Logger,
 	storage *storage.Storage,
 	connMethodSupport direct.ConnMethodSupport,
+	passReqs pass.Requirements,
 	name common.NormalizedRoomName,
 	logic Logic,
 ) *Room {
@@ -67,6 +70,7 @@ func NewRoom(
 
 		storage:           storage,
 		connMethodSupport: connMethodSupport,
+		passReqs:          passReqs,
 
 		Name: name,
 
@@ -257,6 +261,7 @@ func (r *Room) GetClientByUsername(username common.NormalizedUsername) (*Client,
 
 // CreateAccount creates a new account in the room.
 // Returns ErrAccountExists if an account with the same username already exists.
+// Returns a password.Error if the password does not meet the room's requirements.
 func (r *Room) CreateAccount(ctx context.Context, username common.NormalizedUsername, password string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -276,7 +281,7 @@ func (r *Room) CreateAccount(ctx context.Context, username common.NormalizedUser
 		return ErrAccountExists
 	}
 
-	hash, err := mcfpassword.HashPassword(password)
+	hash, err := pass.HashWithRequirements(username, password, r.passReqs)
 	if err != nil {
 		return fmt.Errorf(`failed to hash password for account %q@%q in CreateAccount: %w`,
 			username.String(),
@@ -330,6 +335,9 @@ func (r *Room) DeleteAccount(ctx context.Context, username common.NormalizedUser
 	return nil
 }
 
+// UpdateAccountPassword updates the password of an account in the room.
+// If the account does not exist, returns ErrNoSuchAccount.
+// Returns a password.Error if the password does not meet the room's requirements.
 func (r *Room) UpdateAccountPassword(ctx context.Context, username common.NormalizedUsername, password string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -337,7 +345,7 @@ func (r *Room) UpdateAccountPassword(ctx context.Context, username common.Normal
 		return ErrRoomClosed
 	}
 
-	hash, err := mcfpassword.HashPassword(password)
+	hash, err := pass.HashWithRequirements(username, password, r.passReqs)
 	if err != nil {
 		return fmt.Errorf(`failed to hash password for account %q@%q in UpdateAccountPassword: %w`,
 			username.String(),
@@ -368,6 +376,62 @@ func (r *Room) UpdateAccountPassword(ctx context.Context, username common.Normal
 	}
 
 	return nil
+}
+
+// VerifyAccountPassword verifies a password for an account in the room.
+// If the account does not exist, returns ErrNoSuchAccount.
+// Returns true if the password matches, false otherwise.
+func (r *Room) VerifyAccountPassword(ctx context.Context, username common.NormalizedUsername, password string) (bool, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.isClosed {
+		return false, ErrRoomClosed
+	}
+
+	record, has, err := r.storage.GetAccountByRoomAndUsername(ctx, r.Name, username)
+	if err != nil {
+		return false, fmt.Errorf(`failed to check if account %q@%q exists in VerifyAccountPassword: %w`,
+			username.String(),
+			r.Name.String(),
+			err,
+		)
+	}
+	if !has {
+		return false, ErrNoSuchAccount
+	}
+
+	matches, needsRehash, err := mcfpassword.VerifyPassword(password, record.PasswordHash)
+	if err != nil {
+		return false, fmt.Errorf(`failed to verify password for account %q@%q in VerifyAccountPassword: %w`,
+			username.String(),
+			r.Name.String(),
+			err,
+		)
+	}
+
+	// Rehash if needed.
+	if needsRehash {
+		var hash string
+		hash, err = mcfpassword.HashPassword(password)
+		if err != nil {
+			return false, fmt.Errorf(`failed to rehash password for account %q@%q in VerifyAccountPassword: %w`,
+				username.String(),
+				r.Name.String(),
+				err,
+			)
+		}
+
+		err = r.storage.UpdateAccountPasswordHash(ctx, r.Name, username, hash)
+		if err != nil {
+			return false, fmt.Errorf(`failed to update rehashed password for account %q@%q in VerifyAccountPassword: %w`,
+				username.String(),
+				r.Name.String(),
+				err,
+			)
+		}
+	}
+
+	return matches, nil
 }
 
 // handleConnect performs logic that needs to be done after a client connects.

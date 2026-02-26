@@ -138,6 +138,10 @@ const (
 	// [C2C, C2S] The result of the direct connect handshake.
 	MsgType_MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT MsgType = 35
 	// [C2S] Requests changing the client's account password.
+	// Expected: Either:
+	//   - Message MSG_TYPE_ACKNOWLEDGED if successful.
+	//   - Message MSG_TYPE_ERROR of ERR_TYPE_PERMISSION_DENIED if the specified current password is incorrect.
+	//   - Message MSG_TYPE_ERROR of ERR_TYPE_INVALID_FIELDS if the new password is empty or otherwise does not follow the server's password requirements.
 	MsgType_MSG_TYPE_CHANGE_ACCOUNT_PASSWORD MsgType = 36
 )
 
@@ -2585,6 +2589,62 @@ func (x *MsgDirectConnHandshakeResult) GetResult() DirectConnHandshakeResult {
 	return DirectConnHandshakeResult_DIRECT_CONN_HANDSHAKE_RESULT_UNSPECIFIED
 }
 
+// See MSG_TYPE_CHANGE_ACCOUNT_PASSWORD.
+type MsgChangeAccountPassword struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The client's current account password.
+	CurrentPassword string `protobuf:"bytes,1,opt,name=current_password,json=currentPassword,proto3" json:"current_password,omitempty"`
+	// The new password.
+	// Must not be empty.
+	NewPassword   string `protobuf:"bytes,2,opt,name=new_password,json=newPassword,proto3" json:"new_password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MsgChangeAccountPassword) Reset() {
+	*x = MsgChangeAccountPassword{}
+	mi := &file_pb_v1_protocol_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MsgChangeAccountPassword) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgChangeAccountPassword) ProtoMessage() {}
+
+func (x *MsgChangeAccountPassword) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_v1_protocol_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MsgChangeAccountPassword.ProtoReflect.Descriptor instead.
+func (*MsgChangeAccountPassword) Descriptor() ([]byte, []int) {
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *MsgChangeAccountPassword) GetCurrentPassword() string {
+	if x != nil {
+		return x.CurrentPassword
+	}
+	return ""
+}
+
+func (x *MsgChangeAccountPassword) GetNewPassword() string {
+	if x != nil {
+		return x.NewPassword
+	}
+	return ""
+}
+
 var File_pb_v1_protocol_proto protoreflect.FileDescriptor
 
 const file_pb_v1_protocol_proto_rawDesc = "" +
@@ -2693,7 +2753,10 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\tmethod_id\x18\x01 \x01(\tR\bmethodId\x12\x14\n" +
 	"\x05token\x18\x02 \x01(\tR\x05token\"X\n" +
 	"\x1cMsgDirectConnHandshakeResult\x128\n" +
-	"\x06result\x18\x01 \x01(\x0e2 .pb.v1.DirectConnHandshakeResultR\x06result*\xf9\b\n" +
+	"\x06result\x18\x01 \x01(\x0e2 .pb.v1.DirectConnHandshakeResultR\x06result\"h\n" +
+	"\x18MsgChangeAccountPassword\x12)\n" +
+	"\x10current_password\x18\x01 \x01(\tR\x0fcurrentPassword\x12!\n" +
+	"\fnew_password\x18\x02 \x01(\tR\vnewPassword*\xf9\b\n" +
 	"\aMsgType\x12\x18\n" +
 	"\x14MSG_TYPE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rMSG_TYPE_PING\x10\x01\x12\x11\n" +
@@ -2792,7 +2855,7 @@ func file_pb_v1_protocol_proto_rawDescGZIP() []byte {
 }
 
 var file_pb_v1_protocol_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
-var file_pb_v1_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
+var file_pb_v1_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 39)
 var file_pb_v1_protocol_proto_goTypes = []any{
 	(MsgType)(0),                              // 0: pb.v1.MsgType
 	(ErrType)(0),                              // 1: pb.v1.ErrType
@@ -2839,6 +2902,7 @@ var file_pb_v1_protocol_proto_goTypes = []any{
 	(*MsgRedeemConnHandshakeTokenResult)(nil), // 42: pb.v1.MsgRedeemConnHandshakeTokenResult
 	(*MsgDirectConnHandshake)(nil),            // 43: pb.v1.MsgDirectConnHandshake
 	(*MsgDirectConnHandshakeResult)(nil),      // 44: pb.v1.MsgDirectConnHandshakeResult
+	(*MsgChangeAccountPassword)(nil),          // 45: pb.v1.MsgChangeAccountPassword
 }
 var file_pb_v1_protocol_proto_depIdxs = []int32{
 	1,  // 0: pb.v1.MsgError.type:type_name -> pb.v1.ErrType
@@ -2876,7 +2940,7 @@ func file_pb_v1_protocol_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pb_v1_protocol_proto_rawDesc), len(file_pb_v1_protocol_proto_rawDesc)),
 			NumEnums:      7,
-			NumMessages:   38,
+			NumMessages:   39,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
