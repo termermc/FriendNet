@@ -48,7 +48,7 @@ func NewServer(
 	listener, err := protocol.NewQuicProtoListener(addrPort.String(), &tls.Config{
 		MinVersion:   tls.VersionTLS13,
 		Certificates: []tls.Certificate{cert},
-		NextProtos:   []string{protocol.AlpnProtoName},
+		NextProtos:   []string{protocol.DirectAlpnProtoName},
 	})
 	if err != nil {
 		return nil, err

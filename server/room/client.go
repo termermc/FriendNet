@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net"
 	"runtime/debug"
+	"sync"
 	"time"
 
 	"friendnet.org/common"
@@ -19,6 +20,8 @@ const ClientPingInterval = 10 * time.Second
 
 // Client is an authenticated client connected to a room.
 type Client struct {
+	mu sync.RWMutex
+
 	logger *slog.Logger
 	conn   protocol.ProtoConn
 
@@ -27,6 +30,9 @@ type Client struct {
 	Username common.NormalizedUsername
 
 	logic Logic
+
+	// A mapping of connection method IDs to their corresponding methods.
+	connMethods map[string]*pb.ConnMethod
 }
 
 // NewClient creates a new room client.
@@ -49,6 +55,8 @@ func NewClient(
 		Username: username,
 
 		logic: logic,
+
+		connMethods: make(map[string]*pb.ConnMethod),
 	}
 }
 
