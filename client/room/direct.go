@@ -75,7 +75,7 @@ func (c *Conn) mkAdConnMethod(publicIp netip.Addr, addrPort netip.AddrPort) *pb.
 	}
 
 	return &pb.MsgAdvertiseConnMethod{
-		Id:       c.directPart.CreateMethodId(c.mkMethodId(addrPort)),
+		Id:       c.mkMethodId(addrPort),
 		Type:     methodType,
 		Address:  addrPort.String(),
 		Priority: priority,
@@ -124,12 +124,9 @@ func (c *Conn) runDirectAdsAndLoop() {
 		}()
 	}
 
-	// Advertise known servers.
-	servers := mgr.GetServers()
-	for _, server := range servers {
+	advertiseInBg := func(server *direct.Server) {
 		method := c.mkAdConnMethod(publicIp, server.AddrPort)
 
-		// Advertise in the background.
 		go func() {
 			defer func() {
 				if rec := recover(); rec != nil {
@@ -166,6 +163,14 @@ func (c *Conn) runDirectAdsAndLoop() {
 
 			result := msg.Payload.TestResult
 			if result != pb.ConnResult_CONN_RESULT_OK {
+				c.logger.Info("server verified advertised address",
+					"service", "room.Conn",
+					"room", c.RoomName.String(),
+					"method_type", method.Type.String(),
+					"address", server.AddrPort.String(),
+					"priority", method.Priority,
+				)
+			} else {
 				c.logger.Error("server said it could not connect to advertised address",
 					"service", "room.Conn",
 					"room", c.RoomName.String(),
@@ -181,8 +186,58 @@ func (c *Conn) runDirectAdsAndLoop() {
 		}()
 	}
 
-	// TODO Listen for new servers from partition.
-	// TODO Listen for server closures from partition and remove advertisements.
+	// Advertise known servers.
+	servers := mgr.GetServers()
+	for _, server := range servers {
+		advertiseInBg(server)
+	}
+
+	// Listen for new direct methods from partition.
+	go func() {
+		for {
+			server, err := c.directPart.WaitServerOpen()
+			if err != nil {
+				return
+			}
+
+			advertiseInBg(server)
+		}
+	}()
+
+	// Listen for direct methods closing from partition.
+	go func() {
+		for {
+			server, err := c.directPart.WaitServerClose()
+			if err != nil {
+				return
+			}
+
+			mtdId := c.mkMethodId(server.AddrPort)
+
+			// TODO Remove from internal method map.
+
+			// Remove advertisement in background.
+			go func() {
+				_, err = protocol.SendAndReceiveExpect[*pb.MsgAcknowledged](
+					c.serverConn,
+					pb.MsgType_MSG_TYPE_REMOVE_CONN_METHOD,
+					&pb.MsgRemoveConnMethod{
+						Id: mtdId,
+					},
+					pb.MsgType_MSG_TYPE_ACKNOWLEDGED,
+				)
+				if err != nil {
+					c.logger.Error("failed to remove direct method advertisement",
+						"service", "room.Conn",
+						"room", c.RoomName.String(),
+						"err", err,
+						"method_id", mtdId,
+					)
+					return
+				}
+			}()
+		}
+	}()
 }
 
 func (c *Conn) incomingDirectConnHandler(incomingConn *direct.IncomingDirectConn) {

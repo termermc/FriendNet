@@ -88,13 +88,14 @@ func NewManager(
 
 func (m *Manager) lockAndRemoveServer(addrPort netip.AddrPort) {
 	m.mu.Lock()
-	_, has := m.servers[addrPort]
+	server, has := m.servers[addrPort]
 	if has {
 		delete(m.servers, addrPort)
+		for _, part := range m.partitions {
+			go part.notifyServerClose(server)
+		}
 	}
 	m.mu.Unlock()
-
-	// TODO Broadcast to some kind of listeners or partitions that the server is gone.
 }
 
 func (m *Manager) startServers() {
@@ -153,7 +154,7 @@ func (m *Manager) startServers() {
 		probedIps = common.GetUnicastIpsFromInterfaces(false, m.cfg.AdvertisePrivateIps)
 	}
 
-	// Collect addresses to listen on and advertise.
+	// Collect addresses to listen on.
 	listenAddrPorts := make([]netip.AddrPort, 0, 1+len(addrPorts)+len(probedIps))
 	if publicIp.IsValid() {
 		listenAddrPorts = append(listenAddrPorts, netip.AddrPortFrom(publicIp, defaultPort))
@@ -190,6 +191,9 @@ func (m *Manager) startServers() {
 	m.mu.Lock()
 	for _, server := range servers {
 		m.servers[server.AddrPort] = server
+		for _, part := range m.partitions {
+			go part.notifyServerOpen(server)
+		}
 	}
 	m.mu.Unlock()
 }
@@ -266,6 +270,9 @@ func (m *Manager) NotifyIpAvailable(ip netip.Addr) {
 			return
 		}
 		m.servers[server.AddrPort] = server
+		for _, part := range m.partitions {
+			go part.notifyServerOpen(server)
+		}
 		m.mu.Unlock()
 	}()
 }
@@ -327,9 +334,12 @@ func (m *Manager) CreatePartition(name string) (*Partition, error) {
 		ctx:       ctx,
 		ctxCancel: ctxCancel,
 
-		id:       hash,
-		m:        m,
-		connChan: make(chan *IncomingDirectConn),
+		id: hash,
+		m:  m,
+
+		connChan:        make(chan *IncomingDirectConn),
+		serverOpenChan:  make(chan *Server),
+		serverCloseChan: make(chan *Server),
 	}
 	m.partitions[hash] = partition
 	return partition, nil
@@ -416,9 +426,12 @@ type Partition struct {
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 
-	id       string
-	m        *Manager
-	connChan chan *IncomingDirectConn
+	id string
+	m  *Manager
+
+	connChan        chan *IncomingDirectConn
+	serverOpenChan  chan *Server
+	serverCloseChan chan *Server
 }
 
 // Close closes the partition and stops listening for incoming connections.
@@ -431,8 +444,11 @@ func (p *Partition) Close() error {
 	default:
 	}
 
-	close(p.connChan)
+	// Cancel before closing channels to unblock waiting channel sends without a panic.
 	p.ctxCancel()
+	close(p.connChan)
+	close(p.serverOpenChan)
+	close(p.serverCloseChan)
 
 	p.m.mu.Lock()
 	delete(p.m.partitions, p.id)
@@ -447,8 +463,23 @@ func (p *Partition) CreateMethodId(id string) string {
 	return p.id + ":" + id
 }
 
+func (p *Partition) notifyServerOpen(server *Server) {
+	select {
+	case <-p.ctx.Done():
+		return
+	case p.serverOpenChan <- server:
+	}
+}
+func (p *Partition) notifyServerClose(server *Server) {
+	select {
+	case <-p.ctx.Done():
+		return
+	case p.serverCloseChan <- server:
+	}
+}
+
 // sendConn sends a new incoming direct connection to the partition.
-// This method will block until the connection is received.
+// This method will block until the connection is received or the context is done.
 func (p *Partition) sendConn(conn *IncomingDirectConn) {
 	select {
 	case <-p.ctx.Done():
@@ -469,5 +500,30 @@ func (p *Partition) AcceptConn() (*IncomingDirectConn, error) {
 		return nil, ErrPartitionClosed
 	case conn := <-p.connChan:
 		return conn, nil
+	}
+}
+
+// WaitServerOpen waits for a server to be open, and then returns it.
+// If the partition is closed, it returns ErrPartitionClosed.
+// The returned *Server is never nil.
+func (p *Partition) WaitServerOpen() (*Server, error) {
+	select {
+	case <-p.ctx.Done():
+		return nil, ErrPartitionClosed
+	case server := <-p.serverOpenChan:
+		return server, nil
+	}
+}
+
+// WaitServerClose waits for a server to be closed, and then returns it.
+// The returned server must not have any methods called on it.
+// If the partition is closed, it returns ErrPartitionClosed.
+// The returned *Server is never nil.
+func (p *Partition) WaitServerClose() (*Server, error) {
+	select {
+	case <-p.ctx.Done():
+		return nil, ErrPartitionClosed
+	case server := <-p.serverCloseChan:
+		return server, nil
 	}
 }

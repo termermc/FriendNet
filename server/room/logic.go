@@ -53,6 +53,15 @@ type Logic interface {
 		msg *protocol.TypedProtoMsg[*pb.MsgAdvertiseConnMethod],
 	) error
 
+	// OnRemoveConnMethod handles an incoming remove connection method request.
+	// Implementations must follow the documentation on MSG_TYPE_REMOVE_CONN_METHOD.
+	OnRemoveConnMethod(
+		ctx context.Context,
+		client *Client,
+		bidi protocol.ProtoBidi,
+		msg *protocol.TypedProtoMsg[*pb.MsgRemoveConnMethod],
+	) error
+
 	// OnGetPublicIp handles an incoming get public IP request.
 	// Implementations must follow the documentation on MSG_TYPE_GET_PUBLIC_IP.
 	OnGetPublicIp(
@@ -162,7 +171,7 @@ func (l LogicImpl) OnAdvertiseConnMethod(ctx context.Context, client *Client, bi
 
 	// Try to connect.
 	connRes := func() pb.ConnResult {
-		if client.Room.connMethodSupport.IsSupported(ad.Type) {
+		if !client.Room.connMethodSupport.IsSupported(ad.Type) {
 			return pb.ConnResult_CONN_RESULT_METHOD_NOT_SUPPORTED
 		}
 
@@ -209,6 +218,19 @@ func (l LogicImpl) OnAdvertiseConnMethod(ctx context.Context, client *Client, bi
 		AlreadyExists: false,
 		TestResult:    connRes,
 	})
+}
+
+func (l LogicImpl) OnRemoveConnMethod(_ context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgRemoveConnMethod]) error {
+	client.mu.Lock()
+	_, has := client.connMethods[msg.Payload.Id]
+	if !has {
+		client.mu.Unlock()
+		return bidi.WriteError(pb.ErrType_ERR_TYPE_INVALID_FIELDS, "no such method")
+	}
+	delete(client.connMethods, msg.Payload.Id)
+	client.mu.Unlock()
+
+	return bidi.WriteAck()
 }
 
 func (l LogicImpl) OnGetPublicIp(_ context.Context, client *Client, bidi protocol.ProtoBidi, _ *protocol.TypedProtoMsg[*pb.MsgGetPublicIp]) error {
