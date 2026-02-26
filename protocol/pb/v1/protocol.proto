@@ -392,6 +392,10 @@ message MsgGetOnlineUsers {
 message OnlineUserInfo {
     // The user's username.
     string username = 1;
+
+    // TODO Include a map of arbitrary attributes.
+    // Allow these to be updated at any time.
+    // These could hold things like an avatar path.
 }
 
 // See MSG_TYPE_ONLINE_USERS.
