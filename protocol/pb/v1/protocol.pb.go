@@ -102,6 +102,7 @@ const (
 	// [C2C] Requests another client to connect to the sender.
 	// Typically used to establish a direct connection for future C2C messages.
 	// The client should reply only after a connection attempt succeeds or fails.
+	// This message only makes sense to be sent over a proxy stream.
 	// Expected: Message MSG_TYPE_DIRECT_CONN_RESULT.
 	MsgType_MSG_TYPE_CONNECT_TO_ME MsgType = 24
 	// [C2C] The result of a client attempting to direct connect to another client.
