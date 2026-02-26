@@ -79,6 +79,15 @@ type Logic interface {
 		bidi protocol.ProtoBidi,
 		msg *protocol.TypedProtoMsg[*pb.MsgGetDirectConnHandshakeToken],
 	) error
+
+	// OnRedeemConnHandshakeToken handles an incoming redeem direct connection handshake token request.
+	// Implementations must follow the documentation on MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN.
+	OnRedeemConnHandshakeToken(
+		ctx context.Context,
+		client *Client,
+		bidi protocol.ProtoBidi,
+		msg *protocol.TypedProtoMsg[*pb.MsgRedeemConnHandshakeToken],
+	) error
 }
 
 type LogicImpl struct {
@@ -264,4 +273,11 @@ func (l LogicImpl) OnGetDirectConnHandshakeToken(_ context.Context, client *Clie
 	return bidi.Write(pb.MsgType_MSG_TYPE_DIRECT_CONN_HANDSHAKE_TOKEN, &pb.MsgDirectConnHandshakeToken{
 		Token: token,
 	})
+}
+
+func (l LogicImpl) OnRedeemConnHandshakeToken(_ context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgRedeemConnHandshakeToken]) error {
+	return bidi.Write(
+		pb.MsgType_MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN_RESULT,
+		client.Room.TokenManager.Redeem(client.Username, msg.Payload.Token),
+	)
 }
