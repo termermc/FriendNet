@@ -60,6 +60,9 @@ func NewClient(
 	}
 }
 
+// msgHandler handles a message from a client.
+// It must not close the bidi passed to it.
+// After returning, the bidi will be closed.
 func (c *Client) msgHandler(bidi protocol.ProtoBidi, firstMsg *protocol.UntypedProtoMsg) error {
 	ctx := context.Background()
 
@@ -78,6 +81,8 @@ func (c *Client) msgHandler(bidi protocol.ProtoBidi, firstMsg *protocol.UntypedP
 		return c.logic.OnGetOnlineUsers(ctx, c, bidi, protocol.ToTyped[*pb.MsgGetOnlineUsers](firstMsg))
 	case pb.MsgType_MSG_TYPE_GET_PUBLIC_IP:
 		return c.logic.OnGetPublicIp(ctx, c, bidi, protocol.ToTyped[*pb.MsgGetPublicIp](firstMsg))
+	case pb.MsgType_MSG_TYPE_GET_DIRECT_CONN_HANDSHAKE_TOKEN:
+		return c.logic.OnGetDirectConnHandshakeToken(ctx, c, bidi, protocol.ToTyped[*pb.MsgGetDirectConnHandshakeToken](firstMsg))
 
 	default:
 		c.logger.Error("client sent unknown message type",
@@ -95,6 +100,9 @@ func (c *Client) msgHandler(bidi protocol.ProtoBidi, firstMsg *protocol.UntypedP
 	}
 }
 
+// bidiHandler handles a new C2S bidi.
+// It must not close the bidi passed to it.
+// After returning, the bidi will be closed.
 func (c *Client) bidiHandler(bidi protocol.ProtoBidi) {
 	// Read first message.
 	firstMsg, firstErr := bidi.Read()

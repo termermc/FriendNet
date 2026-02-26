@@ -17,7 +17,7 @@ import (
 // Handlers do not need to close bidis; they are closed by the caller after the handler returns.
 type Logic interface {
 	// OnPing handles an incoming ping request.
-	// Implementations must write a MSG_TYPE_PONG before returning.
+	// Implementations must follow the documentation on MSG_TYPE_PING.
 	OnPing(
 		ctx context.Context,
 		client *Client,
@@ -43,11 +43,22 @@ type Logic interface {
 		msg *protocol.TypedProtoMsg[*pb.MsgGetOnlineUsers],
 	) error
 
+	// OnGetPublicIp handles an incoming get public IP request.
+	// Implementations must follow the documentation on MSG_TYPE_GET_PUBLIC_IP.
 	OnGetPublicIp(
 		ctx context.Context,
 		client *Client,
 		bidi protocol.ProtoBidi,
 		msg *protocol.TypedProtoMsg[*pb.MsgGetPublicIp],
+	) error
+
+	// OnGetDirectConnHandshakeToken handles an incoming get direct connection handshake token request.
+	// Implementations must follow the documentation on MSG_TYPE_GET_DIRECT_CONN_HANDSHAKE_TOKEN.
+	OnGetDirectConnHandshakeToken(
+		ctx context.Context,
+		client *Client,
+		bidi protocol.ProtoBidi,
+		msg *protocol.TypedProtoMsg[*pb.MsgGetDirectConnHandshakeToken],
 	) error
 }
 
@@ -124,7 +135,7 @@ func (l LogicImpl) OnGetOnlineUsers(_ context.Context, client *Client, bidi prot
 	return nil
 }
 
-func (l LogicImpl) OnGetPublicIp(ctx context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgGetPublicIp]) error {
+func (l LogicImpl) OnGetPublicIp(_ context.Context, client *Client, bidi protocol.ProtoBidi, _ *protocol.TypedProtoMsg[*pb.MsgGetPublicIp]) error {
 	remote := client.RemoteAddr().String()
 
 	var addr string
@@ -136,5 +147,23 @@ func (l LogicImpl) OnGetPublicIp(ctx context.Context, client *Client, bidi proto
 
 	return bidi.Write(pb.MsgType_MSG_TYPE_PUBLIC_IP, &pb.MsgPublicIp{
 		PublicIp: addr,
+	})
+}
+
+func (l LogicImpl) OnGetDirectConnHandshakeToken(_ context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgGetDirectConnHandshakeToken]) error {
+	target, usernameOk := common.NormalizeUsername(msg.Payload.Username)
+	if !usernameOk {
+		return bidi.WriteError(pb.ErrType_ERR_TYPE_INVALID_FIELDS, "invalid target username")
+	}
+
+	if target == client.Username {
+		return bidi.WriteError(pb.ErrType_ERR_TYPE_INVALID_FIELDS, "cannot issue a handshake token whose target is yourself")
+	}
+
+	room := client.Room
+	token := room.TokenManager.NewClientToken(room.Name, client.Username, target)
+
+	return bidi.Write(pb.MsgType_MSG_TYPE_DIRECT_CONN_HANDSHAKE_TOKEN, &pb.MsgDirectConnHandshakeToken{
+		Token: token,
 	})
 }

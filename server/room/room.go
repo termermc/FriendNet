@@ -35,6 +35,9 @@ type Room struct {
 	// The room's name.
 	Name common.NormalizedRoomName
 
+	// The room's token manager.
+	TokenManager *TokenManager
+
 	// The room's context.
 	// Canceled when it is closed.
 	Context   context.Context
@@ -57,13 +60,14 @@ func NewRoom(
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
 	return &Room{
-		logger:    logger,
-		storage:   storage,
-		Name:      name,
-		Context:   ctx,
-		ctxCancel: ctxCancel,
-		logic:     logic,
-		clients:   make(map[string]*Client),
+		logger:       logger,
+		storage:      storage,
+		Name:         name,
+		TokenManager: NewTokenManager(ctx, DefaultTokenValidDuration, DefaultTokenExpiredGcInterval),
+		Context:      ctx,
+		ctxCancel:    ctxCancel,
+		logic:        logic,
+		clients:      make(map[string]*Client),
 	}
 }
 

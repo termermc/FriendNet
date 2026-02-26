@@ -131,10 +131,6 @@ enum MsgType {
 
     // [C2S] Requests a token to be used for a direct connect handshake with another client.
     // Expected: Message MSG_TYPE_DIRECT_CONN_HANDSHAKE_TOKEN.
-    // TODO Include the room and origin and target in the token so that it cannot be stolen by the recipient and used to impersonate the sender.
-    // TODO Token must be only able to be used once and have an expiration built-in.
-    // TODO The token should probably be an encrypted value, and uses should be stored temporarily in-memory.
-    // TODO That will prevent creating a million different tokens without using them.
     // TODO Disallow creating a token whose sender is self.
     MSG_TYPE_GET_DIRECT_CONN_HANDSHAKE_TOKEN = 30;
 
