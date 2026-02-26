@@ -96,6 +96,7 @@ func (m *Manager) Close() error {
 			_ = room.Close()
 		})
 	}
+	wg.Wait()
 
 	return nil
 }
