@@ -86,13 +86,13 @@ func (m *TokenManager) expGc() {
 		case <-m.ctx.Done():
 			return
 		case <-ticker.C:
-			m.mu.RLock()
+			m.mu.Lock()
 			for token, invalidUntilTs := range m.expiredTokens {
 				if invalidUntilTs.Before(time.Now()) {
 					delete(m.expiredTokens, token)
 				}
 			}
-			m.mu.RUnlock()
+			m.mu.Unlock()
 		}
 	}
 }
