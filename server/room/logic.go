@@ -2,6 +2,7 @@ package room
 
 import (
 	"context"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -43,6 +44,15 @@ type Logic interface {
 		msg *protocol.TypedProtoMsg[*pb.MsgGetOnlineUsers],
 	) error
 
+	// OnAdvertiseConnMethod handles an incoming advertise connection method request.
+	// Implementations must follow the documentation on MSG_TYPE_ADVERTISE_CONN_METHOD.
+	OnAdvertiseConnMethod(
+		ctx context.Context,
+		client *Client,
+		bidi protocol.ProtoBidi,
+		msg *protocol.TypedProtoMsg[*pb.MsgAdvertiseConnMethod],
+	) error
+
 	// OnGetPublicIp handles an incoming get public IP request.
 	// Implementations must follow the documentation on MSG_TYPE_GET_PUBLIC_IP.
 	OnGetPublicIp(
@@ -63,12 +73,19 @@ type Logic interface {
 }
 
 type LogicImpl struct {
+	logger *slog.Logger
+
+	directConnTestTimeout time.Duration
 }
 
 var _ Logic = (*LogicImpl)(nil)
 
-func NewLogicImpl() *LogicImpl {
-	return &LogicImpl{}
+func NewLogicImpl(logger *slog.Logger) *LogicImpl {
+	return &LogicImpl{
+		logger: logger,
+
+		directConnTestTimeout: 10 * time.Second,
+	}
 }
 
 func (l LogicImpl) OnPing(_ context.Context, _ *Client, bidi protocol.ProtoBidi, _ *protocol.TypedProtoMsg[*pb.MsgPing]) error {
@@ -133,6 +150,65 @@ func (l LogicImpl) OnGetOnlineUsers(_ context.Context, client *Client, bidi prot
 	}
 
 	return nil
+}
+
+func (l LogicImpl) OnAdvertiseConnMethod(ctx context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgAdvertiseConnMethod]) error {
+	ad := msg.Payload
+
+	// Validate address.
+	if err := protocol.ValidateMethodAddress(ad.Type, ad.Address); err != nil {
+		return bidi.WriteError(pb.ErrType_ERR_TYPE_INVALID_FIELDS, err.Error())
+	}
+
+	// Try to connect.
+	connRes := func() pb.ConnResult {
+		if client.Room.connMethodSupport.IsSupported(ad.Type) {
+			return pb.ConnResult_CONN_RESULT_METHOD_NOT_SUPPORTED
+		}
+
+		timeoutCtx, cancel := context.WithTimeout(ctx, l.directConnTestTimeout)
+		defer cancel()
+
+		token := client.Room.TokenManager.NewServerToken()
+
+		conn, result, _ := protocol.CreateDirectConnection(timeoutCtx, ad.Type, ad.Address, &pb.MsgDirectConnHandshake{
+			MethodId: ad.Id,
+			Token:    token,
+		})
+		if conn != nil {
+			_ = conn.CloseWithReason("direct connection verified")
+		}
+
+		return result
+	}()
+
+	mtd := &pb.ConnMethod{
+		Id:               ad.Id,
+		Type:             ad.Type,
+		Address:          ad.Address,
+		Priority:         ad.Priority,
+		IsServerVerified: connRes == pb.ConnResult_CONN_RESULT_OK,
+	}
+
+	client.mu.Lock()
+
+	// First, check if this is a duplicate.
+	_, has := client.connMethods[ad.Id]
+	if has {
+		client.mu.Unlock()
+		return bidi.Write(pb.MsgType_MSG_TYPE_ADVERTISE_CONN_METHOD_RESULT, &pb.MsgAdvertiseConnMethodResult{
+			AlreadyExists: true,
+		})
+	}
+
+	// Not a duplicate, add method.
+	client.connMethods[ad.Id] = mtd
+	client.mu.Unlock()
+
+	return bidi.Write(pb.MsgType_MSG_TYPE_ADVERTISE_CONN_METHOD_RESULT, &pb.MsgAdvertiseConnMethodResult{
+		AlreadyExists: false,
+		TestResult:    connRes,
+	})
 }
 
 func (l LogicImpl) OnGetPublicIp(_ context.Context, client *Client, bidi protocol.ProtoBidi, _ *protocol.TypedProtoMsg[*pb.MsgGetPublicIp]) error {

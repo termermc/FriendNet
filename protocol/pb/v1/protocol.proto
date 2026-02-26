@@ -405,7 +405,7 @@ message MsgOnlineUsers {
 message MsgBye {
 }
 
-// ConnMethodType is an enum of possible direct connection types.
+// ConnMethodType is an enum of possible connection method types.
 enum ConnMethodType {
     // Do not use.
     CONN_METHOD_TYPE_UNSPECIFIED = 0;

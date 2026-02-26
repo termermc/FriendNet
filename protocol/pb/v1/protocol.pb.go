@@ -120,10 +120,6 @@ const (
 	MsgType_MSG_TYPE_CLIENT_CONN_METHODS MsgType = 29
 	// [C2S] Requests a token to be used for a direct connect handshake with another client.
 	// Expected: Message MSG_TYPE_DIRECT_CONN_HANDSHAKE_TOKEN.
-	// TODO Include the room and origin and target in the token so that it cannot be stolen by the recipient and used to impersonate the sender.
-	// TODO Token must be only able to be used once and have an expiration built-in.
-	// TODO The token should probably be an encrypted value, and uses should be stored temporarily in-memory.
-	// TODO That will prevent creating a million different tokens without using them.
 	// TODO Disallow creating a token whose sender is self.
 	MsgType_MSG_TYPE_GET_DIRECT_CONN_HANDSHAKE_TOKEN MsgType = 30
 	// [S2C] A direct connect handshake token.
@@ -459,7 +455,7 @@ func (AuthRejectionReason) EnumDescriptor() ([]byte, []int) {
 	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{3}
 }
 
-// ConnMethodType is an enum of possible direct connection types.
+// ConnMethodType is an enum of possible connection method types.
 type ConnMethodType int32
 
 const (

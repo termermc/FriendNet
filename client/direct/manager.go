@@ -16,6 +16,7 @@ import (
 	"unsafe"
 
 	"friendnet.org/client/router"
+	"friendnet.org/common"
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
 )
@@ -149,68 +150,7 @@ func (m *Manager) startServers() {
 
 	var probedIps []netip.Addr
 	if !m.cfg.DisableProbeIpsToAdvertise {
-		ifaces, err := net.Interfaces()
-		if err == nil {
-			for _, iface := range ifaces {
-				ifaceAddrs, addrsErr := iface.Addrs()
-				if addrsErr != nil {
-					m.logger.Error("failed to get interface addresses",
-						"service", "direct.Manager",
-						"interface", iface.Name,
-						"err", addrsErr,
-					)
-					continue
-				}
-
-				for _, oldAddr := range ifaceAddrs {
-					oldStr := oldAddr.String()
-					if slashIdx := strings.IndexRune(oldStr, '/'); slashIdx != -1 {
-						oldStr = oldStr[:slashIdx]
-					}
-
-					var addr netip.Addr
-					if colonIdx := strings.IndexRune(oldStr, ':'); colonIdx != -1 {
-						// First try to parse as IPv6.
-						addr, err = netip.ParseAddr(oldStr)
-						if err != nil {
-							// Not IPv6, try to parse without port.
-							addr, err = netip.ParseAddr(oldStr[:colonIdx])
-							if err != nil {
-								continue
-							}
-
-							goto check
-						}
-
-						goto check
-					}
-
-					addr, err = netip.ParseAddr(oldStr)
-					if err != nil {
-						continue
-					}
-
-				check:
-					if addr.IsLoopback() ||
-						addr.IsLinkLocalUnicast() ||
-						addr.IsLinkLocalMulticast() ||
-						addr.IsInterfaceLocalMulticast() ||
-						addr.IsMulticast() {
-						continue
-					}
-					if addr.IsPrivate() && !m.cfg.AdvertisePrivateIps {
-						continue
-					}
-
-					probedIps = append(probedIps, addr)
-				}
-			}
-		} else {
-			m.logger.Error("failed to get network interfaces to discover client IPs",
-				"service", "direct.Manager",
-				"err", err,
-			)
-		}
+		probedIps = common.GetUnicastIpsFromInterfaces(false, m.cfg.AdvertisePrivateIps)
 	}
 
 	// Collect addresses to listen on and advertise.

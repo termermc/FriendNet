@@ -11,6 +11,7 @@ import (
 	"friendnet.org/common"
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
+	"friendnet.org/server/direct"
 	"friendnet.org/server/storage"
 	"github.com/quic-go/quic-go"
 	mcfpassword "github.com/termermc/go-mcf-password"
@@ -30,7 +31,8 @@ type Room struct {
 	mu       sync.RWMutex
 	isClosed bool
 
-	storage *storage.Storage
+	storage           *storage.Storage
+	connMethodSupport direct.ConnMethodSupport
 
 	// The room's name.
 	Name common.NormalizedRoomName
@@ -54,20 +56,28 @@ type Room struct {
 func NewRoom(
 	logger *slog.Logger,
 	storage *storage.Storage,
+	connMethodSupport direct.ConnMethodSupport,
 	name common.NormalizedRoomName,
 	logic Logic,
 ) *Room {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
 	return &Room{
-		logger:       logger,
-		storage:      storage,
-		Name:         name,
+		logger: logger,
+
+		storage:           storage,
+		connMethodSupport: connMethodSupport,
+
+		Name: name,
+
 		TokenManager: NewTokenManager(ctx, DefaultTokenValidDuration, DefaultTokenExpiredGcInterval),
-		Context:      ctx,
-		ctxCancel:    ctxCancel,
-		logic:        logic,
-		clients:      make(map[string]*Client),
+
+		Context:   ctx,
+		ctxCancel: ctxCancel,
+
+		logic: logic,
+
+		clients: make(map[string]*Client),
 	}
 }
 

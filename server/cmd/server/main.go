@@ -18,6 +18,7 @@ import (
 	"friendnet.org/server"
 	"friendnet.org/server/cert"
 	"friendnet.org/server/config"
+	"friendnet.org/server/direct"
 	"friendnet.org/server/storage"
 )
 
@@ -56,7 +57,15 @@ func main() {
 		_ = storageInst.Close()
 	}()
 
-	srv, err := server.NewServer(logger, storageInst)
+	// Probe for connection method support.
+	connMethodSupport, err := direct.ProbeConnMethodSupport()
+	if err != nil {
+		logger.Warn("failed to probe for connection method support, support list will be incomplete",
+			"err", err,
+		)
+	}
+
+	srv, err := server.NewServer(logger, storageInst, connMethodSupport)
 	if err != nil {
 		logger.Error("failed to create server", "err", err)
 		os.Exit(1)

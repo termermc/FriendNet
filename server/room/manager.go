@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"friendnet.org/common"
+	"friendnet.org/server/direct"
 	"friendnet.org/server/storage"
 )
 
@@ -21,8 +22,10 @@ type Manager struct {
 	mu       sync.RWMutex
 	isClosed bool
 
-	storage *storage.Storage
-	logic   Logic
+	storage           *storage.Storage
+	connMethodSupport direct.ConnMethodSupport
+
+	logic Logic
 
 	// Key is the string value of a common.NormalizedRoomName.
 	rooms map[string]*Room
@@ -34,13 +37,18 @@ func NewManager(
 	ctx context.Context,
 	logger *slog.Logger,
 	storage *storage.Storage,
+	connMethodSupport direct.ConnMethodSupport,
 	logic Logic,
 ) (*Manager, error) {
 	m := &Manager{
-		logger:  logger,
-		storage: storage,
-		logic:   logic,
-		rooms:   make(map[string]*Room),
+		logger: logger,
+
+		storage:           storage,
+		connMethodSupport: connMethodSupport,
+
+		logic: logic,
+
+		rooms: make(map[string]*Room),
 	}
 
 	// Load rooms from storage.
@@ -52,6 +60,7 @@ func NewManager(
 		m.rooms[room.Name.String()] = NewRoom(
 			logger,
 			storage,
+			connMethodSupport,
 			room.Name,
 			logic,
 		)
@@ -127,6 +136,7 @@ func (m *Manager) CreateRoom(ctx context.Context, name common.NormalizedRoomName
 	room := NewRoom(
 		m.logger,
 		m.storage,
+		m.connMethodSupport,
 		name,
 		m.logic,
 	)

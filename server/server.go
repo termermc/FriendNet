@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"friendnet.org/protocol"
+	"friendnet.org/server/direct"
 	"friendnet.org/server/lobby"
 	"friendnet.org/server/room"
 	"friendnet.org/server/storage"
@@ -43,6 +44,7 @@ type Server struct {
 func NewServer(
 	logger *slog.Logger,
 	storage *storage.Storage,
+	connMethodSupport direct.ConnMethodSupport,
 ) (*Server, error) {
 	if storage == nil {
 		panic("storage cannot be nil")
@@ -50,7 +52,13 @@ func NewServer(
 
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
-	roomMgr, err := room.NewManager(ctx, logger, storage, room.NewLogicImpl())
+	roomMgr, err := room.NewManager(
+		ctx,
+		logger,
+		storage,
+		connMethodSupport,
+		room.NewLogicImpl(logger),
+	)
 	if err != nil {
 		ctxCancel()
 		return nil, err
