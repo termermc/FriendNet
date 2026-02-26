@@ -202,12 +202,25 @@ func (m *TokenManager) Redeem(redeemer common.NormalizedUsername, token string) 
 		return res
 	}
 
+	if len(buf) < serMinBufSize {
+		return res
+	}
+
 	offset := 0
 
 	if buf[offset] != tokenMagicNum {
 		return res
 	}
 	offset++
+
+	// Now that we already checked the minimum length and magic number,
+	// we can be sure that parsing the rest of the token without bounds
+	// checks is safe.
+	// Tokens are short-lived and encrypted based on a key generated at
+	// runtime, so getting a malicious payload is impossible. Even if
+	// we got a non-malicious token from a different serialization
+	// version, we would have rejected it because the magic number was
+	// different.
 
 	// Check expiration.
 	expTs := binary.LittleEndian.Uint64(buf[offset : offset+serExpSize])
