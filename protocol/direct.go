@@ -146,7 +146,8 @@ func CreateDirectConnection(
 
 		isOk := false
 		const timedOutMsg = "test timed out"
-		go func() {
+		const canceledMsg = "test canceled"
+		go func(c ProtoConn) {
 			<-ctx.Done()
 			if isOk {
 				return
@@ -154,16 +155,16 @@ func CreateDirectConnection(
 
 			ctxErr := ctx.Err()
 			if errors.Is(ctxErr, context.Canceled) {
-				_ = conn.CloseWithReason("cancelled")
+				_ = c.CloseWithReason(canceledMsg)
 				return
 			}
 			if errors.Is(ctxErr, context.DeadlineExceeded) {
-				_ = conn.CloseWithReason(timedOutMsg)
+				_ = c.CloseWithReason(timedOutMsg)
 				return
 			}
 
-			_ = conn.CloseWithReason("")
-		}()
+			_ = c.CloseWithReason("")
+		}(conn)
 
 		// Send handshake.
 		msg, hsErr := SendAndReceiveExpect[*pb.MsgDirectConnHandshakeResult](
@@ -174,7 +175,7 @@ func CreateDirectConnection(
 		)
 		if hsErr != nil {
 			if appErr, ok := errors.AsType[*quic.ApplicationError](hsErr); ok {
-				if appErr.ErrorMessage == timedOutMsg {
+				if appErr.ErrorMessage == timedOutMsg || appErr.ErrorMessage == canceledMsg {
 					return nil, context.DeadlineExceeded
 				}
 			}
@@ -207,7 +208,7 @@ func CreateDirectConnection(
 			return
 		}
 
-		if hsErr, ok := errors.AsType[*DirectConnHandshakeError](err); ok {
+		if hsErr, ok := errors.AsType[DirectConnHandshakeError](err); ok {
 			if hsErr.IsKThxBye() {
 				result = pb.ConnResult_CONN_RESULT_OK
 				return

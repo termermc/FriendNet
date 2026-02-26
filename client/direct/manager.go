@@ -369,7 +369,12 @@ func (i *IncomingDirectConn) RemoteAddr() net.Addr {
 func (i *IncomingDirectConn) SendResultAndClose(result pb.DirectConnHandshakeResult, closeMsg string) error {
 	defer func() {
 		_ = i.Bidi.Close()
-		_ = i.conn.CloseWithReason(closeMsg)
+
+		go func() {
+			// Give some time for the result message to be received.
+			time.Sleep(500 * time.Millisecond)
+			_ = i.conn.CloseWithReason(closeMsg)
+		}()
 	}()
 
 	err := i.Bidi.Write(pb.MsgType_MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT, &pb.MsgDirectConnHandshakeResult{
@@ -454,6 +459,17 @@ func (p *Partition) Close() error {
 	delete(p.m.partitions, p.id)
 	p.m.mu.Unlock()
 
+	// If there is a conn that was not accepted, close it now.
+	select {
+	case conn := <-p.connChan:
+		if conn == nil {
+			break
+		}
+		_ = conn.InternalError()
+	default:
+		break
+	}
+
 	return nil
 }
 
@@ -494,6 +510,7 @@ func (p *Partition) sendConn(conn *IncomingDirectConn) {
 // Once a connection is received, it is no longer owned by the partition.
 //
 // It returns ErrPartitionClosed if the partition is closed.
+// The returned *IncomingDirectConn is never nil.
 func (p *Partition) AcceptConn() (*IncomingDirectConn, error) {
 	select {
 	case <-p.ctx.Done():
