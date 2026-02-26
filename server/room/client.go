@@ -83,6 +83,8 @@ func (c *Client) msgHandler(bidi protocol.ProtoBidi, firstMsg *protocol.UntypedP
 		return c.logic.OnAdvertiseConnMethod(ctx, c, bidi, protocol.ToTyped[*pb.MsgAdvertiseConnMethod](firstMsg))
 	case pb.MsgType_MSG_TYPE_GET_PUBLIC_IP:
 		return c.logic.OnGetPublicIp(ctx, c, bidi, protocol.ToTyped[*pb.MsgGetPublicIp](firstMsg))
+	case pb.MsgType_MSG_TYPE_GET_CLIENT_CONN_METHODS:
+		return c.logic.OnGetClientConnMethods(ctx, c, bidi, protocol.ToTyped[*pb.MsgGetClientConnMethods](firstMsg))
 	case pb.MsgType_MSG_TYPE_GET_DIRECT_CONN_HANDSHAKE_TOKEN:
 		return c.logic.OnGetDirectConnHandshakeToken(ctx, c, bidi, protocol.ToTyped[*pb.MsgGetDirectConnHandshakeToken](firstMsg))
 	case pb.MsgType_MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN:
