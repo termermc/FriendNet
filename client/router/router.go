@@ -94,8 +94,7 @@ func GetIpAndForwardPort(ctx context.Context, port uint16) (externalIp string, e
 			"",
 			// External port number to expose to Internet:
 			port,
-			// Forward TCP (this could be "UDP" if we wanted that instead).
-			"TCP",
+			"UDP",
 			// Internal port number on the LAN to forward to.
 			// Some routers might not support this being different to the external
 			// port number.
