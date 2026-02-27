@@ -147,6 +147,10 @@ func (l LogicImpl) OnOpenOutboundProxy(_ context.Context, client *Client, bidi p
 		bidi,
 	)
 	if err != nil {
+		if errors.Is(err, ErrTargetNotOnline) {
+			return bidi.WriteClientNotOnlineError(targetUsername)
+		}
+
 		return err
 	}
 	defer func() {
