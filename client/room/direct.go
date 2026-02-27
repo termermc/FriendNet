@@ -116,10 +116,16 @@ func (c *Conn) AdoptDirectConn(conn protocol.ProtoConn, username common.Normaliz
 			}
 		}()
 
-		defer func() {
+		disown := func() {
 			c.mu.Lock()
-			delete(c.directConns, username)
+			set, has = c.directConns[username]
+			if has {
+				delete(set, conn)
+			}
 			c.mu.Unlock()
+		}
+		defer func() {
+			disown()
 
 			c.logger.Info("direct peer connection closed",
 				"room", c.RoomName.String(),
@@ -137,6 +143,7 @@ func (c *Conn) AdoptDirectConn(conn protocol.ProtoConn, username common.Normaliz
 			}
 
 			c.incomingBidi <- C2cBidi{
+				disown:    disown,
 				ProtoBidi: bidi,
 				RoomConn:  c,
 				Username:  username,

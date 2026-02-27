@@ -12,6 +12,10 @@ import (
 
 // C2cBidi is a client-to-client bidi stream
 type C2cBidi struct {
+	// The function to disown the connection.
+	// Should be nil if from a proxy.
+	disown func()
+
 	protocol.ProtoBidi
 
 	// The associated room connection.
@@ -19,6 +23,14 @@ type C2cBidi struct {
 
 	// The client's username.
 	Username common.NormalizedUsername
+}
+
+// DisownConn disowns the direct connection that created the bidi.
+// If the bidi is proxied, this is no-op.
+func (b C2cBidi) DisownConn() {
+	if b.disown != nil {
+		b.disown()
+	}
 }
 
 func (c *Conn) c2cLoop() {
@@ -61,6 +73,10 @@ loop:
 				// Handle C2C message.
 				err = nil
 				switch rawMsg.Type {
+				case pb.MsgType_MSG_TYPE_BYE:
+					_ = bidi.WriteAck()
+					bidi.DisownConn()
+					err = nil
 				case pb.MsgType_MSG_TYPE_PING:
 					err = c.logic.OnPing(c.Context, c, bidi.ProtoBidi, protocol.ToTyped[*pb.MsgPing](rawMsg))
 				case pb.MsgType_MSG_TYPE_GET_DIR_FILES:

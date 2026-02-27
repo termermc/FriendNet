@@ -294,25 +294,52 @@ func (c *Conn) pingLoop() {
 // Subsequent calls are no-op.
 func (c *Conn) Close() error {
 	c.mu.Lock()
-	defer c.mu.Unlock()
 	if c.isClosed {
+		c.mu.Unlock()
 		return nil
 	}
 	c.isClosed = true
 
+	directConns := make([]protocol.ProtoConn, 0, len(c.directConns)*3)
+	for _, set := range c.directConns {
+		for conn := range set {
+			directConns = append(directConns, conn)
+		}
+	}
+
+	c.mu.Unlock()
+
 	_ = c.directPart.Close()
 
-	// Signal to the server that the client is leaving.
-	// Give it 5 seconds to respond before closing the connection.
+	// Signal to the server and direct conns that the client is leaving.
+	// Give it 5 seconds to respond before closing the connections.
 	timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	go func() {
-		_, _ = c.serverConn.SendAndReceive(pb.MsgType_MSG_TYPE_BYE, &pb.MsgBye{})
+		var byeWg sync.WaitGroup
+		byeWg.Go(func() {
+			_, _ = c.serverConn.SendAndReceive(pb.MsgType_MSG_TYPE_BYE, &pb.MsgBye{})
+		})
+		for _, conn := range directConns {
+			byeWg.Go(func() {
+				_, _ = conn.SendAndReceive(pb.MsgType_MSG_TYPE_BYE, &pb.MsgBye{})
+			})
+		}
+		byeWg.Wait()
 		cancel()
 	}()
 	<-timeoutCtx.Done()
 
-	_ = c.serverConn.CloseWithReason("goodbye")
+	var closeWg sync.WaitGroup
+	closeWg.Go(func() {
+		_ = c.serverConn.CloseWithReason("goodbye")
+	})
+	for _, conn := range directConns {
+		closeWg.Go(func() {
+			_ = conn.CloseWithReason("goodbye")
+		})
+	}
+	closeWg.Wait()
 
 	c.ctxCancel()
 
