@@ -390,6 +390,16 @@ func (c *Conn) openC2cBidiWithMsg(
 		// Try to connect directly.
 		directConn, _, connErr = c.tryConnectToPeerAndAddToMap(username)
 		if connErr != nil {
+			// Was the client not online?
+			if protoErr, ok := errors.AsType[*protocol.ProtoMsgError](connErr); ok {
+				if protoErr.Msg.Type == pb.ErrType_ERR_TYPE_CLIENT_NOT_ONLINE {
+					// The client was offline.
+					// Just return the error as-is.
+					// Do not cache failure.
+					return protocol.ProtoBidi{}, connErr
+				}
+			}
+
 			// Record this failure.
 			c.mu.Lock()
 			c.directConnectOutgoingFailures[username] = struct{}{}
