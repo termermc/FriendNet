@@ -208,7 +208,8 @@ func (c *Conn) runDirectAdsAndLoop() {
 				}
 
 				result := msg.Payload.TestResult
-				if result == pb.ConnResult_CONN_RESULT_OK {
+				isOk := result == pb.ConnResult_CONN_RESULT_OK
+				if isOk {
 					c.logger.Info("server verified advertised address",
 						"service", "room.Conn",
 						"room", c.RoomName.String(),
@@ -230,14 +231,21 @@ func (c *Conn) runDirectAdsAndLoop() {
 				}
 
 				c.mu.Lock()
+				defer c.mu.Unlock()
+
+				existing, hasExisting := c.directSelfMethods[method.Id]
+				if hasExisting && existing.IsServerVerified {
+					// The existing one is already verified, do not replace it.
+					return
+				}
+
 				c.directSelfMethods[method.Id] = &pb.ConnMethod{
 					Id:               method.Id,
 					Type:             method.Type,
 					Address:          method.Address,
 					Priority:         method.Priority,
-					IsServerVerified: result == pb.ConnResult_CONN_RESULT_OK,
+					IsServerVerified: isOk,
 				}
-				c.mu.Unlock()
 			}()
 		}
 	}
