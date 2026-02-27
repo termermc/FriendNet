@@ -650,8 +650,11 @@ func (c *Conn) tryConnectToPeerAndAddToMap(ctx context.Context, peer common.Norm
 				if hasSucceeded {
 					successLock.Unlock()
 
-					// Another method already succeeded, close this connection.
-					_ = conn.CloseWithReason("another method succeeded")
+					// This is a crazy hack, but don't close any other succeeded connections if same user.
+					if peer != c.Username {
+						// Another method already succeeded, close this connection.
+						_ = conn.CloseWithReason("another method succeeded")
+					}
 					return
 				}
 				successChan <- successVals{
