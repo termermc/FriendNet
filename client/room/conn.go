@@ -368,6 +368,12 @@ func (c *Conn) openC2cBidiWithMsg(
 		_, hasFailedConnectToMe := c.directConnectToMeFailures[username]
 		c.mu.RUnlock()
 
+		// Are we already connected?
+		if hasExisting {
+			directConn = existing
+			goto openBidi
+		}
+
 		// First, try to connect.
 		var connErr error
 		directConn, _, connErr = c.tryConnectToPeerAndAddToMap(username)
