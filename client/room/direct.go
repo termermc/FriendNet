@@ -146,6 +146,10 @@ func (c *Conn) runDirectAdsAndLoop() {
 	}
 
 	advertiseInBg := func(server *direct.Server) {
+		if server.AddrPort.Addr().IsPrivate() && !mgr.AdvertisePrivateIps() {
+			return
+		}
+
 		method := c.mkAdConnMethod(publicIp, server.AddrPort)
 
 		go func() {
@@ -567,6 +571,7 @@ func (c *Conn) tryConnectToPeerAndAddToMap(ctx context.Context, peer common.Norm
 	type successVals struct {
 		conn   protocol.ProtoConn
 		result pb.ConnResult
+		method *pb.ConnMethod
 	}
 	type failureVals struct {
 		err    error
@@ -620,6 +625,7 @@ func (c *Conn) tryConnectToPeerAndAddToMap(ctx context.Context, peer common.Norm
 				successChan <- successVals{
 					conn:   conn,
 					result: result,
+					method: method,
 				}
 				hasSucceeded = true
 				successLock.Unlock()
@@ -638,6 +644,13 @@ collectErrs:
 		case <-ctx.Done():
 			return nil, 0, ctx.Err()
 		case success := <-successChan:
+			c.logger.Info("directly connected to peer",
+				"service", "room.Conn",
+				"room", c.RoomName.String(),
+				"peer", peer.String(),
+				"remote_addr", success.method.Address,
+			)
+
 			return success.conn, success.result, nil
 		case failure := <-failureChan:
 			if failure.err == nil {

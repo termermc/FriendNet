@@ -151,7 +151,7 @@ func (m *Manager) startServers() {
 
 	var probedIps []netip.Addr
 	if !m.cfg.DisableProbeIpsToAdvertise {
-		probedIps = common.GetUnicastIpsFromInterfaces(false, m.cfg.AdvertisePrivateIps)
+		probedIps = common.GetUnicastIpsFromInterfaces(false, true)
 	}
 
 	// Collect addresses to listen on.
@@ -224,6 +224,11 @@ func (m *Manager) IsDisabled() bool {
 // By default, clients will try to discover the machine's public IP by asking the server for it.
 func (m *Manager) IsPublicIpDiscoveryDisabled() bool {
 	return m.cfg.DisablePublicIpDiscovery
+}
+
+// AdvertisePrivateIps returns whether clients should advertise their private IPs to the server.
+func (m *Manager) AdvertisePrivateIps() bool {
+	return m.cfg.AdvertisePrivateIps
 }
 
 // NotifyIpAvailable notifies the Manager that an IP address is available for use.
