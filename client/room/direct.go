@@ -200,8 +200,15 @@ func (c *Conn) runDirectAdsAndLoop() {
 				)
 			}
 
-			// TODO If ok, record the method in Conn struct.
-			// Later on, if we have any verified methods, we can ask a client to connect to us as a direct connect method.
+			c.mu.Lock()
+			c.directSelfMethods[method.Id] = &pb.ConnMethod{
+				Id:               method.Id,
+				Type:             method.Type,
+				Address:          method.Address,
+				Priority:         method.Priority,
+				IsServerVerified: result == pb.ConnResult_CONN_RESULT_OK,
+			}
+			c.mu.Unlock()
 		}()
 	}
 
@@ -233,7 +240,10 @@ func (c *Conn) runDirectAdsAndLoop() {
 
 			mtdId := c.mkMethodId(server.AddrPort)
 
-			// TODO Remove from internal method map.
+			// Remove from internal map.
+			c.mu.Lock()
+			delete(c.directSelfMethods, mtdId)
+			c.mu.Unlock()
 
 			// Remove advertisement in background.
 			go func() {
