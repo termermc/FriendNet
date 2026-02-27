@@ -16,4 +16,4 @@ export const DefaultServerPort = 20038
 /**
  * The timeout to use for RPC requests.
  */
-export const RpcTimeoutMs = 10_000
+export const RpcTimeoutMs = 60_000
