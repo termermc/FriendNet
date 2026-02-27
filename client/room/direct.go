@@ -411,19 +411,11 @@ func (c *Conn) directConnReadLoop(conn protocol.ProtoConn, username common.Norma
 }
 
 // directConnectAndAddToMap attempts to establish a direct connection to a peer.
-// It skips connecting if a connection already exists, and returns it if so.
 // It does not check if there is an existing connection; it only makes a connection.
 // If the connection is successful, it adds the connection to the map.
+// If there was an existing connection, it will be replaced.
 // See protocol.CreateDirectConnection for further behavior.
 func (c *Conn) directConnectAndAddToMap(ctx context.Context, peer common.NormalizedUsername, method *pb.ConnMethod) (protocol.ProtoConn, pb.ConnResult, error) {
-	// Check for an existing connection.
-	c.mu.RLock()
-	existing, hasExisting := c.directConns[peer]
-	c.mu.RUnlock()
-	if hasExisting {
-		return existing, pb.ConnResult_CONN_RESULT_OK, nil
-	}
-
 	// Get a token from the server.
 	tokenMsg, err := protocol.SendAndReceiveExpect[*pb.MsgDirectConnHandshakeToken](
 		c.serverConn,
@@ -451,18 +443,13 @@ func (c *Conn) directConnectAndAddToMap(ctx context.Context, peer common.Normali
 	}
 
 	c.mu.Lock()
-
-	// Make sure there wasn't an existing connection established during the time we were making this one.
-	existing, hasExisting = c.directConns[peer]
-	if hasExisting {
-		_ = conn.CloseWithReason("duplicate connection")
-		return existing, pb.ConnResult_CONN_RESULT_OK, nil
-	}
-
-	// Add connection to map.
+	existing, hasExisting := c.directConns[peer]
 	c.directConns[peer] = conn
-
 	c.mu.Unlock()
+
+	if hasExisting {
+		_ = existing.CloseWithReason("new connection opened")
+	}
 
 	return conn, result, nil
 }

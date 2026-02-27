@@ -39,6 +39,11 @@ type Logic interface {
 	//
 	// C2C
 	OnGetFile(ctx context.Context, room *Conn, bidi C2cBidi, msg *protocol.TypedProtoMsg[*pb.MsgGetFile]) error
+
+	// OnConnectToMe handles an incoming connect to me request.
+	//
+	// C2C
+	OnConnectToMe(ctx context.Context, room *Conn, bidi C2cBidi, msg *protocol.TypedProtoMsg[*pb.MsgConnectToMe]) error
 }
 
 // LogicImpl implements Logic.
@@ -261,4 +266,20 @@ func (l *LogicImpl) OnGetFile(_ context.Context, _ *Conn, bidi C2cBidi, msg *pro
 	}
 
 	return nil
+}
+
+func (l *LogicImpl) OnConnectToMe(_ context.Context, room *Conn, bidi C2cBidi, _ *protocol.TypedProtoMsg[*pb.MsgConnectToMe]) error {
+	_, result, err := room.tryConnectToPeerAndAddToMap(bidi.Username)
+	if err != nil && result == pb.ConnResult_CONN_RESULT_INTERNAL_ERROR {
+		room.logger.Error("internal error while connecting to peer",
+			"service", "room.LogicImpl",
+			"room", room.RoomName.String(),
+			"peer", bidi.Username.String(),
+			"err", err,
+		)
+	}
+
+	return bidi.Write(pb.MsgType_MSG_TYPE_DIRECT_CONN_RESULT, &pb.MsgDirectConnResult{
+		Result: result,
+	})
 }

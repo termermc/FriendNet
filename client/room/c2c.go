@@ -62,17 +62,15 @@ loop:
 				err = nil
 				switch rawMsg.Type {
 				case pb.MsgType_MSG_TYPE_PING:
-					msg := protocol.ToTyped[*pb.MsgPing](rawMsg)
-					err = c.logic.OnPing(c.Context, c, bidi.ProtoBidi, msg)
+					err = c.logic.OnPing(c.Context, c, bidi.ProtoBidi, protocol.ToTyped[*pb.MsgPing](rawMsg))
 				case pb.MsgType_MSG_TYPE_GET_DIR_FILES:
-					msg := protocol.ToTyped[*pb.MsgGetDirFiles](rawMsg)
-					err = c.logic.OnGetDirFiles(c.Context, c, bidi, msg)
+					err = c.logic.OnGetDirFiles(c.Context, c, bidi, protocol.ToTyped[*pb.MsgGetDirFiles](rawMsg))
 				case pb.MsgType_MSG_TYPE_GET_FILE_META:
-					msg := protocol.ToTyped[*pb.MsgGetFileMeta](rawMsg)
-					err = c.logic.OnGetFileMeta(c.Context, c, bidi, msg)
+					err = c.logic.OnGetFileMeta(c.Context, c, bidi, protocol.ToTyped[*pb.MsgGetFileMeta](rawMsg))
 				case pb.MsgType_MSG_TYPE_GET_FILE:
-					msg := protocol.ToTyped[*pb.MsgGetFile](rawMsg)
-					err = c.logic.OnGetFile(c.Context, c, bidi, msg)
+					err = c.logic.OnGetFile(c.Context, c, bidi, protocol.ToTyped[*pb.MsgGetFile](rawMsg))
+				case pb.MsgType_MSG_TYPE_CONNECT_TO_ME:
+					err = c.logic.OnConnectToMe(c.Context, c, bidi, protocol.ToTyped[*pb.MsgConnectToMe](rawMsg))
 				default:
 					err = bidi.WriteUnimplementedError(rawMsg.Type)
 				}
