@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 
 	"github.com/huin/goupnp/dcps/internetgateway2"
@@ -29,7 +30,7 @@ type Client interface {
 	LocalAddr() net.IP
 }
 
-func PickRouterClient(ctx context.Context) (Client, error) {
+func routerClients(ctx context.Context) ([]Client, error) {
 	tasks, _ := errgroup.WithContext(ctx)
 
 	// Request each type of client in parallel, and return what is found.
@@ -56,58 +57,70 @@ func PickRouterClient(ctx context.Context) (Client, error) {
 		return nil, err
 	}
 
-	// Trivial handling for where we find exactly one device to talk to, you
-	// might want to provide more flexible handling than this if multiple
-	// devices are found.
-	switch {
-	case len(ip2Clients) == 1:
-		return ip2Clients[0], nil
-	case len(ip1Clients) == 1:
-		return ip1Clients[0], nil
-	case len(ppp1Clients) == 1:
-		return ppp1Clients[0], nil
-	default:
-		return nil, errors.New("multiple or no services found")
+	clients := make([]Client, 0, len(ip2Clients)+len(ip1Clients)+len(ppp1Clients))
+	for _, client := range ip2Clients {
+		clients = append(clients, client)
 	}
+	for _, client := range ip1Clients {
+		clients = append(clients, client)
+	}
+	for _, client := range ppp1Clients {
+		clients = append(clients, client)
+	}
+
+	return clients, nil
 }
 
 // GetIpAndForwardPort gets the external IP address of the router and forwards a port.
 // The port will be both the internal port and the external Internet-exposed port.
 func GetIpAndForwardPort(ctx context.Context, port uint16) (externalIp string, err error) {
-	client, err := PickRouterClient(ctx)
+	clients, err := routerClients(ctx)
 	if err != nil {
 		return "", err
 	}
-
-	externalIp, err = client.GetExternalIPAddress()
-	if err != nil {
-		return "", err
+	if len(clients) == 0 {
+		return "", errors.New("no services found")
 	}
 
-	err = client.AddPortMapping(
-		"",
-		// External port number to expose to Internet:
-		port,
-		// Forward TCP (this could be "UDP" if we wanted that instead).
-		"TCP",
-		// Internal port number on the LAN to forward to.
-		// Some routers might not support this being different to the external
-		// port number.
-		port,
-		// Internal address on the LAN we want to forward to.
-		client.LocalAddr().String(),
-		// Enabled:
-		true,
-		// Informational description for the client requesting the port forwarding.
-		"FriendNet Direct Connection",
-		// How long should the port forward last for in seconds.
-		// If you want to keep it open for longer and potentially across router
-		// resets, you might want to periodically request before this elapses.
-		3600,
-	)
-	if err != nil {
-		return "", err
+	var errs []error
+	for _, client := range clients {
+		externalIp, err = client.GetExternalIPAddress()
+		if err != nil {
+			errs = append(errs, fmt.Errorf("GetExternalIPAddress via %T failed: %w", client, err))
+			continue
+		}
+
+		err = client.AddPortMapping(
+			"",
+			// External port number to expose to Internet:
+			port,
+			// Forward TCP (this could be "UDP" if we wanted that instead).
+			"TCP",
+			// Internal port number on the LAN to forward to.
+			// Some routers might not support this being different to the external
+			// port number.
+			port,
+			// Internal address on the LAN we want to forward to.
+			client.LocalAddr().String(),
+			// Enabled:
+			true,
+			// Informational description for the client requesting the port forwarding.
+			"FriendNet Direct Connection",
+			// How long should the port forward last for in seconds.
+			// If you want to keep it open for longer and potentially across router
+			// resets, you might want to periodically request before this elapses.
+			3600,
+		)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("AddPortMapping via %T failed: %w", client, err))
+			continue
+		}
+
+		return externalIp, nil
 	}
 
-	return externalIp, nil
+	if len(errs) == 0 {
+		return "", errors.New("no services found")
+	}
+	return "", errors.Join(errs...)
 }
