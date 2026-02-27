@@ -133,7 +133,7 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = server.Do(r.Context(), func(ctx context.Context, c *room.Conn) error {
-		peer := c.GetVirtualC2cConn(username)
+		peer := c.GetVirtualC2cConn(username, false)
 
 		// Get metadata before getting file.
 		// This is necessary for range requests.

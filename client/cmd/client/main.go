@@ -24,6 +24,7 @@ import (
 	"friendnet.org/client/direct"
 	"friendnet.org/client/storage"
 	"friendnet.org/common"
+	"friendnet.org/common/machine"
 	"friendnet.org/mkcert"
 	"friendnet.org/protocol/pb/clientrpc/v1/clientrpcv1connect"
 	"friendnet.org/webui"
@@ -149,10 +150,19 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Probe for connection method support.
+	connMethodSupport, err := machine.ProbeConnMethodSupport()
+	if err != nil {
+		logger.Warn("failed to probe for connection method support, support list will be incomplete",
+			"err", err,
+		)
+	}
+
 	multi, err := client.NewMultiClient(
 		logger,
 		store,
 		certStore,
+		connMethodSupport,
 		directMgr,
 	)
 	if err != nil {

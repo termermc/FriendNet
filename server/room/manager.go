@@ -7,8 +7,8 @@ import (
 	"sync"
 
 	"friendnet.org/common"
+	"friendnet.org/common/machine"
 	"friendnet.org/common/password"
-	"friendnet.org/server/direct"
 	"friendnet.org/server/storage"
 )
 
@@ -24,7 +24,7 @@ type Manager struct {
 	isClosed bool
 
 	storage           *storage.Storage
-	connMethodSupport direct.ConnMethodSupport
+	connMethodSupport machine.ConnMethodSupport
 	passReqs          password.Requirements
 
 	logic Logic
@@ -39,7 +39,7 @@ func NewManager(
 	ctx context.Context,
 	logger *slog.Logger,
 	storage *storage.Storage,
-	connMethodSupport direct.ConnMethodSupport,
+	connMethodSupport machine.ConnMethodSupport,
 	passReqs password.Requirements,
 	logic Logic,
 ) (*Manager, error) {

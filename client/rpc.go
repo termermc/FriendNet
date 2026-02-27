@@ -359,7 +359,7 @@ func (s *RpcServer) GetDirFiles(ctx context.Context, request *v1.GetDirFilesRequ
 	}
 
 	return srv.Do(ctx, func(ctx context.Context, c *room.Conn) error {
-		peer := c.GetVirtualC2cConn(username)
+		peer := c.GetVirtualC2cConn(username, false)
 		stream, err := peer.GetDirFiles(request.Path)
 		if err != nil {
 			return err
@@ -419,7 +419,7 @@ func (s *RpcServer) GetFileMeta(ctx context.Context, request *v1.GetFileMetaRequ
 	}
 
 	return DoValue(srv.ConnNanny, ctx, func(ctx context.Context, c *room.Conn) (*v1.GetFileMetaResponse, error) {
-		peer := c.GetVirtualC2cConn(username)
+		peer := c.GetVirtualC2cConn(username, false)
 		meta, err := peer.GetFileMeta(path)
 		if err != nil {
 			if protoMsgErr, ok := errors.AsType[protocol.ProtoMsgError](err); ok {

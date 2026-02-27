@@ -17,6 +17,9 @@ import (
 // ErrUnknownMethodType is returned when trying to use an unknown connection method type.
 var ErrUnknownMethodType = errors.New("unknown direct connection method type")
 
+// ErrUnsupportedMethodType is returned when trying to use a connection method type that is not supported by the current instance or machine.
+var ErrUnsupportedMethodType = errors.New("unsupported direct connection method type")
+
 // IsMethodTypeKnown returns whether the specified connection method type is known to the current protocol version.
 // Useful when paired with ErrUnknownMethodType.
 func IsMethodTypeKnown(typ pb.ConnMethodType) bool {

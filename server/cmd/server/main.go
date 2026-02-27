@@ -13,13 +13,13 @@ import (
 
 	"connectrpc.com/connect"
 	"friendnet.org/common"
+	"friendnet.org/common/machine"
 	"friendnet.org/common/password"
 	"friendnet.org/protocol"
 	"friendnet.org/protocol/pb/serverrpc/v1/serverrpcv1connect"
 	"friendnet.org/server"
 	"friendnet.org/server/cert"
 	"friendnet.org/server/config"
-	"friendnet.org/server/direct"
 	"friendnet.org/server/storage"
 )
 
@@ -59,7 +59,7 @@ func main() {
 	}()
 
 	// Probe for connection method support.
-	connMethodSupport, err := direct.ProbeConnMethodSupport()
+	connMethodSupport, err := machine.ProbeConnMethodSupport()
 	if err != nil {
 		logger.Warn("failed to probe for connection method support, support list will be incomplete",
 			"err", err,

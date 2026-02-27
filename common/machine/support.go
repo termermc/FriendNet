@@ -1,4 +1,4 @@
-package direct
+package machine
 
 import (
 	"friendnet.org/common"

@@ -14,6 +14,7 @@ import (
 	"friendnet.org/client/share"
 	"friendnet.org/client/storage"
 	"friendnet.org/common"
+	"friendnet.org/common/machine"
 )
 
 // ErrMultiClientClosed is returned by MultiClient methods when the MultiClient is closed.
@@ -50,10 +51,11 @@ type MultiClient struct {
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 
-	logger    *slog.Logger
-	storage   *storage.Storage
-	certStore cert.Store
-	directMgr *direct.Manager
+	logger            *slog.Logger
+	storage           *storage.Storage
+	certStore         cert.Store
+	connMethodSupport machine.ConnMethodSupport
+	directMgr         *direct.Manager
 
 	// Mapping of server UUIDs to the Server instances that manage connections to them.
 	servers map[string]*Server
@@ -65,6 +67,7 @@ func NewMultiClient(
 	logger *slog.Logger,
 	storage *storage.Storage,
 	certStore cert.Store,
+	connMethodSupport machine.ConnMethodSupport,
 	directMgr *direct.Manager,
 ) (*MultiClient, error) {
 	ctx, ctxCancel := context.WithCancel(context.Background())
@@ -76,13 +79,14 @@ func NewMultiClient(
 	}
 
 	c := &MultiClient{
-		ctx:       ctx,
-		ctxCancel: ctxCancel,
-		logger:    logger,
-		storage:   storage,
-		certStore: certStore,
-		directMgr: directMgr,
-		servers:   make(map[string]*Server, len(serverRecs)),
+		ctx:               ctx,
+		ctxCancel:         ctxCancel,
+		logger:            logger,
+		storage:           storage,
+		certStore:         certStore,
+		connMethodSupport: connMethodSupport,
+		directMgr:         directMgr,
+		servers:           make(map[string]*Server, len(serverRecs)),
 	}
 
 	for _, record := range serverRecs {
@@ -178,6 +182,7 @@ func (c *MultiClient) createServerInstance(record storage.ServerRecord) (*Server
 		ConnNanny: NewConnNanny(
 			c.logger,
 			c.certStore,
+			c.connMethodSupport,
 			c.directMgr,
 			record.Uuid,
 			record.Address,

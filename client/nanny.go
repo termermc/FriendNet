@@ -12,6 +12,7 @@ import (
 	"friendnet.org/client/direct"
 	"friendnet.org/client/room"
 	"friendnet.org/common"
+	"friendnet.org/common/machine"
 )
 
 var ErrConnNannyClosed = errors.New("conn nanny closed")
@@ -44,12 +45,13 @@ type ConnNanny struct {
 	mu       sync.RWMutex
 	isClosed bool
 
-	certStore      cert.Store
-	directMgr      *direct.Manager
-	directPartName string
-	address        string
-	creds          room.Credentials
-	logic          room.Logic
+	certStore         cert.Store
+	directMgr         *direct.Manager
+	directPartName    string
+	address           string
+	creds             room.Credentials
+	logic             room.Logic
+	connMethodSupport machine.ConnMethodSupport
 
 	shouldReconnect bool
 	connOrNil       *room.Conn
@@ -67,6 +69,7 @@ type ConnNanny struct {
 func NewConnNanny(
 	logger *slog.Logger,
 	certStore cert.Store,
+	connMethodSupport machine.ConnMethodSupport,
 	directMgr *direct.Manager,
 	directPartitionName string,
 	address string,
@@ -84,12 +87,13 @@ func NewConnNanny(
 		ctx:       ctx,
 		ctxCancel: ctxCancel,
 
-		certStore:      certStore,
-		directMgr:      directMgr,
-		directPartName: directPartitionName,
-		address:        address,
-		creds:          creds,
-		logic:          logic,
+		certStore:         certStore,
+		directMgr:         directMgr,
+		directPartName:    directPartitionName,
+		address:           address,
+		creds:             creds,
+		logic:             logic,
+		connMethodSupport: connMethodSupport,
 
 		openCh: make(chan struct{}),
 
@@ -280,6 +284,7 @@ func (n *ConnNanny) daemon() {
 		conn, err := room.NewRoomConn(
 			n.logger,
 			n.logic,
+			n.connMethodSupport,
 			n.certStore,
 			n.directMgr,
 			n.directPartName,

@@ -9,10 +9,10 @@ import (
 	"sync"
 
 	"friendnet.org/common"
+	"friendnet.org/common/machine"
 	pass "friendnet.org/common/password"
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
-	"friendnet.org/server/direct"
 	"friendnet.org/server/storage"
 	"github.com/quic-go/quic-go"
 	mcfpassword "github.com/termermc/go-mcf-password"
@@ -33,7 +33,7 @@ type Room struct {
 	isClosed bool
 
 	storage           *storage.Storage
-	connMethodSupport direct.ConnMethodSupport
+	connMethodSupport machine.ConnMethodSupport
 	passReqs          pass.Requirements
 
 	// The room's name.
@@ -58,7 +58,7 @@ type Room struct {
 func NewRoom(
 	logger *slog.Logger,
 	storage *storage.Storage,
-	connMethodSupport direct.ConnMethodSupport,
+	connMethodSupport machine.ConnMethodSupport,
 	passReqs pass.Requirements,
 	name common.NormalizedRoomName,
 	logic Logic,

@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"hash/fnv"
 	"net/netip"
+	"slices"
 	"unsafe"
 
 	"friendnet.org/client/direct"
@@ -408,25 +410,138 @@ func (c *Conn) directConnReadLoop(conn protocol.ProtoConn, username common.Norma
 	}
 }
 
-func (c *Conn) tryDirectConnect(ctx context.Context, username common.NormalizedUsername) (protocol.ProtoConn, error) {
-	// First, check if we already have a connection.
+// directConnectAndAddToMap attempts to establish a direct connection to a peer.
+// It skips connecting if a connection already exists, and returns it if so.
+// It does not check if there is an existing connection; it only makes a connection.
+// If the connection is successful, it adds the connection to the map.
+// See protocol.CreateDirectConnection for further behavior.
+func (c *Conn) directConnectAndAddToMap(ctx context.Context, peer common.NormalizedUsername, method *pb.ConnMethod) (protocol.ProtoConn, pb.ConnResult, error) {
+	// Check for an existing connection.
 	c.mu.RLock()
-	existing, hasExisting := c.directConns[username]
-	methods, hasMethods := c.directConnMethods[username]
+	existing, hasExisting := c.directConns[peer]
 	c.mu.RUnlock()
-
 	if hasExisting {
-		return existing, nil
+		return existing, pb.ConnResult_CONN_RESULT_OK, nil
 	}
 
-	if hasMethods {
-		if len(methods) == 0 {
-			// No methods to reach out to the client, do we have any methods for them to connect to us?
-			// TODO
+	// Get a token from the server.
+	tokenMsg, err := protocol.SendAndReceiveExpect[*pb.MsgDirectConnHandshakeToken](
+		c.serverConn,
+		pb.MsgType_MSG_TYPE_GET_DIRECT_CONN_HANDSHAKE_TOKEN,
+		&pb.MsgGetDirectConnHandshakeToken{
+			Username: peer.String(),
+		},
+		pb.MsgType_MSG_TYPE_DIRECT_CONN_HANDSHAKE_TOKEN,
+	)
+	if err != nil {
+		return nil, 0, fmt.Errorf(`failed to get handshake token for peer %q: %w`, peer.String(), err)
+	}
+
+	conn, result, err := protocol.CreateDirectConnection(
+		ctx,
+		method.Type,
+		method.Address,
+		&pb.MsgDirectConnHandshake{
+			MethodId: method.Id,
+			Token:    tokenMsg.Payload.Token,
+		},
+	)
+	if err != nil {
+		return nil, result, err
+	}
+
+	c.mu.Lock()
+
+	// Make sure there wasn't an existing connection established during the time we were making this one.
+	existing, hasExisting = c.directConns[peer]
+	if hasExisting {
+		_ = conn.CloseWithReason("duplicate connection")
+		return existing, pb.ConnResult_CONN_RESULT_OK, nil
+	}
+
+	// Add connection to map.
+	c.directConns[peer] = conn
+
+	c.mu.Unlock()
+
+	return conn, result, nil
+}
+
+var errNoPeerMethods = errors.New("no method found to connect to peer")
+
+// tryConnectToPeerAndAddToMap attempts to establish a direct connection to a peer.
+// It returns the first successful connection, or an error and the last result if all methods fail.
+// Returns errNoPeerMethods if no methods are available.
+// It adds the peer to the map if successful.
+func (c *Conn) tryConnectToPeerAndAddToMap(peer common.NormalizedUsername) (conn protocol.ProtoConn, result pb.ConnResult, err error) {
+	// Do we need to query methods for the peer?
+	c.mu.RLock()
+	peerMethods, hasPeerMethods := c.directPeerMethods[peer]
+	c.mu.RUnlock()
+	if !hasPeerMethods {
+		// Query methods for the peer.
+		methodsMsg, methodsErr := protocol.SendAndReceiveExpect[*pb.MsgClientConnMethods](
+			c.serverConn,
+			pb.MsgType_MSG_TYPE_GET_CLIENT_CONN_METHODS,
+			&pb.MsgGetClientConnMethods{
+				Username: peer.String(),
+			},
+			pb.MsgType_MSG_TYPE_CLIENT_CONN_METHODS,
+		)
+		if methodsErr != nil {
+			return nil, 0, fmt.Errorf(`failed to query connection methods for peer "%s": %w`, peer.String(), methodsErr)
 		}
-	} else {
-		// Let's fetch methods for the user.
+
+		peerMethods = methodsMsg.Payload.Methods
+
+		// Save methods to the cache to save time later.
+		c.mu.Lock()
+		c.directPeerMethods[peer] = peerMethods
+		c.mu.Unlock()
 	}
 
-	return nil, nil
+	if len(peerMethods) == 0 {
+		return nil, 0, errNoPeerMethods
+	}
+
+	// Sort methods by verified, priority desc.
+	slices.SortFunc(peerMethods, func(a *pb.ConnMethod, b *pb.ConnMethod) int {
+		if a.IsServerVerified != b.IsServerVerified {
+			if a.IsServerVerified {
+				return -1
+			}
+			return 1
+		}
+		return int(b.Priority) - int(a.Priority)
+	})
+
+	// Try every method until success.
+	errs := make([]error, 0, len(peerMethods))
+	for _, method := range peerMethods {
+		if !c.connMethodSupport.IsSupported(method.Type) {
+			result = pb.ConnResult_CONN_RESULT_METHOD_NOT_SUPPORTED
+			errs = append(errs, protocol.ErrUnsupportedMethodType)
+			continue
+		}
+
+		conn, result, err = c.directConnectAndAddToMap(c.Context, peer, method)
+		if err != nil {
+			c.logger.Warn("failed to direct connect to peer",
+				"service", "room.Conn",
+				"room", c.RoomName.String(),
+				"peer", peer.String(),
+				"method_id", method.Id,
+				"method_type", method.Type.String(),
+				"address", method.Address,
+				"err", err,
+			)
+			errs = append(errs, err)
+			continue
+		}
+
+		return conn, result, nil
+	}
+
+	// No methods worked.
+	return nil, result, errors.Join(errs...)
 }

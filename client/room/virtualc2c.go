@@ -21,6 +21,10 @@ type VirtualC2cConn struct {
 
 	// The client's username.
 	Username common.NormalizedUsername
+
+	// Whether to force proxying instead of using a direct connection.
+	// It may still fall back to proxying if no direct connection method is available.
+	ForceProxy bool
 }
 
 func (c VirtualC2cConn) lockCheck() error {
@@ -47,7 +51,7 @@ func (c VirtualC2cConn) OpenBidiWithMsg(typ pb.MsgType, msg proto.Message) (bidi
 		return
 	}
 
-	return c.ServerConn.openC2cBidiWithMsg(c.Username, typ, msg)
+	return c.ServerConn.openC2cBidiWithMsg(c.Username, typ, msg, c.ForceProxy)
 }
 
 func (c VirtualC2cConn) WaitForBidi(ctx context.Context) (protocol.ProtoBidi, error) {

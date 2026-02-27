@@ -8,9 +8,9 @@ import (
 	"log/slog"
 	"sync"
 
+	"friendnet.org/common/machine"
 	"friendnet.org/common/password"
 	"friendnet.org/protocol"
-	"friendnet.org/server/direct"
 	"friendnet.org/server/lobby"
 	"friendnet.org/server/room"
 	"friendnet.org/server/storage"
@@ -45,7 +45,7 @@ type Server struct {
 func NewServer(
 	logger *slog.Logger,
 	storage *storage.Storage,
-	connMethodSupport direct.ConnMethodSupport,
+	connMethodSupport machine.ConnMethodSupport,
 	passReqs password.Requirements,
 ) (*Server, error) {
 	if storage == nil {
