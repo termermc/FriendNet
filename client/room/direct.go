@@ -156,10 +156,12 @@ func (c *Conn) runDirectAdsAndLoop() {
 			// Did we get our public IP?
 			// If so, try to advertise it.
 			// If we are listening on a private port, port forwarding might be enabled.
-			methodsToAdvertise = append(methodsToAdvertise, c.mkAdConnMethod(
-				publicIp,
-				netip.AddrPortFrom(publicIp, server.AddrPort.Port()),
-			))
+			if publicIp.IsValid() {
+				methodsToAdvertise = append(methodsToAdvertise, c.mkAdConnMethod(
+					publicIp,
+					netip.AddrPortFrom(publicIp, server.AddrPort.Port()),
+				))
+			}
 		}
 
 		for _, method := range methodsToAdvertise {
