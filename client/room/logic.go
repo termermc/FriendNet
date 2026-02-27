@@ -268,8 +268,8 @@ func (l *LogicImpl) OnGetFile(_ context.Context, _ *Conn, bidi C2cBidi, msg *pro
 	return nil
 }
 
-func (l *LogicImpl) OnConnectToMe(_ context.Context, room *Conn, bidi C2cBidi, _ *protocol.TypedProtoMsg[*pb.MsgConnectToMe]) error {
-	_, result, err := room.tryConnectToPeerAndAddToMap(bidi.Username)
+func (l *LogicImpl) OnConnectToMe(ctx context.Context, room *Conn, bidi C2cBidi, _ *protocol.TypedProtoMsg[*pb.MsgConnectToMe]) error {
+	_, result, err := room.tryConnectToPeerAndAddToMap(ctx, bidi.Username)
 	if err != nil && result == pb.ConnResult_CONN_RESULT_INTERNAL_ERROR {
 		room.logger.Error("internal error while connecting to peer",
 			"service", "room.LogicImpl",

@@ -225,7 +225,7 @@ func NewRoomConn(
 		directSelfMethods:             make(map[string]*pb.ConnMethod),
 		directConnectOutgoingFailures: make(map[common.NormalizedUsername]struct{}),
 		directConnectToMeFailures:     make(map[common.NormalizedUsername]struct{}),
-		directOutgoingTimeout:         5 * time.Second,
+		directOutgoingTimeout:         10 * time.Second,
 		directGcInterval:              5 * time.Minute,
 	}
 
@@ -380,6 +380,9 @@ func (c *Conn) openC2cBidiWithMsg(
 			goto openBidi
 		}
 
+		timeoutCtx, ctxCancel := context.WithTimeout(c.Context, c.directOutgoingTimeout)
+		defer ctxCancel()
+
 		var connErr error
 
 		// Have we already tried and failed to connect to this peer?
@@ -388,7 +391,7 @@ func (c *Conn) openC2cBidiWithMsg(
 		}
 
 		// Try to connect directly.
-		directConn, _, connErr = c.tryConnectToPeerAndAddToMap(username)
+		directConn, _, connErr = c.tryConnectToPeerAndAddToMap(timeoutCtx, username)
 		if connErr != nil {
 			// Was the client not online?
 			if protoErr, ok := errors.AsType[*protocol.ProtoMsgError](connErr); ok {

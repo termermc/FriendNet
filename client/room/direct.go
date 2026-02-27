@@ -8,6 +8,7 @@ import (
 	"hash/fnv"
 	"net/netip"
 	"slices"
+	"sync"
 	"time"
 	"unsafe"
 
@@ -519,7 +520,9 @@ var errNoPeerMethods = errors.New("no method found to connect to peer")
 // It returns the first successful connection, or an error and the last result if all methods fail.
 // Returns errNoPeerMethods if no methods are available.
 // It adds the peer to the map if successful.
-func (c *Conn) tryConnectToPeerAndAddToMap(peer common.NormalizedUsername) (conn protocol.ProtoConn, result pb.ConnResult, err error) {
+//
+// The context controls the connect timeout.
+func (c *Conn) tryConnectToPeerAndAddToMap(ctx context.Context, peer common.NormalizedUsername) (conn protocol.ProtoConn, result pb.ConnResult, err error) {
 	// Do we need to query methods for the peer?
 	c.mu.RLock()
 	peerMethods, hasPeerMethods := c.directPeerMethods[peer]
@@ -561,31 +564,65 @@ func (c *Conn) tryConnectToPeerAndAddToMap(peer common.NormalizedUsername) (conn
 		return int(b.Priority) - int(a.Priority)
 	})
 
-	// Try every method until success.
+	type successVals struct {
+		conn   protocol.ProtoConn
+		result pb.ConnResult
+	}
+	successChan := make(chan successVals, len(peerMethods))
+	errChan := make(chan error, len(peerMethods))
+
+	go func() {
+		var wg sync.WaitGroup
+
+		// Try methods concurrently.
+		for _, method := range peerMethods {
+			if !c.connMethodSupport.IsSupported(method.Type) {
+				result = pb.ConnResult_CONN_RESULT_METHOD_NOT_SUPPORTED
+				errChan <- protocol.ErrUnsupportedMethodType
+				continue
+			}
+
+			wg.Go(func() {
+				conn, result, err = c.directConnectAndAddToMap(ctx, peer, method)
+				if err != nil {
+					c.logger.Warn("failed to direct connect to peer",
+						"service", "room.Conn",
+						"room", c.RoomName.String(),
+						"peer", peer.String(),
+						"method_id", method.Id,
+						"method_type", method.Type.String(),
+						"address", method.Address,
+						"err", err,
+					)
+					errChan <- err
+				}
+
+				successChan <- successVals{
+					conn:   conn,
+					result: result,
+				}
+			})
+		}
+
+		wg.Wait()
+		close(errChan)
+	}()
+
 	errs := make([]error, 0, len(peerMethods))
-	for _, method := range peerMethods {
-		if !c.connMethodSupport.IsSupported(method.Type) {
-			result = pb.ConnResult_CONN_RESULT_METHOD_NOT_SUPPORTED
-			errs = append(errs, protocol.ErrUnsupportedMethodType)
-			continue
+collectErrs:
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, 0, ctx.Err()
+		case success := <-successChan:
+			return success.conn, success.result, nil
+		case connErr := <-errChan:
+			if connErr == nil {
+				// The error channel was closed, so all methods finished.
+				break collectErrs
+			}
+			errs = append(errs, connErr)
 		}
-
-		conn, result, err = c.directConnectAndAddToMap(c.Context, peer, method)
-		if err != nil {
-			c.logger.Warn("failed to direct connect to peer",
-				"service", "room.Conn",
-				"room", c.RoomName.String(),
-				"peer", peer.String(),
-				"method_id", method.Id,
-				"method_type", method.Type.String(),
-				"address", method.Address,
-				"err", err,
-			)
-			errs = append(errs, err)
-			continue
-		}
-
-		return conn, result, nil
 	}
 
 	// No methods worked.
