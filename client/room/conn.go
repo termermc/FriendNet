@@ -419,7 +419,7 @@ func (c *Conn) openC2cBidiWithMsg(
 		}
 
 		// Try to connect directly.
-		directConn, _, connErr = c.tryConnectToPeerAndAddToMap(timeoutCtx, username)
+		directConn, _, connErr = c.tryConnectToPeer(timeoutCtx, username)
 		if connErr != nil {
 			// Was the client not online?
 			if protoErr, ok := errors.AsType[*protocol.ProtoMsgError](connErr); ok {

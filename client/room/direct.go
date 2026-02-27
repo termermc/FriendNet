@@ -592,13 +592,14 @@ func (c *Conn) directConnect(ctx context.Context, peer common.NormalizedUsername
 
 var errNoPeerMethods = errors.New("no method found to connect to peer")
 
-// tryConnectToPeerAndAddToMap attempts to establish a direct connection to a peer.
-// It returns the first successful connection, or an error and the last result if all methods fail.
+// tryConnectToPeer attempts to establish a direct connection to a peer.
+// It returns on the first successful connection, or an error and the last result if all methods fail.
+// Even after returning, it may finish establishing more connections if there were multiple methods.
 // Returns errNoPeerMethods if no methods are available.
-// It adds the peer to the map if successful.
+// It adopts all successful connections.
 //
 // The context controls the connect timeout.
-func (c *Conn) tryConnectToPeerAndAddToMap(ctx context.Context, peer common.NormalizedUsername) (protocol.ProtoConn, pb.ConnResult, error) {
+func (c *Conn) tryConnectToPeer(ctx context.Context, peer common.NormalizedUsername) (protocol.ProtoConn, pb.ConnResult, error) {
 	// Do we need to query methods for the peer?
 	c.mu.RLock()
 	peerMethods, hasPeerMethods := c.directPeerMethods[peer]
@@ -689,9 +690,6 @@ func (c *Conn) tryConnectToPeerAndAddToMap(ctx context.Context, peer common.Norm
 				successLock.Lock()
 				if hasSucceeded {
 					successLock.Unlock()
-
-					// Another method already succeeded, close this connection.
-					_ = conn.CloseWithReason("another method succeeded")
 					return
 				}
 				successChan <- successVals{
