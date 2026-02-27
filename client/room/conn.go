@@ -93,6 +93,10 @@ type Conn struct {
 	// They may be verified by the server, they may not.
 	directSelfMethods map[string]*pb.ConnMethod
 
+	// A set of usernames that we have failed to directly connect to.
+	// Cleared periodically.
+	directConnectOutgoingFailures map[common.NormalizedUsername]struct{}
+
 	// A set of usernames that failed to directly connect to us when we sent them CONNECT_TO_ME.
 	// Cleared periodically.
 	directConnectToMeFailures map[common.NormalizedUsername]struct{}
@@ -214,14 +218,15 @@ func NewRoomConn(
 		serverConn:   conn,
 		incomingBidi: make(chan C2cBidi, incomingBidiChanSize),
 
-		directMgr:                 directMgr,
-		directPart:                directPart,
-		directConns:               make(map[common.NormalizedUsername]protocol.ProtoConn),
-		directPeerMethods:         make(map[common.NormalizedUsername][]*pb.ConnMethod),
-		directSelfMethods:         make(map[string]*pb.ConnMethod),
-		directConnectToMeFailures: make(map[common.NormalizedUsername]struct{}),
-		directOutgoingTimeout:     5 * time.Second,
-		directGcInterval:          5 * time.Minute,
+		directMgr:                     directMgr,
+		directPart:                    directPart,
+		directConns:                   make(map[common.NormalizedUsername]protocol.ProtoConn),
+		directPeerMethods:             make(map[common.NormalizedUsername][]*pb.ConnMethod),
+		directSelfMethods:             make(map[string]*pb.ConnMethod),
+		directConnectOutgoingFailures: make(map[common.NormalizedUsername]struct{}),
+		directConnectToMeFailures:     make(map[common.NormalizedUsername]struct{}),
+		directOutgoingTimeout:         5 * time.Second,
+		directGcInterval:              5 * time.Minute,
 	}
 
 	go c.directCacheGc()
@@ -366,6 +371,7 @@ func (c *Conn) openC2cBidiWithMsg(
 			selfMethods = append(selfMethods, method)
 		}
 		_, hasFailedConnectToMe := c.directConnectToMeFailures[username]
+		_, hasFailedOutgoing := c.directConnectOutgoingFailures[username]
 		c.mu.RUnlock()
 
 		// Are we already connected?
@@ -374,10 +380,21 @@ func (c *Conn) openC2cBidiWithMsg(
 			goto openBidi
 		}
 
-		// First, try to connect.
 		var connErr error
+
+		// Have we already tried and failed to connect to this peer?
+		if hasFailedOutgoing {
+			goto tryConnectToMe
+		}
+
+		// Try to connect directly.
 		directConn, _, connErr = c.tryConnectToPeerAndAddToMap(username)
 		if connErr != nil {
+			// Record this failure.
+			c.mu.Lock()
+			c.directConnectOutgoingFailures[username] = struct{}{}
+			c.mu.Unlock()
+
 			if errors.Is(connErr, errNoPeerMethods) {
 				// No peer methods.
 				// Try to have the peer connect to us.

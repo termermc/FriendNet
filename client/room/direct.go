@@ -27,6 +27,7 @@ func (c *Conn) directCacheGc() {
 		case <-ticker.C:
 			c.mu.Lock()
 			c.directPeerMethods = make(map[common.NormalizedUsername][]*pb.ConnMethod)
+			c.directConnectOutgoingFailures = make(map[common.NormalizedUsername]struct{})
 			c.directConnectToMeFailures = make(map[common.NormalizedUsername]struct{})
 			c.mu.Unlock()
 		}
