@@ -81,7 +81,8 @@ type Conn struct {
 	// Direct connections to room clients.
 	// The connections could have been outgoing or incoming,
 	// but they are treated the same once established.
-	directConns map[common.NormalizedUsername]protocol.ProtoConn
+	// The key is the client username, the value is a set of connections.
+	directConns map[common.NormalizedUsername]map[protocol.ProtoConn]struct{}
 
 	// A cache of direct connect methods for room clients.
 	// If no methods are available for a client, the slice will be empty.
@@ -220,7 +221,7 @@ func NewRoomConn(
 
 		directMgr:                     directMgr,
 		directPart:                    directPart,
-		directConns:                   make(map[common.NormalizedUsername]protocol.ProtoConn),
+		directConns:                   make(map[common.NormalizedUsername]map[protocol.ProtoConn]struct{}),
 		directPeerMethods:             make(map[common.NormalizedUsername][]*pb.ConnMethod),
 		directSelfMethods:             make(map[string]*pb.ConnMethod),
 		directConnectOutgoingFailures: make(map[common.NormalizedUsername]struct{}),
@@ -364,8 +365,8 @@ func (c *Conn) openC2cBidiWithMsg(
 	var directConn protocol.ProtoConn
 	if !forceProxy && !c.directMgr.IsDisabled() {
 		// Collect information that will be useful for helping us connect.
+		existing := c.GetDirectConns(username)
 		c.mu.RLock()
-		existing, hasExisting := c.directConns[username]
 		selfMethods := make([]*pb.ConnMethod, 0, len(c.directSelfMethods))
 		for _, method := range c.directSelfMethods {
 			selfMethods = append(selfMethods, method)
@@ -375,8 +376,8 @@ func (c *Conn) openC2cBidiWithMsg(
 		c.mu.RUnlock()
 
 		// Are we already connected?
-		if hasExisting {
-			directConn = existing
+		if len(existing) > 0 {
+			directConn = existing[0]
 			goto openBidi
 		}
 
@@ -518,10 +519,8 @@ func (c *Conn) openC2cBidiWithMsg(
 
 		// The peer said they were able to connect to us.
 		// Check if the connection is active.
-		c.mu.RLock()
-		existing, hasExisting = c.directConns[username]
-		c.mu.RUnlock()
-		if !hasExisting {
+		existing = c.GetDirectConns(username)
+		if len(existing) == 0 {
 			c.logger.Warn("a peer said they connected to us, but no connection was found",
 				"service", "room.Conn",
 				"room", c.RoomName.String(),
@@ -539,7 +538,7 @@ func (c *Conn) openC2cBidiWithMsg(
 		)
 
 		// The peer successfully connected to us!
-		directConn = existing
+		directConn = existing[0]
 		goto openBidi
 	}
 

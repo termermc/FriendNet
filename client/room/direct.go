@@ -35,6 +35,131 @@ func (c *Conn) directCacheGc() {
 	}
 }
 
+// GetDirectConns returns all direct connections to the specified peer.
+// It does not differentiate between connections that we initiated and ones that the peer initiated.
+// Note that this method creates a new slice each time it is called, and it RLocks the Conn mutex.
+func (c *Conn) GetDirectConns(username common.NormalizedUsername) []protocol.ProtoConn {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	set, has := c.directConns[username]
+	if !has {
+		return nil
+	}
+
+	res := make([]protocol.ProtoConn, 0, len(set))
+	for conn := range set {
+		res = append(res, conn)
+	}
+
+	return res
+}
+
+// AdoptDirectConn puts the specified connection under management as a direct connection to the specified peer.
+// The connection must already have had a successful handshake.
+//
+// It returns true if this Conn already owns the connection.
+// If true, the caller should close the connection.
+func (c *Conn) AdoptDirectConn(conn protocol.ProtoConn, username common.NormalizedUsername) (alreadyOwned bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	set, has := c.directConns[username]
+	if !has {
+		set = make(map[protocol.ProtoConn]struct{})
+		c.directConns[username] = set
+	}
+
+	_, has = set[conn]
+	if has {
+		return true
+	}
+
+	set[conn] = struct{}{}
+
+	// Ping loop.
+	go func() {
+		for {
+			_, pingErr := protocol.SendAndReceiveExpect[*pb.MsgPong](
+				conn,
+				pb.MsgType_MSG_TYPE_PING,
+				&pb.MsgPing{},
+				pb.MsgType_MSG_TYPE_PONG,
+			)
+			if pingErr != nil {
+				if protocol.IsErrorConnCloseOrCancel(pingErr) {
+					return
+				}
+
+				c.logger.Error("error pinging directly connected client",
+					"service", "room.Conn",
+					"room", c.RoomName.String(),
+					"username", username.String(),
+					"remote_addr", conn.RemoteAddr().String(),
+					"err", pingErr,
+				)
+				return
+			}
+		}
+	}()
+
+	// Handle incoming connections.
+	go func() {
+		defer func() {
+			if rec := recover(); rec != nil {
+				c.logger.Error("direct conn read loop panicked",
+					"service", "room.Conn",
+					"room", c.RoomName.String(),
+					"username", username.String(),
+					"err", rec,
+				)
+			}
+		}()
+
+		defer func() {
+			c.mu.Lock()
+			delete(c.directConns, username)
+			c.mu.Unlock()
+
+			c.logger.Info("direct peer connection closed",
+				"room", c.RoomName.String(),
+				"username", username.String(),
+				"remote_addr", conn.RemoteAddr().String(),
+			)
+		}()
+
+		var loopErr error
+		for {
+			bidi, err := conn.WaitForBidi(c.Context)
+			if err != nil {
+				loopErr = err
+				break
+			}
+
+			c.incomingBidi <- C2cBidi{
+				ProtoBidi: bidi,
+				RoomConn:  c,
+				Username:  username,
+			}
+		}
+		if loopErr != nil {
+			if protocol.IsErrorConnCloseOrCancel(loopErr) {
+				return
+			}
+
+			c.logger.Error("direct conn read loop exited with error",
+				"service", "room.Conn",
+				"err", loopErr,
+				"room", c.RoomName.String(),
+				"username", username.String(),
+				"remote_addr", conn.RemoteAddr().String(),
+			)
+		}
+	}()
+
+	return false
+}
+
 var errEmptyHandshakeToken = errors.New("empty handshake token")
 
 func (c *Conn) redeemDirectHandshakeToken(token string) (*pb.MsgRedeemConnHandshakeTokenResult, error) {
@@ -400,118 +525,29 @@ func (c *Conn) incomingDirectConnHandler(incomingConn *direct.IncomingDirectConn
 		return
 	}
 
-	// Don't manage the lifecycle of self-connection.
-	if username != c.Username {
-		// Assign connection to map, getting reference to existing if any.
-		c.mu.Lock()
-		existing, hasExisting := c.directConns[username]
-		c.directConns[username] = conn
-		c.mu.Unlock()
-
-		c.logger.Info("client made direct connection",
+	alreadyOwned := c.AdoptDirectConn(conn, username)
+	if alreadyOwned {
+		c.logger.Error("tried to adopt a direct connection that we already own",
+			"service", "room.Conn",
 			"room", c.RoomName.String(),
 			"username", username.String(),
 			"remote_addr", incomingConn.RemoteAddr().String(),
 		)
-
-		if hasExisting {
-			// Close existing connection.
-			_ = existing.CloseWithReason("new connection from same client")
-		}
+		_ = conn.CloseWithReason("internal error")
+		return
 	}
 
-	// Ping loop.
-	go func() {
-		for {
-			_, pingErr := protocol.SendAndReceiveExpect[*pb.MsgPong](
-				conn,
-				pb.MsgType_MSG_TYPE_PING,
-				&pb.MsgPing{},
-				pb.MsgType_MSG_TYPE_PONG,
-			)
-			if pingErr != nil {
-				if protocol.IsErrorConnCloseOrCancel(pingErr) {
-					return
-				}
-
-				c.logger.Error("error pinging directly connected client",
-					"service", "room.Conn",
-					"room", c.RoomName.String(),
-					"username", username.String(),
-					"remote_addr", incomingConn.RemoteAddr().String(),
-					"err", pingErr,
-				)
-				return
-			}
-		}
-	}()
-
-	// Handle authenticated connection.
-	go func() {
-		defer func() {
-			if rec := recover(); rec != nil {
-				c.logger.Error("direct conn read loop panicked",
-					"service", "room.Conn",
-					"room", c.RoomName.String(),
-					"username", username.String(),
-					"err", rec,
-				)
-			}
-		}()
-
-		// Don't manage the lifecycle of a self-connection.
-		if username != c.Username {
-			defer func() {
-				c.mu.Lock()
-				delete(c.directConns, username)
-				c.mu.Unlock()
-
-				c.logger.Info("direct peer connection closed",
-					"room", c.RoomName.String(),
-					"username", username.String(),
-					"remote_addr", conn.RemoteAddr().String(),
-				)
-			}()
-		}
-
-		loopErr := c.directConnReadLoop(conn, username)
-		if loopErr != nil {
-			if protocol.IsErrorConnCloseOrCancel(loopErr) {
-				return
-			}
-
-			c.logger.Error("direct conn read loop exited with error",
-				"service", "room.Conn",
-				"err", loopErr,
-				"room", c.RoomName.String(),
-				"username", username.String(),
-				"remote_addr", conn.RemoteAddr().String(),
-			)
-		}
-	}()
+	c.logger.Info("client made direct connection",
+		"room", c.RoomName.String(),
+		"username", username.String(),
+		"remote_addr", incomingConn.RemoteAddr().String(),
+	)
 }
 
-func (c *Conn) directConnReadLoop(conn protocol.ProtoConn, username common.NormalizedUsername) error {
-	for {
-		bidi, err := conn.WaitForBidi(c.Context)
-		if err != nil {
-			return err
-		}
-
-		c.incomingBidi <- C2cBidi{
-			ProtoBidi: bidi,
-			RoomConn:  c,
-			Username:  username,
-		}
-	}
-}
-
-// directConnectAndAddToMap attempts to establish a direct connection to a peer.
-// It does not check if there is an existing connection; it only makes a connection.
-// If the connection is successful, it adds the connection to the map.
-// If there was an existing connection, it will be replaced.
+// directConnect attempts to establish a direct connection to a peer.
+// If the connection is successful, it adopts the connection.
 // See protocol.CreateDirectConnection for further behavior.
-func (c *Conn) directConnectAndAddToMap(ctx context.Context, peer common.NormalizedUsername, method *pb.ConnMethod) (protocol.ProtoConn, pb.ConnResult, error) {
+func (c *Conn) directConnect(ctx context.Context, peer common.NormalizedUsername, method *pb.ConnMethod) (protocol.ProtoConn, pb.ConnResult, error) {
 	// Get a token from the server.
 	tokenMsg, err := protocol.SendAndReceiveExpect[*pb.MsgDirectConnHandshakeToken](
 		c.serverConn,
@@ -538,14 +574,7 @@ func (c *Conn) directConnectAndAddToMap(ctx context.Context, peer common.Normali
 		return nil, result, err
 	}
 
-	c.mu.Lock()
-	existing, hasExisting := c.directConns[peer]
-	c.directConns[peer] = conn
-	c.mu.Unlock()
-
-	if hasExisting {
-		_ = existing.CloseWithReason("new connection opened")
-	}
+	c.AdoptDirectConn(conn, peer)
 
 	return conn, result, nil
 }
@@ -628,7 +657,7 @@ func (c *Conn) tryConnectToPeerAndAddToMap(ctx context.Context, peer common.Norm
 			}
 
 			wg.Go(func() {
-				conn, result, err := c.directConnectAndAddToMap(ctx, peer, method)
+				conn, result, err := c.directConnect(ctx, peer, method)
 				if err != nil {
 					c.logger.Warn("failed to direct connect to peer",
 						"service", "room.Conn",
@@ -650,11 +679,8 @@ func (c *Conn) tryConnectToPeerAndAddToMap(ctx context.Context, peer common.Norm
 				if hasSucceeded {
 					successLock.Unlock()
 
-					// This is a crazy hack, but don't close any other succeeded connections if same user.
-					if peer != c.Username {
-						// Another method already succeeded, close this connection.
-						_ = conn.CloseWithReason("another method succeeded")
-					}
+					// Another method already succeeded, close this connection.
+					_ = conn.CloseWithReason("another method succeeded")
 					return
 				}
 				successChan <- successVals{
