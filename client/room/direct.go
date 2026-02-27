@@ -606,6 +606,7 @@ func (c *Conn) tryConnectToPeerAndAddToMap(ctx context.Context, peer common.Norm
 						err:    err,
 						result: result,
 					}
+					return
 				}
 
 				successLock.Lock()
