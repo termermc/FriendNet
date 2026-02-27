@@ -357,7 +357,7 @@ func (c *Conn) openC2cBidiWithMsg(
 	forceProxy bool,
 ) (protocol.ProtoBidi, error) {
 	var directConn protocol.ProtoConn
-	if !forceProxy {
+	if !forceProxy && !c.directMgr.IsDisabled() {
 		// Collect information that will be useful for helping us connect.
 		c.mu.RLock()
 		existing, hasExisting := c.directConns[username]
