@@ -279,6 +279,14 @@ func (l *LogicImpl) OnConnectToMe(ctx context.Context, room *Conn, bidi C2cBidi,
 		)
 	}
 
+	if result == pb.ConnResult_CONN_RESULT_OK {
+		room.logger.Info("connected to peer",
+			"service", "room.LogicImpl",
+			"room", room.RoomName.String(),
+			"peer", bidi.Username.String(),
+		)
+	}
+
 	return bidi.Write(pb.MsgType_MSG_TYPE_DIRECT_CONN_RESULT, &pb.MsgDirectConnResult{
 		Result: result,
 	})

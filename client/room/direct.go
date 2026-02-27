@@ -430,7 +430,7 @@ func (c *Conn) incomingDirectConnHandler(incomingConn *direct.IncomingDirectConn
 				delete(c.directConns, username)
 				c.mu.Unlock()
 
-				c.logger.Info("client disconnected from direct connection",
+				c.logger.Info("direct peer connection closed",
 					"room", c.RoomName.String(),
 					"username", username.String(),
 					"remote_addr", conn.RemoteAddr().String(),
