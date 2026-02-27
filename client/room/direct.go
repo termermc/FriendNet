@@ -8,6 +8,7 @@ import (
 	"hash/fnv"
 	"net/netip"
 	"slices"
+	"time"
 	"unsafe"
 
 	"friendnet.org/client/direct"
@@ -15,6 +16,22 @@ import (
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
 )
+
+func (c *Conn) directCacheGc() {
+	ticker := time.NewTicker(c.directGcInterval)
+
+	for {
+		select {
+		case <-c.Context.Done():
+			return
+		case <-ticker.C:
+			c.mu.Lock()
+			c.directPeerMethods = make(map[common.NormalizedUsername][]*pb.ConnMethod)
+			c.directConnectToMeFailures = make(map[common.NormalizedUsername]struct{})
+			c.mu.Unlock()
+		}
+	}
+}
 
 var errEmptyHandshakeToken = errors.New("empty handshake token")
 

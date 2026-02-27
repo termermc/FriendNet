@@ -99,6 +99,9 @@ type Conn struct {
 
 	// The timeout for establishing outgoing direct connections.
 	directOutgoingTimeout time.Duration
+
+	// The interval at which direct connection-related caches are cleared.
+	directGcInterval time.Duration
 }
 
 // negotiateVersion negotiates the protocol version with the server.
@@ -218,7 +221,10 @@ func NewRoomConn(
 		directSelfMethods:         make(map[string]*pb.ConnMethod),
 		directConnectToMeFailures: make(map[common.NormalizedUsername]struct{}),
 		directOutgoingTimeout:     10 * time.Second,
+		directGcInterval:          5 * time.Minute,
 	}
+
+	go c.directCacheGc()
 
 	go c.c2cLoop()
 
