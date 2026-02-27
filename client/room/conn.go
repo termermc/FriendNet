@@ -220,7 +220,7 @@ func NewRoomConn(
 		directPeerMethods:         make(map[common.NormalizedUsername][]*pb.ConnMethod),
 		directSelfMethods:         make(map[string]*pb.ConnMethod),
 		directConnectToMeFailures: make(map[common.NormalizedUsername]struct{}),
-		directOutgoingTimeout:     10 * time.Second,
+		directOutgoingTimeout:     5 * time.Second,
 		directGcInterval:          5 * time.Minute,
 	}
 
