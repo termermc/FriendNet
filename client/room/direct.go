@@ -352,24 +352,51 @@ func (c *Conn) incomingDirectConnHandler(incomingConn *direct.IncomingDirectConn
 		return
 	}
 
-	// Assign connection to map, getting reference to existing if any.
-	c.mu.Lock()
-	existing, hasExisting := c.directConns[username]
-	c.directConns[username] = conn
-	c.mu.Unlock()
+	// Don't manage the lifecycle of self-connection.
+	if username != c.Username {
+		// Assign connection to map, getting reference to existing if any.
+		c.mu.Lock()
+		existing, hasExisting := c.directConns[username]
+		c.directConns[username] = conn
+		c.mu.Unlock()
 
-	c.logger.Info("client made direct connection",
-		"room", c.RoomName.String(),
-		"username", username.String(),
-		"remote_addr", incomingConn.RemoteAddr().String(),
-	)
+		c.logger.Info("client made direct connection",
+			"room", c.RoomName.String(),
+			"username", username.String(),
+			"remote_addr", incomingConn.RemoteAddr().String(),
+		)
 
-	if hasExisting {
-		// Close existing connection.
-		_ = existing.CloseWithReason("new connection from same client")
+		if hasExisting {
+			// Close existing connection.
+			_ = existing.CloseWithReason("new connection from same client")
+		}
 	}
 
-	// TODO Ping loop
+	// Ping loop.
+	go func() {
+		for {
+			_, pingErr := protocol.SendAndReceiveExpect[*pb.MsgPong](
+				conn,
+				pb.MsgType_MSG_TYPE_PING,
+				&pb.MsgPing{},
+				pb.MsgType_MSG_TYPE_PONG,
+			)
+			if pingErr != nil {
+				if protocol.IsErrorConnCloseOrCancel(pingErr) {
+					return
+				}
+
+				c.logger.Error("error pinging directly connected client",
+					"service", "room.Conn",
+					"room", c.RoomName.String(),
+					"username", username.String(),
+					"remote_addr", incomingConn.RemoteAddr().String(),
+					"err", pingErr,
+				)
+				return
+			}
+		}
+	}()
 
 	// Handle authenticated connection.
 	go func() {
@@ -383,17 +410,21 @@ func (c *Conn) incomingDirectConnHandler(incomingConn *direct.IncomingDirectConn
 				)
 			}
 		}()
-		defer func() {
-			c.mu.Lock()
-			delete(c.directConns, username)
-			c.mu.Unlock()
 
-			c.logger.Info("client disconnected from direct connection",
-				"room", c.RoomName.String(),
-				"username", username.String(),
-				"remote_addr", conn.RemoteAddr().String(),
-			)
-		}()
+		// Don't manage the lifecycle of a self-connection.
+		if username != c.Username {
+			defer func() {
+				c.mu.Lock()
+				delete(c.directConns, username)
+				c.mu.Unlock()
+
+				c.logger.Info("client disconnected from direct connection",
+					"room", c.RoomName.String(),
+					"username", username.String(),
+					"remote_addr", conn.RemoteAddr().String(),
+				)
+			}()
+		}
 
 		loopErr := c.directConnReadLoop(conn, username)
 		if loopErr != nil {
