@@ -532,6 +532,12 @@ func (c *Conn) openC2cBidiWithMsg(
 			goto openBidi
 		}
 
+		c.logger.Info("peer successfully connected to us",
+			"service", "room.Conn",
+			"room", c.RoomName.String(),
+			"peer", username.String(),
+		)
+
 		// The peer successfully connected to us!
 		directConn = existing
 		goto openBidi
