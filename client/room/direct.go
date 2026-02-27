@@ -38,9 +38,13 @@ func (c *Conn) directCacheGc() {
 // GetDirectConns returns all direct connections to the specified peer.
 // It does not differentiate between connections that we initiated and ones that the peer initiated.
 // Note that this method creates a new slice each time it is called, and it RLocks the Conn mutex.
+// If the Conn is closed, returns empty.
 func (c *Conn) GetDirectConns(username common.NormalizedUsername) []protocol.ProtoConn {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
+	if c.isClosed {
+		return nil
+	}
 
 	set, has := c.directConns[username]
 	if !has {
