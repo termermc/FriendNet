@@ -457,6 +457,12 @@ func (c *Conn) openC2cBidiWithMsg(
 		goto openBidi
 
 	connectToMe:
+		c.logger.Info("asking client to connect to us",
+			"service", "room.Conn",
+			"room", c.RoomName.String(),
+			"peer", username.String(),
+		)
+
 		// Ask the peer to connect to us.
 		bidi, err := c.openProxiedC2cBidi(username)
 		if err != nil {
@@ -480,6 +486,13 @@ func (c *Conn) openC2cBidiWithMsg(
 		}
 		if ctmRes.Payload.Result != pb.ConnResult_CONN_RESULT_OK {
 			_ = bidi.Close()
+
+			c.logger.Warn("peer said they could not connect to us",
+				"service", "room.Conn",
+				"room", c.RoomName.String(),
+				"peer", username.String(),
+				"result", ctmRes.Payload.Result.String(),
+			)
 
 			// The peer could not connect.
 			// Record this to save time later.
