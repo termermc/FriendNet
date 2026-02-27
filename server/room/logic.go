@@ -299,10 +299,6 @@ func (l LogicImpl) OnGetDirectConnHandshakeToken(_ context.Context, client *Clie
 		return bidi.WriteError(pb.ErrType_ERR_TYPE_INVALID_FIELDS, "invalid target username")
 	}
 
-	if target == client.Username {
-		return bidi.WriteError(pb.ErrType_ERR_TYPE_INVALID_FIELDS, "cannot issue a handshake token whose target is yourself")
-	}
-
 	room := client.Room
 	token := room.TokenManager.NewClientToken(room.Name, client.Username, target)
 
