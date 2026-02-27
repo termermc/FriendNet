@@ -522,7 +522,7 @@ var errNoPeerMethods = errors.New("no method found to connect to peer")
 // It adds the peer to the map if successful.
 //
 // The context controls the connect timeout.
-func (c *Conn) tryConnectToPeerAndAddToMap(ctx context.Context, peer common.NormalizedUsername) (conn protocol.ProtoConn, result pb.ConnResult, err error) {
+func (c *Conn) tryConnectToPeerAndAddToMap(ctx context.Context, peer common.NormalizedUsername) (protocol.ProtoConn, pb.ConnResult, error) {
 	// Do we need to query methods for the peer?
 	c.mu.RLock()
 	peerMethods, hasPeerMethods := c.directPeerMethods[peer]
@@ -568,10 +568,14 @@ func (c *Conn) tryConnectToPeerAndAddToMap(ctx context.Context, peer common.Norm
 		conn   protocol.ProtoConn
 		result pb.ConnResult
 	}
-	successChan := make(chan successVals, 1)
+	type failureVals struct {
+		err    error
+		result pb.ConnResult
+	}
 	var successLock sync.Mutex
 	hasSucceeded := false
-	errChan := make(chan error, len(peerMethods))
+	successChan := make(chan successVals, 1)
+	failureChan := make(chan failureVals, len(peerMethods))
 
 	go func() {
 		var wg sync.WaitGroup
@@ -579,13 +583,15 @@ func (c *Conn) tryConnectToPeerAndAddToMap(ctx context.Context, peer common.Norm
 		// Try methods concurrently.
 		for _, method := range peerMethods {
 			if !c.connMethodSupport.IsSupported(method.Type) {
-				result = pb.ConnResult_CONN_RESULT_METHOD_NOT_SUPPORTED
-				errChan <- protocol.ErrUnsupportedMethodType
+				failureChan <- failureVals{
+					err:    protocol.ErrUnsupportedMethodType,
+					result: pb.ConnResult_CONN_RESULT_METHOD_NOT_SUPPORTED,
+				}
 				continue
 			}
 
 			wg.Go(func() {
-				conn, result, err = c.directConnectAndAddToMap(ctx, peer, method)
+				conn, result, err := c.directConnectAndAddToMap(ctx, peer, method)
 				if err != nil {
 					c.logger.Warn("failed to direct connect to peer",
 						"service", "room.Conn",
@@ -596,7 +602,10 @@ func (c *Conn) tryConnectToPeerAndAddToMap(ctx context.Context, peer common.Norm
 						"address", method.Address,
 						"err", err,
 					)
-					errChan <- err
+					failureChan <- failureVals{
+						err:    err,
+						result: result,
+					}
 				}
 
 				successLock.Lock()
@@ -617,10 +626,11 @@ func (c *Conn) tryConnectToPeerAndAddToMap(ctx context.Context, peer common.Norm
 		}
 
 		wg.Wait()
-		close(errChan)
+		close(failureChan)
 	}()
 
 	errs := make([]error, 0, len(peerMethods))
+	var lastResult pb.ConnResult
 collectErrs:
 	for {
 		select {
@@ -628,15 +638,16 @@ collectErrs:
 			return nil, 0, ctx.Err()
 		case success := <-successChan:
 			return success.conn, success.result, nil
-		case connErr := <-errChan:
-			if connErr == nil {
-				// The error channel was closed, so all methods finished.
+		case failure := <-failureChan:
+			if failure.err == nil {
+				// Failure chan closed, all methods failed.
 				break collectErrs
 			}
-			errs = append(errs, connErr)
+			errs = append(errs, failure.err)
+			lastResult = failure.result
 		}
 	}
 
 	// No methods worked.
-	return nil, result, errors.Join(errs...)
+	return nil, lastResult, errors.Join(errs...)
 }
