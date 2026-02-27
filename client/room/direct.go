@@ -146,76 +146,96 @@ func (c *Conn) runDirectAdsAndLoop() {
 	}
 
 	advertiseInBg := func(server *direct.Server) {
-		if server.AddrPort.Addr().IsPrivate() && !mgr.AdvertisePrivateIps() {
-			return
+		methodsToAdvertise := make([]*pb.MsgAdvertiseConnMethod, 0, 2)
+
+		if server.AddrPort.Addr().IsPrivate() {
+			if mgr.AdvertisePrivateIps() {
+				methodsToAdvertise = append(methodsToAdvertise, c.mkAdConnMethod(publicIp, server.AddrPort))
+			}
+
+			// Did we get our public IP?
+			// If so, try to advertise it.
+			// If we are listening on a private port, port forwarding might be enabled.
+			methodsToAdvertise = append(methodsToAdvertise, c.mkAdConnMethod(
+				publicIp,
+				netip.AddrPortFrom(publicIp, server.AddrPort.Port()),
+			))
 		}
 
-		method := c.mkAdConnMethod(publicIp, server.AddrPort)
+		for _, method := range methodsToAdvertise {
+			// Have we already advertised this method?
+			c.mu.RLock()
+			_, has := c.directSelfMethods[method.Id]
+			c.mu.RUnlock()
+			if has {
+				continue
+			}
 
-		go func() {
-			defer func() {
-				if rec := recover(); rec != nil {
-					c.logger.Error("direct advertisement goroutine panicked",
+			go func() {
+				defer func() {
+					if rec := recover(); rec != nil {
+						c.logger.Error("direct advertisement goroutine panicked",
+							"service", "room.Conn",
+							"room", c.RoomName.String(),
+							"addr", server.AddrPort.String(),
+							"err", rec,
+						)
+					}
+				}()
+
+				msg, err := protocol.SendAndReceiveExpect[*pb.MsgAdvertiseConnMethodResult](
+					c.serverConn,
+					pb.MsgType_MSG_TYPE_ADVERTISE_CONN_METHOD,
+					method,
+					pb.MsgType_MSG_TYPE_ADVERTISE_CONN_METHOD_RESULT,
+				)
+				if err != nil {
+					if protocol.IsErrorConnCloseOrCancel(err) {
+						return
+					}
+
+					c.logger.Error("failed to advertise direct connection method",
 						"service", "room.Conn",
 						"room", c.RoomName.String(),
-						"addr", server.AddrPort.String(),
-						"err", rec,
+						"method_type", method.Type.String(),
+						"address", server.AddrPort.String(),
+						"priority", method.Priority,
+						"err", err,
 					)
-				}
-			}()
-
-			msg, err := protocol.SendAndReceiveExpect[*pb.MsgAdvertiseConnMethodResult](
-				c.serverConn,
-				pb.MsgType_MSG_TYPE_ADVERTISE_CONN_METHOD,
-				method,
-				pb.MsgType_MSG_TYPE_ADVERTISE_CONN_METHOD_RESULT,
-			)
-			if err != nil {
-				if protocol.IsErrorConnCloseOrCancel(err) {
 					return
 				}
 
-				c.logger.Error("failed to advertise direct connection method",
-					"service", "room.Conn",
-					"room", c.RoomName.String(),
-					"method_type", method.Type.String(),
-					"address", server.AddrPort.String(),
-					"priority", method.Priority,
-					"err", err,
-				)
-				return
-			}
+				result := msg.Payload.TestResult
+				if result == pb.ConnResult_CONN_RESULT_OK {
+					c.logger.Info("server verified advertised address",
+						"service", "room.Conn",
+						"room", c.RoomName.String(),
+						"method_type", method.Type.String(),
+						"address", server.AddrPort.String(),
+						"priority", method.Priority,
+					)
+				} else {
+					c.logger.Error("server said it could not connect to advertised address",
+						"service", "room.Conn",
+						"room", c.RoomName.String(),
+						"method_type", method.Type.String(),
+						"address", server.AddrPort.String(),
+						"priority", method.Priority,
+						"result", result.String(),
+					)
+				}
 
-			result := msg.Payload.TestResult
-			if result == pb.ConnResult_CONN_RESULT_OK {
-				c.logger.Info("server verified advertised address",
-					"service", "room.Conn",
-					"room", c.RoomName.String(),
-					"method_type", method.Type.String(),
-					"address", server.AddrPort.String(),
-					"priority", method.Priority,
-				)
-			} else {
-				c.logger.Error("server said it could not connect to advertised address",
-					"service", "room.Conn",
-					"room", c.RoomName.String(),
-					"method_type", method.Type.String(),
-					"address", server.AddrPort.String(),
-					"priority", method.Priority,
-					"result", result.String(),
-				)
-			}
-
-			c.mu.Lock()
-			c.directSelfMethods[method.Id] = &pb.ConnMethod{
-				Id:               method.Id,
-				Type:             method.Type,
-				Address:          method.Address,
-				Priority:         method.Priority,
-				IsServerVerified: result == pb.ConnResult_CONN_RESULT_OK,
-			}
-			c.mu.Unlock()
-		}()
+				c.mu.Lock()
+				c.directSelfMethods[method.Id] = &pb.ConnMethod{
+					Id:               method.Id,
+					Type:             method.Type,
+					Address:          method.Address,
+					Priority:         method.Priority,
+					IsServerVerified: result == pb.ConnResult_CONN_RESULT_OK,
+				}
+				c.mu.Unlock()
+			}()
+		}
 	}
 
 	// Advertise known servers.
