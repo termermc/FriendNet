@@ -426,6 +426,9 @@ func (c *Conn) openC2cBidiWithMsg(
 			goto tryConnectToMe
 		}
 
+		// Successfully made direct connection!
+		goto openBidi
+
 	tryConnectToMe:
 
 		// The heuristic follows these steps in order:
