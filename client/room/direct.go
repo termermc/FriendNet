@@ -568,7 +568,9 @@ func (c *Conn) tryConnectToPeerAndAddToMap(ctx context.Context, peer common.Norm
 		conn   protocol.ProtoConn
 		result pb.ConnResult
 	}
-	successChan := make(chan successVals, len(peerMethods))
+	successChan := make(chan successVals, 1)
+	var successLock sync.Mutex
+	hasSucceeded := false
 	errChan := make(chan error, len(peerMethods))
 
 	go func() {
@@ -597,10 +599,20 @@ func (c *Conn) tryConnectToPeerAndAddToMap(ctx context.Context, peer common.Norm
 					errChan <- err
 				}
 
+				successLock.Lock()
+				if hasSucceeded {
+					successLock.Unlock()
+
+					// Another method already succeeded, close this connection.
+					_ = conn.CloseWithReason("another method succeeded")
+					return
+				}
 				successChan <- successVals{
 					conn:   conn,
 					result: result,
 				}
+				hasSucceeded = true
+				successLock.Unlock()
 			})
 		}
 
