@@ -486,6 +486,11 @@ func (c *Conn) openC2cBidiWithMsg(
 			"peer", username.String(),
 		)
 
+		// Record this failure.
+		c.mu.Lock()
+		c.directConnectToMeFailures[username] = struct{}{}
+		c.mu.Unlock()
+
 		// No suitable self method found, otherwise would have jumped to connectToMe.
 		// Fall back to proxy.
 		goto openBidi
