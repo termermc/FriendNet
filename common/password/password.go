@@ -98,7 +98,7 @@ func (r *Requirements) Check(username common.NormalizedUsername, password string
 	}
 
 	if len(errs) > 0 {
-		return &Error{Inner: errs}
+		return Error{Inner: errs}
 	}
 
 	return nil
