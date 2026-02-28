@@ -255,9 +255,16 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-		var h2StreamErr http2.StreamError
-		var qStreamErr *quic.StreamError
-		if _, ok := errors.AsType[http2.GoAwayError](err); ok || errors.As(err, &h2StreamErr) || errors.As(err, &qStreamErr) {
+		if _, ok := errors.AsType[http2.GoAwayError](err); ok {
+			return
+		}
+		if _, ok := errors.AsType[http2.StreamError](err); ok {
+			return
+		}
+		if _, ok := errors.AsType[http2.ConnectionError](err); ok {
+			return
+		}
+		if _, ok := errors.AsType[*quic.StreamError](err); ok {
 			return
 		}
 
