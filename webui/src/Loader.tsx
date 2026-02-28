@@ -112,12 +112,28 @@ export const Loader: Component = () => {
 				input: RequestInfo | URL,
 				init?: RequestInit,
 			): Promise<Response> => {
-				const abort = new AbortController()
-				setTimeout(() => abort.abort(), RpcTimeoutMs)
+				let url: URL
+				if (input instanceof Request) {
+					url = new URL(input.url)
+				} else if (typeof input === 'string') {
+					url = new URL(input)
+				} else if (input instanceof URL) {
+					url = input
+				} else {
+					throw new Error('Invalid input type for fetch')
+				}
+
+				let signal: AbortSignal | undefined
+				// Do not time out stream methods.
+				if (!url.pathname.includes('Stream')) {
+					const abort = new AbortController()
+					setTimeout(() => abort.abort(), RpcTimeoutMs)
+					signal = abort.signal
+				}
 
 				return fetch(input, {
 					...init,
-					signal: abort.signal,
+					signal,
 				})
 			},
 			baseUrl: rpcUrl,
