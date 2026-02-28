@@ -60,7 +60,7 @@ func NewServerShareManager(serverUuid string, storage *storage.Storage) (*Server
 	}, nil
 }
 
-func (m *ServerShareManager) snapshotShares() []Share {
+func (m *ServerShareManager) snapshotSharesNoLock() []Share {
 	slice := make([]Share, 0, len(m.shareMap))
 	for _, share := range m.shareMap {
 		slice = append(slice, share)
@@ -78,7 +78,7 @@ func (m *ServerShareManager) GetAll() []Share {
 		return nil
 	}
 
-	return m.snapshotShares()
+	return m.snapshotSharesNoLock()
 }
 
 // GetByName returns the share with the specified name and true, or nil and false if no such share name exists.
@@ -98,12 +98,15 @@ func (m *ServerShareManager) GetByName(name string) (Share, bool) {
 // If a share with the same name exists, returns ErrShareExists.
 func (m *ServerShareManager) Add(ctx context.Context, name string, path string) (Share, error) {
 	m.mu.Lock()
-	defer m.mu.Unlock()
+
 	if m.isClosed {
+		m.mu.Unlock()
 		return nil, ErrServerManagerClosed
 	}
 
 	_, exists := m.shareMap[name]
+	m.mu.Unlock()
+
 	if exists {
 		return nil, ErrShareExists
 	}
@@ -119,7 +122,10 @@ func (m *ServerShareManager) Add(ctx context.Context, name string, path string) 
 	if err != nil {
 		return nil, fmt.Errorf(`failed to create share instance for share %q: %w`, name, err)
 	}
+
+	m.mu.Lock()
 	m.shareMap[name] = share
+	m.mu.Unlock()
 
 	return share, nil
 }
@@ -128,12 +134,15 @@ func (m *ServerShareManager) Add(ctx context.Context, name string, path string) 
 // If the share does not exist, this is no-op.
 func (m *ServerShareManager) Delete(ctx context.Context, name string) error {
 	m.mu.Lock()
-	defer m.mu.Unlock()
 	if m.isClosed {
+		m.mu.Unlock()
 		return ErrShareClosed
 	}
 
 	share, has := m.shareMap[name]
+
+	m.mu.Unlock()
+
 	if !has {
 		return nil
 	}
@@ -146,7 +155,9 @@ func (m *ServerShareManager) Delete(ctx context.Context, name string) error {
 
 	// Close share and remove it from map.
 	_ = share.Close()
+	m.mu.Lock()
 	delete(m.shareMap, name)
+	m.mu.Unlock()
 
 	return nil
 }
@@ -154,17 +165,22 @@ func (m *ServerShareManager) Delete(ctx context.Context, name string) error {
 // Close closes all shares managed by the manager, then the manager itself.
 func (m *ServerShareManager) Close() error {
 	m.mu.Lock()
-	defer m.mu.Unlock()
+
 	if m.isClosed {
+		m.mu.Unlock()
 		return nil
 	}
 	m.isClosed = true
+
+	shares := m.snapshotSharesNoLock()
+
+	m.mu.Unlock()
 
 	m.ctxCancel()
 
 	// Close all shares.
 	var wg sync.WaitGroup
-	for _, share := range m.shareMap {
+	for _, share := range shares {
 		wg.Go(func() {
 			_ = share.Close()
 		})

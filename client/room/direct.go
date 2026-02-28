@@ -66,7 +66,6 @@ func (c *Conn) GetDirectConns(username common.NormalizedUsername) []protocol.Pro
 // If true, the caller should close the connection.
 func (c *Conn) AdoptDirectConn(conn protocol.ProtoConn, username common.NormalizedUsername) (alreadyOwned bool) {
 	c.mu.Lock()
-	defer c.mu.Unlock()
 
 	set, has := c.directConns[username]
 	if !has {
@@ -80,6 +79,8 @@ func (c *Conn) AdoptDirectConn(conn protocol.ProtoConn, username common.Normaliz
 	}
 
 	set[conn] = struct{}{}
+
+	c.mu.Unlock()
 
 	// Ping loop.
 	go func() {

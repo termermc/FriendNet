@@ -74,7 +74,7 @@ func NewManager(
 	return m, nil
 }
 
-func (m *Manager) snapshotRooms() []*Room {
+func (m *Manager) snapshotRoomsNoLock() []*Room {
 	rooms := make([]*Room, 0, len(m.rooms))
 	for _, room := range m.rooms {
 		rooms = append(rooms, room)
@@ -88,15 +88,20 @@ func (m *Manager) snapshotRooms() []*Room {
 // Additional calls are no-op.
 func (m *Manager) Close() error {
 	m.mu.Lock()
-	defer m.mu.Unlock()
+
 	if m.isClosed {
+		m.mu.Unlock()
 		return nil
 	}
 	m.isClosed = true
 
+	rooms := m.snapshotRoomsNoLock()
+
+	m.mu.Unlock()
+
 	// Close all rooms.
 	var wg sync.WaitGroup
-	for _, room := range m.rooms {
+	for _, room := range rooms {
 		wg.Go(func() {
 			_ = room.Close()
 		})
@@ -115,19 +120,22 @@ func (m *Manager) GetAll() []*Room {
 	if m.isClosed {
 		return nil
 	}
-	return m.snapshotRooms()
+	return m.snapshotRoomsNoLock()
 }
 
 // CreateRoom creates a new room and returns it.
 // If a room with the same name already exists, returns ErrRoomExists.
 func (m *Manager) CreateRoom(ctx context.Context, name common.NormalizedRoomName) (*Room, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	m.mu.RLock()
 	if m.isClosed {
+		m.mu.RUnlock()
 		return nil, ErrManagerClosed
 	}
 
 	_, has := m.rooms[name.String()]
+
+	m.mu.RUnlock()
+
 	if has {
 		return nil, ErrRoomExists
 	}
@@ -147,7 +155,10 @@ func (m *Manager) CreateRoom(ctx context.Context, name common.NormalizedRoomName
 		name,
 		m.logic,
 	)
+
+	m.mu.Lock()
 	m.rooms[name.String()] = room
+	m.mu.Unlock()
 
 	return room, nil
 }
@@ -164,13 +175,17 @@ func (m *Manager) GetRoomByName(name common.NormalizedRoomName) (*Room, bool) {
 // DeleteRoomByName deletes the room with the specified name.
 // If the room does not exist, this is a no-op.
 func (m *Manager) DeleteRoomByName(ctx context.Context, name common.NormalizedRoomName) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	m.mu.RLock()
+
 	if m.isClosed {
+		m.mu.RUnlock()
 		return ErrManagerClosed
 	}
 
 	room, has := m.rooms[name.String()]
+
+	m.mu.RUnlock()
+
 	if !has {
 		return nil
 	}

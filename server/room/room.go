@@ -100,12 +100,16 @@ func (r *Room) snapshotClientsNoLock() []*Client {
 // Will never return an error.
 func (r *Room) Close() error {
 	r.mu.Lock()
-	defer r.mu.Unlock()
+
 	if r.isClosed {
+		r.mu.Unlock()
 		return nil
 	}
-
 	r.isClosed = true
+
+	clients := r.snapshotClientsNoLock()
+
+	r.mu.Unlock()
 
 	// Signal to the client connections that the server is shutting down.
 	// Give them 5 seconds to respond before closing the connections.
@@ -113,7 +117,7 @@ func (r *Room) Close() error {
 	defer cancel()
 	go func() {
 		var byeWg sync.WaitGroup
-		for _, client := range r.clients {
+		for _, client := range clients {
 			byeWg.Go(func() {
 				_, _ = client.conn.SendAndReceive(pb.MsgType_MSG_TYPE_BYE, &pb.MsgBye{})
 			})
@@ -125,14 +129,16 @@ func (r *Room) Close() error {
 
 	// Close all client connections.
 	var wg sync.WaitGroup
-	for _, client := range r.clients {
+	for _, client := range clients {
 		wg.Go(func() {
 			_ = client.conn.CloseWithReason("room closed")
 		})
 	}
 	wg.Wait()
 
+	r.mu.Lock()
 	r.clients = nil
+	r.mu.Unlock()
 
 	return nil
 }
@@ -312,11 +318,12 @@ func (r *Room) GetClientByUsername(username common.NormalizedUsername) (*Client,
 // Returns ErrAccountExists if an account with the same username already exists.
 // Returns a password.Error if the password does not meet the room's requirements.
 func (r *Room) CreateAccount(ctx context.Context, username common.NormalizedUsername, password string) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.mu.RLock()
 	if r.isClosed {
+		r.mu.RUnlock()
 		return ErrRoomClosed
 	}
+	r.mu.RUnlock()
 
 	_, has, err := r.storage.GetAccountByRoomAndUsername(ctx, r.Name, username)
 	if err != nil {
@@ -354,11 +361,12 @@ func (r *Room) CreateAccount(ctx context.Context, username common.NormalizedUser
 // DeleteAccount deletes an account from the room.
 // If the account does not exist, returns ErrNoSuchAccount.
 func (r *Room) DeleteAccount(ctx context.Context, username common.NormalizedUsername) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.mu.RLock()
 	if r.isClosed {
+		r.mu.RUnlock()
 		return ErrRoomClosed
 	}
+	r.mu.RUnlock()
 
 	_, has, err := r.storage.GetAccountByRoomAndUsername(ctx, r.Name, username)
 	if err != nil {
@@ -388,11 +396,12 @@ func (r *Room) DeleteAccount(ctx context.Context, username common.NormalizedUser
 // If the account does not exist, returns ErrNoSuchAccount.
 // Returns a password.Error if the password does not meet the room's requirements.
 func (r *Room) UpdateAccountPassword(ctx context.Context, username common.NormalizedUsername, password string) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.mu.RLock()
 	if r.isClosed {
+		r.mu.RUnlock()
 		return ErrRoomClosed
 	}
+	r.mu.RUnlock()
 
 	hash, err := pass.HashWithRequirements(username, password, r.passReqs)
 	if err != nil {
@@ -431,11 +440,12 @@ func (r *Room) UpdateAccountPassword(ctx context.Context, username common.Normal
 // If the account does not exist, returns ErrNoSuchAccount.
 // Returns true if the password matches, false otherwise.
 func (r *Room) VerifyAccountPassword(ctx context.Context, username common.NormalizedUsername, password string) (bool, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.mu.RLock()
 	if r.isClosed {
+		r.mu.RUnlock()
 		return false, ErrRoomClosed
 	}
+	r.mu.RUnlock()
 
 	record, has, err := r.storage.GetAccountByRoomAndUsername(ctx, r.Name, username)
 	if err != nil {

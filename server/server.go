@@ -93,10 +93,14 @@ func NewServer(
 // Subsequent calls are no-op.
 func (s *Server) Close() error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
+
 	if s.isClosed {
+		s.mu.Unlock()
 		return nil
 	}
+	s.isClosed = true
+
+	s.mu.Unlock()
 
 	_ = s.RoomManager.Close()
 
