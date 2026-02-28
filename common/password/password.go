@@ -27,9 +27,11 @@ func (e Error) Error() string {
 	sb := strings.Builder{}
 	sb.Grow(totalLen)
 	sb.WriteString(prefix)
-	for _, err := range e.Inner {
+	for i, err := range e.Inner {
 		sb.WriteString(err.Error())
-		sb.WriteString("; ")
+		if i < len(e.Inner)-1 {
+			sb.WriteString("; ")
+		}
 	}
 
 	return sb.String()
