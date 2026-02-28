@@ -78,7 +78,7 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 				// Server was probably deleted.
 				state.refreshServers().catch((err) => {
 					console.error(
-						'failed to refresh servers after apparently server deletion:',
+						'failed to refresh servers after apparent server deletion:',
 						err,
 					)
 				})
@@ -96,7 +96,7 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 			await refreshUsers()
 		}
 	})()
-	onCleanup(() => runRefresher = false)
+	onCleanup(() => (runRefresher = false))
 
 	const [isDeleting, setDeleting] = createSignal(false)
 	const doDelete = async () => {

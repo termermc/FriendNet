@@ -189,7 +189,11 @@ export const CreateServerPage: Component = () => {
 					</tbody>
 				</table>
 
-				<input type="submit" value="Add Server" disabled={isCreating()} />
+				<input
+					type="submit"
+					value="Add Server"
+					disabled={isCreating()}
+				/>
 			</form>
 		</div>
 	)

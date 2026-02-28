@@ -22,7 +22,8 @@ type LogMsgProps = {
 }
 
 const LogMsg: Component<LogMsgProps> = (props) => {
-	const timestamp = () => new Date(Number(props.msg.createdTs)).toLocaleString()
+	const timestamp = () =>
+		new Date(Number(props.msg.createdTs)).toLocaleString()
 	const attrsText = () => props.formatAttrs(props.msg)
 
 	return (

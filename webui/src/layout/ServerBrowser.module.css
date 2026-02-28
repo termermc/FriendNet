@@ -52,23 +52,22 @@
 }
 
 .serverConnState {
-    display: inline-block;
-    width: 1rem;
-    height: 1rem;
-    border-radius: 100%;
-    background-color: black;
+	display: inline-block;
+	width: 1rem;
+	height: 1rem;
+	border-radius: 100%;
+	background-color: black;
 
-    margin-right: 0.25rem;
-    position: relative;
-    top: 0.15rem;
+	margin-right: 0.25rem;
+	position: relative;
+	top: 0.15rem;
 }
 .serverConnState.closed {
-    background-color: red;
+	background-color: red;
 }
 .serverConnState.opening {
-    background-color: orange;
+	background-color: orange;
 }
 .serverConnState.open {
-    background-color: green;
+	background-color: green;
 }
-

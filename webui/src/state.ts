@@ -17,6 +17,42 @@ import { RpcClient } from './protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
 import { sleep } from './util'
 
+class Refresher {
+	onlineUsers = new Set<string>()
+
+	constructor(
+		state: State,
+		client: RpcClient,
+		private readonly intervalMs: number,
+	) {
+		;(async () => {
+			// noinspection InfiniteLoopJS
+			while (true) {
+				await sleep(this.intervalMs)
+				for (const serverUuid of this.onlineUsers) {
+					this.onlineUsers.delete(serverUuid)
+					try {
+						const server = state.getServerByUuid(serverUuid)
+						if (server == null) {
+							continue
+						}
+
+						const res = client.getOnlineUsers({ serverUuid })
+
+						for await (const { users } of res) {
+							for (const info of users) {
+								server.setUserOnline(info)
+							}
+						}
+					} catch (err) {
+						console.error('failed to refresh online users', err)
+					}
+				}
+			}
+		})()
+	}
+}
+
 /**
  * Represents an online user within a server room.
  */
@@ -56,6 +92,7 @@ export class ServerShare {
  */
 export class Server {
 	readonly #client: RpcClient
+	readonly #refresher: Refresher
 
 	readonly uuid: string
 	readonly createdTs: Date
@@ -81,12 +118,15 @@ export class Server {
 	shares: Accessor<ServerShare[]>
 	#setShares: Setter<ServerShare[]>
 
-	constructor(client: RpcClient, info: ServerInfo) {
+	constructor(client: RpcClient, refresher: Refresher, info: ServerInfo) {
 		this.#client = client
+		this.#refresher = refresher
 
 		this.uuid = info.uuid
 		this.createdTs = new Date(Number(info.createdTs) * 1_000)
-		;[this.connState, this.#setConnState] = createSignal<ServerConnState>(ServerConnState.CLOSED)
+		;[this.connState, this.#setConnState] = createSignal<ServerConnState>(
+			ServerConnState.CLOSED,
+		)
 		;[this.name, this.#setName] = createSignal('')
 		;[this.address, this.#setAddress] = createSignal('')
 		;[this.room, this.#setRoom] = createSignal('')
@@ -103,7 +143,7 @@ export class Server {
 		this.#setConnState(state)
 
 		if (state === ServerConnState.OPEN) {
-			this.refreshOnlineUsers().catch(err => console.error('failed to refresh online users after server became open:', err))
+			this.refreshOnlineUsers()
 		} else {
 			this.#setOnlineUsers([])
 		}
@@ -116,7 +156,7 @@ export class Server {
 	 * @param info The online user's info.
 	 */
 	setUserOnline(info: OnlineUserInfo) {
-		const cur = this.onlineUsers().find(x => x.username === info.username)
+		const cur = this.onlineUsers().find((x) => x.username === info.username)
 		if (cur) {
 			cur.updateFromInfo(info)
 		} else {
@@ -132,18 +172,17 @@ export class Server {
 	 * @param username The user's username.
 	 */
 	setUserOffline(username: string): void {
-		const newUsers = this.onlineUsers().filter(x => x.username !== username)
+		const newUsers = this.onlineUsers().filter(
+			(x) => x.username !== username,
+		)
 		this.#setOnlineUsers(newUsers)
 	}
 
-	async refreshOnlineUsers(): Promise<void> {
-		const res = this.#client.getOnlineUsers({ serverUuid: this.uuid })
-
-		for await (const { users } of res) {
-			for (const info of users) {
-				this.setUserOnline(info)
-			}
-		}
+	/**
+	 * Schedules a refresh of the online users.
+	 */
+	refreshOnlineUsers() {
+		this.#refresher.onlineUsers.add(this.uuid)
 	}
 
 	async refreshShares(): Promise<void> {
@@ -487,7 +526,7 @@ export class EventManager {
 	#state: State
 	#client: RpcClient
 
-	#subscribers = new Map<Event_Type, Set<EventListener>>
+	#subscribers = new Map<Event_Type, Set<EventListener>>()
 
 	/**
 	 * Adds a new event listener for the specified event type.
@@ -539,7 +578,12 @@ export class EventManager {
 
 			try {
 				for await (const res of stream) {
-					console.log('[EVENT]', Event_Type[res.event!.type], res.event, res.context)
+					console.log(
+						'[EVENT]',
+						Event_Type[res.event!.type],
+						res.event,
+						res.context,
+					)
 
 					const evt = res.event!
 
@@ -552,7 +596,10 @@ export class EventManager {
 						try {
 							sub(evt, res.context!)
 						} catch (err) {
-							console.error(`error in event listener for type ${Event_Type[evt.type]} (${evt.type}):`, err)
+							console.error(
+								`error in event listener for type ${Event_Type[evt.type]} (${evt.type}):`,
+								err,
+							)
 						}
 					}
 				}
@@ -565,7 +612,10 @@ export class EventManager {
 			try {
 				await this.#state.doFullRefresh()
 			} catch (err) {
-				console.error('failed to refresh state after event stream error:', err)
+				console.error(
+					'failed to refresh state after event stream error:',
+					err,
+				)
 			}
 		}
 	}
@@ -584,6 +634,12 @@ export class State {
 	 */
 	readonly event: EventManager
 
+	/**
+	 * The global {@link Refresher} instance.
+	 * Used to schedule refreshes of various resources.
+	 */
+	readonly refresher: Refresher
+
 	readonly previewInfo: Accessor<PreviewInfo | undefined>
 	readonly #setPreviewInfo: Setter<PreviewInfo | undefined>
 
@@ -595,6 +651,7 @@ export class State {
 
 		this.log = new LogManager(client)
 		this.event = new EventManager(this, client)
+		this.refresher = new Refresher(this, client, 500)
 
 		;[this.servers, this.#setServers] = createSignal<Server[]>([])
 		;[this.previewInfo, this.#setPreviewInfo] = createSignal<
@@ -602,14 +659,17 @@ export class State {
 		>()
 
 		// Listen to server events.
-		this.event.addEventListener(Event_Type.SERVER_CONN_STATE_CHANGE, (event, ctx) => {
-			const server = this.getServerByUuid(ctx.serverUuid)
-			if (server == null) {
-				return
-			}
+		this.event.addEventListener(
+			Event_Type.SERVER_CONN_STATE_CHANGE,
+			(event, ctx) => {
+				const server = this.getServerByUuid(ctx.serverUuid)
+				if (server == null) {
+					return
+				}
 
-			server.setConnState(event.serverConn!.state)
-		})
+				server.setConnState(event.serverConn!.state)
+			},
+		)
 		this.event.addEventListener(Event_Type.CLIENT_ONLINE, (event, ctx) => {
 			const server = this.getServerByUuid(ctx.serverUuid)
 			if (server == null) {
@@ -629,8 +689,9 @@ export class State {
 
 		// Periodically refresh state.
 		setInterval(() => {
-			this.doFullRefresh()
-				.catch(err => console.error('error doing periodic full state refresh:', err))
+			this.doFullRefresh().catch((err) =>
+				console.error('error doing periodic full state refresh:', err),
+			)
 		}, 10_000)
 	}
 
@@ -640,14 +701,8 @@ export class State {
 	async doFullRefresh() {
 		await this.refreshServers()
 
-		const servers = this.servers()
-		const concurrency = 4
-		const promises = new Array<Promise<void>[]>(concurrency).fill([])
-		for (let i = 0; i < servers.length; i++) {
-			promises[i%concurrency].push(servers[i].refreshOnlineUsers())
-		}
-		for (const arr of promises) {
-			await Promise.all(arr)
+		for (const server of this.servers()) {
+			server.refreshOnlineUsers()
 		}
 	}
 
@@ -659,7 +714,12 @@ export class State {
 	 */
 	previewFile(serverUuid: string, username: string, path: string): void {
 		const cur = this.previewInfo()
-		if (cur != null && cur.serverUuid === serverUuid && cur.username === username && cur.path === path) {
+		if (
+			cur != null &&
+			cur.serverUuid === serverUuid &&
+			cur.username === username &&
+			cur.path === path
+		) {
 			return
 		}
 
@@ -702,7 +762,7 @@ export class State {
 				cur.updateFromInfo(info)
 				newServers.push(cur)
 			} else {
-				newServers.push(new Server(this.#client, info))
+				newServers.push(new Server(this.#client, this.refresher, info))
 			}
 		}
 
@@ -724,7 +784,7 @@ export class State {
 
 		this.#setServers([
 			...this.servers(),
-			new Server(this.#client, res.server!),
+			new Server(this.#client, this.refresher, res.server!),
 		])
 
 		return res.server!.uuid

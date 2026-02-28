@@ -108,7 +108,10 @@ export const Loader: Component = () => {
 	const client = createClient(
 		ClientRpcService,
 		createConnectTransport({
-			fetch: (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+			fetch: (
+				input: RequestInfo | URL,
+				init?: RequestInit,
+			): Promise<Response> => {
 				const abort = new AbortController()
 				setTimeout(() => abort.abort(), RpcTimeoutMs)
 
