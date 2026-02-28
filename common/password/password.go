@@ -155,7 +155,7 @@ func WithMaxLen(max int) Checker {
 // Returns ErrContainsUsername if the password contains the username.
 func WithCannotContainUsername() Checker {
 	return func(username common.NormalizedUsername, password string) error {
-		if strings.Contains(username.String(), strings.ToLower(password)) {
+		if strings.Contains(strings.ToLower(password), username.String()) {
 			return ErrContainsUsername
 		}
 		return nil
