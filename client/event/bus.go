@@ -10,7 +10,7 @@ import (
 
 // SubscriberFunc is a function that handles new events.
 // It is run in its own goroutine.
-type SubscriberFunc func(event *v1.Event)
+type SubscriberFunc func(event *v1.Event, ctx *v1.EventContext)
 
 // SubscriptionId is an identifier for an event subscription.
 // It is used to unsubscribe.
@@ -84,6 +84,6 @@ func (p *Publisher) Publish(event *v1.Event) {
 	defer p.bus.mu.RUnlock()
 
 	for _, sub := range p.bus.subscriptions {
-		go sub.fn(event)
+		go sub.fn(event, p.eventCtx)
 	}
 }

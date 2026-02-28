@@ -29,6 +29,19 @@ const (
 	ConnStateOpen    ConnState = "open"
 )
 
+func (cs ConnState) ToRpcEnum() v1.ServerConnState {
+	switch cs {
+	case ConnStateClosed:
+		return v1.ServerConnState_SERVER_CONN_STATE_CLOSED
+	case ConnStateOpening:
+		return v1.ServerConnState_SERVER_CONN_STATE_OPENING
+	case ConnStateOpen:
+		return v1.ServerConnState_SERVER_CONN_STATE_OPEN
+	default:
+		return v1.ServerConnState_SERVER_CONN_STATE_UNSPECIFIED
+	}
+}
+
 // ConnNanny watches over a connection and manages reconnections, reporting state, etc.
 // It also owns the Logic passed into it, closing it when Close is called.
 type ConnNanny struct {
@@ -165,20 +178,10 @@ func (n *ConnNanny) SetPassword(password string) {
 func (n *ConnNanny) setStateNoLock(state ConnState) {
 	n.state = state
 
-	var enum v1.ServerConnState
-	switch n.state {
-	case ConnStateClosed:
-		enum = v1.ServerConnState_SERVER_CONN_STATE_CLOSED
-	case ConnStateOpening:
-		enum = v1.ServerConnState_SERVER_CONN_STATE_OPENING
-	case ConnStateOpen:
-		enum = v1.ServerConnState_SERVER_CONN_STATE_OPEN
-	}
-
 	n.eventPublisher.Publish(&v1.Event{
 		Type: v1.Event_TYPE_SERVER_CONN_STATE_CHANGE,
 		ServerConn: &v1.Event_ServerConnStateChange{
-			State: enum,
+			State: state.ToRpcEnum(),
 		},
 	})
 }

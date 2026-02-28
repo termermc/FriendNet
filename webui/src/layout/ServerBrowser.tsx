@@ -8,6 +8,35 @@ import { OnlineUser, Server } from '../state'
 import { A } from '@solidjs/router'
 import { Code, ConnectError } from '@connectrpc/connect'
 import { makeBrowsePath, sleep } from '../util'
+import { ServerConnState } from '../../pb/clientrpc/v1/rpc_pb'
+
+const indicatorTitle = {
+	[ServerConnState.UNSPECIFIED]: 'Disconnected',
+	[ServerConnState.CLOSED]: 'Disconnected',
+	[ServerConnState.OPENING]: 'Connecting...',
+	[ServerConnState.OPEN]: 'Connected',
+}
+const indicatorClasses = {
+	[ServerConnState.UNSPECIFIED]: styles.closed,
+	[ServerConnState.CLOSED]: styles.closed,
+	[ServerConnState.OPENING]: styles.opening,
+	[ServerConnState.OPEN]: styles.open,
+}
+
+/**
+ * A server connection state indicator.
+ */
+const ConnStateIndicator: Component<{ state: ServerConnState }> = (props) => {
+	return (
+		<div
+			title={indicatorTitle[props.state]}
+			classList={{
+				[styles.serverConnState]: true,
+				[indicatorClasses[props.state]]: true,
+			}}
+		/>
+	)
+}
 
 const OnlineUserEntry: Component<{ server: Server; user: OnlineUser }> = (
 	props,
@@ -60,14 +89,10 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 		}
 	}
 
-	onMount(async () => {
-		await refreshUsers()
-	})
-
 	let runRefresher = true
 	;(async () => {
 		while (runRefresher) {
-			await sleep(5_000)
+			await sleep(30_000)
 			await refreshUsers()
 		}
 	})()
@@ -112,7 +137,10 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 			}}
 		>
 			<summary>
-				<span title={props.server.name()}>{props.server.name()}</span>
+				<span title={props.server.name()}>
+					<ConnStateIndicator state={props.server.connState()} />
+					{props.server.name()}
+				</span>
 
 				<A
 					title="Edit Server"

@@ -59,6 +59,9 @@ var _ clientrpcv1connect.ClientRpcServiceHandler = (*RpcServer)(nil)
 
 func (s *RpcServer) serverToInfo(srv *Server) *v1.ServerInfo {
 	return &v1.ServerInfo{
+		State: &v1.ServerInfo_State{
+			ConnState: srv.ConnNanny.State().ToRpcEnum(),
+		},
 		Uuid:      srv.Uuid,
 		Name:      srv.Name,
 		Address:   srv.Address(),
@@ -155,10 +158,13 @@ func (s *RpcServer) StreamLogs(ctx context.Context, request *v1.StreamLogsReques
 }
 
 func (s *RpcServer) StreamEvents(ctx context.Context, _ *v1.StreamEventsRequest, conn *connect.ServerStream[v1.StreamEventsResponse]) error {
-	pending := make(chan *v1.Event, 100)
+	pending := make(chan *v1.StreamEventsResponse, 100)
 
-	sub := s.eventBus.Subscribe(func(evt *v1.Event) {
-		pending <- evt
+	sub := s.eventBus.Subscribe(func(evt *v1.Event, ctx *v1.EventContext) {
+		pending <- &v1.StreamEventsResponse{
+			Event:   evt,
+			Context: ctx,
+		}
 	})
 	defer s.eventBus.Unsubscribe(sub)
 
@@ -167,10 +173,8 @@ func (s *RpcServer) StreamEvents(ctx context.Context, _ *v1.StreamEventsRequest,
 		select {
 		case <-ctx.Done():
 			return nil
-		case evt := <-pending:
-			err := conn.Send(&v1.StreamEventsResponse{
-				Event: evt,
-			})
+		case res := <-pending:
+			err := conn.Send(res)
 			if err != nil {
 				return err
 			}

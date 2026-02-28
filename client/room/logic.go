@@ -7,6 +7,7 @@ import (
 	"io/fs"
 
 	"friendnet.org/client/share"
+	"friendnet.org/common"
 	"friendnet.org/protocol"
 	v1 "friendnet.org/protocol/pb/clientrpc/v1"
 	pb "friendnet.org/protocol/pb/v1"
@@ -46,26 +47,20 @@ type Logic interface {
 	// C2C
 	OnConnectToMe(ctx context.Context, room *Conn, bidi C2cBidi, msg *protocol.TypedProtoMsg[*pb.MsgConnectToMe]) error
 
-	// OnClientOnlineStateChange handles an incoming client online state change notification.
+	// OnClientOnline handles an incoming client online notification.
 	//
 	// S2C
-	OnClientOnlineStateChange(ctx context.Context, room *Conn, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgClientOnlineStateChange]) error
+	OnClientOnline(ctx context.Context, room *Conn, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgClientOnline]) error
+
+	// OnClientOffline handles an incoming client offline notification.
+	//
+	// S2C
+	OnClientOffline(ctx context.Context, room *Conn, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgClientOffline]) error
 }
 
 // LogicImpl implements Logic.
 type LogicImpl struct {
 	shares *share.ServerShareManager
-}
-
-func (l *LogicImpl) OnClientOnlineStateChange(_ context.Context, room *Conn, _ protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgClientOnlineStateChange]) error {
-	room.eventPublisher.Publish(&v1.Event{
-		Type: v1.Event_TYPE_CLIENT_ONLINE_STATE_CHANGE,
-		ClientOnlineStateChange: &v1.Event_ClientOnlineStateChange{
-			Username: msg.Payload.Username,
-			IsOnline: msg.Payload.IsOnline,
-		},
-	})
-	return nil
 }
 
 var _ Logic = (*LogicImpl)(nil)
@@ -299,4 +294,33 @@ func (l *LogicImpl) OnConnectToMe(ctx context.Context, room *Conn, bidi C2cBidi,
 	return bidi.Write(pb.MsgType_MSG_TYPE_DIRECT_CONN_RESULT, &pb.MsgDirectConnResult{
 		Result: result,
 	})
+}
+
+func (l *LogicImpl) OnClientOnline(_ context.Context, room *Conn, _ protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgClientOnline]) error {
+	info := msg.Payload.Info
+
+	room.eventPublisher.Publish(&v1.Event{
+		Type: v1.Event_TYPE_CLIENT_ONLINE,
+		ClientOnline: &v1.Event_ClientOnline{
+			Info: &v1.OnlineUserInfo{
+				Username: info.Username,
+			},
+		},
+	})
+	return nil
+}
+
+func (l *LogicImpl) OnClientOffline(_ context.Context, room *Conn, _ protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgClientOffline]) error {
+	username, usernameOk := common.NormalizeUsername(msg.Payload.Username)
+	if !usernameOk {
+		return errors.New("OnClientOffline: server sent invalid username")
+	}
+
+	room.eventPublisher.Publish(&v1.Event{
+		Type: v1.Event_TYPE_CLIENT_OFFLINE,
+		ClientOffline: &v1.Event_ClientOffline{
+			Username: username.String(),
+		},
+	})
+	return nil
 }

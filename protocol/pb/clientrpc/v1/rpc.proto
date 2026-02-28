@@ -14,20 +14,24 @@ message Event {
         // A server's connection state changed.
         TYPE_SERVER_CONN_STATE_CHANGE = 1;
 
-        // A client's online state has changed.
-        TYPE_CLIENT_ONLINE_STATE_CHANGE = 2;
+        // A client went online.
+        TYPE_CLIENT_ONLINE = 2;
+
+        // A client went offline.
+        TYPE_CLIENT_OFFLINE = 3;
     }
 
     message ServerConnStateChange {
         // The server's new connection state.
         ServerConnState state = 2;
     }
-    message ClientOnlineStateChange {
+    message ClientOnline {
+        // The online user's info.
+        OnlineUserInfo info = 1;
+    }
+    message ClientOffline {
         // The client's username.
         string username = 1;
-
-        // Whether the client is online.
-        bool is_online = 2;
     }
 
     // The event type.
@@ -35,7 +39,8 @@ message Event {
     Type type = 1;
 
     optional ServerConnStateChange server_conn = 2;
-    optional ClientOnlineStateChange client_online_state_change = 3;
+    optional ClientOnline client_online = 3;
+    optional ClientOffline client_offline = 4;
 }
 
 // EventContext is the context about where an event was generated.

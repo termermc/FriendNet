@@ -143,8 +143,10 @@ const (
 	//   - Message MSG_TYPE_ERROR of ERR_TYPE_PERMISSION_DENIED if the specified current password is incorrect.
 	//   - Message MSG_TYPE_ERROR of ERR_TYPE_INVALID_FIELDS if the new password is empty or otherwise does not follow the server's password requirements.
 	MsgType_MSG_TYPE_CHANGE_ACCOUNT_PASSWORD MsgType = 36
-	// [S2C] Notification of a client's online state changing.
-	MsgType_MSG_TYPE_CLIENT_ONLINE_STATE_CHANGE MsgType = 37
+	// [S2C] Notification that a client went online.
+	MsgType_MSG_TYPE_CLIENT_ONLINE MsgType = 37
+	// [S2C] Notification that a client went offline.
+	MsgType_MSG_TYPE_CLIENT_OFFLINE MsgType = 38
 )
 
 // Enum value maps for MsgType.
@@ -187,7 +189,8 @@ var (
 		34: "MSG_TYPE_DIRECT_CONN_HANDSHAKE",
 		35: "MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT",
 		36: "MSG_TYPE_CHANGE_ACCOUNT_PASSWORD",
-		37: "MSG_TYPE_CLIENT_ONLINE_STATE_CHANGE",
+		37: "MSG_TYPE_CLIENT_ONLINE",
+		38: "MSG_TYPE_CLIENT_OFFLINE",
 	}
 	MsgType_value = map[string]int32{
 		"MSG_TYPE_UNSPECIFIED":                        0,
@@ -227,7 +230,8 @@ var (
 		"MSG_TYPE_DIRECT_CONN_HANDSHAKE":              34,
 		"MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT":       35,
 		"MSG_TYPE_CHANGE_ACCOUNT_PASSWORD":            36,
-		"MSG_TYPE_CLIENT_ONLINE_STATE_CHANGE":         37,
+		"MSG_TYPE_CLIENT_ONLINE":                      37,
+		"MSG_TYPE_CLIENT_OFFLINE":                     38,
 	}
 )
 
@@ -2649,31 +2653,29 @@ func (x *MsgChangeAccountPassword) GetNewPassword() string {
 	return ""
 }
 
-// See MSG_TYPE_CLIENT_ONLINE_STATE_CHANGE.
-type MsgClientOnlineStateChange struct {
+// See MSG_TYPE_CLIENT_ONLINE.
+type MsgClientOnline struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The client's username.
-	Username string `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
-	// Whether the client is online.
-	IsOnline      bool `protobuf:"varint,2,opt,name=is_online,json=isOnline,proto3" json:"is_online,omitempty"`
+	// The online client's info.
+	Info          *OnlineUserInfo `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *MsgClientOnlineStateChange) Reset() {
-	*x = MsgClientOnlineStateChange{}
+func (x *MsgClientOnline) Reset() {
+	*x = MsgClientOnline{}
 	mi := &file_pb_v1_protocol_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *MsgClientOnlineStateChange) String() string {
+func (x *MsgClientOnline) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*MsgClientOnlineStateChange) ProtoMessage() {}
+func (*MsgClientOnline) ProtoMessage() {}
 
-func (x *MsgClientOnlineStateChange) ProtoReflect() protoreflect.Message {
+func (x *MsgClientOnline) ProtoReflect() protoreflect.Message {
 	mi := &file_pb_v1_protocol_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2685,23 +2687,62 @@ func (x *MsgClientOnlineStateChange) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use MsgClientOnlineStateChange.ProtoReflect.Descriptor instead.
-func (*MsgClientOnlineStateChange) Descriptor() ([]byte, []int) {
+// Deprecated: Use MsgClientOnline.ProtoReflect.Descriptor instead.
+func (*MsgClientOnline) Descriptor() ([]byte, []int) {
 	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{39}
 }
 
-func (x *MsgClientOnlineStateChange) GetUsername() string {
+func (x *MsgClientOnline) GetInfo() *OnlineUserInfo {
+	if x != nil {
+		return x.Info
+	}
+	return nil
+}
+
+// See MSG_TYPE_CLIENT_OFFLINE.
+type MsgClientOffline struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The client's username.
+	Username      string `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MsgClientOffline) Reset() {
+	*x = MsgClientOffline{}
+	mi := &file_pb_v1_protocol_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MsgClientOffline) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgClientOffline) ProtoMessage() {}
+
+func (x *MsgClientOffline) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_v1_protocol_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MsgClientOffline.ProtoReflect.Descriptor instead.
+func (*MsgClientOffline) Descriptor() ([]byte, []int) {
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{40}
+}
+
+func (x *MsgClientOffline) GetUsername() string {
 	if x != nil {
 		return x.Username
 	}
 	return ""
-}
-
-func (x *MsgClientOnlineStateChange) GetIsOnline() bool {
-	if x != nil {
-		return x.IsOnline
-	}
-	return false
 }
 
 var File_pb_v1_protocol_proto protoreflect.FileDescriptor
@@ -2815,10 +2856,11 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x06result\x18\x01 \x01(\x0e2 .pb.v1.DirectConnHandshakeResultR\x06result\"h\n" +
 	"\x18MsgChangeAccountPassword\x12)\n" +
 	"\x10current_password\x18\x01 \x01(\tR\x0fcurrentPassword\x12!\n" +
-	"\fnew_password\x18\x02 \x01(\tR\vnewPassword\"U\n" +
-	"\x1aMsgClientOnlineStateChange\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\x12\x1b\n" +
-	"\tis_online\x18\x02 \x01(\bR\bisOnline*\xa2\t\n" +
+	"\fnew_password\x18\x02 \x01(\tR\vnewPassword\"<\n" +
+	"\x0fMsgClientOnline\x12)\n" +
+	"\x04info\x18\x01 \x01(\v2\x15.pb.v1.OnlineUserInfoR\x04info\".\n" +
+	"\x10MsgClientOffline\x12\x1a\n" +
+	"\busername\x18\x01 \x01(\tR\busername*\xb2\t\n" +
 	"\aMsgType\x12\x18\n" +
 	"\x14MSG_TYPE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rMSG_TYPE_PING\x10\x01\x12\x11\n" +
@@ -2857,8 +2899,9 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"+MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN_RESULT\x10!\x12\"\n" +
 	"\x1eMSG_TYPE_DIRECT_CONN_HANDSHAKE\x10\"\x12)\n" +
 	"%MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT\x10#\x12$\n" +
-	" MSG_TYPE_CHANGE_ACCOUNT_PASSWORD\x10$\x12'\n" +
-	"#MSG_TYPE_CLIENT_ONLINE_STATE_CHANGE\x10%*\x8b\x03\n" +
+	" MSG_TYPE_CHANGE_ACCOUNT_PASSWORD\x10$\x12\x1a\n" +
+	"\x16MSG_TYPE_CLIENT_ONLINE\x10%\x12\x1b\n" +
+	"\x17MSG_TYPE_CLIENT_OFFLINE\x10&*\x8b\x03\n" +
 	"\aErrType\x12\x18\n" +
 	"\x14ERR_TYPE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11ERR_TYPE_INTERNAL\x10\x01\x12\x1e\n" +
@@ -2918,7 +2961,7 @@ func file_pb_v1_protocol_proto_rawDescGZIP() []byte {
 }
 
 var file_pb_v1_protocol_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
-var file_pb_v1_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 40)
+var file_pb_v1_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 41)
 var file_pb_v1_protocol_proto_goTypes = []any{
 	(MsgType)(0),                              // 0: pb.v1.MsgType
 	(ErrType)(0),                              // 1: pb.v1.ErrType
@@ -2966,7 +3009,8 @@ var file_pb_v1_protocol_proto_goTypes = []any{
 	(*MsgDirectConnHandshake)(nil),            // 43: pb.v1.MsgDirectConnHandshake
 	(*MsgDirectConnHandshakeResult)(nil),      // 44: pb.v1.MsgDirectConnHandshakeResult
 	(*MsgChangeAccountPassword)(nil),          // 45: pb.v1.MsgChangeAccountPassword
-	(*MsgClientOnlineStateChange)(nil),        // 46: pb.v1.MsgClientOnlineStateChange
+	(*MsgClientOnline)(nil),                   // 46: pb.v1.MsgClientOnline
+	(*MsgClientOffline)(nil),                  // 47: pb.v1.MsgClientOffline
 }
 var file_pb_v1_protocol_proto_depIdxs = []int32{
 	1,  // 0: pb.v1.MsgError.type:type_name -> pb.v1.ErrType
@@ -2983,11 +3027,12 @@ var file_pb_v1_protocol_proto_depIdxs = []int32{
 	4,  // 11: pb.v1.ConnMethod.type:type_name -> pb.v1.ConnMethodType
 	37, // 12: pb.v1.MsgClientConnMethods.methods:type_name -> pb.v1.ConnMethod
 	6,  // 13: pb.v1.MsgDirectConnHandshakeResult.result:type_name -> pb.v1.DirectConnHandshakeResult
-	14, // [14:14] is the sub-list for method output_type
-	14, // [14:14] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	26, // 14: pb.v1.MsgClientOnline.info:type_name -> pb.v1.OnlineUserInfo
+	15, // [15:15] is the sub-list for method output_type
+	15, // [15:15] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_pb_v1_protocol_proto_init() }
@@ -3004,7 +3049,7 @@ func file_pb_v1_protocol_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pb_v1_protocol_proto_rawDesc), len(file_pb_v1_protocol_proto_rawDesc)),
 			NumEnums:      7,
-			NumMessages:   40,
+			NumMessages:   41,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

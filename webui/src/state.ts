@@ -2,9 +2,13 @@ import { Accessor, createSignal, Setter } from 'solid-js'
 import {
 	CreateServerRequest,
 	CreateShareRequest,
+	Event,
+	Event_Type,
+	EventContext,
 	LogMessage,
 	LogMessageAttr,
 	OnlineUserInfo,
+	ServerConnState,
 	ServerInfo,
 	ShareInfo,
 	UpdateServerRequest,
@@ -56,6 +60,9 @@ export class Server {
 	readonly uuid: string
 	readonly createdTs: Date
 
+	connState: Accessor<ServerConnState>
+	#setConnState: Setter<ServerConnState>
+
 	name: Accessor<string>
 	#setName: Setter<string>
 
@@ -79,6 +86,7 @@ export class Server {
 
 		this.uuid = info.uuid
 		this.createdTs = new Date(Number(info.createdTs) * 1_000)
+		;[this.connState, this.#setConnState] = createSignal<ServerConnState>(ServerConnState.CLOSED)
 		;[this.name, this.#setName] = createSignal('')
 		;[this.address, this.#setAddress] = createSignal('')
 		;[this.room, this.#setRoom] = createSignal('')
@@ -91,28 +99,51 @@ export class Server {
 		this.updateFromInfo(info)
 	}
 
+	setConnState(state: ServerConnState): void {
+		this.#setConnState(state)
+
+		if (state === ServerConnState.OPEN) {
+			this.refreshOnlineUsers().catch(err => console.error('failed to refresh online users after server became open:', err))
+		} else {
+			this.#setOnlineUsers([])
+		}
+	}
+
+	/**
+	 * Sets a user as online.
+	 * If the user is already online, it will be updated.
+	 * If the user is not online, it will be added.
+	 * @param info The online user's info.
+	 */
+	setUserOnline(info: OnlineUserInfo) {
+		const cur = this.onlineUsers().find(x => x.username === info.username)
+		if (cur) {
+			cur.updateFromInfo(info)
+		} else {
+			const newUsers = [...this.onlineUsers(), new OnlineUser(info)]
+			newUsers.sort((a, b) => a.username.localeCompare(b.username))
+
+			this.#setOnlineUsers(newUsers)
+		}
+	}
+
+	/**
+	 * Sets a user as offline.
+	 * @param username The user's username.
+	 */
+	setUserOffline(username: string): void {
+		const newUsers = this.onlineUsers().filter(x => x.username !== username)
+		this.#setOnlineUsers(newUsers)
+	}
+
 	async refreshOnlineUsers(): Promise<void> {
 		const res = this.#client.getOnlineUsers({ serverUuid: this.uuid })
 
-		const curUsers = this.onlineUsers()
-		const newUsers: OnlineUser[] = []
-
 		for await (const { users } of res) {
 			for (const info of users) {
-				const cur = curUsers.find((x) => x.username === info.username)
-				if (cur) {
-					cur.updateFromInfo(info)
-					newUsers.push(cur)
-				} else {
-					newUsers.push(new OnlineUser(info))
-				}
+				this.setUserOnline(info)
 			}
 		}
-
-		// Sort users alphabetically.
-		newUsers.sort((a, b) => a.username.localeCompare(b.username))
-
-		this.#setOnlineUsers(newUsers)
 	}
 
 	async refreshShares(): Promise<void> {
@@ -172,6 +203,7 @@ export class Server {
 	}
 
 	updateFromInfo(info: ServerInfo): void {
+		this.setConnState(info.state!.connState)
 		this.#setName(info.name)
 		this.#setAddress(info.address)
 		this.#setRoom(info.room)
@@ -443,6 +475,102 @@ export class LogManager {
 	}
 }
 
+/**
+ * EventListener is a listener for events from the client RPC.
+ */
+export type EventListener = (event: Event, ctx: EventContext) => void
+
+/**
+ * EventManager manages streaming events from the client and distributing them to subscribers.
+ */
+export class EventManager {
+	#state: State
+	#client: RpcClient
+
+	#subscribers = new Map<Event_Type, Set<EventListener>>
+
+	/**
+	 * Adds a new event listener for the specified event type.
+	 * @param type The event type to listen to.
+	 * @param listener The listener.
+	 */
+	addEventListener(type: Event_Type, listener: EventListener): void {
+		let subscribers = this.#subscribers.get(type)
+		if (subscribers == null) {
+			subscribers = new Set()
+			this.#subscribers.set(type, subscribers)
+		}
+
+		subscribers.add(listener)
+	}
+
+	/**
+	 * Removes an event listener for the specified event type.
+	 * @param type The event type to remove the listener from.
+	 * @param listener The listener.
+	 */
+	removeEventListener(type: Event_Type, listener: EventListener): void {
+		const subscribers = this.#subscribers.get(type)
+		if (subscribers == null) {
+			return
+		}
+
+		subscribers.delete(listener)
+	}
+
+	constructor(state: State, client: RpcClient) {
+		this.#state = state
+		this.#client = client
+
+		// noinspection JSIgnoredPromiseFromCall
+		this.#daemon()
+	}
+
+	/**
+	 * The daemon that streams events.
+	 * Should only be run once, by the constructor.
+	 * It will never throw.
+	 * @private
+	 */
+	async #daemon() {
+		// noinspection InfiniteLoopJS
+		while (true) {
+			const stream = this.#client.streamEvents({})
+
+			try {
+				for await (const res of stream) {
+					console.log('[EVENT]', Event_Type[res.event!.type], res.event, res.context)
+
+					const evt = res.event!
+
+					const subs = this.#subscribers.get(evt.type)
+					if (subs == null) {
+						continue
+					}
+
+					for (const sub of subs) {
+						try {
+							sub(evt, res.context!)
+						} catch (err) {
+							console.error(`error in event listener for type ${Event_Type[evt.type]} (${evt.type}):`, err)
+						}
+					}
+				}
+			} catch (err) {
+				console.error('error streaming events:', err)
+				await sleep(1_000)
+			}
+
+			// Try to refresh state before reconnecting.
+			try {
+				await this.#state.doFullRefresh()
+			} catch (err) {
+				console.error('failed to refresh state after event stream error:', err)
+			}
+		}
+	}
+}
+
 export class State {
 	readonly #client: RpcClient
 
@@ -450,6 +578,11 @@ export class State {
 	 * The global {@link LogManager} instance.
 	 */
 	readonly log: LogManager
+
+	/**
+	 * The global {@link EventManager} instance.
+	 */
+	readonly event: EventManager
 
 	readonly previewInfo: Accessor<PreviewInfo | undefined>
 	readonly #setPreviewInfo: Setter<PreviewInfo | undefined>
@@ -461,10 +594,58 @@ export class State {
 		this.#client = client
 
 		this.log = new LogManager(client)
+		this.event = new EventManager(this, client)
+
 		;[this.servers, this.#setServers] = createSignal<Server[]>([])
 		;[this.previewInfo, this.#setPreviewInfo] = createSignal<
 			PreviewInfo | undefined
 		>()
+
+		// Listen to server events.
+		this.event.addEventListener(Event_Type.SERVER_CONN_STATE_CHANGE, (event, ctx) => {
+			const server = this.getServerByUuid(ctx.serverUuid)
+			if (server == null) {
+				return
+			}
+
+			server.setConnState(event.serverConn!.state)
+		})
+		this.event.addEventListener(Event_Type.CLIENT_ONLINE, (event, ctx) => {
+			const server = this.getServerByUuid(ctx.serverUuid)
+			if (server == null) {
+				return
+			}
+
+			server.setUserOnline(event.clientOnline!.info!)
+		})
+		this.event.addEventListener(Event_Type.CLIENT_OFFLINE, (event, ctx) => {
+			const server = this.getServerByUuid(ctx.serverUuid)
+			if (server == null) {
+				return
+			}
+
+			server.setUserOffline(event.clientOffline!.username)
+		})
+
+		// Periodically refresh state.
+		setInterval(() => {
+			this.doFullRefresh()
+				.catch(err => console.error('error doing periodic full state refresh:', err))
+		}, 10_000)
+	}
+
+	/**
+	 * Does a full state refresh.
+	 */
+	async doFullRefresh() {
+		await this.refreshServers()
+
+		const servers = this.servers()
+		const promises = new Array<Promise<void>>(servers.length)
+		for (let i = 0; i < servers.length; i++) {
+			promises[i] = servers[i].refreshOnlineUsers()
+		}
+		await Promise.all(promises)
 	}
 
 	/**
