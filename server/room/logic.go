@@ -248,6 +248,7 @@ func (l LogicImpl) OnAdvertiseConnMethod(ctx context.Context, client *Client, bi
 
 			return err
 		}
+		return nil
 	}
 
 	// Not a duplicate, add method.
