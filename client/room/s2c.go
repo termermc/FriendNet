@@ -68,8 +68,9 @@ func (c *Conn) s2cLoop() {
 			err = nil
 			switch rawMsg.Type {
 			case pb.MsgType_MSG_TYPE_PING:
-				msg := protocol.ToTyped[*pb.MsgPing](rawMsg)
-				err = c.logic.OnPing(c.Context, c, bidi, msg)
+				err = c.logic.OnPing(c.Context, c, bidi, protocol.ToTyped[*pb.MsgPing](rawMsg))
+			case pb.MsgType_MSG_TYPE_CLIENT_ONLINE_STATE_CHANGE:
+				err = c.logic.OnClientOnlineStateChange(c.Context, c, bidi, protocol.ToTyped[*pb.MsgClientOnlineStateChange](rawMsg))
 			default:
 				err = bidi.WriteUnimplementedError(rawMsg.Type)
 			}

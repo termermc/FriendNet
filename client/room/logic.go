@@ -8,6 +8,7 @@ import (
 
 	"friendnet.org/client/share"
 	"friendnet.org/protocol"
+	v1 "friendnet.org/protocol/pb/clientrpc/v1"
 	pb "friendnet.org/protocol/pb/v1"
 	"github.com/quic-go/quic-go"
 )
@@ -44,11 +45,27 @@ type Logic interface {
 	//
 	// C2C
 	OnConnectToMe(ctx context.Context, room *Conn, bidi C2cBidi, msg *protocol.TypedProtoMsg[*pb.MsgConnectToMe]) error
+
+	// OnClientOnlineStateChange handles an incoming client online state change notification.
+	//
+	// S2C
+	OnClientOnlineStateChange(ctx context.Context, room *Conn, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgClientOnlineStateChange]) error
 }
 
 // LogicImpl implements Logic.
 type LogicImpl struct {
 	shares *share.ServerShareManager
+}
+
+func (l *LogicImpl) OnClientOnlineStateChange(_ context.Context, room *Conn, _ protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgClientOnlineStateChange]) error {
+	room.eventPublisher.Publish(&v1.Event{
+		Type: v1.Event_TYPE_CLIENT_ONLINE_STATE_CHANGE,
+		ClientOnlineStateChange: &v1.Event_ClientOnlineStateChange{
+			Username: msg.Payload.Username,
+			IsOnline: msg.Payload.IsOnline,
+		},
+	})
+	return nil
 }
 
 var _ Logic = (*LogicImpl)(nil)

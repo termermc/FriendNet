@@ -160,6 +160,9 @@ enum MsgType {
     //  - Message MSG_TYPE_ERROR of ERR_TYPE_PERMISSION_DENIED if the specified current password is incorrect.
     //  - Message MSG_TYPE_ERROR of ERR_TYPE_INVALID_FIELDS if the new password is empty or otherwise does not follow the server's password requirements.
     MSG_TYPE_CHANGE_ACCOUNT_PASSWORD = 36;
+
+    // [S2C] Notification of a client's online state changing.
+    MSG_TYPE_CLIENT_ONLINE_STATE_CHANGE = 37;
 }
 
 // Ping message.
@@ -623,4 +626,13 @@ message MsgChangeAccountPassword {
     // The new password.
     // Must not be empty.
     string new_password = 2;
+}
+
+// See MSG_TYPE_CLIENT_ONLINE_STATE_CHANGE.
+message MsgClientOnlineStateChange {
+    // The client's username.
+    string username = 1;
+
+    // Whether the client is online.
+    bool is_online = 2;
 }

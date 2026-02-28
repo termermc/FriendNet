@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"runtime/debug"
 	"sync"
+	"time"
 
 	"friendnet.org/common"
 	"friendnet.org/common/machine"
@@ -16,6 +17,7 @@ import (
 	"friendnet.org/server/storage"
 	"github.com/quic-go/quic-go"
 	mcfpassword "github.com/termermc/go-mcf-password"
+	"google.golang.org/protobuf/proto"
 )
 
 var ErrRoomClosed = errors.New("room closed")
@@ -145,6 +147,31 @@ func (r *Room) GetAllClients() []*Client {
 	}
 
 	return r.snapshotClients()
+}
+
+// Broadcast broadcasts a message to all clients in the room.
+// It is fire-and-forget and returns quickly, not waiting for the message to be sent.
+// No-op if the room is closed.
+func (r *Room) Broadcast(typ pb.MsgType, msg proto.Message) {
+	clients := r.GetAllClients()
+	for _, client := range clients {
+		go func() {
+			bidi, err := client.conn.OpenBidiWithMsg(typ, msg)
+			if err != nil {
+				if protocol.IsErrorConnCloseOrCancel(err) {
+					return
+				}
+
+				r.logger.Error("failed to broadcast message to client",
+					"service", "room.Room",
+					"username", client.Username.String(),
+					"message_type", typ.String(),
+				)
+			}
+			time.Sleep(100 * time.Millisecond)
+			_ = bidi.Close()
+		}()
+	}
 }
 
 // Onboard takes ownership of a connection and adds it to the room.
@@ -440,6 +467,11 @@ func (r *Room) VerifyAccountPassword(ctx context.Context, username common.Normal
 func (r *Room) handleConnect(client *Client) {
 	r.clients[client.Username.String()] = client
 
+	r.Broadcast(pb.MsgType_MSG_TYPE_CLIENT_ONLINE_STATE_CHANGE, &pb.MsgClientOnlineStateChange{
+		Username: client.Username.String(),
+		IsOnline: true,
+	})
+
 	r.logger.Info("client connected",
 		"service", "room.Room",
 		"room", r.Name.String(),
@@ -463,6 +495,11 @@ func (r *Room) handleDisconnect(client *Client) {
 
 	// In case the connection was not closed, mark it as closed here.
 	_ = client.conn.CloseWithReason("disconnected")
+
+	r.Broadcast(pb.MsgType_MSG_TYPE_CLIENT_ONLINE_STATE_CHANGE, &pb.MsgClientOnlineStateChange{
+		Username: client.Username.String(),
+		IsOnline: false,
+	})
 
 	r.logger.Info("client disconnected",
 		"service", "room.Room",

@@ -176,8 +176,8 @@ func (n *ConnNanny) setStateNoLock(state ConnState) {
 	}
 
 	n.eventPublisher.Publish(&v1.Event{
-		Type: v1.Event_TYPE_SERVER_CONN,
-		ServerConn: &v1.Event_ServerConn{
+		Type: v1.Event_TYPE_SERVER_CONN_STATE_CHANGE,
+		ServerConn: &v1.Event_ServerConnStateChange{
 			State: enum,
 		},
 	})

@@ -82,6 +82,8 @@ func MsgTypeToEmptyMsg(typ pb.MsgType) proto.Message {
 		return &pb.MsgDirectConnHandshakeResult{}
 	case pb.MsgType_MSG_TYPE_CHANGE_ACCOUNT_PASSWORD:
 		return &pb.MsgChangeAccountPassword{}
+	case pb.MsgType_MSG_TYPE_CLIENT_ONLINE_STATE_CHANGE:
+		return &pb.MsgClientOnlineStateChange{}
 	default:
 		return nil
 	}
