@@ -30,6 +30,7 @@ import (
 	"friendnet.org/common"
 	"friendnet.org/common/machine"
 	"friendnet.org/mkcert"
+	v1 "friendnet.org/protocol/pb/clientrpc/v1"
 	"friendnet.org/protocol/pb/clientrpc/v1/clientrpcv1connect"
 	"friendnet.org/webui"
 	"github.com/pkg/browser"
@@ -139,10 +140,6 @@ func main() {
 		noBrowser = true
 		noLock = true
 	}
-
-	println(headless)
-	println(noBrowser)
-	println(noLock)
 
 	if dataDir == "" {
 		var err error
@@ -343,6 +340,7 @@ func main() {
 			fileAddr,
 			stop,
 		),
+
 		func(impl *client.RpcServer, options ...connect.HandlerOption) (string, http.Handler) {
 			return clientrpcv1connect.NewClientRpcServiceHandler(impl, options...)
 		},
@@ -374,6 +372,15 @@ func main() {
 	defer stop()
 	shutdownWg.Go(func() {
 		<-ctx.Done()
+
+		// Send stop event to all subscribers.
+		eventBus.
+			CreatePublisher(&v1.EventContext{}).
+			Publish(&v1.Event{
+				Type: v1.Event_TYPE_STOP,
+			})
+		time.Sleep(100 * time.Millisecond)
+
 		logger.Info("shutdown signal received, closing client")
 
 		doWithTimeout := func(timeout time.Duration, fn func(ctx context.Context)) {

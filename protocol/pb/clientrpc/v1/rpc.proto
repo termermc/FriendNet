@@ -11,14 +11,17 @@ message Event {
         // Do not use.
         TYPE_UNSPECIFIED = 0;
 
+        // The client is stopping.
+        TYPE_STOP = 1;
+
         // A server's connection state changed.
-        TYPE_SERVER_CONN_STATE_CHANGE = 1;
+        TYPE_SERVER_CONN_STATE_CHANGE = 2;
 
         // A client went online.
-        TYPE_CLIENT_ONLINE = 2;
+        TYPE_CLIENT_ONLINE = 3;
 
         // A client went offline.
-        TYPE_CLIENT_OFFLINE = 3;
+        TYPE_CLIENT_OFFLINE = 4;
     }
 
     message ServerConnStateChange {

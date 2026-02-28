@@ -659,6 +659,10 @@ export class State {
 		>()
 
 		// Listen to server events.
+		this.event.addEventListener(Event_Type.STOP, () => {
+			window.close()
+			setTimeout(() => window.location.assign('about:blank'), 100)
+		})
 		this.event.addEventListener(
 			Event_Type.SERVER_CONN_STATE_CHANGE,
 			(event, ctx) => {

@@ -83,27 +83,31 @@ type Event_Type int32
 const (
 	// Do not use.
 	Event_TYPE_UNSPECIFIED Event_Type = 0
+	// The client is stopping.
+	Event_TYPE_STOP Event_Type = 1
 	// A server's connection state changed.
-	Event_TYPE_SERVER_CONN_STATE_CHANGE Event_Type = 1
+	Event_TYPE_SERVER_CONN_STATE_CHANGE Event_Type = 2
 	// A client went online.
-	Event_TYPE_CLIENT_ONLINE Event_Type = 2
+	Event_TYPE_CLIENT_ONLINE Event_Type = 3
 	// A client went offline.
-	Event_TYPE_CLIENT_OFFLINE Event_Type = 3
+	Event_TYPE_CLIENT_OFFLINE Event_Type = 4
 )
 
 // Enum value maps for Event_Type.
 var (
 	Event_Type_name = map[int32]string{
 		0: "TYPE_UNSPECIFIED",
-		1: "TYPE_SERVER_CONN_STATE_CHANGE",
-		2: "TYPE_CLIENT_ONLINE",
-		3: "TYPE_CLIENT_OFFLINE",
+		1: "TYPE_STOP",
+		2: "TYPE_SERVER_CONN_STATE_CHANGE",
+		3: "TYPE_CLIENT_ONLINE",
+		4: "TYPE_CLIENT_OFFLINE",
 	}
 	Event_Type_value = map[string]int32{
 		"TYPE_UNSPECIFIED":              0,
-		"TYPE_SERVER_CONN_STATE_CHANGE": 1,
-		"TYPE_CLIENT_ONLINE":            2,
-		"TYPE_CLIENT_OFFLINE":           3,
+		"TYPE_STOP":                     1,
+		"TYPE_SERVER_CONN_STATE_CHANGE": 2,
+		"TYPE_CLIENT_ONLINE":            3,
+		"TYPE_CLIENT_OFFLINE":           4,
 	}
 )
 
@@ -2473,7 +2477,7 @@ var File_pb_clientrpc_v1_rpc_proto protoreflect.FileDescriptor
 
 const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\n" +
-	"\x19pb/clientrpc/v1/rpc.proto\x12\x0fpb.clientrpc.v1\"\x97\x05\n" +
+	"\x19pb/clientrpc/v1/rpc.proto\x12\x0fpb.clientrpc.v1\"\xa6\x05\n" +
 	"\x05Event\x12/\n" +
 	"\x04type\x18\x01 \x01(\x0e2\x1b.pb.clientrpc.v1.Event.TypeR\x04type\x12R\n" +
 	"\vserver_conn\x18\x02 \x01(\v2,.pb.clientrpc.v1.Event.ServerConnStateChangeH\x00R\n" +
@@ -2485,12 +2489,13 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\fClientOnline\x123\n" +
 	"\x04info\x18\x01 \x01(\v2\x1f.pb.clientrpc.v1.OnlineUserInfoR\x04info\x1a+\n" +
 	"\rClientOffline\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\"p\n" +
+	"\busername\x18\x01 \x01(\tR\busername\"\x7f\n" +
 	"\x04Type\x12\x14\n" +
-	"\x10TYPE_UNSPECIFIED\x10\x00\x12!\n" +
-	"\x1dTYPE_SERVER_CONN_STATE_CHANGE\x10\x01\x12\x16\n" +
-	"\x12TYPE_CLIENT_ONLINE\x10\x02\x12\x17\n" +
-	"\x13TYPE_CLIENT_OFFLINE\x10\x03B\x0e\n" +
+	"\x10TYPE_UNSPECIFIED\x10\x00\x12\r\n" +
+	"\tTYPE_STOP\x10\x01\x12!\n" +
+	"\x1dTYPE_SERVER_CONN_STATE_CHANGE\x10\x02\x12\x16\n" +
+	"\x12TYPE_CLIENT_ONLINE\x10\x03\x12\x17\n" +
+	"\x13TYPE_CLIENT_OFFLINE\x10\x04B\x0e\n" +
 	"\f_server_connB\x10\n" +
 	"\x0e_client_onlineB\x11\n" +
 	"\x0f_client_offline\"/\n" +
