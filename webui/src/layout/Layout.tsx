@@ -32,6 +32,7 @@ export const Layout: Component<LayoutProps> = (props) => {
 			isStopping = true
 			await client.stop({})
 			window.close()
+			setTimeout(() => window.location.assign('about:blank'), 100)
 		} catch (err) {
 			console.error('failed to stop client:', err)
 			alert('Failed to stop client, see console for details')
