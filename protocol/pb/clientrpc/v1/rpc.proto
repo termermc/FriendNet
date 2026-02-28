@@ -4,6 +4,51 @@ option go_package = "friendnet.org/protocol/clientrpc";
 
 package pb.clientrpc.v1;
 
+// Event is an event.
+// Events are differentiated by type, and have different data based on that type.
+message Event {
+    enum Type {
+        // Do not use.
+        TYPE_UNSPECIFIED = 0;
+
+        // A server's connection state changed.
+        TYPE_SERVER_CONN = 1;
+
+        // A client is online.
+        TYPE_CLIENT_ONLINE = 2;
+
+        // A client is offline.
+        TYPE_CLIENT_OFFLINE = 3;
+    }
+
+    message ServerConn {
+        // The server's new connection state.
+        ServerConnState state = 2;
+    }
+    message ClientOnline {
+        // The client's username.
+        string username = 2;
+    }
+    message ClientOffline {
+        // The client's username.
+        string username = 2;
+    }
+
+    // The event type.
+    // The appropriate field will be filled based on the type.
+    Type type = 1;
+
+    optional ServerConn server_conn = 2;
+    optional ClientOnline client_online = 3;
+    optional ClientOffline client_offline = 4;
+}
+
+// EventContext is the context about where an event was generated.
+message EventContext {
+    // The UUID of the server where the event originated from.
+    string server_uuid = 1;
+}
+
 // LogMessageAttr is an attribute within a LogMessage.
 message LogMessageAttr {
     // The value kind.
@@ -32,25 +77,48 @@ message LogMessage {
     repeated LogMessageAttr attrs = 4;
 }
 
+// ServerConnState is possible connection states for a server.
+enum ServerConnState {
+    // Do not use.
+    SERVER_CONN_STATE_UNSPECIFIED = 0;
+
+    // Closed.
+    SERVER_CONN_STATE_CLOSED = 1;
+
+    // Opening.
+    SERVER_CONN_STATE_OPENING = 2;
+
+    // Open.
+    SERVER_CONN_STATE_OPEN = 3;
+}
+
 // Information about a server.
 message ServerInfo {
+    message State {
+        // The current connection state.
+        ServerConnState conn_state = 1;
+    }
+
+    // The server's current state.
+    State state = 1;
+
     // The server's UUID.
-    string uuid = 1;
+    string uuid = 2;
 
     // The name given to the server.
-    string name = 2;
+    string name = 3;
 
     // The server's address.
-    string address = 3;
+    string address = 4;
 
     // The room to connect to.
-    string room = 4;
+    string room = 5;
 
     // The username to use for authentication.
-    string username = 5;
+    string username = 6;
 
     // The UNIX timestamp when the server was created.
-    int64 created_ts = 6;
+    int64 created_ts = 7;
 }
 
 // Information about a server share.
@@ -85,6 +153,17 @@ message FileMeta {
     // The file's size, in bytes.
     // Always zero if the file is a folder.
     uint64 size = 3;
+}
+
+message StreamEventsRequest {
+
+}
+message StreamEventsResponse {
+    // The event.
+    Event event = 1;
+
+    // The context about where the event was generated.
+    EventContext context = 2;
 }
 
 message StreamLogsRequest {
@@ -288,6 +367,9 @@ message ChangeAccountPasswordResponse {
 service ClientRpcService {
     // StreamLogs returns an ongoing stream of log messages from the client.
     rpc StreamLogs(StreamLogsRequest) returns (stream StreamLogsResponse) {}
+
+    // StreamEvents returns an ongoing stream of events from the client.
+    rpc StreamEvents(StreamEventsRequest) returns (stream StreamEventsResponse) {}
 
     // Stop shuts down the client.
     rpc Stop(StopRequest) returns (StopResponse) {}

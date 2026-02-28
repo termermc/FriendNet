@@ -22,6 +22,7 @@ import (
 	"friendnet.org/client/cert"
 	"friendnet.org/client/clog"
 	"friendnet.org/client/direct"
+	"friendnet.org/client/event"
 	"friendnet.org/client/storage"
 	"friendnet.org/common"
 	"friendnet.org/common/machine"
@@ -158,12 +159,15 @@ func main() {
 		)
 	}
 
+	eventBus := event.NewBus()
+
 	multi, err := client.NewMultiClient(
 		logger,
 		store,
 		certStore,
 		connMethodSupport,
 		directMgr,
+		eventBus,
 	)
 	if err != nil {
 		panic(fmt.Errorf(`failed to create multi client: %w`, err))
@@ -211,6 +215,7 @@ func main() {
 		client.NewRpcServer(
 			logHandler,
 			multi,
+			eventBus,
 			fileAddr,
 			stop,
 		),

@@ -10,6 +10,7 @@ import (
 
 	"friendnet.org/client/cert"
 	"friendnet.org/client/direct"
+	"friendnet.org/client/event"
 	"friendnet.org/common"
 	"friendnet.org/common/machine"
 	"friendnet.org/protocol"
@@ -107,6 +108,8 @@ type Conn struct {
 
 	// The interval at which direct connection-related caches are cleared.
 	directGcInterval time.Duration
+
+	eventPublisher *event.Publisher
 }
 
 // negotiateVersion negotiates the protocol version with the server.
@@ -158,20 +161,21 @@ func authenticate(serverConn protocol.ProtoConn, creds Credentials) error {
 	}
 }
 
-// NewRoomConn establishes a room connection.
+// NewConn establishes a room connection.
 // If the server rejects the client's protocol version, returns a protocol.VersionRejectedError.
 // If the server rejects the client's credentials, returns a protocol.AuthRejectedError.
 //
 // The directPartitionName value must be unique among open Conn instances that use the same direct.Manager.
 // It could be a server UUID, or something else unique to the connection.
 // If an open Conn instance has the name "abc" and this function is called with directPartitionName "abc", it will return an error.
-func NewRoomConn(
+func NewConn(
 	logger *slog.Logger,
 	logic Logic,
 	connMethodSupport machine.ConnMethodSupport,
 	certStore cert.Store,
 	directMgr *direct.Manager,
 	directPartitionName string,
+	eventPublisher *event.Publisher,
 	address string,
 	creds Credentials,
 ) (*Conn, error) {
@@ -228,6 +232,8 @@ func NewRoomConn(
 		directConnectToMeFailures:     make(map[common.NormalizedUsername]struct{}),
 		directOutgoingTimeout:         10 * time.Second,
 		directGcInterval:              5 * time.Minute,
+
+		eventPublisher: eventPublisher,
 	}
 
 	go c.directCacheGc()

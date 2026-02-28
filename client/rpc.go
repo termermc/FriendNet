@@ -10,6 +10,7 @@ import (
 
 	"connectrpc.com/connect"
 	"friendnet.org/client/clog"
+	"friendnet.org/client/event"
 	"friendnet.org/client/room"
 	"friendnet.org/client/storage"
 	"friendnet.org/common"
@@ -29,6 +30,7 @@ var errFileNotFound = connect.NewError(connect.CodeNotFound, errors.New("file no
 type RpcServer struct {
 	clogHandler   clog.Handler
 	client        *MultiClient
+	eventBus      *event.Bus
 	fileServerUrl string
 	stopper       func()
 }
@@ -36,12 +38,14 @@ type RpcServer struct {
 func NewRpcServer(
 	clogHandler clog.Handler,
 	client *MultiClient,
+	eventBus *event.Bus,
 	fileServerUrl string,
 	stopper func(),
 ) *RpcServer {
 	return &RpcServer{
 		clogHandler:   clogHandler,
 		client:        client,
+		eventBus:      eventBus,
 		fileServerUrl: fileServerUrl,
 		stopper:       stopper,
 	}
@@ -144,6 +148,30 @@ func (s *RpcServer) StreamLogs(ctx context.Context, request *v1.StreamLogsReques
 			return nil
 		case rec := <-pending:
 			if err := sendOne(rec); err != nil {
+				return err
+			}
+		}
+	}
+}
+
+func (s *RpcServer) StreamEvents(ctx context.Context, _ *v1.StreamEventsRequest, conn *connect.ServerStream[v1.StreamEventsResponse]) error {
+	pending := make(chan *v1.Event, 100)
+
+	sub := s.eventBus.Subscribe(func(evt *v1.Event) {
+		pending <- evt
+	})
+	defer s.eventBus.Unsubscribe(sub)
+
+	// Stream new events as they come in.
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case evt := <-pending:
+			err := conn.Send(&v1.StreamEventsResponse{
+				Event: evt,
+			})
+			if err != nil {
 				return err
 			}
 		}

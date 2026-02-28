@@ -10,11 +10,13 @@ import (
 
 	"friendnet.org/client/cert"
 	"friendnet.org/client/direct"
+	"friendnet.org/client/event"
 	"friendnet.org/client/room"
 	"friendnet.org/client/share"
 	"friendnet.org/client/storage"
 	"friendnet.org/common"
 	"friendnet.org/common/machine"
+	v1 "friendnet.org/protocol/pb/clientrpc/v1"
 )
 
 // ErrMultiClientClosed is returned by MultiClient methods when the MultiClient is closed.
@@ -56,6 +58,7 @@ type MultiClient struct {
 	certStore         cert.Store
 	connMethodSupport machine.ConnMethodSupport
 	directMgr         *direct.Manager
+	eventBus          *event.Bus
 
 	// Mapping of server UUIDs to the Server instances that manage connections to them.
 	servers map[string]*Server
@@ -69,6 +72,7 @@ func NewMultiClient(
 	certStore cert.Store,
 	connMethodSupport machine.ConnMethodSupport,
 	directMgr *direct.Manager,
+	eventBus *event.Bus,
 ) (*MultiClient, error) {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
@@ -86,6 +90,7 @@ func NewMultiClient(
 		certStore:         certStore,
 		connMethodSupport: connMethodSupport,
 		directMgr:         directMgr,
+		eventBus:          eventBus,
 		servers:           make(map[string]*Server, len(serverRecs)),
 	}
 
@@ -185,6 +190,9 @@ func (c *MultiClient) createServerInstance(record storage.ServerRecord) (*Server
 			c.connMethodSupport,
 			c.directMgr,
 			record.Uuid,
+			c.eventBus.CreatePublisher(&v1.EventContext{
+				ServerUuid: record.Uuid,
+			}),
 			record.Address,
 			room.Credentials{
 				Room:     record.Room,

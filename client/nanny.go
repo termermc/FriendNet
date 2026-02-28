@@ -10,9 +10,11 @@ import (
 
 	"friendnet.org/client/cert"
 	"friendnet.org/client/direct"
+	"friendnet.org/client/event"
 	"friendnet.org/client/room"
 	"friendnet.org/common"
 	"friendnet.org/common/machine"
+	v1 "friendnet.org/protocol/pb/clientrpc/v1"
 )
 
 var ErrConnNannyClosed = errors.New("conn nanny closed")
@@ -48,6 +50,7 @@ type ConnNanny struct {
 	certStore         cert.Store
 	directMgr         *direct.Manager
 	directPartName    string
+	eventPublisher    *event.Publisher
 	address           string
 	creds             room.Credentials
 	logic             room.Logic
@@ -72,6 +75,7 @@ func NewConnNanny(
 	connMethodSupport machine.ConnMethodSupport,
 	directMgr *direct.Manager,
 	directPartitionName string,
+	eventPublisher *event.Publisher,
 	address string,
 	creds room.Credentials,
 	logic room.Logic,
@@ -90,6 +94,7 @@ func NewConnNanny(
 		certStore:         certStore,
 		directMgr:         directMgr,
 		directPartName:    directPartitionName,
+		eventPublisher:    eventPublisher,
 		address:           address,
 		creds:             creds,
 		logic:             logic,
@@ -155,6 +160,27 @@ func (n *ConnNanny) SetPassword(password string) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	n.creds.Password = password
+}
+
+func (n *ConnNanny) setStateNoLock(state ConnState) {
+	n.state = state
+
+	var enum v1.ServerConnState
+	switch n.state {
+	case ConnStateClosed:
+		enum = v1.ServerConnState_SERVER_CONN_STATE_CLOSED
+	case ConnStateOpening:
+		enum = v1.ServerConnState_SERVER_CONN_STATE_OPENING
+	case ConnStateOpen:
+		enum = v1.ServerConnState_SERVER_CONN_STATE_OPEN
+	}
+
+	n.eventPublisher.Publish(&v1.Event{
+		Type: v1.Event_TYPE_SERVER_CONN,
+		ServerConn: &v1.Event_ServerConn{
+			State: enum,
+		},
+	})
 }
 
 // WaitOpen blocks until the underlying connection is open, ctx is done, or the nanny is closed.
@@ -249,7 +275,7 @@ func (n *ConnNanny) daemon() {
 			n.mu.Lock()
 			orphanedConn := n.connOrNil
 			n.connOrNil = nil
-			n.state = ConnStateClosed
+			n.setStateNoLock(ConnStateClosed)
 			n.openCh = make(chan struct{})
 			shouldRestart := !n.isClosed && n.shouldReconnect
 			n.mu.Unlock()
@@ -277,17 +303,18 @@ func (n *ConnNanny) daemon() {
 			// is to just return and let Connect() start a new daemon if desired.
 			return
 		}
-		n.state = ConnStateOpening
+		n.setStateNoLock(ConnStateOpening)
 		n.mu.Unlock()
 
 		// Connect outside lock; may block.
-		conn, err := room.NewRoomConn(
+		conn, err := room.NewConn(
 			n.logger,
 			n.logic,
 			n.connMethodSupport,
 			n.certStore,
 			n.directMgr,
 			n.directPartName,
+			n.eventPublisher,
 			n.address,
 			n.creds,
 		)
@@ -304,7 +331,7 @@ func (n *ConnNanny) daemon() {
 			}
 
 			// Connection never opened, so we do not to close or recreate openCh.
-			n.state = ConnStateClosed
+			n.setStateNoLock(ConnStateClosed)
 
 			// Back off.
 			if n.curWait < n.maxWait {
@@ -331,7 +358,7 @@ func (n *ConnNanny) daemon() {
 		// Connection is open!
 		// Set connection and state, then signal to waiters that it is open.
 		n.connOrNil = conn
-		n.state = ConnStateOpen
+		n.setStateNoLock(ConnStateOpen)
 		select {
 		case <-n.openCh:
 		default:
@@ -348,7 +375,7 @@ func (n *ConnNanny) daemon() {
 		if n.connOrNil == conn {
 			n.connOrNil = nil
 		}
-		n.state = ConnStateClosed
+		n.setStateNoLock(ConnStateClosed)
 		n.openCh = make(chan struct{})
 		n.mu.Unlock()
 
@@ -367,7 +394,7 @@ func (n *ConnNanny) Close() error {
 	}
 	n.isClosed = true
 	n.shouldReconnect = false
-	n.state = ConnStateClosed
+	n.setStateNoLock(ConnStateClosed)
 
 	oldConn := n.connOrNil
 	n.connOrNil = nil
@@ -435,7 +462,7 @@ func (n *ConnNanny) Disconnect() {
 	n.connOrNil = nil
 
 	n.shouldReconnect = false
-	n.state = ConnStateClosed
+	n.setStateNoLock(ConnStateClosed)
 
 	// Ensure WaitOpen blocks until we open again.
 	n.openCh = make(chan struct{})
