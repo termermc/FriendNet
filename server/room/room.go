@@ -87,10 +87,7 @@ func NewRoom(
 	}
 }
 
-func (r *Room) snapshotClients() []*Client {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
+func (r *Room) snapshotClientsNoLock() []*Client {
 	clients := make([]*Client, 0, len(r.clients))
 	for _, client := range r.clients {
 		clients = append(clients, client)
@@ -162,7 +159,7 @@ func (r *Room) GetAllClients() []*Client {
 		return nil
 	}
 
-	return r.snapshotClients()
+	return r.snapshotClientsNoLock()
 }
 
 // Broadcast broadcasts a message to all clients in the room.
@@ -205,12 +202,19 @@ func (r *Room) Onboard(
 	version *pb.ProtoVersion,
 	username common.NormalizedUsername,
 ) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
+	r.mu.RLock()
 	if r.isClosed {
+		r.mu.RUnlock()
 		return ErrRoomClosed
 	}
+
+	_, has := r.clients[username.String()]
+	if has {
+		r.mu.RUnlock()
+		return ErrUsernameAlreadyConnected
+	}
+
+	r.mu.RUnlock()
 
 	client := NewClient(
 		r.logger,
@@ -221,15 +225,15 @@ func (r *Room) Onboard(
 		r.logic,
 	)
 
-	_, has := r.clients[username.String()]
-	if has {
-		return ErrUsernameAlreadyConnected
-	}
-
+	r.mu.Lock()
 	r.handleConnect(client)
+	r.mu.Unlock()
 
 	err := authBidi.Write(pb.MsgType_MSG_TYPE_AUTH_ACCEPTED, &pb.MsgAuthAccepted{})
 	if err != nil {
+		r.mu.Lock()
+		r.handleDisconnect(client)
+		r.mu.Unlock()
 		return fmt.Errorf("failed to write auth accepted message: %w", err)
 	}
 	_ = authBidi.Close()
