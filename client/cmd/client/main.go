@@ -4,10 +4,12 @@ import (
 	"context"
 	"crypto/tls"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -32,6 +34,72 @@ import (
 	"github.com/pkg/browser"
 )
 
+const lockFilename = "client-lock.json"
+
+type LockData struct {
+	Ts      int64  `json:"ts"`
+	RpcAddr string `json:"rpc_addr"`
+}
+
+type Locker struct {
+	lockDir string
+}
+
+func (l *Locker) CheckLock() *LockData {
+	filePath := filepath.Join(l.lockDir, lockFilename)
+	jsonData, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil
+	}
+
+	var data LockData
+	err = json.Unmarshal(jsonData, &data)
+	if err != nil {
+		_ = os.Remove(filePath)
+		return nil
+	}
+
+	rpcUrl, err := url.Parse(data.RpcAddr)
+	if err != nil {
+		_ = os.Remove(filePath)
+		return nil
+	}
+
+	// See if we can dial the RPC address in the lock.
+	conn, err := net.DialTimeout("tcp", rpcUrl.Host, 1*time.Second)
+	if err != nil {
+		// Failed to dial address; this is probably a stale lock.
+		_ = os.Remove(filePath)
+		return nil
+	}
+
+	// We can dial the address. The client is truly locked.
+	_ = conn.Close()
+	return &data
+}
+
+func (l *Locker) Lock(rpcAddr string) error {
+	filePath := filepath.Join(l.lockDir, lockFilename)
+	data := LockData{
+		Ts:      time.Now().UnixMilli(),
+		RpcAddr: rpcAddr,
+	}
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("failed to marshal lock data: %w", err)
+	}
+	err = os.WriteFile(filePath, jsonData, 0600)
+	if err != nil {
+		return fmt.Errorf("failed to write lock file: %w", err)
+	}
+	return nil
+}
+
+func (l *Locker) Unlock() {
+	filePath := filepath.Join(l.lockDir, lockFilename)
+	_ = os.Remove(filePath)
+}
+
 func main() {
 	runId := time.Now().UnixMilli()
 
@@ -44,6 +112,7 @@ func main() {
 	var fileAddr string
 	var uiAddr string
 	var noBrowser bool
+	var noLock bool
 	var installCa bool
 	var uninstallCa bool
 
@@ -52,6 +121,7 @@ func main() {
 	flag.StringVar(&fileAddr, "fileaddr", "https://localhost:20040", "File server address")
 	flag.StringVar(&uiAddr, "uiaddr", "https://localhost:20041", "Web UI server address")
 	flag.BoolVar(&noBrowser, "nobrowser", false, "do not open web UI in browser")
+	flag.BoolVar(&noLock, "nolock", false, "do not use a lock to prevent multiple instances of the client from running")
 	flag.BoolVar(&installCa, "installca", false, "if set, tries to install the client's root CA for HTTPS on the web UI")
 	flag.BoolVar(&uninstallCa, "uninstallca", false, "if set, tries to uninstall the client's root CA")
 	flag.Parse()
@@ -94,6 +164,29 @@ func main() {
 	}
 	if uiUrl.Scheme != "https" {
 		panic(fmt.Errorf(`web UI server address must start with "https://" scheme`))
+	}
+
+	if !noLock {
+		locker := &Locker{
+			lockDir: dataDir,
+		}
+		lockData := locker.CheckLock()
+		if lockData != nil {
+			println("Client is already running")
+
+			if !noBrowser {
+				// Try to open web UI in browser.
+				_ = browser.OpenURL(uiUrl.String())
+			}
+
+			return
+		}
+
+		err = locker.Lock(rpcAddr)
+		if err != nil {
+			panic(fmt.Errorf(`failed to lock client: %w`, err))
+		}
+		defer locker.Unlock()
 	}
 
 	dbDir := filepath.Join(dataDir, "client.db")
