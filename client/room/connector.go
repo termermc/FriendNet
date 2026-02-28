@@ -69,7 +69,8 @@ func ConnectWithCertStore(ctx context.Context, certStore cert.Store, address str
 	}
 
 	qConn, err := quic.DialAddr(ctx, address, tlsCfg, &quic.Config{
-		KeepAlivePeriod: protocol.DefaultKeepAlivePeriod,
+		KeepAlivePeriod:    protocol.DefaultKeepAlivePeriod,
+		MaxIncomingStreams: protocol.DefaultMaxIncomingStreams,
 	})
 	if err != nil {
 		return nil, fmt.Errorf(`failed to dial QUIC %q: %w`, address, err)

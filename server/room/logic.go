@@ -238,19 +238,35 @@ func (l LogicImpl) OnAdvertiseConnMethod(ctx context.Context, client *Client, bi
 	_, has := client.connMethods[ad.Id]
 	if has {
 		client.mu.Unlock()
-		return bidi.Write(pb.MsgType_MSG_TYPE_ADVERTISE_CONN_METHOD_RESULT, &pb.MsgAdvertiseConnMethodResult{
+		err := bidi.Write(pb.MsgType_MSG_TYPE_ADVERTISE_CONN_METHOD_RESULT, &pb.MsgAdvertiseConnMethodResult{
 			AlreadyExists: true,
 		})
+		if err != nil {
+			if protocol.IsErrorConnCloseOrCancel(err) {
+				return nil
+			}
+
+			return err
+		}
 	}
 
 	// Not a duplicate, add method.
 	client.connMethods[ad.Id] = mtd
 	client.mu.Unlock()
 
-	return bidi.Write(pb.MsgType_MSG_TYPE_ADVERTISE_CONN_METHOD_RESULT, &pb.MsgAdvertiseConnMethodResult{
+	err := bidi.Write(pb.MsgType_MSG_TYPE_ADVERTISE_CONN_METHOD_RESULT, &pb.MsgAdvertiseConnMethodResult{
 		AlreadyExists: false,
 		TestResult:    connRes,
 	})
+	if err != nil {
+		if protocol.IsErrorConnCloseOrCancel(err) {
+			return nil
+		}
+
+		return err
+	}
+
+	return nil
 }
 
 func (l LogicImpl) OnRemoveConnMethod(_ context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgRemoveConnMethod]) error {

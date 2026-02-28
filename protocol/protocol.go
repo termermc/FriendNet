@@ -38,6 +38,9 @@ var CurrentProtocolVersion = &pb.ProtoVersion{
 // DefaultKeepAlivePeriod is the default keepalive period for QUIC connections.
 const DefaultKeepAlivePeriod = 10 * time.Second
 
+// DefaultMaxIncomingStreams is the default maximum of incoming streams to allow for QUIC connections.
+const DefaultMaxIncomingStreams = 100
+
 // UntypedProtoMsg is a protocol message with an unknown payload type.
 // It can be converted to a TypedProtoMsg with ToTyped.
 // See documentation on ToTyped for details.
@@ -575,7 +578,8 @@ func NewQuicProtoListener(listenAddr string, tlsCfg *tls.Config) (ProtoListener,
 
 	trans := quic.Transport{Conn: udpConn}
 	listener, err := trans.Listen(tlsCfg, &quic.Config{
-		KeepAlivePeriod: DefaultKeepAlivePeriod,
+		KeepAlivePeriod:    DefaultKeepAlivePeriod,
+		MaxIncomingStreams: DefaultMaxIncomingStreams,
 	})
 	if err != nil {
 		return nil, err

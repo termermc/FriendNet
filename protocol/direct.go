@@ -139,7 +139,8 @@ func CreateDirectConnection(
 
 		var qConn *quic.Conn
 		qConn, err = quic.DialAddr(ctx, address, tlsCfg, &quic.Config{
-			KeepAlivePeriod: DefaultKeepAlivePeriod,
+			KeepAlivePeriod:    DefaultKeepAlivePeriod,
+			MaxIncomingStreams: DefaultMaxIncomingStreams,
 		})
 		if err != nil {
 			return nil, fmt.Errorf(`failed to dial QUIC %q for direct connection: %w`, address, err)

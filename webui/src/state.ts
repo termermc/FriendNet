@@ -641,11 +641,14 @@ export class State {
 		await this.refreshServers()
 
 		const servers = this.servers()
-		const promises = new Array<Promise<void>>(servers.length)
+		const concurrency = 4
+		const promises = new Array<Promise<void>[]>(concurrency).fill([])
 		for (let i = 0; i < servers.length; i++) {
-			promises[i] = servers[i].refreshOnlineUsers()
+			promises[i%concurrency].push(servers[i].refreshOnlineUsers())
 		}
-		await Promise.all(promises)
+		for (const arr of promises) {
+			await Promise.all(arr)
+		}
 	}
 
 	/**
