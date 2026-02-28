@@ -70,6 +70,22 @@ func (c VirtualC2cConn) SendAndReceive(typ pb.MsgType, msg proto.Message) (*prot
 	return bidi.Read()
 }
 
+func (c VirtualC2cConn) SendAndReceiveAck(typ pb.MsgType, msg proto.Message) error {
+	reply, err := c.SendAndReceive(typ, msg)
+	if err != nil {
+		return err
+	}
+
+	if reply.Type != pb.MsgType_MSG_TYPE_ACKNOWLEDGED {
+		return protocol.UnexpectedMsgTypeError{
+			Expected: pb.MsgType_MSG_TYPE_ACKNOWLEDGED,
+			Actual:   reply.Type,
+		}
+	}
+
+	return nil
+}
+
 var _ protocol.ProtoConn = VirtualC2cConn{}
 
 // GetDirFiles returns a stream of files in the specified directory.

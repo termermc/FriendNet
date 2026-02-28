@@ -187,6 +187,10 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 					<A href={`/server/${props.server.uuid}/shares`}>
 						📁 Manage Shares
 					</A>
+					<br/>
+					<A href={`/server/${props.server.uuid}/changepassword`}>
+						🔑 Change Account Password
+					</A>
 				</div>
 
 				<div class={styles.onlineUsers}>

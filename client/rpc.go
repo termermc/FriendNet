@@ -26,6 +26,7 @@ var errInvalidRoomName = connect.NewError(connect.CodeInvalidArgument, errors.Ne
 var errPathNotDir = connect.NewError(connect.CodeInvalidArgument, errors.New("path is not a directory"))
 var errShareNotFound = connect.NewError(connect.CodeNotFound, errors.New("share not found"))
 var errFileNotFound = connect.NewError(connect.CodeNotFound, errors.New("file not found"))
+var errIncorrectPassword = connect.NewError(connect.CodeInvalidArgument, errors.New("incorrect password"))
 
 type RpcServer struct {
 	clogHandler   clog.Handler
@@ -294,11 +295,13 @@ func (s *RpcServer) UpdateServer(ctx context.Context, request *v1.UpdateServerRe
 
 	err := s.client.Update(ctx,
 		request.Uuid,
-		request.Name,
-		request.Address,
-		roomName,
-		username,
-		request.Password,
+		storage.UpdateServerFields{
+			Name:     request.Name,
+			Address:  request.Address,
+			Room:     roomName,
+			Username: username,
+			Password: request.Password,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -511,6 +514,44 @@ func (s *RpcServer) GetOnlineUsers(ctx context.Context, request *v1.GetOnlineUse
 }
 
 func (s *RpcServer) ChangeAccountPassword(ctx context.Context, request *v1.ChangeAccountPasswordRequest) (*v1.ChangeAccountPasswordResponse, error) {
-	//TODO implement me
-	panic("implement me")
+	srv, has := s.client.GetByUuid(request.ServerUuid)
+	if !has {
+		return nil, errServerNotFound
+	}
+
+	// Send password change request to server.
+	err := srv.Do(ctx, func(ctx context.Context, c *room.Conn) error {
+		err := c.ChangeAccountPassword(
+			request.CurrentPassword,
+			request.NewPassword,
+		)
+		if err != nil {
+			if protoErr, ok := errors.AsType[protocol.ProtoMsgError](err); ok {
+				errType := protoErr.Msg.Type
+				if errType == pb.ErrType_ERR_TYPE_PERMISSION_DENIED {
+					return errIncorrectPassword
+				}
+				if errType == pb.ErrType_ERR_TYPE_INVALID_FIELDS {
+					return connect.NewError(connect.CodeInvalidArgument, errors.New(common.StrPtrOr(protoErr.Msg.Message, "password does not meet requirements")))
+				}
+			}
+
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Update password in database and memory.
+	err = s.client.Update(ctx, srv.Uuid, storage.UpdateServerFields{
+		Password: new(request.NewPassword),
+	})
+	if err != nil {
+		return nil, fmt.Errorf(`failed to update server password in database: %w`, err)
+	}
+
+	return &v1.ChangeAccountPasswordResponse{}, nil
 }

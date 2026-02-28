@@ -267,11 +267,7 @@ func (c *MultiClient) Create(
 func (c *MultiClient) Update(
 	ctx context.Context,
 	uuid string,
-	name *string,
-	address *string,
-	room *common.NormalizedRoomName,
-	username *common.NormalizedUsername,
-	password *string,
+	fields storage.UpdateServerFields,
 ) error {
 	c.mu.Lock()
 	if c.isClosed {
@@ -286,11 +282,7 @@ func (c *MultiClient) Update(
 	err := c.storage.UpdateServer(
 		ctx,
 		uuid,
-		name,
-		address,
-		room,
-		username,
-		password,
+		fields,
 	)
 	if err != nil {
 		return fmt.Errorf(`failed to update server UUID %q in storage: %w`, uuid, err)
@@ -298,20 +290,20 @@ func (c *MultiClient) Update(
 
 	// Update in memory.
 	if hasServer {
-		if name != nil {
-			server.Name = *name
+		if fields.Name != nil {
+			server.Name = *fields.Name
 		}
-		if address != nil {
-			server.SetAddress(*address)
+		if fields.Address != nil {
+			server.SetAddress(*fields.Address)
 		}
-		if room != nil {
-			server.SetRoom(*room)
+		if fields.Room != nil {
+			server.SetRoom(*fields.Room)
 		}
-		if username != nil {
-			server.SetUsername(*username)
+		if fields.Username != nil {
+			server.SetUsername(*fields.Username)
 		}
-		if password != nil {
-			server.SetPassword(*password)
+		if fields.Password != nil {
+			server.SetPassword(*fields.Password)
 		}
 	}
 

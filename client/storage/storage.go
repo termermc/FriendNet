@@ -233,38 +233,42 @@ func (s *Storage) DeleteShareByServerAndName(
 	return err
 }
 
+type UpdateServerFields struct {
+	Name     *string
+	Address  *string
+	Room     *common.NormalizedRoomName
+	Username *common.NormalizedUsername
+	Password *string
+}
+
 // UpdateServer updates the specified server record.
 // Any nil fields will be left unchanged.
 func (s *Storage) UpdateServer(
 	ctx context.Context,
 	uuid string,
-	name *string,
-	address *string,
-	room *common.NormalizedRoomName,
-	username *common.NormalizedUsername,
-	password *string,
+	fields UpdateServerFields,
 ) error {
 	fieldStrs := make([]string, 0, 5)
 	vals := make([]any, 0, 5)
-	if name != nil {
+	if fields.Name != nil {
 		fieldStrs = append(fieldStrs, `name = ?`)
-		vals = append(vals, *name)
+		vals = append(vals, *fields.Name)
 	}
-	if address != nil {
+	if fields.Address != nil {
 		fieldStrs = append(fieldStrs, `address = ?`)
-		vals = append(vals, *address)
+		vals = append(vals, *fields.Address)
 	}
-	if room != nil {
+	if fields.Room != nil {
 		fieldStrs = append(fieldStrs, `room = ?`)
-		vals = append(vals, room.String())
+		vals = append(vals, fields.Room.String())
 	}
-	if username != nil {
+	if fields.Username != nil {
 		fieldStrs = append(fieldStrs, `username = ?`)
-		vals = append(vals, username.String())
+		vals = append(vals, fields.Username.String())
 	}
-	if password != nil {
+	if fields.Password != nil {
 		fieldStrs = append(fieldStrs, `password = ?`)
-		vals = append(vals, *password)
+		vals = append(vals, *fields.Password)
 	}
 
 	// Nothing to update.

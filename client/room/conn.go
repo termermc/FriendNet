@@ -273,6 +273,19 @@ func (c *Conn) Ping() (time.Duration, error) {
 	return time.Since(start), nil
 }
 
+// ChangeAccountPassword changes the password on the account the connection is using.
+func (c *Conn) ChangeAccountPassword(currentPassword string, newPassword string) error {
+	err := c.serverConn.SendAndReceiveAck(pb.MsgType_MSG_TYPE_CHANGE_ACCOUNT_PASSWORD, &pb.MsgChangeAccountPassword{
+		CurrentPassword: currentPassword,
+		NewPassword:     newPassword,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to change account password: %w", err)
+	}
+
+	return err
+}
+
 func (c *Conn) pingLoop() {
 	ticker := time.NewTicker(ServerPingInterval)
 	defer ticker.Stop()

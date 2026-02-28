@@ -106,6 +106,10 @@ type ProtoConn interface {
 	//
 	// If you know what type you are expecting, SendAndReceiveExpect is a better alternative.
 	SendAndReceive(typ pb.MsgType, msg proto.Message) (*UntypedProtoMsg, error)
+
+	// SendAndReceiveAck is like SendAndReceive but expects an ACKNOWLEDGED message.
+	// Returns an UnexpectedMsgTypeError if the received type does not match the expected type.
+	SendAndReceiveAck(typ pb.MsgType, msg proto.Message) error
 }
 
 // ProtoConnImpl wraps a QUIC connection to provide protocol-specific methods.
@@ -167,8 +171,25 @@ func (conn *ProtoConnImpl) SendAndReceive(typ pb.MsgType, msg proto.Message) (*U
 	return bidi.Read()
 }
 
-// SendAndReceiveExpect is like SendAndReceive but also checks that the reply's type matches the expected type.
+func (conn *ProtoConnImpl) SendAndReceiveAck(typ pb.MsgType, msg proto.Message) error {
+	reply, err := conn.SendAndReceive(typ, msg)
+	if err != nil {
+		return err
+	}
+
+	if reply.Type != pb.MsgType_MSG_TYPE_ACKNOWLEDGED {
+		return UnexpectedMsgTypeError{
+			Expected: pb.MsgType_MSG_TYPE_ACKNOWLEDGED,
+			Actual:   reply.Type,
+		}
+	}
+
+	return nil
+}
+
+// SendAndReceiveExpect is like ProtoConn.SendAndReceive but also checks that the reply's type matches the expected type.
 // See ReadExpect for important details, as it works the same way.
+// Returns an UnexpectedMsgTypeError if the received type does not match the expected type.
 func SendAndReceiveExpect[T proto.Message](
 	conn ProtoConn,
 	typ pb.MsgType,
@@ -181,7 +202,10 @@ func SendAndReceiveExpect[T proto.Message](
 	}
 
 	if reply.Type != expectType {
-		return nil, fmt.Errorf("unexpected reply type: got %v, expected %v", reply.Type, expectType)
+		return nil, UnexpectedMsgTypeError{
+			Expected: expectType,
+			Actual:   reply.Type,
+		}
 	}
 
 	casted, ok := reply.Payload.(T)

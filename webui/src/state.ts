@@ -271,6 +271,24 @@ export class Server {
 			this.#setUsername(req.username)
 		}
 	}
+
+	/**
+	 * Changes the server's account password.
+	 * To just update the password to authenticate with only without changing the account password, use {@link update}.
+	 * @param currentPassword The current password.
+	 * @param newPassword The new password.
+	 * @throws {ConnectError} If the current password is incorrect, or the new password does not meet minimum requirements.
+	 */
+	async changeAccountPassword(
+		currentPassword: string,
+		newPassword: string,
+	): Promise<void> {
+		await this.#client.changeAccountPassword({
+			serverUuid: this.uuid,
+			currentPassword,
+			newPassword,
+		})
+	}
 }
 
 /**
@@ -652,7 +670,6 @@ export class State {
 		this.log = new LogManager(client)
 		this.event = new EventManager(this, client)
 		this.refresher = new Refresher(this, client, 500)
-
 		;[this.servers, this.#setServers] = createSignal<Server[]>([])
 		;[this.previewInfo, this.#setPreviewInfo] = createSignal<
 			PreviewInfo | undefined

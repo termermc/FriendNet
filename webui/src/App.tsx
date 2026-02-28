@@ -9,6 +9,7 @@ import { ServerSharesPage } from './page/ServerSharesPage'
 import { ServerBrowsePage } from './page/ServerBrowsePage'
 import { makeBrowsePath } from './util'
 import { LogsPage } from './page/LogsPage'
+import { ChangeServerPasswordPage } from './page/ChangeServerPasswordPage'
 
 const App: Component = () => {
 	const routes: RouteDefinition[] = [
@@ -34,6 +35,10 @@ const App: Component = () => {
 		{
 			path: '/server/:uuid/shares',
 			component: ServerSharesPage,
+		},
+		{
+			path: '/server/:uuid/changepassword',
+			component: ChangeServerPasswordPage,
 		},
 
 		{
