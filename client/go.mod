@@ -7,13 +7,12 @@ require (
 	friendnet.org/common v0.0.0
 	friendnet.org/mkcert v0.0.0
 	friendnet.org/protocol v0.0.0
+	friendnet.org/upnp v0.0.0
 	friendnet.org/webui v0.0.0
 	github.com/google/uuid v1.6.0
-	github.com/huin/goupnp v1.3.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/quic-go/quic-go v0.59.0
 	golang.org/x/net v0.50.0
-	golang.org/x/sync v0.19.0
 	google.golang.org/protobuf v1.36.11
 	modernc.org/sqlite v1.46.1
 )
@@ -37,5 +36,6 @@ replace (
 	friendnet.org/common => ../common
 	friendnet.org/mkcert => ../mkcert
 	friendnet.org/protocol => ../protocol
+	friendnet.org/upnp => ../upnp
 	friendnet.org/webui => ../webui
 )

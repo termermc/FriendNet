@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	friendnet.org/common v0.0.0
 	golang.org/x/net v0.50.0
-	howett.net/plist v1.0.0
+	howett.net/plist v1.0.1
 )
 
 require (

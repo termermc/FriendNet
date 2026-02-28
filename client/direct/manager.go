@@ -15,10 +15,10 @@ import (
 	"time"
 	"unsafe"
 
-	"friendnet.org/client/router"
 	"friendnet.org/common"
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
+	"friendnet.org/upnp"
 )
 
 const invalidTokenReason = "invalid token"
@@ -110,6 +110,8 @@ func (m *Manager) startServers() {
 	var publicIp netip.Addr
 
 	if !m.cfg.DisableUPnP {
+		upnp.SetLogger(m.logger)
+
 		timeout := m.cfg.UpnpTimeout
 		if timeout == 0 {
 			timeout = 10 * time.Second
@@ -117,34 +119,76 @@ func (m *Manager) startServers() {
 
 		timeoutCtx, cancel := context.WithTimeout(m.ctx, timeout)
 
-		func() {
-			ipStr, err := router.GetIpAndForwardPort(timeoutCtx, defaultPort)
-			if err != nil {
-				if errors.Is(err, context.DeadlineExceeded) ||
-					errors.Is(err, context.Canceled) {
-					m.logger.Warn("UPnP public IP discovery and forwarding timed out",
-						"service", "direct.Manager",
-					)
-					return
-				}
+		const ipForwardDuration = 2 * time.Hour
 
+		forwardIps := func(ctx context.Context, defaultPort uint16) upnp.ForwardResult {
+			return upnp.ForwardUDPForPublicIPs(ctx, defaultPort, "FriendNet Client Direct", ipForwardDuration, 3*time.Second)
+		}
+
+		forwardOk := func() bool {
+			result := forwardIps(timeoutCtx, defaultPort)
+			errs := make([]error, len(result.Failures))
+			for i, failure := range result.Failures {
+				errs[i] = failure.Err
+			}
+			if len(result.Forwarded) == 0 {
 				m.logger.Warn("UPnP public IP discovery and forwarding failed",
 					"service", "direct.Manager",
-					"err", err,
+					"err", errors.Join(errs...),
 				)
-				return
+				return false
 			}
 
-			publicIp, err = netip.ParseAddr(ipStr)
-			if err != nil {
-				m.logger.Error("UPnP public IP discovery succeeded, but the public IP it discovered could not be parsed",
-					"service", "direct.Manager",
-					"ip", ipStr,
-					"err", err,
-				)
-				return
+			// Prefer IPv4.
+			for _, forwarded := range result.Forwarded {
+				if forwarded.IP.To4() == nil {
+					// Address is IPv6, ignore for now.
+					continue
+				}
+
+				var ok bool
+				publicIp, ok = netip.AddrFromSlice(forwarded.IP)
+				if !ok {
+					// Can't convert from net.IP to netip.Addr for some reason.
+					continue
+				}
 			}
+			// If there was no IPv4, use the first available address.
+			if !publicIp.IsValid() {
+				for _, forwarded := range result.Forwarded {
+					publicIp, _ = netip.AddrFromSlice(forwarded.IP)
+					if publicIp.IsValid() {
+						break
+					}
+				}
+			}
+
+			if !publicIp.IsValid() {
+				m.logger.Error("UPnP public IP discovery returned success, but no public IP could be found",
+					"service", "direct.Manager",
+				)
+				return false
+			}
+
+			return true
 		}()
+
+		if forwardOk {
+			// Periodically re-forward IPs with UPnP.
+			go func() {
+				ticker := time.NewTicker(ipForwardDuration - (10 * time.Minute))
+				defer ticker.Stop()
+
+				for {
+					select {
+					case <-m.ctx.Done():
+						return
+					case <-ticker.C:
+						forwardIps(context.Background(), defaultPort)
+					}
+				}
+			}()
+		}
 
 		cancel()
 	}
