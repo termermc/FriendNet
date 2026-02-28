@@ -110,6 +110,22 @@ func (r *Room) Close() error {
 
 	r.isClosed = true
 
+	// Signal to the client connections that the server is shutting down.
+	// Give them 5 seconds to respond before closing the connections.
+	timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	go func() {
+		var byeWg sync.WaitGroup
+		for _, client := range r.clients {
+			byeWg.Go(func() {
+				_, _ = client.conn.SendAndReceive(pb.MsgType_MSG_TYPE_BYE, &pb.MsgBye{})
+			})
+		}
+		byeWg.Wait()
+		cancel()
+	}()
+	<-timeoutCtx.Done()
+
 	// Close all client connections.
 	var wg sync.WaitGroup
 	for _, client := range r.clients {

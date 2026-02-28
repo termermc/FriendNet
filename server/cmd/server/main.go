@@ -56,7 +56,7 @@ func main() {
 		os.Exit(1)
 	}
 	defer func() {
-		timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		timeoutCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		go func() {
 			_ = storageInst.Close()
 			cancel()
@@ -90,7 +90,7 @@ func main() {
 		os.Exit(1)
 	}
 	defer func() {
-		timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		timeoutCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		go func() {
 			_ = srv.Close()
 			cancel()

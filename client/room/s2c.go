@@ -67,6 +67,13 @@ func (c *Conn) s2cLoop() {
 			// Handle S2C message.
 			err = nil
 			switch rawMsg.Type {
+			case pb.MsgType_MSG_TYPE_BYE:
+				c.logger.Info("server shut down",
+					"service", "room.Conn",
+					"room", c.RoomName.String(),
+				)
+				_ = bidi.WriteAck()
+				_ = c.serverConn.CloseWithReason("it was nice knowing you")
 			case pb.MsgType_MSG_TYPE_PING:
 				err = c.logic.OnPing(c.Context, c, bidi, protocol.ToTyped[*pb.MsgPing](rawMsg))
 			case pb.MsgType_MSG_TYPE_CLIENT_ONLINE:
