@@ -45,7 +45,6 @@ type MkCert struct {
 // Wrapper around the mkcert init functions for each file.
 func initGlobalState() {
 	initCertGo()
-	initTruststoreJavaGo()
 	initTruststoreLinuxGo()
 	initTruststoreNssGo()
 }
@@ -143,18 +142,6 @@ func (m *MkCert) Install() error {
 				}
 			}
 		}
-		if storeEnabled("java") && hasJava {
-			if m.checkJava() {
-				log.Println("The local CA is already installed in Java's trust store!")
-			} else {
-				if hasKeytool {
-					m.installJava()
-					log.Println("The local CA is now installed in Java's trust store!️")
-				} else {
-					log.Println(`Warning: "keytool" is not available, so the CA can't be automatically installed in Java's trust store!`)
-				}
-			}
-		}
 	}()
 
 	return err
@@ -183,15 +170,6 @@ func (m *MkCert) Uninstall() error {
 				log.Print("")
 				log.Printf(`Warning: "certutil" is not available, so the CA can't be automatically uninstalled from %s (if it was ever installed)!️`, NSSBrowsers)
 				log.Printf(`You can Install "certutil" with "%s" and re-run "-uninstallca"`, CertutilInstallHelp)
-				log.Print("")
-			}
-		}
-		if storeEnabled("java") && hasJava {
-			if hasKeytool {
-				m.uninstallJava()
-			} else {
-				log.Print("")
-				log.Println(`Warning: "keytool" is not available, so the CA can't be automatically uninstalled from Java's trust store (if it was ever installed)!️`)
 				log.Print("")
 			}
 		}
