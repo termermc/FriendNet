@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	"connectrpc.com/connect"
 	"friendnet.org/common"
@@ -55,7 +56,12 @@ func main() {
 		os.Exit(1)
 	}
 	defer func() {
-		_ = storageInst.Close()
+		timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		go func() {
+			_ = storageInst.Close()
+			cancel()
+		}()
+		<-timeoutCtx.Done()
 	}()
 
 	// Probe for connection method support.
@@ -84,7 +90,12 @@ func main() {
 		os.Exit(1)
 	}
 	defer func() {
-		_ = srv.Close()
+		timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		go func() {
+			_ = srv.Close()
+			cancel()
+		}()
+		<-timeoutCtx.Done()
 	}()
 
 	// Create RPC servers.
