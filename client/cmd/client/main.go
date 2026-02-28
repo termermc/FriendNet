@@ -252,15 +252,31 @@ func main() {
 		<-ctx.Done()
 		logger.Info("shutdown signal received, closing client")
 
-		timeoutCtx, ctxCancel := context.WithTimeout(context.Background(), 3*time.Second)
-		defer ctxCancel()
+		doWithTimeout := func(timeout time.Duration, fn func(ctx context.Context)) {
+			timeoutCtx, ctxCancel := context.WithTimeout(context.Background(), timeout)
+			go func() {
+				fn(timeoutCtx)
+				ctxCancel()
+			}()
+			<-timeoutCtx.Done()
+		}
 
-		_ = uiServer.Shutdown(timeoutCtx)
-		_ = fileServer.Shutdown(timeoutCtx)
-		_ = rpc.Close()
-		_ = multi.Close()
-		_ = logHandler.Close()
-		_ = store.Close()
+		doWithTimeout(1*time.Second, func(ctx context.Context) {
+			_ = uiServer.Shutdown(ctx)
+			_ = fileServer.Shutdown(ctx)
+		})
+		doWithTimeout(1*time.Second, func(_ context.Context) {
+			_ = rpc.Close()
+		})
+		doWithTimeout(5*time.Second, func(_ context.Context) {
+			_ = multi.Close()
+		})
+		doWithTimeout(5*time.Second, func(_ context.Context) {
+			_ = logHandler.Close()
+		})
+		doWithTimeout(5*time.Second, func(_ context.Context) {
+			_ = store.Close()
+		})
 	})
 
 	var wg sync.WaitGroup
