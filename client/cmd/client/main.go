@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"syscall"
 	"time"
@@ -111,6 +112,7 @@ func main() {
 	var rpcAddr string
 	var fileAddr string
 	var uiAddr string
+	var headless bool
 	var noBrowser bool
 	var noLock bool
 	var installCa bool
@@ -124,7 +126,23 @@ func main() {
 	flag.BoolVar(&noLock, "nolock", false, "do not use a lock to prevent multiple instances of the client from running")
 	flag.BoolVar(&installCa, "installca", false, "if set, tries to install the client's root CA for HTTPS on the web UI")
 	flag.BoolVar(&uninstallCa, "uninstallca", false, "if set, tries to uninstall the client's root CA")
+
+	// Prevent headless mode on Windows.
+	// It just causes the process to go to the background and not stay in the terminal.
+	if runtime.GOOS != "windows" {
+		flag.BoolVar(&headless, "headless", false, "run client in headless mode (RPC-only, no web UI, no locking, no GUI or browser functionality)")
+	}
+
 	flag.Parse()
+
+	if headless {
+		noBrowser = true
+		noLock = true
+	}
+
+	println(headless)
+	println(noBrowser)
+	println(noLock)
 
 	if dataDir == "" {
 		var err error
@@ -227,8 +245,21 @@ func main() {
 		return
 	}
 
-	if !mc.CheckPlatform() || !mc.CheckNSS() {
-		logger.Warn("The FriendNet client root CA is not installed on your system. You should install it by running the client with the -installca option.")
+	if !headless && !mc.CheckPlatform() {
+		installed := false
+		if runtime.GOOS == "windows" {
+			InfoBox("FriendNet Client", "It looks like this is your first time running the FriendNet client.\n\nThe web UI requires HTTPS and a custom certificate, so that will be installed now. If it is not installed, the web UI will not work in your browser.\n\nYou may need to restart your browser afterward.")
+			if err = mc.Install(); err != nil {
+				logger.Error(`failed to install client root CA`, "err", err)
+				InfoBox("Error", "Failed to install FriendNet client root CA. Please try again or install it manually by running the client with the -installca option.\n\nError: "+err.Error())
+				os.Exit(1)
+			}
+			installed = true
+		}
+
+		if !installed {
+			logger.Warn("The FriendNet client root CA is not installed on your system. You should install it by running the client with the -installca option.")
+		}
 	}
 
 	certStore := cert.NewSqliteStore(store.Db)
@@ -392,27 +423,29 @@ func main() {
 			panic(fmt.Errorf(`file server ended with error: %w`, listenErr))
 		}
 	})
-	wg.Go(func() {
-		uiUrl := fmt.Sprintf("%s?rpc=%s&token=%s", uiAddr, rpcAddr, rpcBearerToken)
+	if !headless {
+		wg.Go(func() {
+			uiUrl := fmt.Sprintf("%s?rpc=%s&token=%s", uiAddr, rpcAddr, rpcBearerToken)
 
-		logger.Info(`Web UI server listening`,
-			"addr", uiAddr,
-			"url", uiUrl,
-		)
+			logger.Info(`Web UI server listening`,
+				"addr", uiAddr,
+				"url", uiUrl,
+			)
 
-		if !noBrowser {
-			// Try to open URL in browser.
-			_ = browser.OpenURL(uiUrl)
-		}
-
-		listenErr := uiServer.ListenAndServeTLS("", "")
-		if listenErr != nil {
-			if errors.Is(listenErr, http.ErrServerClosed) {
-				return
+			if !noBrowser {
+				// Try to open URL in browser.
+				_ = browser.OpenURL(uiUrl)
 			}
-			panic(fmt.Errorf(`web UI server ended with error: %w`, listenErr))
-		}
-	})
+
+			listenErr := uiServer.ListenAndServeTLS("", "")
+			if listenErr != nil {
+				if errors.Is(listenErr, http.ErrServerClosed) {
+					return
+				}
+				panic(fmt.Errorf(`web UI server ended with error: %w`, listenErr))
+			}
+		})
+	}
 
 	wg.Wait()
 
