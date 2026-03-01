@@ -555,3 +555,25 @@ func (s *RpcServer) ChangeAccountPassword(ctx context.Context, request *v1.Chang
 
 	return &v1.ChangeAccountPasswordResponse{}, nil
 }
+
+func (s *RpcServer) ServerConnect(ctx context.Context, request *v1.ServerConnectRequest) (*v1.ServerConnectResponse, error) {
+	srv, has := s.client.GetByUuid(request.Uuid)
+	if !has {
+		return nil, errServerNotFound
+	}
+
+	srv.Connect()
+
+	return &v1.ServerConnectResponse{}, nil
+}
+
+func (s *RpcServer) ServerDisconnect(ctx context.Context, request *v1.ServerDisconnectRequest) (*v1.ServerDisconnectResponse, error) {
+	srv, has := s.client.GetByUuid(request.Uuid)
+	if !has {
+		return nil, errServerNotFound
+	}
+
+	srv.Disconnect()
+
+	return &v1.ServerDisconnectResponse{}, nil
+}

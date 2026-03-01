@@ -250,6 +250,22 @@ export class Server {
 	}
 
 	/**
+	 * Requests that the server connects.
+	 * Re-enables reconnection if it was disabled.
+	 */
+	async connect(): Promise<void> {
+		await this.#client.connectServer({ uuid: this.uuid })
+	}
+
+	/**
+	 * Requests that the server disconnects.
+	 * Disables reconnection if it was enabled.
+	 */
+	async disconnect(): Promise<void> {
+		await this.#client.disconnectServer({ uuid: this.uuid })
+	}
+
+	/**
 	 * Updates the server's info.
 	 * @param req The values to update.
 	 */

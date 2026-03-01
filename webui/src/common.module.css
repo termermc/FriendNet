@@ -10,6 +10,9 @@
 .displayInlineBlock {
 	display: inline-block;
 }
+.opacity05 {
+    opacity: 0.5;
+}
 
 .errorMessage {
 	font-weight: bold;

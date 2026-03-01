@@ -2293,6 +2293,168 @@ func (*ChangeAccountPasswordResponse) Descriptor() ([]byte, []int) {
 	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{41}
 }
 
+type ServerConnectRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The server's UUID.
+	Uuid          string `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ServerConnectRequest) Reset() {
+	*x = ServerConnectRequest{}
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[42]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ServerConnectRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ServerConnectRequest) ProtoMessage() {}
+
+func (x *ServerConnectRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[42]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ServerConnectRequest.ProtoReflect.Descriptor instead.
+func (*ServerConnectRequest) Descriptor() ([]byte, []int) {
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{42}
+}
+
+func (x *ServerConnectRequest) GetUuid() string {
+	if x != nil {
+		return x.Uuid
+	}
+	return ""
+}
+
+type ServerConnectResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ServerConnectResponse) Reset() {
+	*x = ServerConnectResponse{}
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[43]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ServerConnectResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ServerConnectResponse) ProtoMessage() {}
+
+func (x *ServerConnectResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[43]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ServerConnectResponse.ProtoReflect.Descriptor instead.
+func (*ServerConnectResponse) Descriptor() ([]byte, []int) {
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{43}
+}
+
+type ServerDisconnectRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The server's UUID.
+	Uuid          string `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ServerDisconnectRequest) Reset() {
+	*x = ServerDisconnectRequest{}
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[44]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ServerDisconnectRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ServerDisconnectRequest) ProtoMessage() {}
+
+func (x *ServerDisconnectRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[44]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ServerDisconnectRequest.ProtoReflect.Descriptor instead.
+func (*ServerDisconnectRequest) Descriptor() ([]byte, []int) {
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{44}
+}
+
+func (x *ServerDisconnectRequest) GetUuid() string {
+	if x != nil {
+		return x.Uuid
+	}
+	return ""
+}
+
+type ServerDisconnectResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ServerDisconnectResponse) Reset() {
+	*x = ServerDisconnectResponse{}
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[45]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ServerDisconnectResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ServerDisconnectResponse) ProtoMessage() {}
+
+func (x *ServerDisconnectResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[45]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ServerDisconnectResponse.ProtoReflect.Descriptor instead.
+func (*ServerDisconnectResponse) Descriptor() ([]byte, []int) {
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{45}
+}
+
 type Event_ServerConnStateChange struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The server's new connection state.
@@ -2303,7 +2465,7 @@ type Event_ServerConnStateChange struct {
 
 func (x *Event_ServerConnStateChange) Reset() {
 	*x = Event_ServerConnStateChange{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[42]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2315,7 +2477,7 @@ func (x *Event_ServerConnStateChange) String() string {
 func (*Event_ServerConnStateChange) ProtoMessage() {}
 
 func (x *Event_ServerConnStateChange) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[42]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2348,7 +2510,7 @@ type Event_ClientOnline struct {
 
 func (x *Event_ClientOnline) Reset() {
 	*x = Event_ClientOnline{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[43]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2360,7 +2522,7 @@ func (x *Event_ClientOnline) String() string {
 func (*Event_ClientOnline) ProtoMessage() {}
 
 func (x *Event_ClientOnline) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[43]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2393,7 +2555,7 @@ type Event_ClientOffline struct {
 
 func (x *Event_ClientOffline) Reset() {
 	*x = Event_ClientOffline{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[44]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2405,7 +2567,7 @@ func (x *Event_ClientOffline) String() string {
 func (*Event_ClientOffline) ProtoMessage() {}
 
 func (x *Event_ClientOffline) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[44]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2438,7 +2600,7 @@ type ServerInfo_State struct {
 
 func (x *ServerInfo_State) Reset() {
 	*x = ServerInfo_State{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[45]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2450,7 +2612,7 @@ func (x *ServerInfo_State) String() string {
 func (*ServerInfo_State) ProtoMessage() {}
 
 func (x *ServerInfo_State) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[45]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2629,12 +2791,18 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"serverUuid\x12)\n" +
 	"\x10current_password\x18\x02 \x01(\tR\x0fcurrentPassword\x12!\n" +
 	"\fnew_password\x18\x03 \x01(\tR\vnewPassword\"\x1f\n" +
-	"\x1dChangeAccountPasswordResponse*\x8d\x01\n" +
+	"\x1dChangeAccountPasswordResponse\"*\n" +
+	"\x14ServerConnectRequest\x12\x12\n" +
+	"\x04uuid\x18\x01 \x01(\tR\x04uuid\"\x17\n" +
+	"\x15ServerConnectResponse\"-\n" +
+	"\x17ServerDisconnectRequest\x12\x12\n" +
+	"\x04uuid\x18\x01 \x01(\tR\x04uuid\"\x1a\n" +
+	"\x18ServerDisconnectResponse*\x8d\x01\n" +
 	"\x0fServerConnState\x12!\n" +
 	"\x1dSERVER_CONN_STATE_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18SERVER_CONN_STATE_CLOSED\x10\x01\x12\x1d\n" +
 	"\x19SERVER_CONN_STATE_OPENING\x10\x02\x12\x1a\n" +
-	"\x16SERVER_CONN_STATE_OPEN\x10\x032\xe3\f\n" +
+	"\x16SERVER_CONN_STATE_OPEN\x10\x032\xb0\x0e\n" +
 	"\x10ClientRpcService\x12Y\n" +
 	"\n" +
 	"StreamLogs\x12\".pb.clientrpc.v1.StreamLogsRequest\x1a#.pb.clientrpc.v1.StreamLogsResponse\"\x000\x01\x12_\n" +
@@ -2654,7 +2822,9 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\vGetDirFiles\x12#.pb.clientrpc.v1.GetDirFilesRequest\x1a$.pb.clientrpc.v1.GetDirFilesResponse\"\x000\x01\x12Z\n" +
 	"\vGetFileMeta\x12#.pb.clientrpc.v1.GetFileMetaRequest\x1a$.pb.clientrpc.v1.GetFileMetaResponse\"\x00\x12e\n" +
 	"\x0eGetOnlineUsers\x12&.pb.clientrpc.v1.GetOnlineUsersRequest\x1a'.pb.clientrpc.v1.GetOnlineUsersResponse\"\x000\x01\x12x\n" +
-	"\x15ChangeAccountPassword\x12-.pb.clientrpc.v1.ChangeAccountPasswordRequest\x1a..pb.clientrpc.v1.ChangeAccountPasswordResponse\"\x00B\xb1\x01\n" +
+	"\x15ChangeAccountPassword\x12-.pb.clientrpc.v1.ChangeAccountPasswordRequest\x1a..pb.clientrpc.v1.ChangeAccountPasswordResponse\"\x00\x12`\n" +
+	"\rServerConnect\x12%.pb.clientrpc.v1.ServerConnectRequest\x1a&.pb.clientrpc.v1.ServerConnectResponse\"\x00\x12i\n" +
+	"\x10ServerDisconnect\x12(.pb.clientrpc.v1.ServerDisconnectRequest\x1a).pb.clientrpc.v1.ServerDisconnectResponse\"\x00B\xb1\x01\n" +
 	"\x13com.pb.clientrpc.v1B\bRpcProtoP\x01Z2friendnet.org/protocol/pb/clientrpc/v1;clientrpcv1\xa2\x02\x03PCX\xaa\x02\x0fPb.Clientrpc.V1\xca\x02\x0fPb\\Clientrpc\\V1\xe2\x02\x1bPb\\Clientrpc\\V1\\GPBMetadata\xea\x02\x11Pb::Clientrpc::V1b\x06proto3"
 
 var (
@@ -2670,7 +2840,7 @@ func file_pb_clientrpc_v1_rpc_proto_rawDescGZIP() []byte {
 }
 
 var file_pb_clientrpc_v1_rpc_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_pb_clientrpc_v1_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 46)
+var file_pb_clientrpc_v1_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 50)
 var file_pb_clientrpc_v1_rpc_proto_goTypes = []any{
 	(ServerConnState)(0),                  // 0: pb.clientrpc.v1.ServerConnState
 	(Event_Type)(0),                       // 1: pb.clientrpc.v1.Event.Type
@@ -2716,18 +2886,22 @@ var file_pb_clientrpc_v1_rpc_proto_goTypes = []any{
 	(*GetOnlineUsersResponse)(nil),        // 41: pb.clientrpc.v1.GetOnlineUsersResponse
 	(*ChangeAccountPasswordRequest)(nil),  // 42: pb.clientrpc.v1.ChangeAccountPasswordRequest
 	(*ChangeAccountPasswordResponse)(nil), // 43: pb.clientrpc.v1.ChangeAccountPasswordResponse
-	(*Event_ServerConnStateChange)(nil),   // 44: pb.clientrpc.v1.Event.ServerConnStateChange
-	(*Event_ClientOnline)(nil),            // 45: pb.clientrpc.v1.Event.ClientOnline
-	(*Event_ClientOffline)(nil),           // 46: pb.clientrpc.v1.Event.ClientOffline
-	(*ServerInfo_State)(nil),              // 47: pb.clientrpc.v1.ServerInfo.State
+	(*ServerConnectRequest)(nil),          // 44: pb.clientrpc.v1.ServerConnectRequest
+	(*ServerConnectResponse)(nil),         // 45: pb.clientrpc.v1.ServerConnectResponse
+	(*ServerDisconnectRequest)(nil),       // 46: pb.clientrpc.v1.ServerDisconnectRequest
+	(*ServerDisconnectResponse)(nil),      // 47: pb.clientrpc.v1.ServerDisconnectResponse
+	(*Event_ServerConnStateChange)(nil),   // 48: pb.clientrpc.v1.Event.ServerConnStateChange
+	(*Event_ClientOnline)(nil),            // 49: pb.clientrpc.v1.Event.ClientOnline
+	(*Event_ClientOffline)(nil),           // 50: pb.clientrpc.v1.Event.ClientOffline
+	(*ServerInfo_State)(nil),              // 51: pb.clientrpc.v1.ServerInfo.State
 }
 var file_pb_clientrpc_v1_rpc_proto_depIdxs = []int32{
 	1,  // 0: pb.clientrpc.v1.Event.type:type_name -> pb.clientrpc.v1.Event.Type
-	44, // 1: pb.clientrpc.v1.Event.server_conn:type_name -> pb.clientrpc.v1.Event.ServerConnStateChange
-	45, // 2: pb.clientrpc.v1.Event.client_online:type_name -> pb.clientrpc.v1.Event.ClientOnline
-	46, // 3: pb.clientrpc.v1.Event.client_offline:type_name -> pb.clientrpc.v1.Event.ClientOffline
+	48, // 1: pb.clientrpc.v1.Event.server_conn:type_name -> pb.clientrpc.v1.Event.ServerConnStateChange
+	49, // 2: pb.clientrpc.v1.Event.client_online:type_name -> pb.clientrpc.v1.Event.ClientOnline
+	50, // 3: pb.clientrpc.v1.Event.client_offline:type_name -> pb.clientrpc.v1.Event.ClientOffline
 	4,  // 4: pb.clientrpc.v1.LogMessage.attrs:type_name -> pb.clientrpc.v1.LogMessageAttr
-	47, // 5: pb.clientrpc.v1.ServerInfo.state:type_name -> pb.clientrpc.v1.ServerInfo.State
+	51, // 5: pb.clientrpc.v1.ServerInfo.state:type_name -> pb.clientrpc.v1.ServerInfo.State
 	2,  // 6: pb.clientrpc.v1.StreamEventsResponse.event:type_name -> pb.clientrpc.v1.Event
 	3,  // 7: pb.clientrpc.v1.StreamEventsResponse.context:type_name -> pb.clientrpc.v1.EventContext
 	5,  // 8: pb.clientrpc.v1.StreamLogsResponse.logs:type_name -> pb.clientrpc.v1.LogMessage
@@ -2759,25 +2933,29 @@ var file_pb_clientrpc_v1_rpc_proto_depIdxs = []int32{
 	38, // 34: pb.clientrpc.v1.ClientRpcService.GetFileMeta:input_type -> pb.clientrpc.v1.GetFileMetaRequest
 	40, // 35: pb.clientrpc.v1.ClientRpcService.GetOnlineUsers:input_type -> pb.clientrpc.v1.GetOnlineUsersRequest
 	42, // 36: pb.clientrpc.v1.ClientRpcService.ChangeAccountPassword:input_type -> pb.clientrpc.v1.ChangeAccountPasswordRequest
-	13, // 37: pb.clientrpc.v1.ClientRpcService.StreamLogs:output_type -> pb.clientrpc.v1.StreamLogsResponse
-	11, // 38: pb.clientrpc.v1.ClientRpcService.StreamEvents:output_type -> pb.clientrpc.v1.StreamEventsResponse
-	15, // 39: pb.clientrpc.v1.ClientRpcService.Stop:output_type -> pb.clientrpc.v1.StopResponse
-	17, // 40: pb.clientrpc.v1.ClientRpcService.GetClientInfo:output_type -> pb.clientrpc.v1.GetClientInfoResponse
-	19, // 41: pb.clientrpc.v1.ClientRpcService.GetServers:output_type -> pb.clientrpc.v1.GetServersResponse
-	21, // 42: pb.clientrpc.v1.ClientRpcService.CreateServer:output_type -> pb.clientrpc.v1.CreateServerResponse
-	23, // 43: pb.clientrpc.v1.ClientRpcService.DeleteServer:output_type -> pb.clientrpc.v1.DeleteServerResponse
-	25, // 44: pb.clientrpc.v1.ClientRpcService.ConnectServer:output_type -> pb.clientrpc.v1.ConnectServerResponse
-	27, // 45: pb.clientrpc.v1.ClientRpcService.DisconnectServer:output_type -> pb.clientrpc.v1.DisconnectServerResponse
-	29, // 46: pb.clientrpc.v1.ClientRpcService.UpdateServer:output_type -> pb.clientrpc.v1.UpdateServerResponse
-	31, // 47: pb.clientrpc.v1.ClientRpcService.GetShares:output_type -> pb.clientrpc.v1.GetSharesResponse
-	33, // 48: pb.clientrpc.v1.ClientRpcService.CreateShare:output_type -> pb.clientrpc.v1.CreateShareResponse
-	35, // 49: pb.clientrpc.v1.ClientRpcService.DeleteShare:output_type -> pb.clientrpc.v1.DeleteShareResponse
-	37, // 50: pb.clientrpc.v1.ClientRpcService.GetDirFiles:output_type -> pb.clientrpc.v1.GetDirFilesResponse
-	39, // 51: pb.clientrpc.v1.ClientRpcService.GetFileMeta:output_type -> pb.clientrpc.v1.GetFileMetaResponse
-	41, // 52: pb.clientrpc.v1.ClientRpcService.GetOnlineUsers:output_type -> pb.clientrpc.v1.GetOnlineUsersResponse
-	43, // 53: pb.clientrpc.v1.ClientRpcService.ChangeAccountPassword:output_type -> pb.clientrpc.v1.ChangeAccountPasswordResponse
-	37, // [37:54] is the sub-list for method output_type
-	20, // [20:37] is the sub-list for method input_type
+	44, // 37: pb.clientrpc.v1.ClientRpcService.ServerConnect:input_type -> pb.clientrpc.v1.ServerConnectRequest
+	46, // 38: pb.clientrpc.v1.ClientRpcService.ServerDisconnect:input_type -> pb.clientrpc.v1.ServerDisconnectRequest
+	13, // 39: pb.clientrpc.v1.ClientRpcService.StreamLogs:output_type -> pb.clientrpc.v1.StreamLogsResponse
+	11, // 40: pb.clientrpc.v1.ClientRpcService.StreamEvents:output_type -> pb.clientrpc.v1.StreamEventsResponse
+	15, // 41: pb.clientrpc.v1.ClientRpcService.Stop:output_type -> pb.clientrpc.v1.StopResponse
+	17, // 42: pb.clientrpc.v1.ClientRpcService.GetClientInfo:output_type -> pb.clientrpc.v1.GetClientInfoResponse
+	19, // 43: pb.clientrpc.v1.ClientRpcService.GetServers:output_type -> pb.clientrpc.v1.GetServersResponse
+	21, // 44: pb.clientrpc.v1.ClientRpcService.CreateServer:output_type -> pb.clientrpc.v1.CreateServerResponse
+	23, // 45: pb.clientrpc.v1.ClientRpcService.DeleteServer:output_type -> pb.clientrpc.v1.DeleteServerResponse
+	25, // 46: pb.clientrpc.v1.ClientRpcService.ConnectServer:output_type -> pb.clientrpc.v1.ConnectServerResponse
+	27, // 47: pb.clientrpc.v1.ClientRpcService.DisconnectServer:output_type -> pb.clientrpc.v1.DisconnectServerResponse
+	29, // 48: pb.clientrpc.v1.ClientRpcService.UpdateServer:output_type -> pb.clientrpc.v1.UpdateServerResponse
+	31, // 49: pb.clientrpc.v1.ClientRpcService.GetShares:output_type -> pb.clientrpc.v1.GetSharesResponse
+	33, // 50: pb.clientrpc.v1.ClientRpcService.CreateShare:output_type -> pb.clientrpc.v1.CreateShareResponse
+	35, // 51: pb.clientrpc.v1.ClientRpcService.DeleteShare:output_type -> pb.clientrpc.v1.DeleteShareResponse
+	37, // 52: pb.clientrpc.v1.ClientRpcService.GetDirFiles:output_type -> pb.clientrpc.v1.GetDirFilesResponse
+	39, // 53: pb.clientrpc.v1.ClientRpcService.GetFileMeta:output_type -> pb.clientrpc.v1.GetFileMetaResponse
+	41, // 54: pb.clientrpc.v1.ClientRpcService.GetOnlineUsers:output_type -> pb.clientrpc.v1.GetOnlineUsersResponse
+	43, // 55: pb.clientrpc.v1.ClientRpcService.ChangeAccountPassword:output_type -> pb.clientrpc.v1.ChangeAccountPasswordResponse
+	45, // 56: pb.clientrpc.v1.ClientRpcService.ServerConnect:output_type -> pb.clientrpc.v1.ServerConnectResponse
+	47, // 57: pb.clientrpc.v1.ClientRpcService.ServerDisconnect:output_type -> pb.clientrpc.v1.ServerDisconnectResponse
+	39, // [39:58] is the sub-list for method output_type
+	20, // [20:39] is the sub-list for method input_type
 	20, // [20:20] is the sub-list for extension type_name
 	20, // [20:20] is the sub-list for extension extendee
 	0,  // [0:20] is the sub-list for field type_name
@@ -2797,7 +2975,7 @@ func file_pb_clientrpc_v1_rpc_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pb_clientrpc_v1_rpc_proto_rawDesc), len(file_pb_clientrpc_v1_rpc_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   46,
+			NumMessages:   50,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

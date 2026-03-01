@@ -83,6 +83,12 @@ const (
 	// ClientRpcServiceChangeAccountPasswordProcedure is the fully-qualified name of the
 	// ClientRpcService's ChangeAccountPassword RPC.
 	ClientRpcServiceChangeAccountPasswordProcedure = "/pb.clientrpc.v1.ClientRpcService/ChangeAccountPassword"
+	// ClientRpcServiceServerConnectProcedure is the fully-qualified name of the ClientRpcService's
+	// ServerConnect RPC.
+	ClientRpcServiceServerConnectProcedure = "/pb.clientrpc.v1.ClientRpcService/ServerConnect"
+	// ClientRpcServiceServerDisconnectProcedure is the fully-qualified name of the ClientRpcService's
+	// ServerDisconnect RPC.
+	ClientRpcServiceServerDisconnectProcedure = "/pb.clientrpc.v1.ClientRpcService/ServerDisconnect"
 )
 
 // ClientRpcServiceClient is a client for the pb.clientrpc.v1.ClientRpcService service.
@@ -161,6 +167,16 @@ type ClientRpcServiceClient interface {
 	// Returns INVALID_ARGUMENT if the new password was not allowed (too short, too long, etc.).
 	// Returns PERMISSION_DENIED if the current password was incorrect.
 	ChangeAccountPassword(context.Context, *v1.ChangeAccountPasswordRequest) (*v1.ChangeAccountPasswordResponse, error)
+	// ServerConnect tries to connect to a server immediately.
+	// If the server was previously disconnected and reconnect was disabled, reconnect will be enabled.
+	//
+	// Returns NOT_FOUND if no such server exists.
+	ServerConnect(context.Context, *v1.ServerConnectRequest) (*v1.ServerConnectResponse, error)
+	// ServerDisconnect disconnects from a server.
+	// Reconnect will be disabled until ServerConnect is called on the server.
+	//
+	// Returns NOT_FOUND if no such server exists.
+	ServerDisconnect(context.Context, *v1.ServerDisconnectRequest) (*v1.ServerDisconnectResponse, error)
 }
 
 // NewClientRpcServiceClient constructs a client for the pb.clientrpc.v1.ClientRpcService service.
@@ -276,6 +292,18 @@ func NewClientRpcServiceClient(httpClient connect.HTTPClient, baseURL string, op
 			connect.WithSchema(clientRpcServiceMethods.ByName("ChangeAccountPassword")),
 			connect.WithClientOptions(opts...),
 		),
+		serverConnect: connect.NewClient[v1.ServerConnectRequest, v1.ServerConnectResponse](
+			httpClient,
+			baseURL+ClientRpcServiceServerConnectProcedure,
+			connect.WithSchema(clientRpcServiceMethods.ByName("ServerConnect")),
+			connect.WithClientOptions(opts...),
+		),
+		serverDisconnect: connect.NewClient[v1.ServerDisconnectRequest, v1.ServerDisconnectResponse](
+			httpClient,
+			baseURL+ClientRpcServiceServerDisconnectProcedure,
+			connect.WithSchema(clientRpcServiceMethods.ByName("ServerDisconnect")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -298,6 +326,8 @@ type clientRpcServiceClient struct {
 	getFileMeta           *connect.Client[v1.GetFileMetaRequest, v1.GetFileMetaResponse]
 	getOnlineUsers        *connect.Client[v1.GetOnlineUsersRequest, v1.GetOnlineUsersResponse]
 	changeAccountPassword *connect.Client[v1.ChangeAccountPasswordRequest, v1.ChangeAccountPasswordResponse]
+	serverConnect         *connect.Client[v1.ServerConnectRequest, v1.ServerConnectResponse]
+	serverDisconnect      *connect.Client[v1.ServerDisconnectRequest, v1.ServerDisconnectResponse]
 }
 
 // StreamLogs calls pb.clientrpc.v1.ClientRpcService.StreamLogs.
@@ -437,6 +467,24 @@ func (c *clientRpcServiceClient) ChangeAccountPassword(ctx context.Context, req 
 	return nil, err
 }
 
+// ServerConnect calls pb.clientrpc.v1.ClientRpcService.ServerConnect.
+func (c *clientRpcServiceClient) ServerConnect(ctx context.Context, req *v1.ServerConnectRequest) (*v1.ServerConnectResponse, error) {
+	response, err := c.serverConnect.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// ServerDisconnect calls pb.clientrpc.v1.ClientRpcService.ServerDisconnect.
+func (c *clientRpcServiceClient) ServerDisconnect(ctx context.Context, req *v1.ServerDisconnectRequest) (*v1.ServerDisconnectResponse, error) {
+	response, err := c.serverDisconnect.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // ClientRpcServiceHandler is an implementation of the pb.clientrpc.v1.ClientRpcService service.
 type ClientRpcServiceHandler interface {
 	// StreamLogs returns an ongoing stream of log messages from the client.
@@ -513,6 +561,16 @@ type ClientRpcServiceHandler interface {
 	// Returns INVALID_ARGUMENT if the new password was not allowed (too short, too long, etc.).
 	// Returns PERMISSION_DENIED if the current password was incorrect.
 	ChangeAccountPassword(context.Context, *v1.ChangeAccountPasswordRequest) (*v1.ChangeAccountPasswordResponse, error)
+	// ServerConnect tries to connect to a server immediately.
+	// If the server was previously disconnected and reconnect was disabled, reconnect will be enabled.
+	//
+	// Returns NOT_FOUND if no such server exists.
+	ServerConnect(context.Context, *v1.ServerConnectRequest) (*v1.ServerConnectResponse, error)
+	// ServerDisconnect disconnects from a server.
+	// Reconnect will be disabled until ServerConnect is called on the server.
+	//
+	// Returns NOT_FOUND if no such server exists.
+	ServerDisconnect(context.Context, *v1.ServerDisconnectRequest) (*v1.ServerDisconnectResponse, error)
 }
 
 // NewClientRpcServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -624,6 +682,18 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 		connect.WithSchema(clientRpcServiceMethods.ByName("ChangeAccountPassword")),
 		connect.WithHandlerOptions(opts...),
 	)
+	clientRpcServiceServerConnectHandler := connect.NewUnaryHandlerSimple(
+		ClientRpcServiceServerConnectProcedure,
+		svc.ServerConnect,
+		connect.WithSchema(clientRpcServiceMethods.ByName("ServerConnect")),
+		connect.WithHandlerOptions(opts...),
+	)
+	clientRpcServiceServerDisconnectHandler := connect.NewUnaryHandlerSimple(
+		ClientRpcServiceServerDisconnectProcedure,
+		svc.ServerDisconnect,
+		connect.WithSchema(clientRpcServiceMethods.ByName("ServerDisconnect")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/pb.clientrpc.v1.ClientRpcService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ClientRpcServiceStreamLogsProcedure:
@@ -660,6 +730,10 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 			clientRpcServiceGetOnlineUsersHandler.ServeHTTP(w, r)
 		case ClientRpcServiceChangeAccountPasswordProcedure:
 			clientRpcServiceChangeAccountPasswordHandler.ServeHTTP(w, r)
+		case ClientRpcServiceServerConnectProcedure:
+			clientRpcServiceServerConnectHandler.ServeHTTP(w, r)
+		case ClientRpcServiceServerDisconnectProcedure:
+			clientRpcServiceServerDisconnectHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -735,4 +809,12 @@ func (UnimplementedClientRpcServiceHandler) GetOnlineUsers(context.Context, *v1.
 
 func (UnimplementedClientRpcServiceHandler) ChangeAccountPassword(context.Context, *v1.ChangeAccountPasswordRequest) (*v1.ChangeAccountPasswordResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.ChangeAccountPassword is not implemented"))
+}
+
+func (UnimplementedClientRpcServiceHandler) ServerConnect(context.Context, *v1.ServerConnectRequest) (*v1.ServerConnectResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.ServerConnect is not implemented"))
+}
+
+func (UnimplementedClientRpcServiceHandler) ServerDisconnect(context.Context, *v1.ServerDisconnectRequest) (*v1.ServerDisconnectResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.ServerDisconnect is not implemented"))
 }

@@ -362,6 +362,22 @@ message ChangeAccountPasswordResponse {
 
 }
 
+message ServerConnectRequest {
+    // The server's UUID.
+    string uuid = 1;
+}
+message ServerConnectResponse {
+
+}
+
+message ServerDisconnectRequest {
+    // The server's UUID.
+    string uuid = 1;
+}
+message ServerDisconnectResponse {
+
+}
+
 // ClientRpcService provides an RPC interface to a running FriendNet client.
 // It can query state and perform actions.
 //
@@ -458,4 +474,16 @@ service ClientRpcService {
     // Returns INVALID_ARGUMENT if the new password was not allowed (too short, too long, etc.).
     // Returns PERMISSION_DENIED if the current password was incorrect.
     rpc ChangeAccountPassword(ChangeAccountPasswordRequest) returns (ChangeAccountPasswordResponse) {}
+
+    // ServerConnect tries to connect to a server immediately.
+    // If the server was previously disconnected and reconnect was disabled, reconnect will be enabled.
+    //
+    // Returns NOT_FOUND if no such server exists.
+    rpc ServerConnect(ServerConnectRequest) returns (ServerConnectResponse) {}
+
+    // ServerDisconnect disconnects from a server.
+    // Reconnect will be disabled until ServerConnect is called on the server.
+    //
+    // Returns NOT_FOUND if no such server exists.
+    rpc ServerDisconnect(ServerDisconnectRequest) returns (ServerDisconnectResponse) {}
 }
