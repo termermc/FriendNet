@@ -44,6 +44,7 @@ type Manager struct {
 
 	cfg          *Config
 	cfgAddrPorts map[netip.AddrPort]struct{}
+	defaultPort  uint16
 
 	// All currently listening servers.
 	servers map[netip.AddrPort]*Server
@@ -64,6 +65,12 @@ func NewManager(
 
 	ctx, cancel := context.WithCancel(context.Background())
 
+	defaultPort := cfg.DefaultPort
+	if defaultPort == 0 {
+		const minPort = 1024
+		defaultPort = uint16(rand.IntN(65535-minPort) + minPort)
+	}
+
 	m := &Manager{
 		logger: logger,
 
@@ -72,6 +79,7 @@ func NewManager(
 
 		cfg:          cfg,
 		cfgAddrPorts: addrPorts,
+		defaultPort:  defaultPort,
 
 		servers:    make(map[netip.AddrPort]*Server),
 		partitions: make(map[string]*Partition),
@@ -101,11 +109,7 @@ func (m *Manager) lockAndRemoveServer(addrPort netip.AddrPort) {
 func (m *Manager) startServers() {
 	addrPorts := m.cfgAddrPorts
 
-	defaultPort := m.cfg.DefaultPort
-	if defaultPort == 0 {
-		const minPort = 1024
-		defaultPort = uint16(rand.IntN(65535-minPort) + minPort)
-	}
+	defaultPort := m.defaultPort
 
 	var publicIp netip.Addr
 
@@ -292,13 +296,13 @@ func (m *Manager) NotifyIpAvailable(ip netip.Addr) {
 		return
 	}
 
-	_, has := m.servers[netip.AddrPortFrom(ip, m.cfg.DefaultPort)]
+	_, has := m.servers[netip.AddrPortFrom(ip, m.defaultPort)]
 	if has {
 		return
 	}
 
 	go func() {
-		addrPort := netip.AddrPortFrom(ip, m.cfg.DefaultPort)
+		addrPort := netip.AddrPortFrom(ip, m.defaultPort)
 		server, err := NewServer(m.logger, m.ctx, m, addrPort, m.cfg.Cert)
 		if err != nil {
 			m.logger.Error("failed to start direct server after IP notification",
