@@ -3,6 +3,7 @@
     <words>
       <w>Addrs</w>
       <w>Conns</w>
+      <w>Waker</w>
       <w>bidis</w>
       <w>clientrpc</w>
       <w>friendnet</w>

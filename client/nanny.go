@@ -72,6 +72,8 @@ type ConnNanny struct {
 	shouldReconnect bool
 	connOrNil       *room.Conn
 
+	backoffWaker context.CancelFunc
+
 	state ConnState
 }
 
@@ -116,7 +118,10 @@ func NewConnNanny(
 		openCh: make(chan struct{}),
 
 		shouldReconnect: true,
-		state:           ConnStateClosed,
+
+		backoffWaker: func() {},
+
+		state: ConnStateClosed,
 	}
 
 	go n.daemon()
@@ -342,9 +347,12 @@ func (n *ConnNanny) daemon() {
 			} else {
 				n.curWait = n.maxWait
 			}
+
+			var backoffCtx context.Context
+			backoffCtx, n.backoffWaker = context.WithTimeout(n.ctx, n.curWait)
 			n.mu.Unlock()
 
-			time.Sleep(n.curWait)
+			<-backoffCtx.Done()
 
 			continue
 		}
@@ -443,6 +451,7 @@ func (n *ConnNanny) Connect() {
 	}
 	was := n.shouldReconnect
 	n.shouldReconnect = true
+	n.backoffWaker()
 	n.mu.Unlock()
 
 	// If we were previously disconnected (daemon returned), start it again.
@@ -469,6 +478,8 @@ func (n *ConnNanny) Disconnect() {
 
 	// Ensure WaitOpen blocks until we open again.
 	n.openCh = make(chan struct{})
+
+	n.backoffWaker()
 
 	n.mu.Unlock()
 
