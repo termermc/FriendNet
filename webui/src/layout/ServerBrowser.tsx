@@ -1,4 +1,12 @@
-import { Component, createEffect, createSignal, For, onCleanup, onMount, Show } from 'solid-js'
+import {
+	Component,
+	createEffect,
+	createSignal,
+	For,
+	onCleanup,
+	onMount,
+	Show,
+} from 'solid-js'
 import { useGlobalState } from '../ctx'
 
 import styles from './ServerBrowser.module.css'
@@ -210,30 +218,40 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 					<A href={`/server/${props.server.uuid}/shares`}>
 						📁 Manage Shares
 					</A>
-					<br/>
+					<br />
 					<A href={`/server/${props.server.uuid}/changepassword`}>
 						🔑 Change Account Password
 					</A>
-					<Show when={props.server.connState() === ServerConnState.OPEN}>
-						<br/>
+					<Show
+						when={props.server.connState() === ServerConnState.OPEN}
+					>
+						<br />
 						<A
 							href=""
 							onClick={doDisconnect}
 							classList={{
-								[stylesCommon.opacity05]: isPendingStateChange(),
+								[stylesCommon.opacity05]:
+									isPendingStateChange(),
 							}}
 						>
-							<ConnStateIndicator state={ServerConnState.CLOSED} />
+							<ConnStateIndicator
+								state={ServerConnState.CLOSED}
+							/>
 							Disconnect
 						</A>
 					</Show>
-					<Show when={props.server.connState() === ServerConnState.CLOSED}>
-						<br/>
+					<Show
+						when={
+							props.server.connState() === ServerConnState.CLOSED
+						}
+					>
+						<br />
 						<A
 							href=""
 							onClick={doConnect}
 							classList={{
-								[stylesCommon.opacity05]: isPendingStateChange(),
+								[stylesCommon.opacity05]:
+									isPendingStateChange(),
 							}}
 						>
 							<ConnStateIndicator state={ServerConnState.OPEN} />

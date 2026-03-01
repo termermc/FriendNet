@@ -47,6 +47,9 @@ export const Layout: Component<LayoutProps> = (props) => {
 				<span class={styles.headerTitle}>{AppName}</span>
 
 				<div class={styles.options}>
+					<A href="/settings" class={styles.option}>
+						🔧 Client Settings
+					</A>{' '}
 					<A href="/logs" class={styles.option}>
 						🔎 Log Viewer
 					</A>

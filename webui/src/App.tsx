@@ -10,6 +10,7 @@ import { ServerBrowsePage } from './page/ServerBrowsePage'
 import { makeBrowsePath } from './util'
 import { LogsPage } from './page/LogsPage'
 import { ChangeServerPasswordPage } from './page/ChangeServerPasswordPage'
+import { SettingsPage } from './page/SettingsPage'
 
 const App: Component = () => {
 	const routes: RouteDefinition[] = [
@@ -18,6 +19,10 @@ const App: Component = () => {
 			component: WelcomePage,
 		},
 
+		{
+			path: '/settings',
+			component: SettingsPage,
+		},
 		{
 			path: '/logs',
 			component: LogsPage,

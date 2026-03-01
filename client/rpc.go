@@ -2,14 +2,17 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"log/slog"
+	"net/netip"
 	"time"
 
 	"connectrpc.com/connect"
 	"friendnet.org/client/clog"
+	"friendnet.org/client/direct"
 	"friendnet.org/client/event"
 	"friendnet.org/client/room"
 	"friendnet.org/client/storage"
@@ -27,6 +30,8 @@ var errPathNotDir = connect.NewError(connect.CodeInvalidArgument, errors.New("pa
 var errShareNotFound = connect.NewError(connect.CodeNotFound, errors.New("share not found"))
 var errFileNotFound = connect.NewError(connect.CodeNotFound, errors.New("file not found"))
 var errIncorrectPassword = connect.NewError(connect.CodeInvalidArgument, errors.New("incorrect password"))
+var errInvalidDefaultPort = connect.NewError(connect.CodeInvalidArgument, errors.New("default port must be between 1024 and 65535 (inclusive), or 0 for random"))
+var errInvalidUpnpTimeout = connect.NewError(connect.CodeInvalidArgument, errors.New("UPnP timeout must be between 0 and 60000 (inclusive)"))
 
 type RpcServer struct {
 	clogHandler   clog.Handler
@@ -576,4 +581,94 @@ func (s *RpcServer) ServerDisconnect(ctx context.Context, request *v1.ServerDisc
 	srv.Disconnect()
 
 	return &v1.ServerDisconnectResponse{}, nil
+}
+
+func (s *RpcServer) GetDirectSettings(ctx context.Context, _ *v1.GetDirectSettingsRequest) (*v1.GetDirectSettingsResponse, error) {
+	cfg, err := direct.ConfigFromSettings(ctx, s.client.storage)
+	if err != nil {
+		return nil, err
+	}
+
+	return &v1.GetDirectSettingsResponse{
+		Settings: &v1.DirectSettings{
+			Disable:                    cfg.Disable,
+			Addresses:                  cfg.Addresses,
+			DefaultPort:                uint32(cfg.DefaultPort),
+			DisableProbeIpsToAdvertise: cfg.DisableProbeIpsToAdvertise,
+			AdvertisePrivateIps:        cfg.AdvertisePrivateIps,
+			DisablePublicIpDiscovery:   cfg.DisablePublicIpDiscovery,
+			DisableUpnp:                cfg.DisableUPnP,
+			UpnpTimeoutMs:              uint32(cfg.UpnpTimeout / time.Millisecond),
+		},
+	}, nil
+}
+
+func (s *RpcServer) UpdateDirectSettings(ctx context.Context, request *v1.UpdateDirectSettingsRequest) (*v1.UpdateDirectSettingsResponse, error) {
+	store := s.client.storage
+	cfg := request.Settings
+
+	// Validate addresses.
+	for _, addr := range cfg.Addresses {
+		_, err := netip.ParseAddrPort(addr)
+		if err != nil {
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid IP:PORT address format: %s", addr))
+		}
+	}
+
+	// Validate default port.
+	if cfg.DefaultPort != 0 {
+		if cfg.DefaultPort > 65535 || cfg.DefaultPort < 1024 {
+			return nil, errInvalidDefaultPort
+		}
+	}
+
+	// Validate UPnP timeout.
+	if cfg.UpnpTimeoutMs > 60_000 {
+		return nil, errInvalidUpnpTimeout
+	}
+
+	if err := store.PutSettingBool(ctx, direct.SettingDisable, cfg.Disable); err != nil {
+		return nil, err
+	}
+	if cfg.Disable {
+		return &v1.UpdateDirectSettingsResponse{}, nil
+	}
+
+	addrsJson, err := json.Marshal(cfg.Addresses)
+	if err != nil {
+		return nil, err
+	}
+	if err = store.PutSetting(ctx, direct.SettingAddrs, string(addrsJson)); err != nil {
+		return nil, err
+	}
+
+	if err = store.PutSettingInt(ctx, direct.SettingDefaultPort, int64(cfg.DefaultPort)); err != nil {
+		return nil, err
+	}
+
+	if err = store.PutSettingBool(ctx, direct.SettingDisableProbeIpsToAdvertise, cfg.DisableProbeIpsToAdvertise); err != nil {
+		return nil, err
+	}
+
+	if err = store.PutSettingBool(ctx, direct.SettingAdvertisePrivateIps, cfg.AdvertisePrivateIps); err != nil {
+		return nil, err
+	}
+
+	if err = store.PutSettingBool(ctx, direct.SettingDisablePublicIpDiscovery, cfg.DisablePublicIpDiscovery); err != nil {
+		return nil, err
+	}
+
+	if err = store.PutSettingInt(ctx, direct.SettingUpnpTimeoutMs, int64(cfg.UpnpTimeoutMs)); err != nil {
+		return nil, err
+	}
+
+	if err = store.PutSettingBool(ctx, direct.SettingDisableUPnP, cfg.DisableUpnp); err != nil {
+		return nil, err
+	}
+
+	if err = store.PutSettingInt(ctx, direct.SettingUpnpTimeoutMs, int64(cfg.UpnpTimeoutMs)); err != nil {
+		return nil, err
+	}
+
+	return &v1.UpdateDirectSettingsResponse{}, nil
 }

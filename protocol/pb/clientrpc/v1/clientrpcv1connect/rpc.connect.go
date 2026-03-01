@@ -89,6 +89,12 @@ const (
 	// ClientRpcServiceServerDisconnectProcedure is the fully-qualified name of the ClientRpcService's
 	// ServerDisconnect RPC.
 	ClientRpcServiceServerDisconnectProcedure = "/pb.clientrpc.v1.ClientRpcService/ServerDisconnect"
+	// ClientRpcServiceGetDirectSettingsProcedure is the fully-qualified name of the ClientRpcService's
+	// GetDirectSettings RPC.
+	ClientRpcServiceGetDirectSettingsProcedure = "/pb.clientrpc.v1.ClientRpcService/GetDirectSettings"
+	// ClientRpcServiceUpdateDirectSettingsProcedure is the fully-qualified name of the
+	// ClientRpcService's UpdateDirectSettings RPC.
+	ClientRpcServiceUpdateDirectSettingsProcedure = "/pb.clientrpc.v1.ClientRpcService/UpdateDirectSettings"
 )
 
 // ClientRpcServiceClient is a client for the pb.clientrpc.v1.ClientRpcService service.
@@ -177,6 +183,13 @@ type ClientRpcServiceClient interface {
 	//
 	// Returns NOT_FOUND if no such server exists.
 	ServerDisconnect(context.Context, *v1.ServerDisconnectRequest) (*v1.ServerDisconnectResponse, error)
+	// GetDirectSettings returns the client's direct connection settings.
+	// The settings may not have taken effect yet if UpdateDirectSettings was called previously without restarting.
+	GetDirectSettings(context.Context, *v1.GetDirectSettingsRequest) (*v1.GetDirectSettingsResponse, error)
+	// UpdateDirectSettings updates the client's direct connection settings.
+	// Changes will not take effect until the client is restarted.
+	// All fields must be filled, default values will not be omitted.
+	UpdateDirectSettings(context.Context, *v1.UpdateDirectSettingsRequest) (*v1.UpdateDirectSettingsResponse, error)
 }
 
 // NewClientRpcServiceClient constructs a client for the pb.clientrpc.v1.ClientRpcService service.
@@ -304,6 +317,18 @@ func NewClientRpcServiceClient(httpClient connect.HTTPClient, baseURL string, op
 			connect.WithSchema(clientRpcServiceMethods.ByName("ServerDisconnect")),
 			connect.WithClientOptions(opts...),
 		),
+		getDirectSettings: connect.NewClient[v1.GetDirectSettingsRequest, v1.GetDirectSettingsResponse](
+			httpClient,
+			baseURL+ClientRpcServiceGetDirectSettingsProcedure,
+			connect.WithSchema(clientRpcServiceMethods.ByName("GetDirectSettings")),
+			connect.WithClientOptions(opts...),
+		),
+		updateDirectSettings: connect.NewClient[v1.UpdateDirectSettingsRequest, v1.UpdateDirectSettingsResponse](
+			httpClient,
+			baseURL+ClientRpcServiceUpdateDirectSettingsProcedure,
+			connect.WithSchema(clientRpcServiceMethods.ByName("UpdateDirectSettings")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -328,6 +353,8 @@ type clientRpcServiceClient struct {
 	changeAccountPassword *connect.Client[v1.ChangeAccountPasswordRequest, v1.ChangeAccountPasswordResponse]
 	serverConnect         *connect.Client[v1.ServerConnectRequest, v1.ServerConnectResponse]
 	serverDisconnect      *connect.Client[v1.ServerDisconnectRequest, v1.ServerDisconnectResponse]
+	getDirectSettings     *connect.Client[v1.GetDirectSettingsRequest, v1.GetDirectSettingsResponse]
+	updateDirectSettings  *connect.Client[v1.UpdateDirectSettingsRequest, v1.UpdateDirectSettingsResponse]
 }
 
 // StreamLogs calls pb.clientrpc.v1.ClientRpcService.StreamLogs.
@@ -485,6 +512,24 @@ func (c *clientRpcServiceClient) ServerDisconnect(ctx context.Context, req *v1.S
 	return nil, err
 }
 
+// GetDirectSettings calls pb.clientrpc.v1.ClientRpcService.GetDirectSettings.
+func (c *clientRpcServiceClient) GetDirectSettings(ctx context.Context, req *v1.GetDirectSettingsRequest) (*v1.GetDirectSettingsResponse, error) {
+	response, err := c.getDirectSettings.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// UpdateDirectSettings calls pb.clientrpc.v1.ClientRpcService.UpdateDirectSettings.
+func (c *clientRpcServiceClient) UpdateDirectSettings(ctx context.Context, req *v1.UpdateDirectSettingsRequest) (*v1.UpdateDirectSettingsResponse, error) {
+	response, err := c.updateDirectSettings.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // ClientRpcServiceHandler is an implementation of the pb.clientrpc.v1.ClientRpcService service.
 type ClientRpcServiceHandler interface {
 	// StreamLogs returns an ongoing stream of log messages from the client.
@@ -571,6 +616,13 @@ type ClientRpcServiceHandler interface {
 	//
 	// Returns NOT_FOUND if no such server exists.
 	ServerDisconnect(context.Context, *v1.ServerDisconnectRequest) (*v1.ServerDisconnectResponse, error)
+	// GetDirectSettings returns the client's direct connection settings.
+	// The settings may not have taken effect yet if UpdateDirectSettings was called previously without restarting.
+	GetDirectSettings(context.Context, *v1.GetDirectSettingsRequest) (*v1.GetDirectSettingsResponse, error)
+	// UpdateDirectSettings updates the client's direct connection settings.
+	// Changes will not take effect until the client is restarted.
+	// All fields must be filled, default values will not be omitted.
+	UpdateDirectSettings(context.Context, *v1.UpdateDirectSettingsRequest) (*v1.UpdateDirectSettingsResponse, error)
 }
 
 // NewClientRpcServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -694,6 +746,18 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 		connect.WithSchema(clientRpcServiceMethods.ByName("ServerDisconnect")),
 		connect.WithHandlerOptions(opts...),
 	)
+	clientRpcServiceGetDirectSettingsHandler := connect.NewUnaryHandlerSimple(
+		ClientRpcServiceGetDirectSettingsProcedure,
+		svc.GetDirectSettings,
+		connect.WithSchema(clientRpcServiceMethods.ByName("GetDirectSettings")),
+		connect.WithHandlerOptions(opts...),
+	)
+	clientRpcServiceUpdateDirectSettingsHandler := connect.NewUnaryHandlerSimple(
+		ClientRpcServiceUpdateDirectSettingsProcedure,
+		svc.UpdateDirectSettings,
+		connect.WithSchema(clientRpcServiceMethods.ByName("UpdateDirectSettings")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/pb.clientrpc.v1.ClientRpcService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ClientRpcServiceStreamLogsProcedure:
@@ -734,6 +798,10 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 			clientRpcServiceServerConnectHandler.ServeHTTP(w, r)
 		case ClientRpcServiceServerDisconnectProcedure:
 			clientRpcServiceServerDisconnectHandler.ServeHTTP(w, r)
+		case ClientRpcServiceGetDirectSettingsProcedure:
+			clientRpcServiceGetDirectSettingsHandler.ServeHTTP(w, r)
+		case ClientRpcServiceUpdateDirectSettingsProcedure:
+			clientRpcServiceUpdateDirectSettingsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -817,4 +885,12 @@ func (UnimplementedClientRpcServiceHandler) ServerConnect(context.Context, *v1.S
 
 func (UnimplementedClientRpcServiceHandler) ServerDisconnect(context.Context, *v1.ServerDisconnectRequest) (*v1.ServerDisconnectResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.ServerDisconnect is not implemented"))
+}
+
+func (UnimplementedClientRpcServiceHandler) GetDirectSettings(context.Context, *v1.GetDirectSettingsRequest) (*v1.GetDirectSettingsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.GetDirectSettings is not implemented"))
+}
+
+func (UnimplementedClientRpcServiceHandler) UpdateDirectSettings(context.Context, *v1.UpdateDirectSettingsRequest) (*v1.UpdateDirectSettingsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.UpdateDirectSettings is not implemented"))
 }

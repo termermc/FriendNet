@@ -2,15 +2,28 @@
 // @generated from file pb/clientrpc/v1/rpc.proto (package pb.clientrpc.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { Message } from "@bufbuild/protobuf";
+import type {
+	GenEnum,
+	GenFile,
+	GenMessage,
+	GenService,
+} from '@bufbuild/protobuf/codegenv2'
+import {
+	enumDesc,
+	fileDesc,
+	messageDesc,
+	serviceDesc,
+} from '@bufbuild/protobuf/codegenv2'
+import type { Message } from '@bufbuild/protobuf'
 
 /**
  * Describes the file pb/clientrpc/v1/rpc.proto.
  */
-export const file_pb_clientrpc_v1_rpc: GenFile = /*@__PURE__*/
-  fileDesc("ChlwYi9jbGllbnRycGMvdjEvcnBjLnByb3RvEg9wYi5jbGllbnRycGMudjEi4AQKBUV2ZW50EikKBHR5cGUYASABKA4yGy5wYi5jbGllbnRycGMudjEuRXZlbnQuVHlwZRJGCgtzZXJ2ZXJfY29ubhgCIAEoCzIsLnBiLmNsaWVudHJwYy52MS5FdmVudC5TZXJ2ZXJDb25uU3RhdGVDaGFuZ2VIAIgBARI/Cg1jbGllbnRfb25saW5lGAMgASgLMiMucGIuY2xpZW50cnBjLnYxLkV2ZW50LkNsaWVudE9ubGluZUgBiAEBEkEKDmNsaWVudF9vZmZsaW5lGAQgASgLMiQucGIuY2xpZW50cnBjLnYxLkV2ZW50LkNsaWVudE9mZmxpbmVIAogBARpIChVTZXJ2ZXJDb25uU3RhdGVDaGFuZ2USLwoFc3RhdGUYAiABKA4yIC5wYi5jbGllbnRycGMudjEuU2VydmVyQ29ublN0YXRlGj0KDENsaWVudE9ubGluZRItCgRpbmZvGAEgASgLMh8ucGIuY2xpZW50cnBjLnYxLk9ubGluZVVzZXJJbmZvGiEKDUNsaWVudE9mZmxpbmUSEAoIdXNlcm5hbWUYASABKAkifwoEVHlwZRIUChBUWVBFX1VOU1BFQ0lGSUVEEAASDQoJVFlQRV9TVE9QEAESIQodVFlQRV9TRVJWRVJfQ09OTl9TVEFURV9DSEFOR0UQAhIWChJUWVBFX0NMSUVOVF9PTkxJTkUQAxIXChNUWVBFX0NMSUVOVF9PRkZMSU5FEARCDgoMX3NlcnZlcl9jb25uQhAKDl9jbGllbnRfb25saW5lQhEKD19jbGllbnRfb2ZmbGluZSIjCgxFdmVudENvbnRleHQSEwoLc2VydmVyX3V1aWQYASABKAkiOgoOTG9nTWVzc2FnZUF0dHISDAoEa2luZBgBIAEoCRILCgNrZXkYAiABKAkSDQoFdmFsdWUYAyABKAkibgoKTG9nTWVzc2FnZRILCgN1aWQYASABKAkSEgoKY3JlYXRlZF90cxgCIAEoAxIPCgdtZXNzYWdlGAMgASgJEi4KBWF0dHJzGAQgAygLMh8ucGIuY2xpZW50cnBjLnYxLkxvZ01lc3NhZ2VBdHRyIt4BCgpTZXJ2ZXJJbmZvEjAKBXN0YXRlGAEgASgLMiEucGIuY2xpZW50cnBjLnYxLlNlcnZlckluZm8uU3RhdGUSDAoEdXVpZBgCIAEoCRIMCgRuYW1lGAMgASgJEg8KB2FkZHJlc3MYBCABKAkSDAoEcm9vbRgFIAEoCRIQCgh1c2VybmFtZRgGIAEoCRISCgpjcmVhdGVkX3RzGAcgASgDGj0KBVN0YXRlEjQKCmNvbm5fc3RhdGUYASABKA4yIC5wYi5jbGllbnRycGMudjEuU2VydmVyQ29ublN0YXRlIlAKCVNoYXJlSW5mbxITCgtzZXJ2ZXJfdXVpZBgBIAEoCRIMCgRuYW1lGAIgASgJEgwKBHBhdGgYAyABKAkSEgoKY3JlYXRlZF90cxgEIAEoAyIiCg5PbmxpbmVVc2VySW5mbxIQCgh1c2VybmFtZRgBIAEoCSI2CghGaWxlTWV0YRIMCgRuYW1lGAEgASgJEg4KBmlzX2RpchgCIAEoCBIMCgRzaXplGAMgASgEIhUKE1N0cmVhbUV2ZW50c1JlcXVlc3QibQoUU3RyZWFtRXZlbnRzUmVzcG9uc2USJQoFZXZlbnQYASABKAsyFi5wYi5jbGllbnRycGMudjEuRXZlbnQSLgoHY29udGV4dBgCIAEoCzIdLnBiLmNsaWVudHJwYy52MS5FdmVudENvbnRleHQiSwoRU3RyZWFtTG9nc1JlcXVlc3QSHwoSc2VuZF9sb2dzX2FmdGVyX3RzGAEgASgDSACIAQFCFQoTX3NlbmRfbG9nc19hZnRlcl90cyI/ChJTdHJlYW1Mb2dzUmVzcG9uc2USKQoEbG9ncxgBIAMoCzIbLnBiLmNsaWVudHJwYy52MS5Mb2dNZXNzYWdlIg0KC1N0b3BSZXF1ZXN0Ig4KDFN0b3BSZXNwb25zZSIWChRHZXRDbGllbnRJbmZvUmVxdWVzdCIwChVHZXRDbGllbnRJbmZvUmVzcG9uc2USFwoPZmlsZV9zZXJ2ZXJfdXJsGAEgASgJIhMKEUdldFNlcnZlcnNSZXF1ZXN0IkIKEkdldFNlcnZlcnNSZXNwb25zZRIsCgdzZXJ2ZXJzGAEgAygLMhsucGIuY2xpZW50cnBjLnYxLlNlcnZlckluZm8iZgoTQ3JlYXRlU2VydmVyUmVxdWVzdBIMCgRuYW1lGAEgASgJEg8KB2FkZHJlc3MYAiABKAkSDAoEcm9vbRgDIAEoCRIQCgh1c2VybmFtZRgEIAEoCRIQCghwYXNzd29yZBgFIAEoCSJDChRDcmVhdGVTZXJ2ZXJSZXNwb25zZRIrCgZzZXJ2ZXIYASABKAsyGy5wYi5jbGllbnRycGMudjEuU2VydmVySW5mbyIjChNEZWxldGVTZXJ2ZXJSZXF1ZXN0EgwKBHV1aWQYASABKAkiFgoURGVsZXRlU2VydmVyUmVzcG9uc2UiJAoUQ29ubmVjdFNlcnZlclJlcXVlc3QSDAoEdXVpZBgBIAEoCSIXChVDb25uZWN0U2VydmVyUmVzcG9uc2UiJwoXRGlzY29ubmVjdFNlcnZlclJlcXVlc3QSDAoEdXVpZBgBIAEoCSIaChhEaXNjb25uZWN0U2VydmVyUmVzcG9uc2UixQEKE1VwZGF0ZVNlcnZlclJlcXVlc3QSDAoEdXVpZBgBIAEoCRIRCgRuYW1lGAIgASgJSACIAQESFAoHYWRkcmVzcxgDIAEoCUgBiAEBEhEKBHJvb20YBCABKAlIAogBARIVCgh1c2VybmFtZRgFIAEoCUgDiAEBEhUKCHBhc3N3b3JkGAYgASgJSASIAQFCBwoFX25hbWVCCgoIX2FkZHJlc3NCBwoFX3Jvb21CCwoJX3VzZXJuYW1lQgsKCV9wYXNzd29yZCJDChRVcGRhdGVTZXJ2ZXJSZXNwb25zZRIrCgZzZXJ2ZXIYASABKAsyGy5wYi5jbGllbnRycGMudjEuU2VydmVySW5mbyInChBHZXRTaGFyZXNSZXF1ZXN0EhMKC3NlcnZlcl91dWlkGAEgASgJIj8KEUdldFNoYXJlc1Jlc3BvbnNlEioKBnNoYXJlcxgBIAMoCzIaLnBiLmNsaWVudHJwYy52MS5TaGFyZUluZm8iRQoSQ3JlYXRlU2hhcmVSZXF1ZXN0EhMKC3NlcnZlcl91dWlkGAEgASgJEgwKBG5hbWUYAiABKAkSDAoEcGF0aBgDIAEoCSJAChNDcmVhdGVTaGFyZVJlc3BvbnNlEikKBXNoYXJlGAEgASgLMhoucGIuY2xpZW50cnBjLnYxLlNoYXJlSW5mbyI3ChJEZWxldGVTaGFyZVJlcXVlc3QSEwoLc2VydmVyX3V1aWQYASABKAkSDAoEbmFtZRgCIAEoCSIVChNEZWxldGVTaGFyZVJlc3BvbnNlIkkKEkdldERpckZpbGVzUmVxdWVzdBITCgtzZXJ2ZXJfdXVpZBgBIAEoCRIQCgh1c2VybmFtZRgCIAEoCRIMCgRwYXRoGAMgASgJIkEKE0dldERpckZpbGVzUmVzcG9uc2USKgoHY29udGVudBgCIAMoCzIZLnBiLmNsaWVudHJwYy52MS5GaWxlTWV0YSJJChJHZXRGaWxlTWV0YVJlcXVlc3QSEwoLc2VydmVyX3V1aWQYASABKAkSEAoIdXNlcm5hbWUYAiABKAkSDAoEcGF0aBgDIAEoCSI+ChNHZXRGaWxlTWV0YVJlc3BvbnNlEicKBG1ldGEYASABKAsyGS5wYi5jbGllbnRycGMudjEuRmlsZU1ldGEiLAoVR2V0T25saW5lVXNlcnNSZXF1ZXN0EhMKC3NlcnZlcl91dWlkGAEgASgJIkgKFkdldE9ubGluZVVzZXJzUmVzcG9uc2USLgoFdXNlcnMYASADKAsyHy5wYi5jbGllbnRycGMudjEuT25saW5lVXNlckluZm8iYwocQ2hhbmdlQWNjb3VudFBhc3N3b3JkUmVxdWVzdBITCgtzZXJ2ZXJfdXVpZBgBIAEoCRIYChBjdXJyZW50X3Bhc3N3b3JkGAIgASgJEhQKDG5ld19wYXNzd29yZBgDIAEoCSIfCh1DaGFuZ2VBY2NvdW50UGFzc3dvcmRSZXNwb25zZSIkChRTZXJ2ZXJDb25uZWN0UmVxdWVzdBIMCgR1dWlkGAEgASgJIhcKFVNlcnZlckNvbm5lY3RSZXNwb25zZSInChdTZXJ2ZXJEaXNjb25uZWN0UmVxdWVzdBIMCgR1dWlkGAEgASgJIhoKGFNlcnZlckRpc2Nvbm5lY3RSZXNwb25zZSqNAQoPU2VydmVyQ29ublN0YXRlEiEKHVNFUlZFUl9DT05OX1NUQVRFX1VOU1BFQ0lGSUVEEAASHAoYU0VSVkVSX0NPTk5fU1RBVEVfQ0xPU0VEEAESHQoZU0VSVkVSX0NPTk5fU1RBVEVfT1BFTklORxACEhoKFlNFUlZFUl9DT05OX1NUQVRFX09QRU4QAzKwDgoQQ2xpZW50UnBjU2VydmljZRJZCgpTdHJlYW1Mb2dzEiIucGIuY2xpZW50cnBjLnYxLlN0cmVhbUxvZ3NSZXF1ZXN0GiMucGIuY2xpZW50cnBjLnYxLlN0cmVhbUxvZ3NSZXNwb25zZSIAMAESXwoMU3RyZWFtRXZlbnRzEiQucGIuY2xpZW50cnBjLnYxLlN0cmVhbUV2ZW50c1JlcXVlc3QaJS5wYi5jbGllbnRycGMudjEuU3RyZWFtRXZlbnRzUmVzcG9uc2UiADABEkUKBFN0b3ASHC5wYi5jbGllbnRycGMudjEuU3RvcFJlcXVlc3QaHS5wYi5jbGllbnRycGMudjEuU3RvcFJlc3BvbnNlIgASYAoNR2V0Q2xpZW50SW5mbxIlLnBiLmNsaWVudHJwYy52MS5HZXRDbGllbnRJbmZvUmVxdWVzdBomLnBiLmNsaWVudHJwYy52MS5HZXRDbGllbnRJbmZvUmVzcG9uc2UiABJXCgpHZXRTZXJ2ZXJzEiIucGIuY2xpZW50cnBjLnYxLkdldFNlcnZlcnNSZXF1ZXN0GiMucGIuY2xpZW50cnBjLnYxLkdldFNlcnZlcnNSZXNwb25zZSIAEl0KDENyZWF0ZVNlcnZlchIkLnBiLmNsaWVudHJwYy52MS5DcmVhdGVTZXJ2ZXJSZXF1ZXN0GiUucGIuY2xpZW50cnBjLnYxLkNyZWF0ZVNlcnZlclJlc3BvbnNlIgASXQoMRGVsZXRlU2VydmVyEiQucGIuY2xpZW50cnBjLnYxLkRlbGV0ZVNlcnZlclJlcXVlc3QaJS5wYi5jbGllbnRycGMudjEuRGVsZXRlU2VydmVyUmVzcG9uc2UiABJgCg1Db25uZWN0U2VydmVyEiUucGIuY2xpZW50cnBjLnYxLkNvbm5lY3RTZXJ2ZXJSZXF1ZXN0GiYucGIuY2xpZW50cnBjLnYxLkNvbm5lY3RTZXJ2ZXJSZXNwb25zZSIAEmkKEERpc2Nvbm5lY3RTZXJ2ZXISKC5wYi5jbGllbnRycGMudjEuRGlzY29ubmVjdFNlcnZlclJlcXVlc3QaKS5wYi5jbGllbnRycGMudjEuRGlzY29ubmVjdFNlcnZlclJlc3BvbnNlIgASXQoMVXBkYXRlU2VydmVyEiQucGIuY2xpZW50cnBjLnYxLlVwZGF0ZVNlcnZlclJlcXVlc3QaJS5wYi5jbGllbnRycGMudjEuVXBkYXRlU2VydmVyUmVzcG9uc2UiABJUCglHZXRTaGFyZXMSIS5wYi5jbGllbnRycGMudjEuR2V0U2hhcmVzUmVxdWVzdBoiLnBiLmNsaWVudHJwYy52MS5HZXRTaGFyZXNSZXNwb25zZSIAEloKC0NyZWF0ZVNoYXJlEiMucGIuY2xpZW50cnBjLnYxLkNyZWF0ZVNoYXJlUmVxdWVzdBokLnBiLmNsaWVudHJwYy52MS5DcmVhdGVTaGFyZVJlc3BvbnNlIgASWgoLRGVsZXRlU2hhcmUSIy5wYi5jbGllbnRycGMudjEuRGVsZXRlU2hhcmVSZXF1ZXN0GiQucGIuY2xpZW50cnBjLnYxLkRlbGV0ZVNoYXJlUmVzcG9uc2UiABJcCgtHZXREaXJGaWxlcxIjLnBiLmNsaWVudHJwYy52MS5HZXREaXJGaWxlc1JlcXVlc3QaJC5wYi5jbGllbnRycGMudjEuR2V0RGlyRmlsZXNSZXNwb25zZSIAMAESWgoLR2V0RmlsZU1ldGESIy5wYi5jbGllbnRycGMudjEuR2V0RmlsZU1ldGFSZXF1ZXN0GiQucGIuY2xpZW50cnBjLnYxLkdldEZpbGVNZXRhUmVzcG9uc2UiABJlCg5HZXRPbmxpbmVVc2VycxImLnBiLmNsaWVudHJwYy52MS5HZXRPbmxpbmVVc2Vyc1JlcXVlc3QaJy5wYi5jbGllbnRycGMudjEuR2V0T25saW5lVXNlcnNSZXNwb25zZSIAMAESeAoVQ2hhbmdlQWNjb3VudFBhc3N3b3JkEi0ucGIuY2xpZW50cnBjLnYxLkNoYW5nZUFjY291bnRQYXNzd29yZFJlcXVlc3QaLi5wYi5jbGllbnRycGMudjEuQ2hhbmdlQWNjb3VudFBhc3N3b3JkUmVzcG9uc2UiABJgCg1TZXJ2ZXJDb25uZWN0EiUucGIuY2xpZW50cnBjLnYxLlNlcnZlckNvbm5lY3RSZXF1ZXN0GiYucGIuY2xpZW50cnBjLnYxLlNlcnZlckNvbm5lY3RSZXNwb25zZSIAEmkKEFNlcnZlckRpc2Nvbm5lY3QSKC5wYi5jbGllbnRycGMudjEuU2VydmVyRGlzY29ubmVjdFJlcXVlc3QaKS5wYi5jbGllbnRycGMudjEuU2VydmVyRGlzY29ubmVjdFJlc3BvbnNlIgBCIlogZnJpZW5kbmV0Lm9yZy9wcm90b2NvbC9jbGllbnRycGNiBnByb3RvMw");
+export const file_pb_clientrpc_v1_rpc: GenFile =
+	/*@__PURE__*/
+	fileDesc(
+		'ChlwYi9jbGllbnRycGMvdjEvcnBjLnByb3RvEg9wYi5jbGllbnRycGMudjEi4AQKBUV2ZW50EikKBHR5cGUYASABKA4yGy5wYi5jbGllbnRycGMudjEuRXZlbnQuVHlwZRJGCgtzZXJ2ZXJfY29ubhgCIAEoCzIsLnBiLmNsaWVudHJwYy52MS5FdmVudC5TZXJ2ZXJDb25uU3RhdGVDaGFuZ2VIAIgBARI/Cg1jbGllbnRfb25saW5lGAMgASgLMiMucGIuY2xpZW50cnBjLnYxLkV2ZW50LkNsaWVudE9ubGluZUgBiAEBEkEKDmNsaWVudF9vZmZsaW5lGAQgASgLMiQucGIuY2xpZW50cnBjLnYxLkV2ZW50LkNsaWVudE9mZmxpbmVIAogBARpIChVTZXJ2ZXJDb25uU3RhdGVDaGFuZ2USLwoFc3RhdGUYAiABKA4yIC5wYi5jbGllbnRycGMudjEuU2VydmVyQ29ublN0YXRlGj0KDENsaWVudE9ubGluZRItCgRpbmZvGAEgASgLMh8ucGIuY2xpZW50cnBjLnYxLk9ubGluZVVzZXJJbmZvGiEKDUNsaWVudE9mZmxpbmUSEAoIdXNlcm5hbWUYASABKAkifwoEVHlwZRIUChBUWVBFX1VOU1BFQ0lGSUVEEAASDQoJVFlQRV9TVE9QEAESIQodVFlQRV9TRVJWRVJfQ09OTl9TVEFURV9DSEFOR0UQAhIWChJUWVBFX0NMSUVOVF9PTkxJTkUQAxIXChNUWVBFX0NMSUVOVF9PRkZMSU5FEARCDgoMX3NlcnZlcl9jb25uQhAKDl9jbGllbnRfb25saW5lQhEKD19jbGllbnRfb2ZmbGluZSIjCgxFdmVudENvbnRleHQSEwoLc2VydmVyX3V1aWQYASABKAkiOgoOTG9nTWVzc2FnZUF0dHISDAoEa2luZBgBIAEoCRILCgNrZXkYAiABKAkSDQoFdmFsdWUYAyABKAkibgoKTG9nTWVzc2FnZRILCgN1aWQYASABKAkSEgoKY3JlYXRlZF90cxgCIAEoAxIPCgdtZXNzYWdlGAMgASgJEi4KBWF0dHJzGAQgAygLMh8ucGIuY2xpZW50cnBjLnYxLkxvZ01lc3NhZ2VBdHRyIt4BCgpTZXJ2ZXJJbmZvEjAKBXN0YXRlGAEgASgLMiEucGIuY2xpZW50cnBjLnYxLlNlcnZlckluZm8uU3RhdGUSDAoEdXVpZBgCIAEoCRIMCgRuYW1lGAMgASgJEg8KB2FkZHJlc3MYBCABKAkSDAoEcm9vbRgFIAEoCRIQCgh1c2VybmFtZRgGIAEoCRISCgpjcmVhdGVkX3RzGAcgASgDGj0KBVN0YXRlEjQKCmNvbm5fc3RhdGUYASABKA4yIC5wYi5jbGllbnRycGMudjEuU2VydmVyQ29ublN0YXRlIlAKCVNoYXJlSW5mbxITCgtzZXJ2ZXJfdXVpZBgBIAEoCRIMCgRuYW1lGAIgASgJEgwKBHBhdGgYAyABKAkSEgoKY3JlYXRlZF90cxgEIAEoAyIiCg5PbmxpbmVVc2VySW5mbxIQCgh1c2VybmFtZRgBIAEoCSI2CghGaWxlTWV0YRIMCgRuYW1lGAEgASgJEg4KBmlzX2RpchgCIAEoCBIMCgRzaXplGAMgASgEIuUBCg5EaXJlY3RTZXR0aW5ncxIPCgdkaXNhYmxlGAEgASgIEhEKCWFkZHJlc3NlcxgCIAMoCRIUCgxkZWZhdWx0X3BvcnQYAyABKA0SJgoeZGlzYWJsZV9wcm9iZV9pcHNfdG9fYWR2ZXJ0aXNlGAQgASgIEh0KFWFkdmVydGlzZV9wcml2YXRlX2lwcxgFIAEoCBIjChtkaXNhYmxlX3B1YmxpY19pcF9kaXNjb3ZlcnkYBiABKAgSFAoMZGlzYWJsZV91cG5wGAcgASgIEhcKD3VwbnBfdGltZW91dF9tcxgIIAEoDSIVChNTdHJlYW1FdmVudHNSZXF1ZXN0Im0KFFN0cmVhbUV2ZW50c1Jlc3BvbnNlEiUKBWV2ZW50GAEgASgLMhYucGIuY2xpZW50cnBjLnYxLkV2ZW50Ei4KB2NvbnRleHQYAiABKAsyHS5wYi5jbGllbnRycGMudjEuRXZlbnRDb250ZXh0IksKEVN0cmVhbUxvZ3NSZXF1ZXN0Eh8KEnNlbmRfbG9nc19hZnRlcl90cxgBIAEoA0gAiAEBQhUKE19zZW5kX2xvZ3NfYWZ0ZXJfdHMiPwoSU3RyZWFtTG9nc1Jlc3BvbnNlEikKBGxvZ3MYASADKAsyGy5wYi5jbGllbnRycGMudjEuTG9nTWVzc2FnZSINCgtTdG9wUmVxdWVzdCIOCgxTdG9wUmVzcG9uc2UiFgoUR2V0Q2xpZW50SW5mb1JlcXVlc3QiMAoVR2V0Q2xpZW50SW5mb1Jlc3BvbnNlEhcKD2ZpbGVfc2VydmVyX3VybBgBIAEoCSITChFHZXRTZXJ2ZXJzUmVxdWVzdCJCChJHZXRTZXJ2ZXJzUmVzcG9uc2USLAoHc2VydmVycxgBIAMoCzIbLnBiLmNsaWVudHJwYy52MS5TZXJ2ZXJJbmZvImYKE0NyZWF0ZVNlcnZlclJlcXVlc3QSDAoEbmFtZRgBIAEoCRIPCgdhZGRyZXNzGAIgASgJEgwKBHJvb20YAyABKAkSEAoIdXNlcm5hbWUYBCABKAkSEAoIcGFzc3dvcmQYBSABKAkiQwoUQ3JlYXRlU2VydmVyUmVzcG9uc2USKwoGc2VydmVyGAEgASgLMhsucGIuY2xpZW50cnBjLnYxLlNlcnZlckluZm8iIwoTRGVsZXRlU2VydmVyUmVxdWVzdBIMCgR1dWlkGAEgASgJIhYKFERlbGV0ZVNlcnZlclJlc3BvbnNlIiQKFENvbm5lY3RTZXJ2ZXJSZXF1ZXN0EgwKBHV1aWQYASABKAkiFwoVQ29ubmVjdFNlcnZlclJlc3BvbnNlIicKF0Rpc2Nvbm5lY3RTZXJ2ZXJSZXF1ZXN0EgwKBHV1aWQYASABKAkiGgoYRGlzY29ubmVjdFNlcnZlclJlc3BvbnNlIsUBChNVcGRhdGVTZXJ2ZXJSZXF1ZXN0EgwKBHV1aWQYASABKAkSEQoEbmFtZRgCIAEoCUgAiAEBEhQKB2FkZHJlc3MYAyABKAlIAYgBARIRCgRyb29tGAQgASgJSAKIAQESFQoIdXNlcm5hbWUYBSABKAlIA4gBARIVCghwYXNzd29yZBgGIAEoCUgEiAEBQgcKBV9uYW1lQgoKCF9hZGRyZXNzQgcKBV9yb29tQgsKCV91c2VybmFtZUILCglfcGFzc3dvcmQiQwoUVXBkYXRlU2VydmVyUmVzcG9uc2USKwoGc2VydmVyGAEgASgLMhsucGIuY2xpZW50cnBjLnYxLlNlcnZlckluZm8iJwoQR2V0U2hhcmVzUmVxdWVzdBITCgtzZXJ2ZXJfdXVpZBgBIAEoCSI/ChFHZXRTaGFyZXNSZXNwb25zZRIqCgZzaGFyZXMYASADKAsyGi5wYi5jbGllbnRycGMudjEuU2hhcmVJbmZvIkUKEkNyZWF0ZVNoYXJlUmVxdWVzdBITCgtzZXJ2ZXJfdXVpZBgBIAEoCRIMCgRuYW1lGAIgASgJEgwKBHBhdGgYAyABKAkiQAoTQ3JlYXRlU2hhcmVSZXNwb25zZRIpCgVzaGFyZRgBIAEoCzIaLnBiLmNsaWVudHJwYy52MS5TaGFyZUluZm8iNwoSRGVsZXRlU2hhcmVSZXF1ZXN0EhMKC3NlcnZlcl91dWlkGAEgASgJEgwKBG5hbWUYAiABKAkiFQoTRGVsZXRlU2hhcmVSZXNwb25zZSJJChJHZXREaXJGaWxlc1JlcXVlc3QSEwoLc2VydmVyX3V1aWQYASABKAkSEAoIdXNlcm5hbWUYAiABKAkSDAoEcGF0aBgDIAEoCSJBChNHZXREaXJGaWxlc1Jlc3BvbnNlEioKB2NvbnRlbnQYAiADKAsyGS5wYi5jbGllbnRycGMudjEuRmlsZU1ldGEiSQoSR2V0RmlsZU1ldGFSZXF1ZXN0EhMKC3NlcnZlcl91dWlkGAEgASgJEhAKCHVzZXJuYW1lGAIgASgJEgwKBHBhdGgYAyABKAkiPgoTR2V0RmlsZU1ldGFSZXNwb25zZRInCgRtZXRhGAEgASgLMhkucGIuY2xpZW50cnBjLnYxLkZpbGVNZXRhIiwKFUdldE9ubGluZVVzZXJzUmVxdWVzdBITCgtzZXJ2ZXJfdXVpZBgBIAEoCSJIChZHZXRPbmxpbmVVc2Vyc1Jlc3BvbnNlEi4KBXVzZXJzGAEgAygLMh8ucGIuY2xpZW50cnBjLnYxLk9ubGluZVVzZXJJbmZvImMKHENoYW5nZUFjY291bnRQYXNzd29yZFJlcXVlc3QSEwoLc2VydmVyX3V1aWQYASABKAkSGAoQY3VycmVudF9wYXNzd29yZBgCIAEoCRIUCgxuZXdfcGFzc3dvcmQYAyABKAkiHwodQ2hhbmdlQWNjb3VudFBhc3N3b3JkUmVzcG9uc2UiJAoUU2VydmVyQ29ubmVjdFJlcXVlc3QSDAoEdXVpZBgBIAEoCSIXChVTZXJ2ZXJDb25uZWN0UmVzcG9uc2UiJwoXU2VydmVyRGlzY29ubmVjdFJlcXVlc3QSDAoEdXVpZBgBIAEoCSIaChhTZXJ2ZXJEaXNjb25uZWN0UmVzcG9uc2UiGgoYR2V0RGlyZWN0U2V0dGluZ3NSZXF1ZXN0Ik4KGUdldERpcmVjdFNldHRpbmdzUmVzcG9uc2USMQoIc2V0dGluZ3MYASABKAsyHy5wYi5jbGllbnRycGMudjEuRGlyZWN0U2V0dGluZ3MiUAobVXBkYXRlRGlyZWN0U2V0dGluZ3NSZXF1ZXN0EjEKCHNldHRpbmdzGAEgASgLMh8ucGIuY2xpZW50cnBjLnYxLkRpcmVjdFNldHRpbmdzIh4KHFVwZGF0ZURpcmVjdFNldHRpbmdzUmVzcG9uc2UqjQEKD1NlcnZlckNvbm5TdGF0ZRIhCh1TRVJWRVJfQ09OTl9TVEFURV9VTlNQRUNJRklFRBAAEhwKGFNFUlZFUl9DT05OX1NUQVRFX0NMT1NFRBABEh0KGVNFUlZFUl9DT05OX1NUQVRFX09QRU5JTkcQAhIaChZTRVJWRVJfQ09OTl9TVEFURV9PUEVOEAMylRAKEENsaWVudFJwY1NlcnZpY2USWQoKU3RyZWFtTG9ncxIiLnBiLmNsaWVudHJwYy52MS5TdHJlYW1Mb2dzUmVxdWVzdBojLnBiLmNsaWVudHJwYy52MS5TdHJlYW1Mb2dzUmVzcG9uc2UiADABEl8KDFN0cmVhbUV2ZW50cxIkLnBiLmNsaWVudHJwYy52MS5TdHJlYW1FdmVudHNSZXF1ZXN0GiUucGIuY2xpZW50cnBjLnYxLlN0cmVhbUV2ZW50c1Jlc3BvbnNlIgAwARJFCgRTdG9wEhwucGIuY2xpZW50cnBjLnYxLlN0b3BSZXF1ZXN0Gh0ucGIuY2xpZW50cnBjLnYxLlN0b3BSZXNwb25zZSIAEmAKDUdldENsaWVudEluZm8SJS5wYi5jbGllbnRycGMudjEuR2V0Q2xpZW50SW5mb1JlcXVlc3QaJi5wYi5jbGllbnRycGMudjEuR2V0Q2xpZW50SW5mb1Jlc3BvbnNlIgASVwoKR2V0U2VydmVycxIiLnBiLmNsaWVudHJwYy52MS5HZXRTZXJ2ZXJzUmVxdWVzdBojLnBiLmNsaWVudHJwYy52MS5HZXRTZXJ2ZXJzUmVzcG9uc2UiABJdCgxDcmVhdGVTZXJ2ZXISJC5wYi5jbGllbnRycGMudjEuQ3JlYXRlU2VydmVyUmVxdWVzdBolLnBiLmNsaWVudHJwYy52MS5DcmVhdGVTZXJ2ZXJSZXNwb25zZSIAEl0KDERlbGV0ZVNlcnZlchIkLnBiLmNsaWVudHJwYy52MS5EZWxldGVTZXJ2ZXJSZXF1ZXN0GiUucGIuY2xpZW50cnBjLnYxLkRlbGV0ZVNlcnZlclJlc3BvbnNlIgASYAoNQ29ubmVjdFNlcnZlchIlLnBiLmNsaWVudHJwYy52MS5Db25uZWN0U2VydmVyUmVxdWVzdBomLnBiLmNsaWVudHJwYy52MS5Db25uZWN0U2VydmVyUmVzcG9uc2UiABJpChBEaXNjb25uZWN0U2VydmVyEigucGIuY2xpZW50cnBjLnYxLkRpc2Nvbm5lY3RTZXJ2ZXJSZXF1ZXN0GikucGIuY2xpZW50cnBjLnYxLkRpc2Nvbm5lY3RTZXJ2ZXJSZXNwb25zZSIAEl0KDFVwZGF0ZVNlcnZlchIkLnBiLmNsaWVudHJwYy52MS5VcGRhdGVTZXJ2ZXJSZXF1ZXN0GiUucGIuY2xpZW50cnBjLnYxLlVwZGF0ZVNlcnZlclJlc3BvbnNlIgASVAoJR2V0U2hhcmVzEiEucGIuY2xpZW50cnBjLnYxLkdldFNoYXJlc1JlcXVlc3QaIi5wYi5jbGllbnRycGMudjEuR2V0U2hhcmVzUmVzcG9uc2UiABJaCgtDcmVhdGVTaGFyZRIjLnBiLmNsaWVudHJwYy52MS5DcmVhdGVTaGFyZVJlcXVlc3QaJC5wYi5jbGllbnRycGMudjEuQ3JlYXRlU2hhcmVSZXNwb25zZSIAEloKC0RlbGV0ZVNoYXJlEiMucGIuY2xpZW50cnBjLnYxLkRlbGV0ZVNoYXJlUmVxdWVzdBokLnBiLmNsaWVudHJwYy52MS5EZWxldGVTaGFyZVJlc3BvbnNlIgASXAoLR2V0RGlyRmlsZXMSIy5wYi5jbGllbnRycGMudjEuR2V0RGlyRmlsZXNSZXF1ZXN0GiQucGIuY2xpZW50cnBjLnYxLkdldERpckZpbGVzUmVzcG9uc2UiADABEloKC0dldEZpbGVNZXRhEiMucGIuY2xpZW50cnBjLnYxLkdldEZpbGVNZXRhUmVxdWVzdBokLnBiLmNsaWVudHJwYy52MS5HZXRGaWxlTWV0YVJlc3BvbnNlIgASZQoOR2V0T25saW5lVXNlcnMSJi5wYi5jbGllbnRycGMudjEuR2V0T25saW5lVXNlcnNSZXF1ZXN0GicucGIuY2xpZW50cnBjLnYxLkdldE9ubGluZVVzZXJzUmVzcG9uc2UiADABEngKFUNoYW5nZUFjY291bnRQYXNzd29yZBItLnBiLmNsaWVudHJwYy52MS5DaGFuZ2VBY2NvdW50UGFzc3dvcmRSZXF1ZXN0Gi4ucGIuY2xpZW50cnBjLnYxLkNoYW5nZUFjY291bnRQYXNzd29yZFJlc3BvbnNlIgASYAoNU2VydmVyQ29ubmVjdBIlLnBiLmNsaWVudHJwYy52MS5TZXJ2ZXJDb25uZWN0UmVxdWVzdBomLnBiLmNsaWVudHJwYy52MS5TZXJ2ZXJDb25uZWN0UmVzcG9uc2UiABJpChBTZXJ2ZXJEaXNjb25uZWN0EigucGIuY2xpZW50cnBjLnYxLlNlcnZlckRpc2Nvbm5lY3RSZXF1ZXN0GikucGIuY2xpZW50cnBjLnYxLlNlcnZlckRpc2Nvbm5lY3RSZXNwb25zZSIAEmwKEUdldERpcmVjdFNldHRpbmdzEikucGIuY2xpZW50cnBjLnYxLkdldERpcmVjdFNldHRpbmdzUmVxdWVzdBoqLnBiLmNsaWVudHJwYy52MS5HZXREaXJlY3RTZXR0aW5nc1Jlc3BvbnNlIgASdQoUVXBkYXRlRGlyZWN0U2V0dGluZ3MSLC5wYi5jbGllbnRycGMudjEuVXBkYXRlRGlyZWN0U2V0dGluZ3NSZXF1ZXN0Gi0ucGIuY2xpZW50cnBjLnYxLlVwZGF0ZURpcmVjdFNldHRpbmdzUmVzcG9uc2UiAEIiWiBmcmllbmRuZXQub3JnL3Byb3RvY29sL2NsaWVudHJwY2IGcHJvdG8z',
+	)
 
 /**
  * Event is an event.
@@ -18,1207 +31,1442 @@ export const file_pb_clientrpc_v1_rpc: GenFile = /*@__PURE__*/
  *
  * @generated from message pb.clientrpc.v1.Event
  */
-export type Event = Message<"pb.clientrpc.v1.Event"> & {
-  /**
-   * The event type.
-   * The appropriate field will be filled based on the type.
-   *
-   * @generated from field: pb.clientrpc.v1.Event.Type type = 1;
-   */
-  type: Event_Type;
+export type Event = Message<'pb.clientrpc.v1.Event'> & {
+	/**
+	 * The event type.
+	 * The appropriate field will be filled based on the type.
+	 *
+	 * @generated from field: pb.clientrpc.v1.Event.Type type = 1;
+	 */
+	type: Event_Type
 
-  /**
-   * @generated from field: optional pb.clientrpc.v1.Event.ServerConnStateChange server_conn = 2;
-   */
-  serverConn?: Event_ServerConnStateChange;
+	/**
+	 * @generated from field: optional pb.clientrpc.v1.Event.ServerConnStateChange server_conn = 2;
+	 */
+	serverConn?: Event_ServerConnStateChange
 
-  /**
-   * @generated from field: optional pb.clientrpc.v1.Event.ClientOnline client_online = 3;
-   */
-  clientOnline?: Event_ClientOnline;
+	/**
+	 * @generated from field: optional pb.clientrpc.v1.Event.ClientOnline client_online = 3;
+	 */
+	clientOnline?: Event_ClientOnline
 
-  /**
-   * @generated from field: optional pb.clientrpc.v1.Event.ClientOffline client_offline = 4;
-   */
-  clientOffline?: Event_ClientOffline;
-};
+	/**
+	 * @generated from field: optional pb.clientrpc.v1.Event.ClientOffline client_offline = 4;
+	 */
+	clientOffline?: Event_ClientOffline
+}
 
 /**
  * Describes the message pb.clientrpc.v1.Event.
  * Use `create(EventSchema)` to create a new message.
  */
-export const EventSchema: GenMessage<Event> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 0);
+export const EventSchema: GenMessage<Event> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 0)
 
 /**
  * @generated from message pb.clientrpc.v1.Event.ServerConnStateChange
  */
-export type Event_ServerConnStateChange = Message<"pb.clientrpc.v1.Event.ServerConnStateChange"> & {
-  /**
-   * The server's new connection state.
-   *
-   * @generated from field: pb.clientrpc.v1.ServerConnState state = 2;
-   */
-  state: ServerConnState;
-};
+export type Event_ServerConnStateChange =
+	Message<'pb.clientrpc.v1.Event.ServerConnStateChange'> & {
+		/**
+		 * The server's new connection state.
+		 *
+		 * @generated from field: pb.clientrpc.v1.ServerConnState state = 2;
+		 */
+		state: ServerConnState
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.Event.ServerConnStateChange.
  * Use `create(Event_ServerConnStateChangeSchema)` to create a new message.
  */
-export const Event_ServerConnStateChangeSchema: GenMessage<Event_ServerConnStateChange> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 0, 0);
+export const Event_ServerConnStateChangeSchema: GenMessage<Event_ServerConnStateChange> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 0, 0)
 
 /**
  * @generated from message pb.clientrpc.v1.Event.ClientOnline
  */
-export type Event_ClientOnline = Message<"pb.clientrpc.v1.Event.ClientOnline"> & {
-  /**
-   * The online user's info.
-   *
-   * @generated from field: pb.clientrpc.v1.OnlineUserInfo info = 1;
-   */
-  info?: OnlineUserInfo;
-};
+export type Event_ClientOnline =
+	Message<'pb.clientrpc.v1.Event.ClientOnline'> & {
+		/**
+		 * The online user's info.
+		 *
+		 * @generated from field: pb.clientrpc.v1.OnlineUserInfo info = 1;
+		 */
+		info?: OnlineUserInfo
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.Event.ClientOnline.
  * Use `create(Event_ClientOnlineSchema)` to create a new message.
  */
-export const Event_ClientOnlineSchema: GenMessage<Event_ClientOnline> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 0, 1);
+export const Event_ClientOnlineSchema: GenMessage<Event_ClientOnline> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 0, 1)
 
 /**
  * @generated from message pb.clientrpc.v1.Event.ClientOffline
  */
-export type Event_ClientOffline = Message<"pb.clientrpc.v1.Event.ClientOffline"> & {
-  /**
-   * The client's username.
-   *
-   * @generated from field: string username = 1;
-   */
-  username: string;
-};
+export type Event_ClientOffline =
+	Message<'pb.clientrpc.v1.Event.ClientOffline'> & {
+		/**
+		 * The client's username.
+		 *
+		 * @generated from field: string username = 1;
+		 */
+		username: string
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.Event.ClientOffline.
  * Use `create(Event_ClientOfflineSchema)` to create a new message.
  */
-export const Event_ClientOfflineSchema: GenMessage<Event_ClientOffline> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 0, 2);
+export const Event_ClientOfflineSchema: GenMessage<Event_ClientOffline> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 0, 2)
 
 /**
  * @generated from enum pb.clientrpc.v1.Event.Type
  */
 export enum Event_Type {
-  /**
-   * Do not use.
-   *
-   * @generated from enum value: TYPE_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
+	/**
+	 * Do not use.
+	 *
+	 * @generated from enum value: TYPE_UNSPECIFIED = 0;
+	 */
+	UNSPECIFIED = 0,
 
-  /**
-   * The client is stopping.
-   *
-   * @generated from enum value: TYPE_STOP = 1;
-   */
-  STOP = 1,
+	/**
+	 * The client is stopping.
+	 *
+	 * @generated from enum value: TYPE_STOP = 1;
+	 */
+	STOP = 1,
 
-  /**
-   * A server's connection state changed.
-   *
-   * @generated from enum value: TYPE_SERVER_CONN_STATE_CHANGE = 2;
-   */
-  SERVER_CONN_STATE_CHANGE = 2,
+	/**
+	 * A server's connection state changed.
+	 *
+	 * @generated from enum value: TYPE_SERVER_CONN_STATE_CHANGE = 2;
+	 */
+	SERVER_CONN_STATE_CHANGE = 2,
 
-  /**
-   * A client went online.
-   *
-   * @generated from enum value: TYPE_CLIENT_ONLINE = 3;
-   */
-  CLIENT_ONLINE = 3,
+	/**
+	 * A client went online.
+	 *
+	 * @generated from enum value: TYPE_CLIENT_ONLINE = 3;
+	 */
+	CLIENT_ONLINE = 3,
 
-  /**
-   * A client went offline.
-   *
-   * @generated from enum value: TYPE_CLIENT_OFFLINE = 4;
-   */
-  CLIENT_OFFLINE = 4,
+	/**
+	 * A client went offline.
+	 *
+	 * @generated from enum value: TYPE_CLIENT_OFFLINE = 4;
+	 */
+	CLIENT_OFFLINE = 4,
 }
 
 /**
  * Describes the enum pb.clientrpc.v1.Event.Type.
  */
-export const Event_TypeSchema: GenEnum<Event_Type> = /*@__PURE__*/
-  enumDesc(file_pb_clientrpc_v1_rpc, 0, 0);
+export const Event_TypeSchema: GenEnum<Event_Type> =
+	/*@__PURE__*/
+	enumDesc(file_pb_clientrpc_v1_rpc, 0, 0)
 
 /**
  * EventContext is the context about where an event was generated.
  *
  * @generated from message pb.clientrpc.v1.EventContext
  */
-export type EventContext = Message<"pb.clientrpc.v1.EventContext"> & {
-  /**
-   * The UUID of the server where the event originated from.
-   *
-   * @generated from field: string server_uuid = 1;
-   */
-  serverUuid: string;
-};
+export type EventContext = Message<'pb.clientrpc.v1.EventContext'> & {
+	/**
+	 * The UUID of the server where the event originated from.
+	 *
+	 * @generated from field: string server_uuid = 1;
+	 */
+	serverUuid: string
+}
 
 /**
  * Describes the message pb.clientrpc.v1.EventContext.
  * Use `create(EventContextSchema)` to create a new message.
  */
-export const EventContextSchema: GenMessage<EventContext> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 1);
+export const EventContextSchema: GenMessage<EventContext> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 1)
 
 /**
  * LogMessageAttr is an attribute within a LogMessage.
  *
  * @generated from message pb.clientrpc.v1.LogMessageAttr
  */
-export type LogMessageAttr = Message<"pb.clientrpc.v1.LogMessageAttr"> & {
-  /**
-   * The value kind.
-   *
-   * @generated from field: string kind = 1;
-   */
-  kind: string;
+export type LogMessageAttr = Message<'pb.clientrpc.v1.LogMessageAttr'> & {
+	/**
+	 * The value kind.
+	 *
+	 * @generated from field: string kind = 1;
+	 */
+	kind: string
 
-  /**
-   * The key.
-   *
-   * @generated from field: string key = 2;
-   */
-  key: string;
+	/**
+	 * The key.
+	 *
+	 * @generated from field: string key = 2;
+	 */
+	key: string
 
-  /**
-   * The string representation of the value.
-   * The value can be interpreted based on the value of `kind`.
-   *
-   * @generated from field: string value = 3;
-   */
-  value: string;
-};
+	/**
+	 * The string representation of the value.
+	 * The value can be interpreted based on the value of `kind`.
+	 *
+	 * @generated from field: string value = 3;
+	 */
+	value: string
+}
 
 /**
  * Describes the message pb.clientrpc.v1.LogMessageAttr.
  * Use `create(LogMessageAttrSchema)` to create a new message.
  */
-export const LogMessageAttrSchema: GenMessage<LogMessageAttr> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 2);
+export const LogMessageAttrSchema: GenMessage<LogMessageAttr> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 2)
 
 /**
  * LogMessage is a structured log message.
  *
  * @generated from message pb.clientrpc.v1.LogMessage
  */
-export type LogMessage = Message<"pb.clientrpc.v1.LogMessage"> & {
-  /**
-   * The message's UID.
-   *
-   * @generated from field: string uid = 1;
-   */
-  uid: string;
+export type LogMessage = Message<'pb.clientrpc.v1.LogMessage'> & {
+	/**
+	 * The message's UID.
+	 *
+	 * @generated from field: string uid = 1;
+	 */
+	uid: string
 
-  /**
-   * The UNIX millisecond timestamp the log was sent on.
-   *
-   * @generated from field: int64 created_ts = 2;
-   */
-  createdTs: bigint;
+	/**
+	 * The UNIX millisecond timestamp the log was sent on.
+	 *
+	 * @generated from field: int64 created_ts = 2;
+	 */
+	createdTs: bigint
 
-  /**
-   * The textual message.
-   *
-   * @generated from field: string message = 3;
-   */
-  message: string;
+	/**
+	 * The textual message.
+	 *
+	 * @generated from field: string message = 3;
+	 */
+	message: string
 
-  /**
-   * The message's attributes.
-   *
-   * @generated from field: repeated pb.clientrpc.v1.LogMessageAttr attrs = 4;
-   */
-  attrs: LogMessageAttr[];
-};
+	/**
+	 * The message's attributes.
+	 *
+	 * @generated from field: repeated pb.clientrpc.v1.LogMessageAttr attrs = 4;
+	 */
+	attrs: LogMessageAttr[]
+}
 
 /**
  * Describes the message pb.clientrpc.v1.LogMessage.
  * Use `create(LogMessageSchema)` to create a new message.
  */
-export const LogMessageSchema: GenMessage<LogMessage> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 3);
+export const LogMessageSchema: GenMessage<LogMessage> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 3)
 
 /**
  * Information about a server.
  *
  * @generated from message pb.clientrpc.v1.ServerInfo
  */
-export type ServerInfo = Message<"pb.clientrpc.v1.ServerInfo"> & {
-  /**
-   * The server's current state.
-   *
-   * @generated from field: pb.clientrpc.v1.ServerInfo.State state = 1;
-   */
-  state?: ServerInfo_State;
+export type ServerInfo = Message<'pb.clientrpc.v1.ServerInfo'> & {
+	/**
+	 * The server's current state.
+	 *
+	 * @generated from field: pb.clientrpc.v1.ServerInfo.State state = 1;
+	 */
+	state?: ServerInfo_State
 
-  /**
-   * The server's UUID.
-   *
-   * @generated from field: string uuid = 2;
-   */
-  uuid: string;
+	/**
+	 * The server's UUID.
+	 *
+	 * @generated from field: string uuid = 2;
+	 */
+	uuid: string
 
-  /**
-   * The name given to the server.
-   *
-   * @generated from field: string name = 3;
-   */
-  name: string;
+	/**
+	 * The name given to the server.
+	 *
+	 * @generated from field: string name = 3;
+	 */
+	name: string
 
-  /**
-   * The server's address.
-   *
-   * @generated from field: string address = 4;
-   */
-  address: string;
+	/**
+	 * The server's address.
+	 *
+	 * @generated from field: string address = 4;
+	 */
+	address: string
 
-  /**
-   * The room to connect to.
-   *
-   * @generated from field: string room = 5;
-   */
-  room: string;
+	/**
+	 * The room to connect to.
+	 *
+	 * @generated from field: string room = 5;
+	 */
+	room: string
 
-  /**
-   * The username to use for authentication.
-   *
-   * @generated from field: string username = 6;
-   */
-  username: string;
+	/**
+	 * The username to use for authentication.
+	 *
+	 * @generated from field: string username = 6;
+	 */
+	username: string
 
-  /**
-   * The UNIX timestamp when the server was created.
-   *
-   * @generated from field: int64 created_ts = 7;
-   */
-  createdTs: bigint;
-};
+	/**
+	 * The UNIX timestamp when the server was created.
+	 *
+	 * @generated from field: int64 created_ts = 7;
+	 */
+	createdTs: bigint
+}
 
 /**
  * Describes the message pb.clientrpc.v1.ServerInfo.
  * Use `create(ServerInfoSchema)` to create a new message.
  */
-export const ServerInfoSchema: GenMessage<ServerInfo> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 4);
+export const ServerInfoSchema: GenMessage<ServerInfo> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 4)
 
 /**
  * @generated from message pb.clientrpc.v1.ServerInfo.State
  */
-export type ServerInfo_State = Message<"pb.clientrpc.v1.ServerInfo.State"> & {
-  /**
-   * The current connection state.
-   *
-   * @generated from field: pb.clientrpc.v1.ServerConnState conn_state = 1;
-   */
-  connState: ServerConnState;
-};
+export type ServerInfo_State = Message<'pb.clientrpc.v1.ServerInfo.State'> & {
+	/**
+	 * The current connection state.
+	 *
+	 * @generated from field: pb.clientrpc.v1.ServerConnState conn_state = 1;
+	 */
+	connState: ServerConnState
+}
 
 /**
  * Describes the message pb.clientrpc.v1.ServerInfo.State.
  * Use `create(ServerInfo_StateSchema)` to create a new message.
  */
-export const ServerInfo_StateSchema: GenMessage<ServerInfo_State> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 4, 0);
+export const ServerInfo_StateSchema: GenMessage<ServerInfo_State> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 4, 0)
 
 /**
  * Information about a server share.
  *
  * @generated from message pb.clientrpc.v1.ShareInfo
  */
-export type ShareInfo = Message<"pb.clientrpc.v1.ShareInfo"> & {
-  /**
-   * The UUID of the associated server.
-   *
-   * @generated from field: string server_uuid = 1;
-   */
-  serverUuid: string;
+export type ShareInfo = Message<'pb.clientrpc.v1.ShareInfo'> & {
+	/**
+	 * The UUID of the associated server.
+	 *
+	 * @generated from field: string server_uuid = 1;
+	 */
+	serverUuid: string
 
-  /**
-   * The share's name.
-   *
-   * @generated from field: string name = 2;
-   */
-  name: string;
+	/**
+	 * The share's name.
+	 *
+	 * @generated from field: string name = 2;
+	 */
+	name: string
 
-  /**
-   * The share's path on disk.
-   *
-   * @generated from field: string path = 3;
-   */
-  path: string;
+	/**
+	 * The share's path on disk.
+	 *
+	 * @generated from field: string path = 3;
+	 */
+	path: string
 
-  /**
-   * The UNIX timestamp when the share was created.
-   *
-   * @generated from field: int64 created_ts = 4;
-   */
-  createdTs: bigint;
-};
+	/**
+	 * The UNIX timestamp when the share was created.
+	 *
+	 * @generated from field: int64 created_ts = 4;
+	 */
+	createdTs: bigint
+}
 
 /**
  * Describes the message pb.clientrpc.v1.ShareInfo.
  * Use `create(ShareInfoSchema)` to create a new message.
  */
-export const ShareInfoSchema: GenMessage<ShareInfo> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 5);
+export const ShareInfoSchema: GenMessage<ShareInfo> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 5)
 
 /**
  * OnlineUserInfo is information about an online user.
  *
  * @generated from message pb.clientrpc.v1.OnlineUserInfo
  */
-export type OnlineUserInfo = Message<"pb.clientrpc.v1.OnlineUserInfo"> & {
-  /**
-   * The user's username.
-   *
-   * @generated from field: string username = 1;
-   */
-  username: string;
-};
+export type OnlineUserInfo = Message<'pb.clientrpc.v1.OnlineUserInfo'> & {
+	/**
+	 * The user's username.
+	 *
+	 * @generated from field: string username = 1;
+	 */
+	username: string
+}
 
 /**
  * Describes the message pb.clientrpc.v1.OnlineUserInfo.
  * Use `create(OnlineUserInfoSchema)` to create a new message.
  */
-export const OnlineUserInfoSchema: GenMessage<OnlineUserInfo> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 6);
+export const OnlineUserInfoSchema: GenMessage<OnlineUserInfo> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 6)
 
 /**
  * FileMeta is metadata about a file/folder.
  *
  * @generated from message pb.clientrpc.v1.FileMeta
  */
-export type FileMeta = Message<"pb.clientrpc.v1.FileMeta"> & {
-  /**
-   * The file's name.
-   *
-   * @generated from field: string name = 1;
-   */
-  name: string;
+export type FileMeta = Message<'pb.clientrpc.v1.FileMeta'> & {
+	/**
+	 * The file's name.
+	 *
+	 * @generated from field: string name = 1;
+	 */
+	name: string
 
-  /**
-   * Whether the file is a directory.
-   *
-   * @generated from field: bool is_dir = 2;
-   */
-  isDir: boolean;
+	/**
+	 * Whether the file is a directory.
+	 *
+	 * @generated from field: bool is_dir = 2;
+	 */
+	isDir: boolean
 
-  /**
-   * The file's size, in bytes.
-   * Always zero if the file is a folder.
-   *
-   * @generated from field: uint64 size = 3;
-   */
-  size: bigint;
-};
+	/**
+	 * The file's size, in bytes.
+	 * Always zero if the file is a folder.
+	 *
+	 * @generated from field: uint64 size = 3;
+	 */
+	size: bigint
+}
 
 /**
  * Describes the message pb.clientrpc.v1.FileMeta.
  * Use `create(FileMetaSchema)` to create a new message.
  */
-export const FileMetaSchema: GenMessage<FileMeta> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 7);
+export const FileMetaSchema: GenMessage<FileMeta> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 7)
+
+/**
+ * DirectSettings is direct connection settings for the client.
+ *
+ * @generated from message pb.clientrpc.v1.DirectSettings
+ */
+export type DirectSettings = Message<'pb.clientrpc.v1.DirectSettings'> & {
+	/**
+	 * Whether to disable direct connections entirely.
+	 * If true, all other fields will be ignored.
+	 *
+	 * @generated from field: bool disable = 1;
+	 */
+	disable: boolean
+
+	/**
+	 * The initial addresses to listen on.
+	 * Each address must be in the format `IPv4:PORT`, `[IPv6]:PORT`, `IP` (IPv6 without port does not need brackets).
+	 * Must specify at least one.
+	 * Can use addresses like `0.0.0.0` and `[::]` (with or without port) to listen on all interfaces.
+	 * Any addresses without a port will have a port assigned to them.
+	 *
+	 * @generated from field: repeated string addresses = 2;
+	 */
+	addresses: string[]
+
+	/**
+	 * The default port to use for addresses that do not have a specified port.
+	 * It will also be the port opened by UPnP.
+	 *
+	 * If 0, a random port will be used.
+	 * Using a random port is not recommended because it will cause port churn across reconnects.
+	 * Keeping the port consistent across reconnects is useful because external clients will be able to more reliably reach the client.
+	 *
+	 * A port >= 1024 is recommended to avoid permission denied errors from the OS.
+	 *
+	 * @generated from field: uint32 default_port = 3;
+	 */
+	defaultPort: number
+
+	/**
+	 * Whether to disable probing the machine for IPs to advertise.
+	 * It does not advertise private IPs unless advertise_private_ips is true.
+	 *
+	 * @generated from field: bool disable_probe_ips_to_advertise = 4;
+	 */
+	disableProbeIpsToAdvertise: boolean
+
+	/**
+	 * Whether to advertise private IPs (like 192.168.0.0/16, 172.16.0.0/12, 10.0.0.0/8).
+	 * Has no effect if probe_ips_to_advertise is false.
+	 * This only makes sense when multiple clients are on the same LAN or VPN.
+	 *
+	 * @generated from field: bool advertise_private_ips = 5;
+	 */
+	advertisePrivateIps: boolean
+
+	/**
+	 * Whether to disable public IP discovery via the server.
+	 * By default, the client will try to discover its public IP by asking the server for it.
+	 *
+	 * @generated from field: bool disable_public_ip_discovery = 6;
+	 */
+	disablePublicIpDiscovery: boolean
+
+	/**
+	 * Whether to disable UPnP.
+	 *
+	 * @generated from field: bool disable_upnp = 7;
+	 */
+	disableUpnp: boolean
+
+	/**
+	 * The timeout for using UPnP.
+	 * Defaults to 10 seconds.
+	 * Has no effect if disable_upnp is true.
+	 *
+	 * @generated from field: uint32 upnp_timeout_ms = 8;
+	 */
+	upnpTimeoutMs: number
+}
+
+/**
+ * Describes the message pb.clientrpc.v1.DirectSettings.
+ * Use `create(DirectSettingsSchema)` to create a new message.
+ */
+export const DirectSettingsSchema: GenMessage<DirectSettings> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 8)
 
 /**
  * @generated from message pb.clientrpc.v1.StreamEventsRequest
  */
-export type StreamEventsRequest = Message<"pb.clientrpc.v1.StreamEventsRequest"> & {
-};
+export type StreamEventsRequest =
+	Message<'pb.clientrpc.v1.StreamEventsRequest'> & {}
 
 /**
  * Describes the message pb.clientrpc.v1.StreamEventsRequest.
  * Use `create(StreamEventsRequestSchema)` to create a new message.
  */
-export const StreamEventsRequestSchema: GenMessage<StreamEventsRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 8);
+export const StreamEventsRequestSchema: GenMessage<StreamEventsRequest> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 9)
 
 /**
  * @generated from message pb.clientrpc.v1.StreamEventsResponse
  */
-export type StreamEventsResponse = Message<"pb.clientrpc.v1.StreamEventsResponse"> & {
-  /**
-   * The event.
-   *
-   * @generated from field: pb.clientrpc.v1.Event event = 1;
-   */
-  event?: Event;
+export type StreamEventsResponse =
+	Message<'pb.clientrpc.v1.StreamEventsResponse'> & {
+		/**
+		 * The event.
+		 *
+		 * @generated from field: pb.clientrpc.v1.Event event = 1;
+		 */
+		event?: Event
 
-  /**
-   * The context about where the event was generated.
-   *
-   * @generated from field: pb.clientrpc.v1.EventContext context = 2;
-   */
-  context?: EventContext;
-};
+		/**
+		 * The context about where the event was generated.
+		 *
+		 * @generated from field: pb.clientrpc.v1.EventContext context = 2;
+		 */
+		context?: EventContext
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.StreamEventsResponse.
  * Use `create(StreamEventsResponseSchema)` to create a new message.
  */
-export const StreamEventsResponseSchema: GenMessage<StreamEventsResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 9);
+export const StreamEventsResponseSchema: GenMessage<StreamEventsResponse> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 10)
 
 /**
  * @generated from message pb.clientrpc.v1.StreamLogsRequest
  */
-export type StreamLogsRequest = Message<"pb.clientrpc.v1.StreamLogsRequest"> & {
-  /**
-   * Optionally, send existing logs after this timestamp before streaming live logs.
-   * The timestamp is a UNIX millisecond timestamp.
-   *
-   * @generated from field: optional int64 send_logs_after_ts = 1;
-   */
-  sendLogsAfterTs?: bigint;
-};
+export type StreamLogsRequest = Message<'pb.clientrpc.v1.StreamLogsRequest'> & {
+	/**
+	 * Optionally, send existing logs after this timestamp before streaming live logs.
+	 * The timestamp is a UNIX millisecond timestamp.
+	 *
+	 * @generated from field: optional int64 send_logs_after_ts = 1;
+	 */
+	sendLogsAfterTs?: bigint
+}
 
 /**
  * Describes the message pb.clientrpc.v1.StreamLogsRequest.
  * Use `create(StreamLogsRequestSchema)` to create a new message.
  */
-export const StreamLogsRequestSchema: GenMessage<StreamLogsRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 10);
+export const StreamLogsRequestSchema: GenMessage<StreamLogsRequest> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 11)
 
 /**
  * @generated from message pb.clientrpc.v1.StreamLogsResponse
  */
-export type StreamLogsResponse = Message<"pb.clientrpc.v1.StreamLogsResponse"> & {
-  /**
-   * The logs.
-   * This field usually has only one log message, but in the case of
-   * sending back existing logs, it may have many.
-   * The logs will be ordered by timestamp, ascending.
-   *
-   * @generated from field: repeated pb.clientrpc.v1.LogMessage logs = 1;
-   */
-  logs: LogMessage[];
-};
+export type StreamLogsResponse =
+	Message<'pb.clientrpc.v1.StreamLogsResponse'> & {
+		/**
+		 * The logs.
+		 * This field usually has only one log message, but in the case of
+		 * sending back existing logs, it may have many.
+		 * The logs will be ordered by timestamp, ascending.
+		 *
+		 * @generated from field: repeated pb.clientrpc.v1.LogMessage logs = 1;
+		 */
+		logs: LogMessage[]
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.StreamLogsResponse.
  * Use `create(StreamLogsResponseSchema)` to create a new message.
  */
-export const StreamLogsResponseSchema: GenMessage<StreamLogsResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 11);
+export const StreamLogsResponseSchema: GenMessage<StreamLogsResponse> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 12)
 
 /**
  * @generated from message pb.clientrpc.v1.StopRequest
  */
-export type StopRequest = Message<"pb.clientrpc.v1.StopRequest"> & {
-};
+export type StopRequest = Message<'pb.clientrpc.v1.StopRequest'> & {}
 
 /**
  * Describes the message pb.clientrpc.v1.StopRequest.
  * Use `create(StopRequestSchema)` to create a new message.
  */
-export const StopRequestSchema: GenMessage<StopRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 12);
+export const StopRequestSchema: GenMessage<StopRequest> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 13)
 
 /**
  * @generated from message pb.clientrpc.v1.StopResponse
  */
-export type StopResponse = Message<"pb.clientrpc.v1.StopResponse"> & {
-};
+export type StopResponse = Message<'pb.clientrpc.v1.StopResponse'> & {}
 
 /**
  * Describes the message pb.clientrpc.v1.StopResponse.
  * Use `create(StopResponseSchema)` to create a new message.
  */
-export const StopResponseSchema: GenMessage<StopResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 13);
+export const StopResponseSchema: GenMessage<StopResponse> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 14)
 
 /**
  * @generated from message pb.clientrpc.v1.GetClientInfoRequest
  */
-export type GetClientInfoRequest = Message<"pb.clientrpc.v1.GetClientInfoRequest"> & {
-};
+export type GetClientInfoRequest =
+	Message<'pb.clientrpc.v1.GetClientInfoRequest'> & {}
 
 /**
  * Describes the message pb.clientrpc.v1.GetClientInfoRequest.
  * Use `create(GetClientInfoRequestSchema)` to create a new message.
  */
-export const GetClientInfoRequestSchema: GenMessage<GetClientInfoRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 14);
+export const GetClientInfoRequestSchema: GenMessage<GetClientInfoRequest> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 15)
 
 /**
  * @generated from message pb.clientrpc.v1.GetClientInfoResponse
  */
-export type GetClientInfoResponse = Message<"pb.clientrpc.v1.GetClientInfoResponse"> & {
-  /**
-   * The base URL to the HTTP file server.
-   *
-   * @generated from field: string file_server_url = 1;
-   */
-  fileServerUrl: string;
-};
+export type GetClientInfoResponse =
+	Message<'pb.clientrpc.v1.GetClientInfoResponse'> & {
+		/**
+		 * The base URL to the HTTP file server.
+		 *
+		 * @generated from field: string file_server_url = 1;
+		 */
+		fileServerUrl: string
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.GetClientInfoResponse.
  * Use `create(GetClientInfoResponseSchema)` to create a new message.
  */
-export const GetClientInfoResponseSchema: GenMessage<GetClientInfoResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 15);
+export const GetClientInfoResponseSchema: GenMessage<GetClientInfoResponse> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 16)
 
 /**
  * @generated from message pb.clientrpc.v1.GetServersRequest
  */
-export type GetServersRequest = Message<"pb.clientrpc.v1.GetServersRequest"> & {
-};
+export type GetServersRequest =
+	Message<'pb.clientrpc.v1.GetServersRequest'> & {}
 
 /**
  * Describes the message pb.clientrpc.v1.GetServersRequest.
  * Use `create(GetServersRequestSchema)` to create a new message.
  */
-export const GetServersRequestSchema: GenMessage<GetServersRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 16);
+export const GetServersRequestSchema: GenMessage<GetServersRequest> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 17)
 
 /**
  * @generated from message pb.clientrpc.v1.GetServersResponse
  */
-export type GetServersResponse = Message<"pb.clientrpc.v1.GetServersResponse"> & {
-  /**
-   * The server records.
-   *
-   * @generated from field: repeated pb.clientrpc.v1.ServerInfo servers = 1;
-   */
-  servers: ServerInfo[];
-};
+export type GetServersResponse =
+	Message<'pb.clientrpc.v1.GetServersResponse'> & {
+		/**
+		 * The server records.
+		 *
+		 * @generated from field: repeated pb.clientrpc.v1.ServerInfo servers = 1;
+		 */
+		servers: ServerInfo[]
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.GetServersResponse.
  * Use `create(GetServersResponseSchema)` to create a new message.
  */
-export const GetServersResponseSchema: GenMessage<GetServersResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 17);
+export const GetServersResponseSchema: GenMessage<GetServersResponse> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 18)
 
 /**
  * @generated from message pb.clientrpc.v1.CreateServerRequest
  */
-export type CreateServerRequest = Message<"pb.clientrpc.v1.CreateServerRequest"> & {
-  /**
-   * The name given to the server record.
-   *
-   * @generated from field: string name = 1;
-   */
-  name: string;
+export type CreateServerRequest =
+	Message<'pb.clientrpc.v1.CreateServerRequest'> & {
+		/**
+		 * The name given to the server record.
+		 *
+		 * @generated from field: string name = 1;
+		 */
+		name: string
 
-  /**
-   * The server's address.
-   *
-   * @generated from field: string address = 2;
-   */
-  address: string;
+		/**
+		 * The server's address.
+		 *
+		 * @generated from field: string address = 2;
+		 */
+		address: string
 
-  /**
-   * The room to connect to.
-   *
-   * @generated from field: string room = 3;
-   */
-  room: string;
+		/**
+		 * The room to connect to.
+		 *
+		 * @generated from field: string room = 3;
+		 */
+		room: string
 
-  /**
-   * The username to use.
-   *
-   * @generated from field: string username = 4;
-   */
-  username: string;
+		/**
+		 * The username to use.
+		 *
+		 * @generated from field: string username = 4;
+		 */
+		username: string
 
-  /**
-   * The password to use.
-   *
-   * @generated from field: string password = 5;
-   */
-  password: string;
-};
+		/**
+		 * The password to use.
+		 *
+		 * @generated from field: string password = 5;
+		 */
+		password: string
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.CreateServerRequest.
  * Use `create(CreateServerRequestSchema)` to create a new message.
  */
-export const CreateServerRequestSchema: GenMessage<CreateServerRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 18);
+export const CreateServerRequestSchema: GenMessage<CreateServerRequest> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 19)
 
 /**
  * @generated from message pb.clientrpc.v1.CreateServerResponse
  */
-export type CreateServerResponse = Message<"pb.clientrpc.v1.CreateServerResponse"> & {
-  /**
-   * The newly created server record.
-   *
-   * @generated from field: pb.clientrpc.v1.ServerInfo server = 1;
-   */
-  server?: ServerInfo;
-};
+export type CreateServerResponse =
+	Message<'pb.clientrpc.v1.CreateServerResponse'> & {
+		/**
+		 * The newly created server record.
+		 *
+		 * @generated from field: pb.clientrpc.v1.ServerInfo server = 1;
+		 */
+		server?: ServerInfo
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.CreateServerResponse.
  * Use `create(CreateServerResponseSchema)` to create a new message.
  */
-export const CreateServerResponseSchema: GenMessage<CreateServerResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 19);
+export const CreateServerResponseSchema: GenMessage<CreateServerResponse> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 20)
 
 /**
  * @generated from message pb.clientrpc.v1.DeleteServerRequest
  */
-export type DeleteServerRequest = Message<"pb.clientrpc.v1.DeleteServerRequest"> & {
-  /**
-   * The server's UUID.
-   *
-   * @generated from field: string uuid = 1;
-   */
-  uuid: string;
-};
+export type DeleteServerRequest =
+	Message<'pb.clientrpc.v1.DeleteServerRequest'> & {
+		/**
+		 * The server's UUID.
+		 *
+		 * @generated from field: string uuid = 1;
+		 */
+		uuid: string
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.DeleteServerRequest.
  * Use `create(DeleteServerRequestSchema)` to create a new message.
  */
-export const DeleteServerRequestSchema: GenMessage<DeleteServerRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 20);
+export const DeleteServerRequestSchema: GenMessage<DeleteServerRequest> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 21)
 
 /**
  * @generated from message pb.clientrpc.v1.DeleteServerResponse
  */
-export type DeleteServerResponse = Message<"pb.clientrpc.v1.DeleteServerResponse"> & {
-};
+export type DeleteServerResponse =
+	Message<'pb.clientrpc.v1.DeleteServerResponse'> & {}
 
 /**
  * Describes the message pb.clientrpc.v1.DeleteServerResponse.
  * Use `create(DeleteServerResponseSchema)` to create a new message.
  */
-export const DeleteServerResponseSchema: GenMessage<DeleteServerResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 21);
+export const DeleteServerResponseSchema: GenMessage<DeleteServerResponse> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 22)
 
 /**
  * @generated from message pb.clientrpc.v1.ConnectServerRequest
  */
-export type ConnectServerRequest = Message<"pb.clientrpc.v1.ConnectServerRequest"> & {
-  /**
-   * The server's UUID.
-   *
-   * @generated from field: string uuid = 1;
-   */
-  uuid: string;
-};
+export type ConnectServerRequest =
+	Message<'pb.clientrpc.v1.ConnectServerRequest'> & {
+		/**
+		 * The server's UUID.
+		 *
+		 * @generated from field: string uuid = 1;
+		 */
+		uuid: string
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.ConnectServerRequest.
  * Use `create(ConnectServerRequestSchema)` to create a new message.
  */
-export const ConnectServerRequestSchema: GenMessage<ConnectServerRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 22);
+export const ConnectServerRequestSchema: GenMessage<ConnectServerRequest> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 23)
 
 /**
  * @generated from message pb.clientrpc.v1.ConnectServerResponse
  */
-export type ConnectServerResponse = Message<"pb.clientrpc.v1.ConnectServerResponse"> & {
-};
+export type ConnectServerResponse =
+	Message<'pb.clientrpc.v1.ConnectServerResponse'> & {}
 
 /**
  * Describes the message pb.clientrpc.v1.ConnectServerResponse.
  * Use `create(ConnectServerResponseSchema)` to create a new message.
  */
-export const ConnectServerResponseSchema: GenMessage<ConnectServerResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 23);
+export const ConnectServerResponseSchema: GenMessage<ConnectServerResponse> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 24)
 
 /**
  * @generated from message pb.clientrpc.v1.DisconnectServerRequest
  */
-export type DisconnectServerRequest = Message<"pb.clientrpc.v1.DisconnectServerRequest"> & {
-  /**
-   * The server's UUID.
-   *
-   * @generated from field: string uuid = 1;
-   */
-  uuid: string;
-};
+export type DisconnectServerRequest =
+	Message<'pb.clientrpc.v1.DisconnectServerRequest'> & {
+		/**
+		 * The server's UUID.
+		 *
+		 * @generated from field: string uuid = 1;
+		 */
+		uuid: string
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.DisconnectServerRequest.
  * Use `create(DisconnectServerRequestSchema)` to create a new message.
  */
-export const DisconnectServerRequestSchema: GenMessage<DisconnectServerRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 24);
+export const DisconnectServerRequestSchema: GenMessage<DisconnectServerRequest> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 25)
 
 /**
  * @generated from message pb.clientrpc.v1.DisconnectServerResponse
  */
-export type DisconnectServerResponse = Message<"pb.clientrpc.v1.DisconnectServerResponse"> & {
-};
+export type DisconnectServerResponse =
+	Message<'pb.clientrpc.v1.DisconnectServerResponse'> & {}
 
 /**
  * Describes the message pb.clientrpc.v1.DisconnectServerResponse.
  * Use `create(DisconnectServerResponseSchema)` to create a new message.
  */
-export const DisconnectServerResponseSchema: GenMessage<DisconnectServerResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 25);
+export const DisconnectServerResponseSchema: GenMessage<DisconnectServerResponse> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 26)
 
 /**
  * @generated from message pb.clientrpc.v1.UpdateServerRequest
  */
-export type UpdateServerRequest = Message<"pb.clientrpc.v1.UpdateServerRequest"> & {
-  /**
-   * The server's UUID.
-   *
-   * @generated from field: string uuid = 1;
-   */
-  uuid: string;
+export type UpdateServerRequest =
+	Message<'pb.clientrpc.v1.UpdateServerRequest'> & {
+		/**
+		 * The server's UUID.
+		 *
+		 * @generated from field: string uuid = 1;
+		 */
+		uuid: string
 
-  /**
-   * The new name, if any.
-   *
-   * @generated from field: optional string name = 2;
-   */
-  name?: string;
+		/**
+		 * The new name, if any.
+		 *
+		 * @generated from field: optional string name = 2;
+		 */
+		name?: string
 
-  /**
-   * The new address, if any.
-   *
-   * @generated from field: optional string address = 3;
-   */
-  address?: string;
+		/**
+		 * The new address, if any.
+		 *
+		 * @generated from field: optional string address = 3;
+		 */
+		address?: string
 
-  /**
-   * The new room, if any.
-   *
-   * @generated from field: optional string room = 4;
-   */
-  room?: string;
+		/**
+		 * The new room, if any.
+		 *
+		 * @generated from field: optional string room = 4;
+		 */
+		room?: string
 
-  /**
-   * The new username, if any.
-   *
-   * @generated from field: optional string username = 5;
-   */
-  username?: string;
+		/**
+		 * The new username, if any.
+		 *
+		 * @generated from field: optional string username = 5;
+		 */
+		username?: string
 
-  /**
-   * The new password, if any.
-   *
-   * @generated from field: optional string password = 6;
-   */
-  password?: string;
-};
+		/**
+		 * The new password, if any.
+		 *
+		 * @generated from field: optional string password = 6;
+		 */
+		password?: string
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.UpdateServerRequest.
  * Use `create(UpdateServerRequestSchema)` to create a new message.
  */
-export const UpdateServerRequestSchema: GenMessage<UpdateServerRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 26);
+export const UpdateServerRequestSchema: GenMessage<UpdateServerRequest> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 27)
 
 /**
  * @generated from message pb.clientrpc.v1.UpdateServerResponse
  */
-export type UpdateServerResponse = Message<"pb.clientrpc.v1.UpdateServerResponse"> & {
-  /**
-   * The server after update.
-   *
-   * @generated from field: pb.clientrpc.v1.ServerInfo server = 1;
-   */
-  server?: ServerInfo;
-};
+export type UpdateServerResponse =
+	Message<'pb.clientrpc.v1.UpdateServerResponse'> & {
+		/**
+		 * The server after update.
+		 *
+		 * @generated from field: pb.clientrpc.v1.ServerInfo server = 1;
+		 */
+		server?: ServerInfo
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.UpdateServerResponse.
  * Use `create(UpdateServerResponseSchema)` to create a new message.
  */
-export const UpdateServerResponseSchema: GenMessage<UpdateServerResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 27);
+export const UpdateServerResponseSchema: GenMessage<UpdateServerResponse> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 28)
 
 /**
  * @generated from message pb.clientrpc.v1.GetSharesRequest
  */
-export type GetSharesRequest = Message<"pb.clientrpc.v1.GetSharesRequest"> & {
-  /**
-   * The UUID of the server to get shares for.
-   *
-   * @generated from field: string server_uuid = 1;
-   */
-  serverUuid: string;
-};
+export type GetSharesRequest = Message<'pb.clientrpc.v1.GetSharesRequest'> & {
+	/**
+	 * The UUID of the server to get shares for.
+	 *
+	 * @generated from field: string server_uuid = 1;
+	 */
+	serverUuid: string
+}
 
 /**
  * Describes the message pb.clientrpc.v1.GetSharesRequest.
  * Use `create(GetSharesRequestSchema)` to create a new message.
  */
-export const GetSharesRequestSchema: GenMessage<GetSharesRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 28);
+export const GetSharesRequestSchema: GenMessage<GetSharesRequest> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 29)
 
 /**
  * @generated from message pb.clientrpc.v1.GetSharesResponse
  */
-export type GetSharesResponse = Message<"pb.clientrpc.v1.GetSharesResponse"> & {
-  /**
-   * The shares.
-   *
-   * @generated from field: repeated pb.clientrpc.v1.ShareInfo shares = 1;
-   */
-  shares: ShareInfo[];
-};
+export type GetSharesResponse = Message<'pb.clientrpc.v1.GetSharesResponse'> & {
+	/**
+	 * The shares.
+	 *
+	 * @generated from field: repeated pb.clientrpc.v1.ShareInfo shares = 1;
+	 */
+	shares: ShareInfo[]
+}
 
 /**
  * Describes the message pb.clientrpc.v1.GetSharesResponse.
  * Use `create(GetSharesResponseSchema)` to create a new message.
  */
-export const GetSharesResponseSchema: GenMessage<GetSharesResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 29);
+export const GetSharesResponseSchema: GenMessage<GetSharesResponse> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 30)
 
 /**
  * @generated from message pb.clientrpc.v1.CreateShareRequest
  */
-export type CreateShareRequest = Message<"pb.clientrpc.v1.CreateShareRequest"> & {
-  /**
-   * The UUID of the associated server.
-   *
-   * @generated from field: string server_uuid = 1;
-   */
-  serverUuid: string;
+export type CreateShareRequest =
+	Message<'pb.clientrpc.v1.CreateShareRequest'> & {
+		/**
+		 * The UUID of the associated server.
+		 *
+		 * @generated from field: string server_uuid = 1;
+		 */
+		serverUuid: string
 
-  /**
-   * The share's name.
-   *
-   * @generated from field: string name = 2;
-   */
-  name: string;
+		/**
+		 * The share's name.
+		 *
+		 * @generated from field: string name = 2;
+		 */
+		name: string
 
-  /**
-   * The share's path on disk.
-   *
-   * @generated from field: string path = 3;
-   */
-  path: string;
-};
+		/**
+		 * The share's path on disk.
+		 *
+		 * @generated from field: string path = 3;
+		 */
+		path: string
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.CreateShareRequest.
  * Use `create(CreateShareRequestSchema)` to create a new message.
  */
-export const CreateShareRequestSchema: GenMessage<CreateShareRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 30);
+export const CreateShareRequestSchema: GenMessage<CreateShareRequest> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 31)
 
 /**
  * @generated from message pb.clientrpc.v1.CreateShareResponse
  */
-export type CreateShareResponse = Message<"pb.clientrpc.v1.CreateShareResponse"> & {
-  /**
-   * The newly created share.
-   *
-   * @generated from field: pb.clientrpc.v1.ShareInfo share = 1;
-   */
-  share?: ShareInfo;
-};
+export type CreateShareResponse =
+	Message<'pb.clientrpc.v1.CreateShareResponse'> & {
+		/**
+		 * The newly created share.
+		 *
+		 * @generated from field: pb.clientrpc.v1.ShareInfo share = 1;
+		 */
+		share?: ShareInfo
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.CreateShareResponse.
  * Use `create(CreateShareResponseSchema)` to create a new message.
  */
-export const CreateShareResponseSchema: GenMessage<CreateShareResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 31);
+export const CreateShareResponseSchema: GenMessage<CreateShareResponse> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 32)
 
 /**
  * @generated from message pb.clientrpc.v1.DeleteShareRequest
  */
-export type DeleteShareRequest = Message<"pb.clientrpc.v1.DeleteShareRequest"> & {
-  /**
-   * The associated server UUID.
-   *
-   * @generated from field: string server_uuid = 1;
-   */
-  serverUuid: string;
+export type DeleteShareRequest =
+	Message<'pb.clientrpc.v1.DeleteShareRequest'> & {
+		/**
+		 * The associated server UUID.
+		 *
+		 * @generated from field: string server_uuid = 1;
+		 */
+		serverUuid: string
 
-  /**
-   * The share's name.
-   *
-   * @generated from field: string name = 2;
-   */
-  name: string;
-};
+		/**
+		 * The share's name.
+		 *
+		 * @generated from field: string name = 2;
+		 */
+		name: string
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.DeleteShareRequest.
  * Use `create(DeleteShareRequestSchema)` to create a new message.
  */
-export const DeleteShareRequestSchema: GenMessage<DeleteShareRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 32);
+export const DeleteShareRequestSchema: GenMessage<DeleteShareRequest> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 33)
 
 /**
  * @generated from message pb.clientrpc.v1.DeleteShareResponse
  */
-export type DeleteShareResponse = Message<"pb.clientrpc.v1.DeleteShareResponse"> & {
-};
+export type DeleteShareResponse =
+	Message<'pb.clientrpc.v1.DeleteShareResponse'> & {}
 
 /**
  * Describes the message pb.clientrpc.v1.DeleteShareResponse.
  * Use `create(DeleteShareResponseSchema)` to create a new message.
  */
-export const DeleteShareResponseSchema: GenMessage<DeleteShareResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 33);
+export const DeleteShareResponseSchema: GenMessage<DeleteShareResponse> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 34)
 
 /**
  * @generated from message pb.clientrpc.v1.GetDirFilesRequest
  */
-export type GetDirFilesRequest = Message<"pb.clientrpc.v1.GetDirFilesRequest"> & {
-  /**
-   * The server's UUID.
-   *
-   * @generated from field: string server_uuid = 1;
-   */
-  serverUuid: string;
+export type GetDirFilesRequest =
+	Message<'pb.clientrpc.v1.GetDirFilesRequest'> & {
+		/**
+		 * The server's UUID.
+		 *
+		 * @generated from field: string server_uuid = 1;
+		 */
+		serverUuid: string
 
-  /**
-   * The online user's username.
-   *
-   * @generated from field: string username = 2;
-   */
-  username: string;
+		/**
+		 * The online user's username.
+		 *
+		 * @generated from field: string username = 2;
+		 */
+		username: string
 
-  /**
-   * The path to get the contents of.
-   *
-   * @generated from field: string path = 3;
-   */
-  path: string;
-};
+		/**
+		 * The path to get the contents of.
+		 *
+		 * @generated from field: string path = 3;
+		 */
+		path: string
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.GetDirFilesRequest.
  * Use `create(GetDirFilesRequestSchema)` to create a new message.
  */
-export const GetDirFilesRequestSchema: GenMessage<GetDirFilesRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 34);
+export const GetDirFilesRequestSchema: GenMessage<GetDirFilesRequest> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 35)
 
 /**
  * @generated from message pb.clientrpc.v1.GetDirFilesResponse
  */
-export type GetDirFilesResponse = Message<"pb.clientrpc.v1.GetDirFilesResponse"> & {
-  /**
-   * The directory's files.
-   *
-   * @generated from field: repeated pb.clientrpc.v1.FileMeta content = 2;
-   */
-  content: FileMeta[];
-};
+export type GetDirFilesResponse =
+	Message<'pb.clientrpc.v1.GetDirFilesResponse'> & {
+		/**
+		 * The directory's files.
+		 *
+		 * @generated from field: repeated pb.clientrpc.v1.FileMeta content = 2;
+		 */
+		content: FileMeta[]
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.GetDirFilesResponse.
  * Use `create(GetDirFilesResponseSchema)` to create a new message.
  */
-export const GetDirFilesResponseSchema: GenMessage<GetDirFilesResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 35);
+export const GetDirFilesResponseSchema: GenMessage<GetDirFilesResponse> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 36)
 
 /**
  * @generated from message pb.clientrpc.v1.GetFileMetaRequest
  */
-export type GetFileMetaRequest = Message<"pb.clientrpc.v1.GetFileMetaRequest"> & {
-  /**
-   * The server's UUID.
-   *
-   * @generated from field: string server_uuid = 1;
-   */
-  serverUuid: string;
+export type GetFileMetaRequest =
+	Message<'pb.clientrpc.v1.GetFileMetaRequest'> & {
+		/**
+		 * The server's UUID.
+		 *
+		 * @generated from field: string server_uuid = 1;
+		 */
+		serverUuid: string
 
-  /**
-   * The online user's username.
-   *
-   * @generated from field: string username = 2;
-   */
-  username: string;
+		/**
+		 * The online user's username.
+		 *
+		 * @generated from field: string username = 2;
+		 */
+		username: string
 
-  /**
-   * The path to get the contents of.
-   *
-   * @generated from field: string path = 3;
-   */
-  path: string;
-};
+		/**
+		 * The path to get the contents of.
+		 *
+		 * @generated from field: string path = 3;
+		 */
+		path: string
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.GetFileMetaRequest.
  * Use `create(GetFileMetaRequestSchema)` to create a new message.
  */
-export const GetFileMetaRequestSchema: GenMessage<GetFileMetaRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 36);
+export const GetFileMetaRequestSchema: GenMessage<GetFileMetaRequest> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 37)
 
 /**
  * @generated from message pb.clientrpc.v1.GetFileMetaResponse
  */
-export type GetFileMetaResponse = Message<"pb.clientrpc.v1.GetFileMetaResponse"> & {
-  /**
-   * The file's metadata.
-   *
-   * @generated from field: pb.clientrpc.v1.FileMeta meta = 1;
-   */
-  meta?: FileMeta;
-};
+export type GetFileMetaResponse =
+	Message<'pb.clientrpc.v1.GetFileMetaResponse'> & {
+		/**
+		 * The file's metadata.
+		 *
+		 * @generated from field: pb.clientrpc.v1.FileMeta meta = 1;
+		 */
+		meta?: FileMeta
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.GetFileMetaResponse.
  * Use `create(GetFileMetaResponseSchema)` to create a new message.
  */
-export const GetFileMetaResponseSchema: GenMessage<GetFileMetaResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 37);
+export const GetFileMetaResponseSchema: GenMessage<GetFileMetaResponse> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 38)
 
 /**
  * @generated from message pb.clientrpc.v1.GetOnlineUsersRequest
  */
-export type GetOnlineUsersRequest = Message<"pb.clientrpc.v1.GetOnlineUsersRequest"> & {
-  /**
-   * The server's UUID.
-   *
-   * @generated from field: string server_uuid = 1;
-   */
-  serverUuid: string;
-};
+export type GetOnlineUsersRequest =
+	Message<'pb.clientrpc.v1.GetOnlineUsersRequest'> & {
+		/**
+		 * The server's UUID.
+		 *
+		 * @generated from field: string server_uuid = 1;
+		 */
+		serverUuid: string
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.GetOnlineUsersRequest.
  * Use `create(GetOnlineUsersRequestSchema)` to create a new message.
  */
-export const GetOnlineUsersRequestSchema: GenMessage<GetOnlineUsersRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 38);
+export const GetOnlineUsersRequestSchema: GenMessage<GetOnlineUsersRequest> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 39)
 
 /**
  * @generated from message pb.clientrpc.v1.GetOnlineUsersResponse
  */
-export type GetOnlineUsersResponse = Message<"pb.clientrpc.v1.GetOnlineUsersResponse"> & {
-  /**
-   * The users.
-   *
-   * @generated from field: repeated pb.clientrpc.v1.OnlineUserInfo users = 1;
-   */
-  users: OnlineUserInfo[];
-};
+export type GetOnlineUsersResponse =
+	Message<'pb.clientrpc.v1.GetOnlineUsersResponse'> & {
+		/**
+		 * The users.
+		 *
+		 * @generated from field: repeated pb.clientrpc.v1.OnlineUserInfo users = 1;
+		 */
+		users: OnlineUserInfo[]
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.GetOnlineUsersResponse.
  * Use `create(GetOnlineUsersResponseSchema)` to create a new message.
  */
-export const GetOnlineUsersResponseSchema: GenMessage<GetOnlineUsersResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 39);
+export const GetOnlineUsersResponseSchema: GenMessage<GetOnlineUsersResponse> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 40)
 
 /**
  * @generated from message pb.clientrpc.v1.ChangeAccountPasswordRequest
  */
-export type ChangeAccountPasswordRequest = Message<"pb.clientrpc.v1.ChangeAccountPasswordRequest"> & {
-  /**
-   * The server's UUID.
-   *
-   * @generated from field: string server_uuid = 1;
-   */
-  serverUuid: string;
+export type ChangeAccountPasswordRequest =
+	Message<'pb.clientrpc.v1.ChangeAccountPasswordRequest'> & {
+		/**
+		 * The server's UUID.
+		 *
+		 * @generated from field: string server_uuid = 1;
+		 */
+		serverUuid: string
 
-  /**
-   * The account's current password.
-   *
-   * @generated from field: string current_password = 2;
-   */
-  currentPassword: string;
+		/**
+		 * The account's current password.
+		 *
+		 * @generated from field: string current_password = 2;
+		 */
+		currentPassword: string
 
-  /**
-   * The account's new password.
-   *
-   * @generated from field: string new_password = 3;
-   */
-  newPassword: string;
-};
+		/**
+		 * The account's new password.
+		 *
+		 * @generated from field: string new_password = 3;
+		 */
+		newPassword: string
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.ChangeAccountPasswordRequest.
  * Use `create(ChangeAccountPasswordRequestSchema)` to create a new message.
  */
-export const ChangeAccountPasswordRequestSchema: GenMessage<ChangeAccountPasswordRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 40);
+export const ChangeAccountPasswordRequestSchema: GenMessage<ChangeAccountPasswordRequest> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 41)
 
 /**
  * @generated from message pb.clientrpc.v1.ChangeAccountPasswordResponse
  */
-export type ChangeAccountPasswordResponse = Message<"pb.clientrpc.v1.ChangeAccountPasswordResponse"> & {
-};
+export type ChangeAccountPasswordResponse =
+	Message<'pb.clientrpc.v1.ChangeAccountPasswordResponse'> & {}
 
 /**
  * Describes the message pb.clientrpc.v1.ChangeAccountPasswordResponse.
  * Use `create(ChangeAccountPasswordResponseSchema)` to create a new message.
  */
-export const ChangeAccountPasswordResponseSchema: GenMessage<ChangeAccountPasswordResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 41);
+export const ChangeAccountPasswordResponseSchema: GenMessage<ChangeAccountPasswordResponse> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 42)
 
 /**
  * @generated from message pb.clientrpc.v1.ServerConnectRequest
  */
-export type ServerConnectRequest = Message<"pb.clientrpc.v1.ServerConnectRequest"> & {
-  /**
-   * The server's UUID.
-   *
-   * @generated from field: string uuid = 1;
-   */
-  uuid: string;
-};
+export type ServerConnectRequest =
+	Message<'pb.clientrpc.v1.ServerConnectRequest'> & {
+		/**
+		 * The server's UUID.
+		 *
+		 * @generated from field: string uuid = 1;
+		 */
+		uuid: string
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.ServerConnectRequest.
  * Use `create(ServerConnectRequestSchema)` to create a new message.
  */
-export const ServerConnectRequestSchema: GenMessage<ServerConnectRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 42);
+export const ServerConnectRequestSchema: GenMessage<ServerConnectRequest> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 43)
 
 /**
  * @generated from message pb.clientrpc.v1.ServerConnectResponse
  */
-export type ServerConnectResponse = Message<"pb.clientrpc.v1.ServerConnectResponse"> & {
-};
+export type ServerConnectResponse =
+	Message<'pb.clientrpc.v1.ServerConnectResponse'> & {}
 
 /**
  * Describes the message pb.clientrpc.v1.ServerConnectResponse.
  * Use `create(ServerConnectResponseSchema)` to create a new message.
  */
-export const ServerConnectResponseSchema: GenMessage<ServerConnectResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 43);
+export const ServerConnectResponseSchema: GenMessage<ServerConnectResponse> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 44)
 
 /**
  * @generated from message pb.clientrpc.v1.ServerDisconnectRequest
  */
-export type ServerDisconnectRequest = Message<"pb.clientrpc.v1.ServerDisconnectRequest"> & {
-  /**
-   * The server's UUID.
-   *
-   * @generated from field: string uuid = 1;
-   */
-  uuid: string;
-};
+export type ServerDisconnectRequest =
+	Message<'pb.clientrpc.v1.ServerDisconnectRequest'> & {
+		/**
+		 * The server's UUID.
+		 *
+		 * @generated from field: string uuid = 1;
+		 */
+		uuid: string
+	}
 
 /**
  * Describes the message pb.clientrpc.v1.ServerDisconnectRequest.
  * Use `create(ServerDisconnectRequestSchema)` to create a new message.
  */
-export const ServerDisconnectRequestSchema: GenMessage<ServerDisconnectRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 44);
+export const ServerDisconnectRequestSchema: GenMessage<ServerDisconnectRequest> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 45)
 
 /**
  * @generated from message pb.clientrpc.v1.ServerDisconnectResponse
  */
-export type ServerDisconnectResponse = Message<"pb.clientrpc.v1.ServerDisconnectResponse"> & {
-};
+export type ServerDisconnectResponse =
+	Message<'pb.clientrpc.v1.ServerDisconnectResponse'> & {}
 
 /**
  * Describes the message pb.clientrpc.v1.ServerDisconnectResponse.
  * Use `create(ServerDisconnectResponseSchema)` to create a new message.
  */
-export const ServerDisconnectResponseSchema: GenMessage<ServerDisconnectResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 45);
+export const ServerDisconnectResponseSchema: GenMessage<ServerDisconnectResponse> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 46)
+
+/**
+ * @generated from message pb.clientrpc.v1.GetDirectSettingsRequest
+ */
+export type GetDirectSettingsRequest =
+	Message<'pb.clientrpc.v1.GetDirectSettingsRequest'> & {}
+
+/**
+ * Describes the message pb.clientrpc.v1.GetDirectSettingsRequest.
+ * Use `create(GetDirectSettingsRequestSchema)` to create a new message.
+ */
+export const GetDirectSettingsRequestSchema: GenMessage<GetDirectSettingsRequest> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 47)
+
+/**
+ * @generated from message pb.clientrpc.v1.GetDirectSettingsResponse
+ */
+export type GetDirectSettingsResponse =
+	Message<'pb.clientrpc.v1.GetDirectSettingsResponse'> & {
+		/**
+		 * The client's direct connection settings.
+		 *
+		 * @generated from field: pb.clientrpc.v1.DirectSettings settings = 1;
+		 */
+		settings?: DirectSettings
+	}
+
+/**
+ * Describes the message pb.clientrpc.v1.GetDirectSettingsResponse.
+ * Use `create(GetDirectSettingsResponseSchema)` to create a new message.
+ */
+export const GetDirectSettingsResponseSchema: GenMessage<GetDirectSettingsResponse> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 48)
+
+/**
+ * @generated from message pb.clientrpc.v1.UpdateDirectSettingsRequest
+ */
+export type UpdateDirectSettingsRequest =
+	Message<'pb.clientrpc.v1.UpdateDirectSettingsRequest'> & {
+		/**
+		 * The settings to update.
+		 * All fields must be filled.
+		 *
+		 * @generated from field: pb.clientrpc.v1.DirectSettings settings = 1;
+		 */
+		settings?: DirectSettings
+	}
+
+/**
+ * Describes the message pb.clientrpc.v1.UpdateDirectSettingsRequest.
+ * Use `create(UpdateDirectSettingsRequestSchema)` to create a new message.
+ */
+export const UpdateDirectSettingsRequestSchema: GenMessage<UpdateDirectSettingsRequest> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 49)
+
+/**
+ * @generated from message pb.clientrpc.v1.UpdateDirectSettingsResponse
+ */
+export type UpdateDirectSettingsResponse =
+	Message<'pb.clientrpc.v1.UpdateDirectSettingsResponse'> & {}
+
+/**
+ * Describes the message pb.clientrpc.v1.UpdateDirectSettingsResponse.
+ * Use `create(UpdateDirectSettingsResponseSchema)` to create a new message.
+ */
+export const UpdateDirectSettingsResponseSchema: GenMessage<UpdateDirectSettingsResponse> =
+	/*@__PURE__*/
+	messageDesc(file_pb_clientrpc_v1_rpc, 50)
 
 /**
  * ServerConnState is possible connection states for a server.
@@ -1226,40 +1474,41 @@ export const ServerDisconnectResponseSchema: GenMessage<ServerDisconnectResponse
  * @generated from enum pb.clientrpc.v1.ServerConnState
  */
 export enum ServerConnState {
-  /**
-   * Do not use.
-   *
-   * @generated from enum value: SERVER_CONN_STATE_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
+	/**
+	 * Do not use.
+	 *
+	 * @generated from enum value: SERVER_CONN_STATE_UNSPECIFIED = 0;
+	 */
+	UNSPECIFIED = 0,
 
-  /**
-   * Closed.
-   *
-   * @generated from enum value: SERVER_CONN_STATE_CLOSED = 1;
-   */
-  CLOSED = 1,
+	/**
+	 * Closed.
+	 *
+	 * @generated from enum value: SERVER_CONN_STATE_CLOSED = 1;
+	 */
+	CLOSED = 1,
 
-  /**
-   * Opening.
-   *
-   * @generated from enum value: SERVER_CONN_STATE_OPENING = 2;
-   */
-  OPENING = 2,
+	/**
+	 * Opening.
+	 *
+	 * @generated from enum value: SERVER_CONN_STATE_OPENING = 2;
+	 */
+	OPENING = 2,
 
-  /**
-   * Open.
-   *
-   * @generated from enum value: SERVER_CONN_STATE_OPEN = 3;
-   */
-  OPEN = 3,
+	/**
+	 * Open.
+	 *
+	 * @generated from enum value: SERVER_CONN_STATE_OPEN = 3;
+	 */
+	OPEN = 3,
 }
 
 /**
  * Describes the enum pb.clientrpc.v1.ServerConnState.
  */
-export const ServerConnStateSchema: GenEnum<ServerConnState> = /*@__PURE__*/
-  enumDesc(file_pb_clientrpc_v1_rpc, 0);
+export const ServerConnStateSchema: GenEnum<ServerConnState> =
+	/*@__PURE__*/
+	enumDesc(file_pb_clientrpc_v1_rpc, 0)
 
 /**
  * ClientRpcService provides an RPC interface to a running FriendNet client.
@@ -1271,242 +1520,263 @@ export const ServerConnStateSchema: GenEnum<ServerConnState> = /*@__PURE__*/
  * @generated from service pb.clientrpc.v1.ClientRpcService
  */
 export const ClientRpcService: GenService<{
-  /**
-   * StreamLogs returns an ongoing stream of log messages from the client.
-   *
-   * @generated from rpc pb.clientrpc.v1.ClientRpcService.StreamLogs
-   */
-  streamLogs: {
-    methodKind: "server_streaming";
-    input: typeof StreamLogsRequestSchema;
-    output: typeof StreamLogsResponseSchema;
-  },
-  /**
-   * StreamEvents returns an ongoing stream of events from the client.
-   *
-   * @generated from rpc pb.clientrpc.v1.ClientRpcService.StreamEvents
-   */
-  streamEvents: {
-    methodKind: "server_streaming";
-    input: typeof StreamEventsRequestSchema;
-    output: typeof StreamEventsResponseSchema;
-  },
-  /**
-   * Stop shuts down the client.
-   *
-   * @generated from rpc pb.clientrpc.v1.ClientRpcService.Stop
-   */
-  stop: {
-    methodKind: "unary";
-    input: typeof StopRequestSchema;
-    output: typeof StopResponseSchema;
-  },
-  /**
-   * GetClientInfo returns information about the FriendNet client.
-   *
-   * @generated from rpc pb.clientrpc.v1.ClientRpcService.GetClientInfo
-   */
-  getClientInfo: {
-    methodKind: "unary";
-    input: typeof GetClientInfoRequestSchema;
-    output: typeof GetClientInfoResponseSchema;
-  },
-  /**
-   * GetServers returns a list of all servers.
-   *
-   * @generated from rpc pb.clientrpc.v1.ClientRpcService.GetServers
-   */
-  getServers: {
-    methodKind: "unary";
-    input: typeof GetServersRequestSchema;
-    output: typeof GetServersResponseSchema;
-  },
-  /**
-   * CreateServer creates a new server and automatically connects to it.
-   *
-   * @generated from rpc pb.clientrpc.v1.ClientRpcService.CreateServer
-   */
-  createServer: {
-    methodKind: "unary";
-    input: typeof CreateServerRequestSchema;
-    output: typeof CreateServerResponseSchema;
-  },
-  /**
-   * DeleteServer disconnects and deletes a server.
-   *
-   * Returns NOT_FOUND if no such server exists.
-   *
-   * @generated from rpc pb.clientrpc.v1.ClientRpcService.DeleteServer
-   */
-  deleteServer: {
-    methodKind: "unary";
-    input: typeof DeleteServerRequestSchema;
-    output: typeof DeleteServerResponseSchema;
-  },
-  /**
-   * ConnectServer connects to an existing server.
-   * The server will reconnect automatically until DisconnectServer is called.
-   * No-op if the server is already connected.
-   *
-   * Returns NOT_FOUND if no such server exists.
-   *
-   * @generated from rpc pb.clientrpc.v1.ClientRpcService.ConnectServer
-   */
-  connectServer: {
-    methodKind: "unary";
-    input: typeof ConnectServerRequestSchema;
-    output: typeof ConnectServerResponseSchema;
-  },
-  /**
-   * DisconnectServer disconnects from an existing server.
-   * The server will not reconnect until ConnectServer is called.
-   * No-op if the server is already disconnected.
-   *
-   * Returns NOT_FOUND if no such server exists.
-   *
-   * @generated from rpc pb.clientrpc.v1.ClientRpcService.DisconnectServer
-   */
-  disconnectServer: {
-    methodKind: "unary";
-    input: typeof DisconnectServerRequestSchema;
-    output: typeof DisconnectServerResponseSchema;
-  },
-  /**
-   * UpdateServer updates server info.
-   * Does not disconnect the server connection if any, so disconnection then reconnection is required for changes to take effect.
-   *
-   * Returns NOT_FOUND if no such server exists.
-   *
-   * @generated from rpc pb.clientrpc.v1.ClientRpcService.UpdateServer
-   */
-  updateServer: {
-    methodKind: "unary";
-    input: typeof UpdateServerRequestSchema;
-    output: typeof UpdateServerResponseSchema;
-  },
-  /**
-   * GetShares returns shares for a server.
-   *
-   * Returns NOT_FOUND if no such server exists.
-   *
-   * @generated from rpc pb.clientrpc.v1.ClientRpcService.GetShares
-   */
-  getShares: {
-    methodKind: "unary";
-    input: typeof GetSharesRequestSchema;
-    output: typeof GetSharesResponseSchema;
-  },
-  /**
-   * CreateShare creates a new server share.
-   *
-   * Returns ALREADY_EXISTS if a share with the same name already exists.
-   *
-   * @generated from rpc pb.clientrpc.v1.ClientRpcService.CreateShare
-   */
-  createShare: {
-    methodKind: "unary";
-    input: typeof CreateShareRequestSchema;
-    output: typeof CreateShareResponseSchema;
-  },
-  /**
-   * DeleteShare deletes an existing server share.
-   *
-   * Returns NOT_FOUND if no such server exists.
-   * Returns NOT_FOUND if no such share exists.
-   *
-   * @generated from rpc pb.clientrpc.v1.ClientRpcService.DeleteShare
-   */
-  deleteShare: {
-    methodKind: "unary";
-    input: typeof DeleteShareRequestSchema;
-    output: typeof DeleteShareResponseSchema;
-  },
-  /**
-   * GetDirFiles requests the files within a directory shared by an online user.
-   * Each message will contain files within the path.
-   *
-   * Returns INVALID_ARGUMENT if the path is not a directory.
-   * Returns NOT_FOUND if no such server exists.
-   * Returns NOT_FOUND if no such path exists.
-   * Returns UNAVAILABLE if the user is offline or otherwise cannot be reached.
-   *
-   * @generated from rpc pb.clientrpc.v1.ClientRpcService.GetDirFiles
-   */
-  getDirFiles: {
-    methodKind: "server_streaming";
-    input: typeof GetDirFilesRequestSchema;
-    output: typeof GetDirFilesResponseSchema;
-  },
-  /**
-   * GetFileMeta returns metadata about a path shared by an online user.
-   *
-   * Returns NOT_FOUND if no such server exists.
-   * Returns NOT_FOUND if no such path exists.
-   * Returns UNAVAILABLE if the user is offline or otherwise cannot be reached.
-   *
-   * @generated from rpc pb.clientrpc.v1.ClientRpcService.GetFileMeta
-   */
-  getFileMeta: {
-    methodKind: "unary";
-    input: typeof GetFileMetaRequestSchema;
-    output: typeof GetFileMetaResponseSchema;
-  },
-  /**
-   * GetOnlineUsers returns a list of online users in a server.
-   *
-   * Returns NOT_FOUND if no such server exists.
-   *
-   * @generated from rpc pb.clientrpc.v1.ClientRpcService.GetOnlineUsers
-   */
-  getOnlineUsers: {
-    methodKind: "server_streaming";
-    input: typeof GetOnlineUsersRequestSchema;
-    output: typeof GetOnlineUsersResponseSchema;
-  },
-  /**
-   * ChangeAccountPassword changes the password for a server account.
-   * It requests that the server update the password, as opposed to just changing which password to log in with.
-   * If you only want to update which password to log in with, use UpdateServer instead.
-   *
-   * If successful, this call updates the password to log in with, so a call to UpdateServer is not necessary.
-   *
-   * Returns NOT_FOUND if no such server exists.
-   * Returns INVALID_ARGUMENT if the new password was not allowed (too short, too long, etc.).
-   * Returns PERMISSION_DENIED if the current password was incorrect.
-   *
-   * @generated from rpc pb.clientrpc.v1.ClientRpcService.ChangeAccountPassword
-   */
-  changeAccountPassword: {
-    methodKind: "unary";
-    input: typeof ChangeAccountPasswordRequestSchema;
-    output: typeof ChangeAccountPasswordResponseSchema;
-  },
-  /**
-   * ServerConnect tries to connect to a server immediately.
-   * If the server was previously disconnected and reconnect was disabled, reconnect will be enabled.
-   *
-   * Returns NOT_FOUND if no such server exists.
-   *
-   * @generated from rpc pb.clientrpc.v1.ClientRpcService.ServerConnect
-   */
-  serverConnect: {
-    methodKind: "unary";
-    input: typeof ServerConnectRequestSchema;
-    output: typeof ServerConnectResponseSchema;
-  },
-  /**
-   * ServerDisconnect disconnects from a server.
-   * Reconnect will be disabled until ServerConnect is called on the server.
-   *
-   * Returns NOT_FOUND if no such server exists.
-   *
-   * @generated from rpc pb.clientrpc.v1.ClientRpcService.ServerDisconnect
-   */
-  serverDisconnect: {
-    methodKind: "unary";
-    input: typeof ServerDisconnectRequestSchema;
-    output: typeof ServerDisconnectResponseSchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_pb_clientrpc_v1_rpc, 0);
-
+	/**
+	 * StreamLogs returns an ongoing stream of log messages from the client.
+	 *
+	 * @generated from rpc pb.clientrpc.v1.ClientRpcService.StreamLogs
+	 */
+	streamLogs: {
+		methodKind: 'server_streaming'
+		input: typeof StreamLogsRequestSchema
+		output: typeof StreamLogsResponseSchema
+	}
+	/**
+	 * StreamEvents returns an ongoing stream of events from the client.
+	 *
+	 * @generated from rpc pb.clientrpc.v1.ClientRpcService.StreamEvents
+	 */
+	streamEvents: {
+		methodKind: 'server_streaming'
+		input: typeof StreamEventsRequestSchema
+		output: typeof StreamEventsResponseSchema
+	}
+	/**
+	 * Stop shuts down the client.
+	 *
+	 * @generated from rpc pb.clientrpc.v1.ClientRpcService.Stop
+	 */
+	stop: {
+		methodKind: 'unary'
+		input: typeof StopRequestSchema
+		output: typeof StopResponseSchema
+	}
+	/**
+	 * GetClientInfo returns information about the FriendNet client.
+	 *
+	 * @generated from rpc pb.clientrpc.v1.ClientRpcService.GetClientInfo
+	 */
+	getClientInfo: {
+		methodKind: 'unary'
+		input: typeof GetClientInfoRequestSchema
+		output: typeof GetClientInfoResponseSchema
+	}
+	/**
+	 * GetServers returns a list of all servers.
+	 *
+	 * @generated from rpc pb.clientrpc.v1.ClientRpcService.GetServers
+	 */
+	getServers: {
+		methodKind: 'unary'
+		input: typeof GetServersRequestSchema
+		output: typeof GetServersResponseSchema
+	}
+	/**
+	 * CreateServer creates a new server and automatically connects to it.
+	 *
+	 * @generated from rpc pb.clientrpc.v1.ClientRpcService.CreateServer
+	 */
+	createServer: {
+		methodKind: 'unary'
+		input: typeof CreateServerRequestSchema
+		output: typeof CreateServerResponseSchema
+	}
+	/**
+	 * DeleteServer disconnects and deletes a server.
+	 *
+	 * Returns NOT_FOUND if no such server exists.
+	 *
+	 * @generated from rpc pb.clientrpc.v1.ClientRpcService.DeleteServer
+	 */
+	deleteServer: {
+		methodKind: 'unary'
+		input: typeof DeleteServerRequestSchema
+		output: typeof DeleteServerResponseSchema
+	}
+	/**
+	 * ConnectServer connects to an existing server.
+	 * The server will reconnect automatically until DisconnectServer is called.
+	 * No-op if the server is already connected.
+	 *
+	 * Returns NOT_FOUND if no such server exists.
+	 *
+	 * @generated from rpc pb.clientrpc.v1.ClientRpcService.ConnectServer
+	 */
+	connectServer: {
+		methodKind: 'unary'
+		input: typeof ConnectServerRequestSchema
+		output: typeof ConnectServerResponseSchema
+	}
+	/**
+	 * DisconnectServer disconnects from an existing server.
+	 * The server will not reconnect until ConnectServer is called.
+	 * No-op if the server is already disconnected.
+	 *
+	 * Returns NOT_FOUND if no such server exists.
+	 *
+	 * @generated from rpc pb.clientrpc.v1.ClientRpcService.DisconnectServer
+	 */
+	disconnectServer: {
+		methodKind: 'unary'
+		input: typeof DisconnectServerRequestSchema
+		output: typeof DisconnectServerResponseSchema
+	}
+	/**
+	 * UpdateServer updates server info.
+	 * Does not disconnect the server connection if any, so disconnection then reconnection is required for changes to take effect.
+	 *
+	 * Returns NOT_FOUND if no such server exists.
+	 *
+	 * @generated from rpc pb.clientrpc.v1.ClientRpcService.UpdateServer
+	 */
+	updateServer: {
+		methodKind: 'unary'
+		input: typeof UpdateServerRequestSchema
+		output: typeof UpdateServerResponseSchema
+	}
+	/**
+	 * GetShares returns shares for a server.
+	 *
+	 * Returns NOT_FOUND if no such server exists.
+	 *
+	 * @generated from rpc pb.clientrpc.v1.ClientRpcService.GetShares
+	 */
+	getShares: {
+		methodKind: 'unary'
+		input: typeof GetSharesRequestSchema
+		output: typeof GetSharesResponseSchema
+	}
+	/**
+	 * CreateShare creates a new server share.
+	 *
+	 * Returns ALREADY_EXISTS if a share with the same name already exists.
+	 *
+	 * @generated from rpc pb.clientrpc.v1.ClientRpcService.CreateShare
+	 */
+	createShare: {
+		methodKind: 'unary'
+		input: typeof CreateShareRequestSchema
+		output: typeof CreateShareResponseSchema
+	}
+	/**
+	 * DeleteShare deletes an existing server share.
+	 *
+	 * Returns NOT_FOUND if no such server exists.
+	 * Returns NOT_FOUND if no such share exists.
+	 *
+	 * @generated from rpc pb.clientrpc.v1.ClientRpcService.DeleteShare
+	 */
+	deleteShare: {
+		methodKind: 'unary'
+		input: typeof DeleteShareRequestSchema
+		output: typeof DeleteShareResponseSchema
+	}
+	/**
+	 * GetDirFiles requests the files within a directory shared by an online user.
+	 * Each message will contain files within the path.
+	 *
+	 * Returns INVALID_ARGUMENT if the path is not a directory.
+	 * Returns NOT_FOUND if no such server exists.
+	 * Returns NOT_FOUND if no such path exists.
+	 * Returns UNAVAILABLE if the user is offline or otherwise cannot be reached.
+	 *
+	 * @generated from rpc pb.clientrpc.v1.ClientRpcService.GetDirFiles
+	 */
+	getDirFiles: {
+		methodKind: 'server_streaming'
+		input: typeof GetDirFilesRequestSchema
+		output: typeof GetDirFilesResponseSchema
+	}
+	/**
+	 * GetFileMeta returns metadata about a path shared by an online user.
+	 *
+	 * Returns NOT_FOUND if no such server exists.
+	 * Returns NOT_FOUND if no such path exists.
+	 * Returns UNAVAILABLE if the user is offline or otherwise cannot be reached.
+	 *
+	 * @generated from rpc pb.clientrpc.v1.ClientRpcService.GetFileMeta
+	 */
+	getFileMeta: {
+		methodKind: 'unary'
+		input: typeof GetFileMetaRequestSchema
+		output: typeof GetFileMetaResponseSchema
+	}
+	/**
+	 * GetOnlineUsers returns a list of online users in a server.
+	 *
+	 * Returns NOT_FOUND if no such server exists.
+	 *
+	 * @generated from rpc pb.clientrpc.v1.ClientRpcService.GetOnlineUsers
+	 */
+	getOnlineUsers: {
+		methodKind: 'server_streaming'
+		input: typeof GetOnlineUsersRequestSchema
+		output: typeof GetOnlineUsersResponseSchema
+	}
+	/**
+	 * ChangeAccountPassword changes the password for a server account.
+	 * It requests that the server update the password, as opposed to just changing which password to log in with.
+	 * If you only want to update which password to log in with, use UpdateServer instead.
+	 *
+	 * If successful, this call updates the password to log in with, so a call to UpdateServer is not necessary.
+	 *
+	 * Returns NOT_FOUND if no such server exists.
+	 * Returns INVALID_ARGUMENT if the new password was not allowed (too short, too long, etc.).
+	 * Returns PERMISSION_DENIED if the current password was incorrect.
+	 *
+	 * @generated from rpc pb.clientrpc.v1.ClientRpcService.ChangeAccountPassword
+	 */
+	changeAccountPassword: {
+		methodKind: 'unary'
+		input: typeof ChangeAccountPasswordRequestSchema
+		output: typeof ChangeAccountPasswordResponseSchema
+	}
+	/**
+	 * ServerConnect tries to connect to a server immediately.
+	 * If the server was previously disconnected and reconnect was disabled, reconnect will be enabled.
+	 *
+	 * Returns NOT_FOUND if no such server exists.
+	 *
+	 * @generated from rpc pb.clientrpc.v1.ClientRpcService.ServerConnect
+	 */
+	serverConnect: {
+		methodKind: 'unary'
+		input: typeof ServerConnectRequestSchema
+		output: typeof ServerConnectResponseSchema
+	}
+	/**
+	 * ServerDisconnect disconnects from a server.
+	 * Reconnect will be disabled until ServerConnect is called on the server.
+	 *
+	 * Returns NOT_FOUND if no such server exists.
+	 *
+	 * @generated from rpc pb.clientrpc.v1.ClientRpcService.ServerDisconnect
+	 */
+	serverDisconnect: {
+		methodKind: 'unary'
+		input: typeof ServerDisconnectRequestSchema
+		output: typeof ServerDisconnectResponseSchema
+	}
+	/**
+	 * GetDirectSettings returns the client's direct connection settings.
+	 * The settings may not have taken effect yet if UpdateDirectSettings was called previously without restarting.
+	 *
+	 * @generated from rpc pb.clientrpc.v1.ClientRpcService.GetDirectSettings
+	 */
+	getDirectSettings: {
+		methodKind: 'unary'
+		input: typeof GetDirectSettingsRequestSchema
+		output: typeof GetDirectSettingsResponseSchema
+	}
+	/**
+	 * UpdateDirectSettings updates the client's direct connection settings.
+	 * Changes will not take effect until the client is restarted.
+	 * All fields must be filled, default values will not be omitted.
+	 *
+	 * @generated from rpc pb.clientrpc.v1.ClientRpcService.UpdateDirectSettings
+	 */
+	updateDirectSettings: {
+		methodKind: 'unary'
+		input: typeof UpdateDirectSettingsRequestSchema
+		output: typeof UpdateDirectSettingsResponseSchema
+	}
+}> = /*@__PURE__*/ serviceDesc(file_pb_clientrpc_v1_rpc, 0)

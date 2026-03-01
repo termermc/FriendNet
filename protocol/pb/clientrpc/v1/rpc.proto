@@ -158,6 +158,51 @@ message FileMeta {
     uint64 size = 3;
 }
 
+// DirectSettings is direct connection settings for the client.
+message DirectSettings {
+    // Whether to disable direct connections entirely.
+    // If true, all other fields will be ignored.
+    bool disable = 1;
+
+    // The initial addresses to listen on.
+    // Each address must be in the format `IPv4:PORT`, `[IPv6]:PORT`, `IP` (IPv6 without port does not need brackets).
+    // Must specify at least one.
+    // Can use addresses like `0.0.0.0` and `[::]` (with or without port) to listen on all interfaces.
+    // Any addresses without a port will have a port assigned to them.
+    repeated string addresses = 2;
+
+    // The default port to use for addresses that do not have a specified port.
+    // It will also be the port opened by UPnP.
+    //
+    // If 0, a random port will be used.
+    // Using a random port is not recommended because it will cause port churn across reconnects.
+    // Keeping the port consistent across reconnects is useful because external clients will be able to more reliably reach the client.
+    //
+    // A port >= 1024 is recommended to avoid permission denied errors from the OS.
+    uint32 default_port = 3;
+
+    // Whether to disable probing the machine for IPs to advertise.
+    // It does not advertise private IPs unless advertise_private_ips is true.
+    bool disable_probe_ips_to_advertise = 4;
+
+    // Whether to advertise private IPs (like 192.168.0.0/16, 172.16.0.0/12, 10.0.0.0/8).
+    // Has no effect if probe_ips_to_advertise is false.
+    // This only makes sense when multiple clients are on the same LAN or VPN.
+    bool advertise_private_ips = 5;
+
+    // Whether to disable public IP discovery via the server.
+    // By default, the client will try to discover its public IP by asking the server for it.
+    bool disable_public_ip_discovery = 6;
+
+    // Whether to disable UPnP.
+    bool disable_upnp = 7;
+
+    // The timeout for using UPnP.
+    // Defaults to 10 seconds.
+    // Has no effect if disable_upnp is true.
+    uint32 upnp_timeout_ms = 8;
+}
+
 message StreamEventsRequest {
 
 }
@@ -378,6 +423,23 @@ message ServerDisconnectResponse {
 
 }
 
+message GetDirectSettingsRequest {
+
+}
+message GetDirectSettingsResponse {
+    // The client's direct connection settings.
+    DirectSettings settings = 1;
+}
+
+message UpdateDirectSettingsRequest {
+    // The settings to update.
+    // All fields must be filled.
+    DirectSettings settings = 1;
+}
+message UpdateDirectSettingsResponse {
+
+}
+
 // ClientRpcService provides an RPC interface to a running FriendNet client.
 // It can query state and perform actions.
 //
@@ -486,4 +548,13 @@ service ClientRpcService {
     //
     // Returns NOT_FOUND if no such server exists.
     rpc ServerDisconnect(ServerDisconnectRequest) returns (ServerDisconnectResponse) {}
+
+    // GetDirectSettings returns the client's direct connection settings.
+    // The settings may not have taken effect yet if UpdateDirectSettings was called previously without restarting.
+    rpc GetDirectSettings(GetDirectSettingsRequest) returns (GetDirectSettingsResponse) {}
+
+    // UpdateDirectSettings updates the client's direct connection settings.
+    // Changes will not take effect until the client is restarted.
+    // All fields must be filled, default values will not be omitted.
+    rpc UpdateDirectSettings(UpdateDirectSettingsRequest) returns (UpdateDirectSettingsResponse) {}
 }
