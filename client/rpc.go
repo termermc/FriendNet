@@ -87,7 +87,7 @@ func (s *RpcServer) shareRecToInfo(share storage.ShareRecord) *v1.ShareInfo {
 	return &v1.ShareInfo{
 		ServerUuid: share.Server,
 		Name:       share.Name,
-		Path:       share.Path,
+		Path:       share.Path.String(),
 		CreatedTs:  share.CreatedTs.Unix(),
 	}
 }
@@ -354,7 +354,7 @@ func (s *RpcServer) CreateShare(ctx context.Context, request *v1.CreateShareRequ
 		return nil, err
 	}
 
-	record, has, err := s.client.storage.GetShareByServerAndName(ctx, request.ServerUuid, request.Name)
+	record, has, err := s.client.storage.GetShareByServerUuidAndName(ctx, request.ServerUuid, request.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -448,7 +448,7 @@ func (s *RpcServer) GetFileMeta(ctx context.Context, request *v1.GetFileMetaRequ
 		return nil, errInvalidUsername
 	}
 
-	path, pathErr := protocol.ValidatePath(request.Path)
+	path, pathErr := common.ValidatePath(request.Path)
 	if pathErr != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, pathErr)
 	}

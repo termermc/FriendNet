@@ -661,6 +661,9 @@ message MsgSearch {
 
 // See MSG_TYPE_SEARCH_RESULT.
 message MsgSearchResult {
+    // The file's containing directory path.
+    string directory_path = 1;
+
     // The file that was found.
-    MsgFileMeta file = 1;
+    MsgFileMeta file = 2;
 }

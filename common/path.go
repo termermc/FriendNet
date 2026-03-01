@@ -1,4 +1,4 @@
-package protocol
+package common
 
 import (
 	"strings"
@@ -83,6 +83,22 @@ func (u ProtoPath) ToSegments() []string {
 	}
 
 	return strings.Split(u.string[1:], "/")
+}
+
+// Name returns the last segment of the path.
+// If the path is "/", returns "".
+//
+// For example, "/foo/bar" -> "bar"
+//
+// If calling on a zero value, panics.
+// If unsure, call ProtoPath.IsZero first.
+func (u ProtoPath) Name() string {
+	if u.IsZero() {
+		panic("tried to call Name() on a zero ProtoPath")
+	}
+
+	slashIdx := strings.LastIndex(u.string, "/")
+	return u.string[slashIdx+1:]
 }
 
 // IsRoot returns whether the path is "/".

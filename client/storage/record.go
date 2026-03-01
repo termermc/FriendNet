@@ -73,10 +73,14 @@ func ScanServerRecord(row common.Scannable) (record ServerRecord, has bool, err 
 }
 
 type ShareRecord struct {
-	Server    string
-	Name      string
-	Path      string
-	CreatedTs time.Time
+	Server            string
+	Name              string
+	Path              common.ProtoPath
+	CreatedTs         time.Time
+	Uuid              string
+	EnableIndexing    bool
+	EnableDirectories bool
+	IsInternal        bool
 }
 
 func ScanShareRecord(row common.Scannable) (record ShareRecord, has bool, err error) {
@@ -84,8 +88,21 @@ func ScanShareRecord(row common.Scannable) (record ShareRecord, has bool, err er
 	var name string
 	var path string
 	var createdTs int64
+	var uuid string
+	var enableIndexing bool
+	var enableDirectories bool
+	var isInternal bool
 
-	err = row.Scan(&server, &name, &path, &createdTs)
+	err = row.Scan(
+		&server,
+		&name,
+		&path,
+		&createdTs,
+		&uuid,
+		&enableIndexing,
+		&enableDirectories,
+		&isInternal,
+	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return record, false, nil
@@ -95,8 +112,41 @@ func ScanShareRecord(row common.Scannable) (record ShareRecord, has bool, err er
 
 	record.Server = server
 	record.Name = name
-	record.Path = path
+	record.Path = common.UncheckedCreateProtoPath(path)
 	record.CreatedTs = time.Unix(createdTs, 0)
+	record.Uuid = uuid
+	record.EnableIndexing = enableIndexing
+	record.EnableDirectories = enableDirectories
+	record.IsInternal = isInternal
+
+	return record, true, nil
+}
+
+type ShareIndexRecord struct {
+	Share       string
+	Path        common.ProtoPath
+	IsDirectory bool
+	Size        int64
+}
+
+func ScanShareIndexRecord(row common.Scannable) (record ShareIndexRecord, has bool, err error) {
+	var share string
+	var path string
+	var isDirectory bool
+	var size int64
+
+	err = row.Scan(&share, &path, &isDirectory, &size)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return record, false, nil
+		}
+		return record, false, err
+	}
+
+	record.Share = share
+	record.Path = common.UncheckedCreateProtoPath(path)
+	record.IsDirectory = isDirectory
+	record.Size = size
 
 	return record, true, nil
 }

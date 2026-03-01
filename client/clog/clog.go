@@ -2,7 +2,6 @@ package clog
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -12,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"friendnet.org/client/storage"
 	"friendnet.org/common"
 	"github.com/google/uuid"
 )
@@ -83,7 +83,7 @@ type subMgr struct {
 type Handler struct {
 	printHandler slog.Handler
 
-	db    *sql.DB
+	store *storage.Storage
 	runId int64
 
 	subMgr *subMgr
@@ -101,11 +101,11 @@ type Handler struct {
 // NewHandler creates a new Handler.
 // The printHandler arg is the handler to use for printing to the console.
 // The runId arg is the client run ID, which should be a value that increases each time the client is run (such as a UNIX millisecond timestamp).
-func NewHandler(db *sql.DB, runId int64, printHandler slog.Handler) Handler {
+func NewHandler(store *storage.Storage, runId int64, printHandler slog.Handler) Handler {
 	h := Handler{
 		printHandler: printHandler,
 
-		db:    db,
+		store: store,
 		runId: runId,
 
 		subMgr: &subMgr{},
@@ -181,7 +181,7 @@ func (h Handler) Unsubscribe(id SubscriptionId) {
 
 // GetLogsAfter returns log messages created after the specified timestamp (and with the current runId).
 func (h Handler) GetLogsAfter(afterTs time.Time, minLevel slog.Level) ([]MessageRecord, error) {
-	rows, err := h.db.Query(`select * from log where run_id = ? and level >= ? and created_ts > ?`,
+	rows, err := h.store.Query(context.Background(), `select * from log where run_id = ? and level >= ? and created_ts > ?`,
 		h.runId,
 		minLevel,
 		afterTs.UnixMilli(),
@@ -284,7 +284,8 @@ func (h Handler) write(rec MessageRecord) error {
 		return fmt.Errorf(`failed to marshal log message metadata in Handler.write: %w`, err)
 	}
 
-	_, err = h.db.Exec(
+	_, err = h.store.Exec(
+		context.Background(),
 		`insert into log (uuid, created_ts, run_id, level, message, metadata_serial_ver, metadata) values (?, ?, ?, ?, ?, ?, ?)`,
 		rec.Uuid,
 		rec.CreatedTs.UnixMilli(),

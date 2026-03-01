@@ -213,7 +213,7 @@ func main() {
 
 	// Create logger after storage is initialized, as it depends on migrations being run.
 	logHandler := clog.NewHandler(
-		store.Db,
+		store,
 		runId,
 		slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 			Level: slog.LevelDebug,
@@ -259,7 +259,7 @@ func main() {
 		}
 	}
 
-	certStore := cert.NewSqliteStore(store.Db)
+	certStore := cert.NewSqliteStore(store)
 
 	directCfg, err := direct.ConfigFromSettings(context.Background(), store)
 	if err != nil {

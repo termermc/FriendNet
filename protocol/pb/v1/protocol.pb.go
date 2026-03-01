@@ -2806,8 +2806,10 @@ func (x *MsgSearch) GetQuery() string {
 // See MSG_TYPE_SEARCH_RESULT.
 type MsgSearchResult struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// The file's containing directory path.
+	DirectoryPath string `protobuf:"bytes,1,opt,name=directory_path,json=directoryPath,proto3" json:"directory_path,omitempty"`
 	// The file that was found.
-	File          *MsgFileMeta `protobuf:"bytes,1,opt,name=file,proto3" json:"file,omitempty"`
+	File          *MsgFileMeta `protobuf:"bytes,2,opt,name=file,proto3" json:"file,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2840,6 +2842,13 @@ func (x *MsgSearchResult) ProtoReflect() protoreflect.Message {
 // Deprecated: Use MsgSearchResult.ProtoReflect.Descriptor instead.
 func (*MsgSearchResult) Descriptor() ([]byte, []int) {
 	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{42}
+}
+
+func (x *MsgSearchResult) GetDirectoryPath() string {
+	if x != nil {
+		return x.DirectoryPath
+	}
+	return ""
 }
 
 func (x *MsgSearchResult) GetFile() *MsgFileMeta {
@@ -2966,9 +2975,10 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x10MsgClientOffline\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\"!\n" +
 	"\tMsgSearch\x12\x14\n" +
-	"\x05query\x18\x01 \x01(\tR\x05query\"9\n" +
-	"\x0fMsgSearchResult\x12&\n" +
-	"\x04file\x18\x01 \x01(\v2\x12.pb.v1.MsgFileMetaR\x04file*\xe3\t\n" +
+	"\x05query\x18\x01 \x01(\tR\x05query\"`\n" +
+	"\x0fMsgSearchResult\x12%\n" +
+	"\x0edirectory_path\x18\x01 \x01(\tR\rdirectoryPath\x12&\n" +
+	"\x04file\x18\x02 \x01(\v2\x12.pb.v1.MsgFileMetaR\x04file*\xe3\t\n" +
 	"\aMsgType\x12\x18\n" +
 	"\x14MSG_TYPE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rMSG_TYPE_PING\x10\x01\x12\x11\n" +

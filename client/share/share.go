@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 
 	"friendnet.org/common"
-	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
 )
 
@@ -35,7 +34,7 @@ type Share interface {
 	// Returns fs.ErrPermission if access is denied.
 	//
 	// May return ErrShareClosed if the share is closed, depending on the implementation.
-	GetFileMeta(path protocol.ProtoPath) (*pb.MsgFileMeta, error)
+	GetFileMeta(path common.ProtoPath) (*pb.MsgFileMeta, error)
 
 	// DirFiles returns metadata for all files in the directory at the specified path.
 	// Must be able to handle a request for "/".
@@ -44,7 +43,7 @@ type Share interface {
 	// Returns fs.ErrPermission if access is denied.
 	//
 	// May return ErrShareClosed if the share is closed, depending on the implementation.
-	DirFiles(path protocol.ProtoPath) ([]*pb.MsgFileMeta, error)
+	DirFiles(path common.ProtoPath) ([]*pb.MsgFileMeta, error)
 
 	// GetFile returns the metadata for a path and a stream of its binary content (if not a directory).
 	// Important: If the file is a directory, the stream will be empty and always return io.EOF.
@@ -59,7 +58,7 @@ type Share interface {
 	// Returns fs.ErrPermission if access is denied.
 	//
 	// May return ErrShareClosed if the share is closed, depending on the implementation.
-	GetFile(path protocol.ProtoPath, offset uint64, limit uint64) (*pb.MsgFileMeta, io.ReadCloser, error)
+	GetFile(path common.ProtoPath, offset uint64, limit uint64) (*pb.MsgFileMeta, io.ReadCloser, error)
 }
 
 // DirShare is an implementation of Share backed by a directory.
@@ -94,7 +93,7 @@ func (s *DirShare) Name() string {
 	return s.name
 }
 
-func (s *DirShare) GetFileMeta(path protocol.ProtoPath) (*pb.MsgFileMeta, error) {
+func (s *DirShare) GetFileMeta(path common.ProtoPath) (*pb.MsgFileMeta, error) {
 	if path.IsRoot() {
 		return &pb.MsgFileMeta{
 			Name:  "/",
@@ -112,7 +111,7 @@ func (s *DirShare) GetFileMeta(path protocol.ProtoPath) (*pb.MsgFileMeta, error)
 	return fileInfoToMeta(info), nil
 }
 
-func (s *DirShare) DirFiles(path protocol.ProtoPath) ([]*pb.MsgFileMeta, error) {
+func (s *DirShare) DirFiles(path common.ProtoPath) ([]*pb.MsgFileMeta, error) {
 	var entries []fs.DirEntry
 	var readDirErr error
 	if path.IsRoot() {
@@ -138,7 +137,7 @@ func (s *DirShare) DirFiles(path protocol.ProtoPath) ([]*pb.MsgFileMeta, error) 
 }
 
 func (s *DirShare) GetFile(
-	path protocol.ProtoPath,
+	path common.ProtoPath,
 	offset uint64,
 	limit uint64,
 ) (*pb.MsgFileMeta, io.ReadCloser, error) {

@@ -2,7 +2,6 @@ package cert
 
 import (
 	"context"
-	"database/sql"
 
 	"friendnet.org/client/storage"
 )
@@ -22,18 +21,18 @@ type Store interface {
 // SqliteStore implements Store using the client's SQLite instance.
 // It relies on the migrations in the migrations module, so it is not standalone.
 type SqliteStore struct {
-	db *sql.DB
+	store *storage.Storage
 }
 
-// NewSqliteStore creates a new SqliteStore instance with the provided database connection.
-func NewSqliteStore(db *sql.DB) *SqliteStore {
-	return &SqliteStore{db: db}
+// NewSqliteStore creates a new SqliteStore instance with the provided storage.
+func NewSqliteStore(store *storage.Storage) *SqliteStore {
+	return &SqliteStore{store: store}
 }
 
 func (s *SqliteStore) GetDer(ctx context.Context, hostname string) ([]byte, error) {
 	hostname = NormalizeHostname(hostname)
 
-	row := s.db.QueryRowContext(ctx, "select * from server_cert where hostname = ?", hostname)
+	row := s.store.QueryRow(ctx, "select * from server_cert where hostname = ?", hostname)
 
 	record, has, err := storage.ScanServerCertRecord(row)
 	if err != nil {
@@ -49,6 +48,6 @@ func (s *SqliteStore) GetDer(ctx context.Context, hostname string) ([]byte, erro
 func (s *SqliteStore) PutDer(ctx context.Context, hostname string, der []byte) error {
 	hostname = NormalizeHostname(hostname)
 
-	_, err := s.db.ExecContext(ctx, "insert or replace into server_cert (hostname, cert_der) values (?, ?)", hostname, der)
+	_, err := s.store.Exec(ctx, "insert or replace into server_cert (hostname, cert_der) values (?, ?)", hostname, der)
 	return err
 }

@@ -114,7 +114,7 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	serverUuid := pathParts[0]
 	usernameRaw := pathParts[1]
 	pathRaw := "/" + strings.Join(pathParts[2:], "/")
-	path, err := protocol.ValidatePath(pathRaw)
+	path, err := common.ValidatePath(pathRaw)
 	if err != nil {
 		text(w, r, http.StatusBadRequest, fmt.Sprintf("invalid path %q: %v\n", pathRaw, err))
 		return

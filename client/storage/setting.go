@@ -12,7 +12,7 @@ import (
 // If the setting does not exist, returns the default value.
 // If you want to put a default value while returning one, use GetSettingOrPut.
 func (s *Storage) GetSettingOr(ctx context.Context, key string, def string) (string, error) {
-	row := s.Db.QueryRowContext(ctx, `select value from setting where key = ?`, key)
+	row := s.QueryRow(ctx, `select value from setting where key = ?`, key)
 	var val string
 	err := row.Scan(&val)
 	if err != nil {
@@ -28,7 +28,7 @@ func (s *Storage) GetSettingOr(ctx context.Context, key string, def string) (str
 // If the setting does not exist, runs a default function and returns its result.
 // If you want to put a default value while returning one, use GetSettingOrPutFunc.
 func (s *Storage) GetSettingOrFunc(ctx context.Context, key string, fn func() (string, error)) (string, error) {
-	row := s.Db.QueryRowContext(ctx, `select value from setting where key = ?`, key)
+	row := s.QueryRow(ctx, `select value from setting where key = ?`, key)
 	var val string
 	err := row.Scan(&val)
 	if err != nil {
@@ -43,7 +43,7 @@ func (s *Storage) GetSettingOrFunc(ctx context.Context, key string, fn func() (s
 // GetSettingOrPutFunc returns the value of the setting with the specified key.
 // If the setting does not exist, it will be created with the result of fn, and that value will be returned.
 func (s *Storage) GetSettingOrPutFunc(ctx context.Context, key string, fn func() (string, error)) (string, error) {
-	row := s.Db.QueryRowContext(ctx, `select value from setting where key = ?`, key)
+	row := s.QueryRow(ctx, `select value from setting where key = ?`, key)
 	var val string
 	err := row.Scan(&val)
 	if err != nil {
@@ -53,7 +53,7 @@ func (s *Storage) GetSettingOrPutFunc(ctx context.Context, key string, fn func()
 				return "", fnErr
 			}
 
-			_, err = s.Db.ExecContext(ctx, `insert into setting (key, value) values (?, ?)`, key, def)
+			_, err = s.Exec(ctx, `insert into setting (key, value) values (?, ?)`, key, def)
 			if err != nil {
 				return "", err
 			}
@@ -68,12 +68,12 @@ func (s *Storage) GetSettingOrPutFunc(ctx context.Context, key string, fn func()
 // GetSettingOrPut returns the value of the setting with the specified key.
 // If the setting does not exist, it will be created with the default value, and that value will be returned.
 func (s *Storage) GetSettingOrPut(ctx context.Context, key string, def string) (string, error) {
-	row := s.Db.QueryRowContext(ctx, `select value from setting where key = ?`, key)
+	row := s.QueryRow(ctx, `select value from setting where key = ?`, key)
 	var val string
 	err := row.Scan(&val)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			_, err = s.Db.ExecContext(ctx, `insert into setting (key, value) values (?, ?)`, key, def)
+			_, err = s.Exec(ctx, `insert into setting (key, value) values (?, ?)`, key, def)
 			if err != nil {
 				return "", err
 			}
@@ -87,7 +87,7 @@ func (s *Storage) GetSettingOrPut(ctx context.Context, key string, def string) (
 
 // PutSetting sets the value of the setting with the specified key.
 func (s *Storage) PutSetting(ctx context.Context, key string, value string) error {
-	_, err := s.Db.ExecContext(ctx, `insert or replace into setting (key, value) values (?, ?)`, key, value)
+	_, err := s.Exec(ctx, `insert or replace into setting (key, value) values (?, ?)`, key, value)
 	return err
 }
 

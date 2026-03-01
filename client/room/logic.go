@@ -71,11 +71,11 @@ func NewLogicImpl(shares *share.ServerShareManager) *LogicImpl {
 	}
 }
 
-func (l *LogicImpl) validatePath(bidi protocol.ProtoBidi, path string) (protocol.ProtoPath, bool) {
-	protoPath, err := protocol.ValidatePath(path)
+func (l *LogicImpl) validatePath(bidi protocol.ProtoBidi, path string) (common.ProtoPath, bool) {
+	protoPath, err := common.ValidatePath(path)
 	if err != nil {
 		_ = bidi.WriteError(pb.ErrType_ERR_TYPE_INVALID_FIELDS, err.Error())
-		return protocol.ZeroProtoPath, false
+		return common.ZeroProtoPath, false
 	}
 	return protoPath, true
 }
@@ -115,7 +115,7 @@ func (l *LogicImpl) sendDirFiles(bidi C2cBidi, files []*pb.MsgFileMeta) error {
 // resolveShareAndPath returns share and path within share based on the specified path.
 // If the path is root, share will be nil.
 // If shareNotFound is true, the share was not found.
-func (l *LogicImpl) resolveShareAndPath(path protocol.ProtoPath) (shareOrNil share.Share, sharePath protocol.ProtoPath, shareNotFound bool, err error) {
+func (l *LogicImpl) resolveShareAndPath(path common.ProtoPath) (shareOrNil share.Share, sharePath common.ProtoPath, shareNotFound bool, err error) {
 	if path.IsRoot() {
 		return
 	}
@@ -123,7 +123,7 @@ func (l *LogicImpl) resolveShareAndPath(path protocol.ProtoPath) (shareOrNil sha
 	// Get path within share.
 	segments := path.ToSegments()
 	shareName := segments[0]
-	sharePath, err = protocol.SegmentsToPath(segments[1:])
+	sharePath, err = common.SegmentsToPath(segments[1:])
 	if err != nil {
 		return
 	}

@@ -170,6 +170,7 @@ func (c *MultiClient) GetByUuid(uuid string) (*Server, bool) {
 func (c *MultiClient) createServerInstance(record storage.ServerRecord) (*Server, error) {
 	var shareMgr *share.ServerShareManager
 	shareMgr, err := share.NewServerShareManager(
+		c.logger,
 		record.Uuid,
 		c.storage,
 	)
