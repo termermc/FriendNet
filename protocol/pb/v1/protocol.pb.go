@@ -147,6 +147,14 @@ const (
 	MsgType_MSG_TYPE_CLIENT_ONLINE MsgType = 37
 	// [S2C] Notification that a client went offline.
 	MsgType_MSG_TYPE_CLIENT_OFFLINE MsgType = 38
+	// [C2S, S2C, C2C] Submits a query to search for in shares.
+	// If C2S, the server will send the query to all connected clients and relay the results.
+	// If S2C or C2C, the client is expected to return search results in its shares and return the results.
+	// Expected:
+	//   - Repeated message MSG_TYPE_SEARCH_RESULT until stream is closed by receiver.
+	MsgType_MSG_TYPE_SEARCH MsgType = 39
+	// [S2C, C2S, C2C] A search result.
+	MsgType_MSG_TYPE_SEARCH_RESULT MsgType = 40
 )
 
 // Enum value maps for MsgType.
@@ -191,6 +199,8 @@ var (
 		36: "MSG_TYPE_CHANGE_ACCOUNT_PASSWORD",
 		37: "MSG_TYPE_CLIENT_ONLINE",
 		38: "MSG_TYPE_CLIENT_OFFLINE",
+		39: "MSG_TYPE_SEARCH",
+		40: "MSG_TYPE_SEARCH_RESULT",
 	}
 	MsgType_value = map[string]int32{
 		"MSG_TYPE_UNSPECIFIED":                        0,
@@ -232,6 +242,8 @@ var (
 		"MSG_TYPE_CHANGE_ACCOUNT_PASSWORD":            36,
 		"MSG_TYPE_CLIENT_ONLINE":                      37,
 		"MSG_TYPE_CLIENT_OFFLINE":                     38,
+		"MSG_TYPE_SEARCH":                             39,
+		"MSG_TYPE_SEARCH_RESULT":                      40,
 	}
 )
 
@@ -2745,6 +2757,98 @@ func (x *MsgClientOffline) GetUsername() string {
 	return ""
 }
 
+// See MSG_TYPE_SEARCH.
+type MsgSearch struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The query.
+	Query         string `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MsgSearch) Reset() {
+	*x = MsgSearch{}
+	mi := &file_pb_v1_protocol_proto_msgTypes[41]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MsgSearch) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgSearch) ProtoMessage() {}
+
+func (x *MsgSearch) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_v1_protocol_proto_msgTypes[41]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MsgSearch.ProtoReflect.Descriptor instead.
+func (*MsgSearch) Descriptor() ([]byte, []int) {
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{41}
+}
+
+func (x *MsgSearch) GetQuery() string {
+	if x != nil {
+		return x.Query
+	}
+	return ""
+}
+
+// See MSG_TYPE_SEARCH_RESULT.
+type MsgSearchResult struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The file that was found.
+	File          *MsgFileMeta `protobuf:"bytes,1,opt,name=file,proto3" json:"file,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MsgSearchResult) Reset() {
+	*x = MsgSearchResult{}
+	mi := &file_pb_v1_protocol_proto_msgTypes[42]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MsgSearchResult) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgSearchResult) ProtoMessage() {}
+
+func (x *MsgSearchResult) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_v1_protocol_proto_msgTypes[42]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MsgSearchResult.ProtoReflect.Descriptor instead.
+func (*MsgSearchResult) Descriptor() ([]byte, []int) {
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{42}
+}
+
+func (x *MsgSearchResult) GetFile() *MsgFileMeta {
+	if x != nil {
+		return x.File
+	}
+	return nil
+}
+
 var File_pb_v1_protocol_proto protoreflect.FileDescriptor
 
 const file_pb_v1_protocol_proto_rawDesc = "" +
@@ -2860,7 +2964,11 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x0fMsgClientOnline\x12)\n" +
 	"\x04info\x18\x01 \x01(\v2\x15.pb.v1.OnlineUserInfoR\x04info\".\n" +
 	"\x10MsgClientOffline\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername*\xb2\t\n" +
+	"\busername\x18\x01 \x01(\tR\busername\"!\n" +
+	"\tMsgSearch\x12\x14\n" +
+	"\x05query\x18\x01 \x01(\tR\x05query\"9\n" +
+	"\x0fMsgSearchResult\x12&\n" +
+	"\x04file\x18\x01 \x01(\v2\x12.pb.v1.MsgFileMetaR\x04file*\xe3\t\n" +
 	"\aMsgType\x12\x18\n" +
 	"\x14MSG_TYPE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rMSG_TYPE_PING\x10\x01\x12\x11\n" +
@@ -2901,7 +3009,9 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"%MSG_TYPE_DIRECT_CONN_HANDSHAKE_RESULT\x10#\x12$\n" +
 	" MSG_TYPE_CHANGE_ACCOUNT_PASSWORD\x10$\x12\x1a\n" +
 	"\x16MSG_TYPE_CLIENT_ONLINE\x10%\x12\x1b\n" +
-	"\x17MSG_TYPE_CLIENT_OFFLINE\x10&*\x8b\x03\n" +
+	"\x17MSG_TYPE_CLIENT_OFFLINE\x10&\x12\x13\n" +
+	"\x0fMSG_TYPE_SEARCH\x10'\x12\x1a\n" +
+	"\x16MSG_TYPE_SEARCH_RESULT\x10(*\x8b\x03\n" +
 	"\aErrType\x12\x18\n" +
 	"\x14ERR_TYPE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11ERR_TYPE_INTERNAL\x10\x01\x12\x1e\n" +
@@ -2961,7 +3071,7 @@ func file_pb_v1_protocol_proto_rawDescGZIP() []byte {
 }
 
 var file_pb_v1_protocol_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
-var file_pb_v1_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 41)
+var file_pb_v1_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 43)
 var file_pb_v1_protocol_proto_goTypes = []any{
 	(MsgType)(0),                              // 0: pb.v1.MsgType
 	(ErrType)(0),                              // 1: pb.v1.ErrType
@@ -3011,6 +3121,8 @@ var file_pb_v1_protocol_proto_goTypes = []any{
 	(*MsgChangeAccountPassword)(nil),          // 45: pb.v1.MsgChangeAccountPassword
 	(*MsgClientOnline)(nil),                   // 46: pb.v1.MsgClientOnline
 	(*MsgClientOffline)(nil),                  // 47: pb.v1.MsgClientOffline
+	(*MsgSearch)(nil),                         // 48: pb.v1.MsgSearch
+	(*MsgSearchResult)(nil),                   // 49: pb.v1.MsgSearchResult
 }
 var file_pb_v1_protocol_proto_depIdxs = []int32{
 	1,  // 0: pb.v1.MsgError.type:type_name -> pb.v1.ErrType
@@ -3028,11 +3140,12 @@ var file_pb_v1_protocol_proto_depIdxs = []int32{
 	37, // 12: pb.v1.MsgClientConnMethods.methods:type_name -> pb.v1.ConnMethod
 	6,  // 13: pb.v1.MsgDirectConnHandshakeResult.result:type_name -> pb.v1.DirectConnHandshakeResult
 	26, // 14: pb.v1.MsgClientOnline.info:type_name -> pb.v1.OnlineUserInfo
-	15, // [15:15] is the sub-list for method output_type
-	15, // [15:15] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	23, // 15: pb.v1.MsgSearchResult.file:type_name -> pb.v1.MsgFileMeta
+	16, // [16:16] is the sub-list for method output_type
+	16, // [16:16] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_pb_v1_protocol_proto_init() }
@@ -3049,7 +3162,7 @@ func file_pb_v1_protocol_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pb_v1_protocol_proto_rawDesc), len(file_pb_v1_protocol_proto_rawDesc)),
 			NumEnums:      7,
-			NumMessages:   41,
+			NumMessages:   43,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

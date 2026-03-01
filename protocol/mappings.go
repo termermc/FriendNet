@@ -86,6 +86,10 @@ func MsgTypeToEmptyMsg(typ pb.MsgType) proto.Message {
 		return &pb.MsgClientOnline{}
 	case pb.MsgType_MSG_TYPE_CLIENT_OFFLINE:
 		return &pb.MsgClientOffline{}
+	case pb.MsgType_MSG_TYPE_SEARCH:
+		return &pb.MsgSearch{}
+	case pb.MsgType_MSG_TYPE_SEARCH_RESULT:
+		return &pb.MsgSearchResult{}
 	default:
 		return nil
 	}
