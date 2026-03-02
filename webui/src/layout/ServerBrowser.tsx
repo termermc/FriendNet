@@ -215,6 +215,10 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 						</tbody>
 					</table>
 
+					<A href={`/server/${props.server.uuid}/search`}>
+						🔎 Search
+					</A>
+					<br />
 					<A href={`/server/${props.server.uuid}/shares`}>
 						📁 Manage Shares
 					</A>

@@ -105,231 +105,257 @@ const P2pSettings: Component = () => {
 			<Show when={isSuccess()}>
 				<div class={stylesCommon.successMessage}>
 					Settings Saved.
-					<br/>
+					<br />
 					Restart your client for changes to take effect.
 				</div>
 			</Show>
 
-			<Show when={isLoading()} fallback={
-				<form onSubmit={submit} class={stylesCommon.form}>
-					<table>
-						<tbody>
-						<tr>
-							<td>
-								<label for="setting-disable">
-									Disable direct connections?
-								</label>
-							</td>
-							<td>
-								<input
-									id="setting-disable"
-									type="checkbox"
-									placeholder=""
-									onChange={(e) =>
-										setDisable(e.currentTarget.checked)
-									}
-									checked={disable()}
-								/>
-							</td>
-						</tr>
-
-						<Show when={!disable()}>
-							<tr>
-								<td>
-									<label for="setting-addresses">
-										Manually listen on these addresses:
-									</label>
-								</td>
-								<td>
-									<For each={addrs()}>
-										{(addr) => (
-											<div>
-												<code>{addr}</code>{' '}
-												<button
-													type="button"
-													onClick={() => {
-														setAddrs(
-															addrs().filter(
-																(a) =>
-																	a !== addr,
-															),
-														)
-													}}
-												>
-													x
-												</button>
-											</div>
-										)}
-									</For>
-
-									<br/>
-
-									<input
-										type="text"
-										placeholder="ex: 0.0.0.0:20048, [::]:20048"
-										value={pendingAddr()}
-										onInput={(e) =>
-											setPendingAddr(
-												e.currentTarget.value,
-											)
-										}
-										onKeyDown={(e) => {
-											if (e.key === 'Enter') {
-												e.preventDefault()
+			<Show
+				when={isLoading()}
+				fallback={
+					<form onSubmit={submit} class={stylesCommon.form}>
+						<table>
+							<tbody>
+								<tr>
+									<td>
+										<label for="setting-disable">
+											Disable direct connections?
+										</label>
+									</td>
+									<td>
+										<input
+											id="setting-disable"
+											type="checkbox"
+											placeholder=""
+											onChange={(e) =>
+												setDisable(
+													e.currentTarget.checked,
+												)
 											}
-										}}
-									/>
-									<button
-										type="button"
-										onClick={() => {
-											const addr = pendingAddr()
-											if (!addr) {
-												return
-											}
-											const exists = addrs().some(
-												(a) => a === addr,
-											)
-											if (exists) {
-												return
-											}
+											checked={disable()}
+										/>
+									</td>
+								</tr>
 
-											setAddrs([...addrs(), addr])
-											setPendingAddr('')
-										}}
-									>
-										Add
-									</button>
-								</td>
-							</tr>
+								<Show when={!disable()}>
+									<tr>
+										<td>
+											<label for="setting-addresses">
+												Manually listen on these
+												addresses:
+											</label>
+										</td>
+										<td>
+											<For each={addrs()}>
+												{(addr) => (
+													<div>
+														<code>{addr}</code>{' '}
+														<button
+															type="button"
+															onClick={() => {
+																setAddrs(
+																	addrs().filter(
+																		(a) =>
+																			a !==
+																			addr,
+																	),
+																)
+															}}
+														>
+															x
+														</button>
+													</div>
+												)}
+											</For>
 
-							<tr>
-								<td>
-									<label for="setting-default-port">
-										Default port, or 0 for random:
-									</label>
-								</td>
-								<td>
-									<input
-										type="number"
-										id="setting-default-port"
-										min={0}
-										max={65535}
-										value={defaultPort()}
-										onInput={(e) =>
-											setDefaultPort(
-												parseInt(e.currentTarget.value),
-											)
-										}
-									/>
-								</td>
-							</tr>
+											<br />
 
-							<tr>
-								<td>
-									<label for="setting-disable-probe">
-										Disable probing the machine's interfaces for IPs to advertise?
-									</label>
-								</td>
-								<td>
-									<input
-										type="checkbox"
-										id="setting-disable-probe"
-										placeholder=""
-										onChange={(e) =>
-											setDisableProbe(e.currentTarget.checked)
-										}
-										checked={disableProbe()}
-									/>
-								</td>
-							</tr>
+											<input
+												type="text"
+												placeholder="ex: 0.0.0.0:20048, [::]:20048"
+												value={pendingAddr()}
+												onInput={(e) =>
+													setPendingAddr(
+														e.currentTarget.value,
+													)
+												}
+												onKeyDown={(e) => {
+													if (e.key === 'Enter') {
+														e.preventDefault()
+													}
+												}}
+											/>
+											<button
+												type="button"
+												onClick={() => {
+													const addr = pendingAddr()
+													if (!addr) {
+														return
+													}
+													const exists = addrs().some(
+														(a) => a === addr,
+													)
+													if (exists) {
+														return
+													}
 
-							<tr>
-								<td>
-									<label for="setting-advertise-private">
-										Advertise private IPs?
-									</label>
-								</td>
-								<td>
-									<input
-										type="checkbox"
-										id="setting-advertise-private"
-										placeholder=""
-										onChange={(e) =>
-											setAdPrivate(e.currentTarget.checked)
-										}
-										checked={adPrivate()}
-									/>
-								</td>
-							</tr>
+													setAddrs([...addrs(), addr])
+													setPendingAddr('')
+												}}
+											>
+												Add
+											</button>
+										</td>
+									</tr>
 
-							<tr>
-								<td>
-									<label for="setting-disable-public-ip-discovery">
-										Disable public IP discovery?
-										If checked, the client will not query servers for the client's public IP.
-									</label>
-								</td>
-								<td>
-									<input
-										type="checkbox"
-										id="setting-disable-public-ip-discovery"
-										placeholder=""
-										onChange={(e) =>
-											setDisablePublicIpDiscovery(e.currentTarget.checked)
-										}
-										checked={disablePublicIpDiscovery()}
-									/>
-								</td>
-							</tr>
+									<tr>
+										<td>
+											<label for="setting-default-port">
+												Default port, or 0 for random:
+											</label>
+										</td>
+										<td>
+											<input
+												type="number"
+												id="setting-default-port"
+												min={0}
+												max={65535}
+												value={defaultPort()}
+												onInput={(e) =>
+													setDefaultPort(
+														parseInt(
+															e.currentTarget
+																.value,
+														),
+													)
+												}
+											/>
+										</td>
+									</tr>
 
-							<tr>
-								<td>
-									<label for="setting-disable-upnp">
-										Disable UPnP?
-									</label>
-								</td>
-								<td>
-									<input
-										type="checkbox"
-										id="setting-disable-upnp"
-										placeholder=""
-										onChange={(e) =>
-											setDisableUpnp(e.currentTarget.checked)
-										}
-										checked={disableUpnp()}
-									/>
-								</td>
-							</tr>
+									<tr>
+										<td>
+											<label for="setting-disable-probe">
+												Disable probing the machine's
+												interfaces for IPs to advertise?
+											</label>
+										</td>
+										<td>
+											<input
+												type="checkbox"
+												id="setting-disable-probe"
+												placeholder=""
+												onChange={(e) =>
+													setDisableProbe(
+														e.currentTarget.checked,
+													)
+												}
+												checked={disableProbe()}
+											/>
+										</td>
+									</tr>
 
-							<tr>
-								<td>
-									<label for="setting-upnp-timeout-ms">
-										UPnP timeout (milliseconds)
-									</label>
-								</td>
-								<td>
-									<input
-										type="number"
-										id="setting-upnp-timeout-ms"
-										placeholder=""
-										onChange={(e) =>
-											setUpnpTimeoutMs(parseInt(e.currentTarget.value))
-										}
-										value={upnpTimeoutMs()}
-									/>
-								</td>
-							</tr>
-						</Show>
-						</tbody>
-					</table>
+									<tr>
+										<td>
+											<label for="setting-advertise-private">
+												Advertise private IPs?
+											</label>
+										</td>
+										<td>
+											<input
+												type="checkbox"
+												id="setting-advertise-private"
+												placeholder=""
+												onChange={(e) =>
+													setAdPrivate(
+														e.currentTarget.checked,
+													)
+												}
+												checked={adPrivate()}
+											/>
+										</td>
+									</tr>
 
-					<input
-						type="submit"
-						value="Update Settings (Requires Restart)"
-						disabled={isSaving()}
-					/>
-				</form>
-			}>
+									<tr>
+										<td>
+											<label for="setting-disable-public-ip-discovery">
+												Disable public IP discovery? If
+												checked, the client will not
+												query servers for the client's
+												public IP.
+											</label>
+										</td>
+										<td>
+											<input
+												type="checkbox"
+												id="setting-disable-public-ip-discovery"
+												placeholder=""
+												onChange={(e) =>
+													setDisablePublicIpDiscovery(
+														e.currentTarget.checked,
+													)
+												}
+												checked={disablePublicIpDiscovery()}
+											/>
+										</td>
+									</tr>
+
+									<tr>
+										<td>
+											<label for="setting-disable-upnp">
+												Disable UPnP?
+											</label>
+										</td>
+										<td>
+											<input
+												type="checkbox"
+												id="setting-disable-upnp"
+												placeholder=""
+												onChange={(e) =>
+													setDisableUpnp(
+														e.currentTarget.checked,
+													)
+												}
+												checked={disableUpnp()}
+											/>
+										</td>
+									</tr>
+
+									<tr>
+										<td>
+											<label for="setting-upnp-timeout-ms">
+												UPnP timeout (milliseconds)
+											</label>
+										</td>
+										<td>
+											<input
+												type="number"
+												id="setting-upnp-timeout-ms"
+												placeholder=""
+												onChange={(e) =>
+													setUpnpTimeoutMs(
+														parseInt(
+															e.currentTarget
+																.value,
+														),
+													)
+												}
+												value={upnpTimeoutMs()}
+											/>
+										</td>
+									</tr>
+								</Show>
+							</tbody>
+						</table>
+
+						<input
+							type="submit"
+							value="Update Settings (Requires Restart)"
+							disabled={isSaving()}
+						/>
+					</form>
+				}
+			>
 				Loading settings...
 			</Show>
 		</div>
@@ -346,7 +372,7 @@ export const SettingsPage: Component = () => {
 		>
 			<h1>Client Settings</h1>
 
-			<P2pSettings/>
+			<P2pSettings />
 		</div>
 	)
 }

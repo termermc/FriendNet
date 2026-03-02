@@ -129,12 +129,12 @@ const Page: Component = () => {
 								<br />
 								Path: {share.path}
 								<br />
-								Follow Symbolic Links? {share.followLinks ? 'Yes' : 'No'}
-								<br/>
+								Follow Symbolic Links?{' '}
+								{share.followLinks ? 'Yes' : 'No'}
+								<br />
 								<button onClick={() => doDelete(share.name)}>
 									Delete
-								</button>
-								{' '}
+								</button>{' '}
 								<button onClick={() => doIndex(share.name)}>
 									Index Now
 								</button>
@@ -156,62 +156,64 @@ const Page: Component = () => {
 			<form onSubmit={submit} class={stylesCommon.form}>
 				<table>
 					<tbody>
-					<tr>
-						<td>
-							<label for="add-share-name">Name</label>
-						</td>
-						<td>
-							<input
-								id="add-share-name"
-								type="text"
-								placeholder=""
-								value={name()}
-								onChange={(e) =>
-									setName(e.currentTarget.value)
-								}
-								required={true}
-							/>
-						</td>
-					</tr>
+						<tr>
+							<td>
+								<label for="add-share-name">Name</label>
+							</td>
+							<td>
+								<input
+									id="add-share-name"
+									type="text"
+									placeholder=""
+									value={name()}
+									onChange={(e) =>
+										setName(e.currentTarget.value)
+									}
+									required={true}
+								/>
+							</td>
+						</tr>
 
-					<tr>
-						<td>
-							<label for="add-share-path">Local Path</label>
-						</td>
-						<td>
-							<input
-								id="add-share-path"
-								type="text"
-								placeholder="/mnt/Music, D:\Music, etc."
-								value={path()}
-								onChange={(e) =>
-									setPath(e.currentTarget.value)
-								}
-								required={true}
-							/>
-						</td>
-					</tr>
+						<tr>
+							<td>
+								<label for="add-share-path">Local Path</label>
+							</td>
+							<td>
+								<input
+									id="add-share-path"
+									type="text"
+									placeholder="/mnt/Music, D:\Music, etc."
+									value={path()}
+									onChange={(e) =>
+										setPath(e.currentTarget.value)
+									}
+									required={true}
+								/>
+							</td>
+						</tr>
 
-					<tr>
-						<td>
-							<label for="add-share-follow-links">Follow symbolic links?</label>
-						</td>
-						<td>
-							<input
-								id="add-share-follow-links"
-								type="checkbox"
-								checked={followLinks()}
-								onChange={(e) =>
-									setFollowLinks(e.currentTarget.checked)
-								}
-								required={true}
-							/>
-						</td>
-					</tr>
+						<tr>
+							<td>
+								<label for="add-share-follow-links">
+									Follow symbolic links?
+								</label>
+							</td>
+							<td>
+								<input
+									id="add-share-follow-links"
+									type="checkbox"
+									checked={followLinks()}
+									onChange={(e) =>
+										setFollowLinks(e.currentTarget.checked)
+									}
+									required={true}
+								/>
+							</td>
+						</tr>
 					</tbody>
 				</table>
 
-				<input type="submit" value="Add Share" disabled={isAdding()}/>
+				<input type="submit" value="Add Share" disabled={isAdding()} />
 			</form>
 		</div>
 	)
@@ -222,7 +224,7 @@ export const ServerSharesPage: Component = () => {
 
 	return (
 		<Show when={loc.pathname} keyed>
-			<Page/>
+			<Page />
 		</Show>
 	)
 }

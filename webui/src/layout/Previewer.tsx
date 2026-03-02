@@ -162,7 +162,13 @@ export const Previewer: Component<PreviewerProps> = (props) => {
 	}
 
 	const url = makeFileUrl(fsUrl, info.serverUuid, info.username, info.path)
-	const cacheUrl = makeFileUrl(fsUrl, info.serverUuid, info.username, info.path, { allowCache: true })
+	const cacheUrl = makeFileUrl(
+		fsUrl,
+		info.serverUuid,
+		info.username,
+		info.path,
+		{ allowCache: true },
+	)
 
 	const cat = guessFileCategory(filename)
 	const catProps: CatProps = {
