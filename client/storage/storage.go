@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"path"
 	"path/filepath"
 	"strings"
+	"unicode"
 
 	"friendnet.org/client/storage/migration"
 	"friendnet.org/common"
@@ -93,7 +95,7 @@ func NewStorage(path string) (*Storage, error) {
 	//	return nil, fmt.Errorf("database integrity check failed: %s", icVal)
 	//}
 
-	insertShareIndexStmt, err := db.Prepare(`insert into share_index_fts (share, index_id, path, is_directory, size) values (?, ?, ?, ?, ?)`)
+	insertShareIndexStmt, err := db.Prepare(`insert into share_index_fts (share, index_id, name, dir, ext, path, is_directory, size) values (?, ?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare insert into share_index_fts: %w", err)
 	}
@@ -296,14 +298,93 @@ func (s *Storage) ClearShareIndex(ctx context.Context, uuid string, curIndexId i
 	return nil
 }
 
+func indexPathParts(pathStr string) (name string, dir string, ext string) {
+	name = path.Base(pathStr)
+	dir = path.Dir(pathStr)
+	ext = strings.TrimPrefix(path.Ext(name), ".")
+	if ext != "" {
+		ext = strings.ToLower(ext)
+	}
+	return name, dir, ext
+}
+
 // InsertShareIndex inserts a new entry into the search index for the share with the specified UUID.
 func (s *Storage) InsertShareIndex(ctx context.Context, uuid string, indexId int64, path string, isDir bool, size int64) error {
-	_, err := s.insertShareIndexStmt.ExecContext(ctx, uuid, indexId, path, isDir, size)
+	name, dir, ext := indexPathParts(path)
+	_, err := s.insertShareIndexStmt.ExecContext(ctx, uuid, indexId, name, dir, ext, path, isDir, size)
 	return err
 }
 
+// OptimizeShareIndex runs FTS5 optimize to compact and improve query performance after bulk indexing.
+func (s *Storage) OptimizeShareIndex(ctx context.Context) error {
+	_, err := s.Exec(ctx, `insert into share_index_fts(share_index_fts) values('optimize')`)
+	return err
+}
+
+func sanitizeExtToken(token string) string {
+	var b strings.Builder
+	b.Grow(len(token))
+	for _, r := range token {
+		if unicode.IsLetter(r) || unicode.IsNumber(r) {
+			b.WriteRune(unicode.ToLower(r))
+		}
+	}
+	return b.String()
+}
+
+func buildFtsQuery(raw string) string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return ""
+	}
+
+	fields := strings.Fields(raw)
+	extTerms := make([]string, 0, 1)
+	plainParts := make([]string, 0, len(fields))
+	for _, field := range fields {
+		lower := strings.ToLower(field)
+		if strings.HasPrefix(lower, "ext:") {
+			ext := field[4:]
+			ext = strings.TrimPrefix(ext, ".")
+			ext = sanitizeExtToken(ext)
+			if ext != "" {
+				extTerms = append(extTerms, ext)
+			}
+			continue
+		}
+		plainParts = append(plainParts, field)
+	}
+
+	esc := common.EscapeQueryString(strings.Join(plainParts, " "))
+	parts := strings.Fields(esc)
+	if len(parts) == 0 && len(extTerms) == 0 {
+		return ""
+	}
+
+	var b strings.Builder
+	for i, part := range parts {
+		if part == "" {
+			continue
+		}
+		if i == len(parts)-1 {
+			b.WriteString(part)
+			b.WriteByte('*')
+		} else {
+			b.WriteString(part)
+		}
+		b.WriteByte(' ')
+	}
+	for _, ext := range extTerms {
+		b.WriteString("ext:")
+		b.WriteString(ext)
+		b.WriteByte(' ')
+	}
+
+	return strings.TrimSpace(b.String())
+}
+
 // QueryShareIndexByShareUuids searches indexes for the shares with the specified UUIDs.
-// The returned records are sorted by path.
+// The returned records are ordered by relevance.
 //
 // The query is a full-text search query.
 //
@@ -315,23 +396,25 @@ func (s *Storage) QueryShareIndexByShareUuids(ctx context.Context, uuids []strin
 
 	// Process the query string.
 	// There are a few things we can do to improve the quality of results.
-	esc := common.EscapeQueryString(query)
-	var q string
-	for part := range strings.SplitSeq(esc, " ") {
-		if part == "" {
-			continue
-		}
-
-		q += part + "* "
+	q := buildFtsQuery(query)
+	if q == "" {
+		return nil, nil
 	}
 
 	ql := `
-select *
+select
+    share,
+    index_id,
+    path,
+    is_directory,
+    size,
+    snippet(share_index_fts, -1, '[', ']', '...', 10) as snippet
 from share_index_fts
 where
     share in (?` + strings.Repeat(", ?", len(uuids)-1) + `) and
 	index_id in (?` + strings.Repeat(", ?", len(indexIds)-1) + `) and
-	(share_index_fts match ?) order by rank limit ?
+	(share_index_fts match ?)
+order by bm25(share_index_fts, 5.0, 1.0, 2.0, 0.5) limit ?
 	`
 	params := make([]any, 0, len(uuids)+len(indexIds)+2)
 	for _, u := range uuids {

@@ -27,7 +27,9 @@ const Page: Component = () => {
 	const [error, setError] = createSignal('')
 	const [isLoading, setLoading] = createSignal(false)
 
-	const [results, setResults] = createSignal<FileTableItem<StreamSearchResponse>[]>([])
+	const [results, setResults] = createSignal<
+		FileTableItem<StreamSearchResponse>[]
+	>([])
 
 	const newItems: FileTableItem<StreamSearchResponse>[] = []
 	const debounceInterval = setInterval(() => {
@@ -35,10 +37,7 @@ const Page: Component = () => {
 			return
 		}
 
-		const newRes = [
-			...results(),
-			...newItems,
-		]
+		const newRes = [...results(), ...newItems]
 
 		// Sort with Fuse.
 		newItems[0].data.directoryPath
@@ -54,7 +53,12 @@ const Page: Component = () => {
 				},
 			],
 		})
-		setResults(fuse.search(submittedQuery).map(x => x.item))
+
+		// Remove "ext:" filters from search term before using it with Fuse.
+		const fuzzyQ = submittedQuery.replace(/(^|\W)ext:\w*/g, ' ')
+
+		const fuzzyRes = fuse.search(fuzzyQ)
+		setResults(fuzzyRes.map((x) => x.item))
 
 		newItems.length = 0
 	}, 100)
@@ -142,13 +146,12 @@ const Page: Component = () => {
 				error={error()}
 				items={results()}
 				forItem={(item) => {
-					const filePath = item.data.directoryPath + '/' + item.meta.name
+					const filePath =
+						item.data.directoryPath + '/' + item.meta.name
 					const username = item.data.username
 
 					const prefix = (
-						<div class={styles.username}>
-							👤{username}
-						</div>
+						<div class={styles.username}>👤{username}</div>
 					)
 
 					if (item.meta.isDir) {
@@ -173,7 +176,11 @@ const Page: Component = () => {
 							filePath,
 						)
 
-						const dirBrowsePath = makeBrowsePath(uuid, username, item.data.directoryPath)
+						const dirBrowsePath = makeBrowsePath(
+							uuid,
+							username,
+							item.data.directoryPath,
+						)
 						console.log(item.data)
 
 						return {
@@ -193,10 +200,7 @@ const Page: Component = () => {
 									>
 										🔗
 									</a>
-									<a
-										title="Download File"
-										href={dlUrl}
-									>
+									<a title="Download File" href={dlUrl}>
 										💾
 									</a>
 								</>

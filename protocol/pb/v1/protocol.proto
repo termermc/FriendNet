@@ -671,6 +671,9 @@ message MsgSearchResult {
 
     // The file that was found.
     MsgFileMeta file = 2;
+
+    // A snippet of text highlighting matched terms.
+    string snippet = 3;
 }
 
 // See MSG_TYPE_SEARCH_ROOM_RESULT.

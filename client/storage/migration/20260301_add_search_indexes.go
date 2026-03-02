@@ -118,9 +118,14 @@ create unique index share_server_name_uindex
 create virtual table share_index_fts using fts5(
     share unindexed,
     index_id unindexed,
+    name,
+    dir,
+    ext,
     path,
-    is_directory,
-    size unindexed
+    is_directory unindexed,
+    size unindexed,
+    prefix = '2 3 4',
+    tokenize = 'unicode61'
 );
 
 create trigger share_delete_index

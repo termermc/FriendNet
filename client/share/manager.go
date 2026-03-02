@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
 	"sync"
 	"time"
 
@@ -174,6 +175,7 @@ func (m *ServerShareManager) indexShare(ctx context.Context, name string) (count
 	}
 
 	shouldClearOld := false
+	shouldOptimize := false
 	defer func() {
 		if !shouldClearOld {
 			return
@@ -188,6 +190,17 @@ func (m *ServerShareManager) indexShare(ctx context.Context, name string) (count
 			)
 			return
 		}
+
+		if shouldOptimize {
+			optErr := m.storage.OptimizeShareIndex(ctx)
+			if optErr != nil {
+				m.logger.Warn("failed to optimize share index",
+					"service", "share.ServerShareManager",
+					"share_uuid", rec.Uuid,
+					"err", optErr,
+				)
+			}
+		}
 	}()
 
 	dirs := []string{"/"}
@@ -198,6 +211,14 @@ func (m *ServerShareManager) indexShare(ctx context.Context, name string) (count
 
 		var files []*pb.MsgFileMeta
 		files, err = share.DirFiles(common.UncheckedCreateProtoPath(dir))
+		if err != nil {
+			// Skip files that were removed or we do not have permission to access.
+			if os.IsNotExist(err) || os.IsPermission(err) {
+				continue
+			}
+
+			return count, true, fmt.Errorf("failed to read directory %q: %w", dir, err)
+		}
 		for _, file := range files {
 			if count >= m.indexerMaxFiles {
 				shouldClearOld = true
@@ -231,6 +252,7 @@ func (m *ServerShareManager) indexShare(ctx context.Context, name string) (count
 	}
 
 	shouldClearOld = true
+	shouldOptimize = true
 
 	return count, true, nil
 }
@@ -520,6 +542,7 @@ func (m *ServerShareManager) SearchShares(ctx context.Context, query string, lim
 			result.DirectoryPath = "/" + share.Name() + dirPath.String()
 		}
 		result.File = meta
+		result.Snippet = rec.Snippet
 	}
 
 	return results, nil

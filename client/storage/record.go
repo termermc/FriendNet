@@ -132,6 +132,7 @@ type ShareIndexRecord struct {
 	Path        common.ProtoPath
 	IsDirectory bool
 	Size        int64
+	Snippet     string
 }
 
 func ScanShareIndexRecord(row common.Scannable) (record ShareIndexRecord, has bool, err error) {
@@ -140,8 +141,9 @@ func ScanShareIndexRecord(row common.Scannable) (record ShareIndexRecord, has bo
 	var path string
 	var isDirectory bool
 	var size int64
+	var snippet string
 
-	err = row.Scan(&share, &indexId, &path, &isDirectory, &size)
+	err = row.Scan(&share, &indexId, &path, &isDirectory, &size, &snippet)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return record, false, nil
@@ -154,6 +156,7 @@ func ScanShareIndexRecord(row common.Scannable) (record ShareIndexRecord, has bo
 	record.Path = common.UncheckedCreateProtoPath(path)
 	record.IsDirectory = isDirectory
 	record.Size = size
+	record.Snippet = snippet
 
 	return record, true, nil
 }

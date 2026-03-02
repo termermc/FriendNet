@@ -2933,7 +2933,9 @@ type StreamSearchResponse struct {
 	// The file's containing directory path.
 	DirectoryPath string `protobuf:"bytes,2,opt,name=directory_path,json=directoryPath,proto3" json:"directory_path,omitempty"`
 	// The file that was found.
-	File          *FileMeta `protobuf:"bytes,3,opt,name=file,proto3" json:"file,omitempty"`
+	File *FileMeta `protobuf:"bytes,3,opt,name=file,proto3" json:"file,omitempty"`
+	// A snippet of text highlighting matched terms.
+	Snippet       string `protobuf:"bytes,4,opt,name=snippet,proto3" json:"snippet,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2987,6 +2989,13 @@ func (x *StreamSearchResponse) GetFile() *FileMeta {
 		return x.File
 	}
 	return nil
+}
+
+func (x *StreamSearchResponse) GetSnippet() string {
+	if x != nil {
+		return x.Snippet
+	}
+	return ""
 }
 
 type Event_ServerConnStateChange struct {
@@ -3360,11 +3369,12 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"serverUuid\x12\x1f\n" +
 	"\busername\x18\x02 \x01(\tH\x00R\busername\x88\x01\x01\x12\x14\n" +
 	"\x05query\x18\x03 \x01(\tR\x05queryB\v\n" +
-	"\t_username\"\x88\x01\n" +
+	"\t_username\"\xa2\x01\n" +
 	"\x14StreamSearchResponse\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12%\n" +
 	"\x0edirectory_path\x18\x02 \x01(\tR\rdirectoryPath\x12-\n" +
-	"\x04file\x18\x03 \x01(\v2\x19.pb.clientrpc.v1.FileMetaR\x04file*\x8d\x01\n" +
+	"\x04file\x18\x03 \x01(\v2\x19.pb.clientrpc.v1.FileMetaR\x04file\x12\x18\n" +
+	"\asnippet\x18\x04 \x01(\tR\asnippet*\x8d\x01\n" +
 	"\x0fServerConnState\x12!\n" +
 	"\x1dSERVER_CONN_STATE_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18SERVER_CONN_STATE_CLOSED\x10\x01\x12\x1d\n" +

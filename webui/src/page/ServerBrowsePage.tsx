@@ -157,10 +157,7 @@ const Page: Component = () => {
 									>
 										🔗
 									</a>
-									<a
-										title="Download File"
-										href={dlUrl}
-									>
+									<a title="Download File" href={dlUrl}>
 										💾
 									</a>
 								</>

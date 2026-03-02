@@ -2815,7 +2815,9 @@ type MsgSearchResult struct {
 	// The file's containing directory path.
 	DirectoryPath string `protobuf:"bytes,1,opt,name=directory_path,json=directoryPath,proto3" json:"directory_path,omitempty"`
 	// The file that was found.
-	File          *MsgFileMeta `protobuf:"bytes,2,opt,name=file,proto3" json:"file,omitempty"`
+	File *MsgFileMeta `protobuf:"bytes,2,opt,name=file,proto3" json:"file,omitempty"`
+	// A snippet of text highlighting matched terms.
+	Snippet       string `protobuf:"bytes,3,opt,name=snippet,proto3" json:"snippet,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2862,6 +2864,13 @@ func (x *MsgSearchResult) GetFile() *MsgFileMeta {
 		return x.File
 	}
 	return nil
+}
+
+func (x *MsgSearchResult) GetSnippet() string {
+	if x != nil {
+		return x.Snippet
+	}
+	return ""
 }
 
 // See MSG_TYPE_SEARCH_ROOM_RESULT.
@@ -3036,10 +3045,11 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x10MsgClientOffline\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\"!\n" +
 	"\tMsgSearch\x12\x14\n" +
-	"\x05query\x18\x01 \x01(\tR\x05query\"`\n" +
+	"\x05query\x18\x01 \x01(\tR\x05query\"z\n" +
 	"\x0fMsgSearchResult\x12%\n" +
 	"\x0edirectory_path\x18\x01 \x01(\tR\rdirectoryPath\x12&\n" +
-	"\x04file\x18\x02 \x01(\v2\x12.pb.v1.MsgFileMetaR\x04file\"a\n" +
+	"\x04file\x18\x02 \x01(\v2\x12.pb.v1.MsgFileMetaR\x04file\x12\x18\n" +
+	"\asnippet\x18\x03 \x01(\tR\asnippet\"a\n" +
 	"\x13MsgSearchRoomResult\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12.\n" +
 	"\x06result\x18\x02 \x01(\v2\x16.pb.v1.MsgSearchResultR\x06result*\x84\n" +

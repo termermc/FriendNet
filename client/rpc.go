@@ -740,6 +740,7 @@ func (s *RpcServer) StreamSearch(ctx context.Context, request *v1.StreamSearchRe
 					Username:      next.Username,
 					DirectoryPath: next.Result.DirectoryPath,
 					File:          s.metaToInfo(next.Result.File),
+					Snippet:       next.Result.Snippet,
 				})
 				if err != nil {
 					if protocol.IsErrorConnCloseOrCancel(err) {
@@ -777,6 +778,7 @@ func (s *RpcServer) StreamSearch(ctx context.Context, request *v1.StreamSearchRe
 					Username:      peer.Username.String(),
 					DirectoryPath: next.DirectoryPath,
 					File:          s.metaToInfo(next.File),
+					Snippet:       next.Snippet,
 				})
 				if err != nil {
 					if protocol.IsErrorConnCloseOrCancel(err) {

@@ -480,6 +480,9 @@ message StreamSearchResponse {
 
     // The file that was found.
     FileMeta file = 3;
+
+    // A snippet of text highlighting matched terms.
+    string snippet = 4;
 }
 
 // ClientRpcService provides an RPC interface to a running FriendNet client.

@@ -207,6 +207,7 @@ type ClientRpcServiceClient interface {
 	// It streams the results as they come in.
 	//
 	// Returns NOT_FOUND if no such server exists.
+	// Returns INVALID_ARGUMENT if the search query is empty.
 	// Returns UNAVAILABLE if the user is offline or otherwise cannot be reached (if a specific client was specified).
 	StreamSearch(context.Context, *v1.StreamSearchRequest) (*connect.ServerStreamForClient[v1.StreamSearchResponse], error)
 }
@@ -681,6 +682,7 @@ type ClientRpcServiceHandler interface {
 	// It streams the results as they come in.
 	//
 	// Returns NOT_FOUND if no such server exists.
+	// Returns INVALID_ARGUMENT if the search query is empty.
 	// Returns UNAVAILABLE if the user is offline or otherwise cannot be reached (if a specific client was specified).
 	StreamSearch(context.Context, *v1.StreamSearchRequest, *connect.ServerStream[v1.StreamSearchResponse]) error
 }
