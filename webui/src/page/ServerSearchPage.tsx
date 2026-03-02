@@ -1,18 +1,19 @@
 import styles from './ServerSearchPage.module.css'
-import stylesCommon from '../common.module.css'
 
 import { Component, createSignal, onCleanup, Show } from 'solid-js'
-import { useGlobalState, useRpcClient } from '../ctx'
+import { useFileServerUrl, useGlobalState, useRpcClient } from '../ctx'
 import { Code, ConnectError } from '@connectrpc/connect'
-import { useLocation, useParams } from '@solidjs/router'
-import { FileTableItem } from '../FileTable'
+import { A, useLocation, useParams } from '@solidjs/router'
+import { FileTable, FileTableItem } from '../FileTable'
 import { StreamSearchResponse } from '../../pb/clientrpc/v1/rpc_pb'
 import Fuse from 'fuse.js'
+import { makeBrowsePath, makeFileUrl } from '../util'
 
 const Page: Component = () => {
 	const { uuid } = useParams<{ uuid: string }>()
 	const state = useGlobalState()
 	const client = useRpcClient()
+	const fsUrl = useFileServerUrl()
 
 	const server = state.getServerByUuid(uuid)
 	if (!server) {
@@ -83,6 +84,7 @@ const Page: Component = () => {
 
 		try {
 			const stream = client.streamSearch({
+				serverUuid: uuid,
 				username: username().trim() || undefined,
 				query: q,
 			})
@@ -111,120 +113,101 @@ const Page: Component = () => {
 
 	return (
 		<div class={styles.container}>
-			<Show when={error()}>
-				<div class={stylesCommon.errorMessage}>{error()}</div>
-			</Show>
-
-			<h1>Edit Server</h1>
-
-			<form onSubmit={submit} class={stylesCommon.form}>
-				<table>
-					<tbody>
-						<tr>
-							<td>
-								<label for="edit-server-name">Name</label>
-							</td>
-							<td>
-								<input
-									id="edit-server-name"
-									type="text"
-									placeholder=""
-									value={name()}
-									onChange={(e) =>
-										setName(e.currentTarget.value)
-									}
-									required={true}
-								/>
-							</td>
-						</tr>
-
-						<tr>
-							<td>
-								<label for="edit-server-address">Address</label>
-							</td>
-							<td>
-								<input
-									id="edit-server-address"
-									type="text"
-									placeholder="example.com, example.com:20038, etc."
-									value={address()}
-									onChange={(e) =>
-										setAddress(e.currentTarget.value)
-									}
-									required={true}
-								/>
-							</td>
-						</tr>
-
-						<tr>
-							<td>
-								<label for="edit-server-room">Room</label>
-							</td>
-							<td>
-								<input
-									id="edit-server-room"
-									type="text"
-									placeholder=""
-									value={room()}
-									onChange={(e) =>
-										setRoom(e.currentTarget.value)
-									}
-									required={true}
-								/>
-							</td>
-						</tr>
-
-						<tr>
-							<td>
-								<label for="edit-server-username">
-									Username
-								</label>
-							</td>
-							<td>
-								<input
-									id="edit-server-username"
-									type="text"
-									placeholder=""
-									value={username()}
-									onChange={(e) =>
-										setUsername(e.currentTarget.value)
-									}
-									required={true}
-								/>
-							</td>
-						</tr>
-
-						<tr>
-							<td>
-								<label
-									for="edit-server-password"
-									style="cursor:help"
-									title='This is the password to log in with. To change your account password, click "Change Account Password" on the server in the server browser.'
-								>
-									Password<sup>🛈</sup>
-								</label>
-							</td>
-							<td>
-								<input
-									id="edit-server-password"
-									type="password"
-									placeholder="Leave blank to leave unchanged"
-									value={password()}
-									onChange={(e) =>
-										setPassword(e.currentTarget.value)
-									}
-								/>
-							</td>
-						</tr>
-					</tbody>
-				</table>
+			<form class={styles.form} onSubmit={submit}>
+				<input
+					class={styles.fieldUsername}
+					type="text"
+					placeholder="Optional Username"
+					value={username()}
+					onChange={(e) => setUsername(e.currentTarget.value)}
+				/>
 
 				<input
+					class={styles.fieldQuery}
+					type="text"
+					placeholder="Search Query"
+					value={query()}
+					onChange={(e) => setQuery(e.currentTarget.value)}
+				/>
+
+				<input
+					class={styles.fieldSubmit}
 					type="submit"
-					value="Save Changes"
-					disabled={isLoading()}
+					placeholder="Search"
 				/>
 			</form>
+
+			<FileTable
+				isLoading={isLoading()}
+				error={error()}
+				items={results()}
+				forItem={(item) => {
+					const filePath = item.data.directoryPath + '/' + item.meta.name
+					const username = item.data.username
+
+					const prefix = (
+						<div class={styles.username}>
+							👤{username}
+						</div>
+					)
+
+					if (item.meta.isDir) {
+						return {
+							prefix: prefix,
+							href: makeBrowsePath(uuid, username, filePath),
+						}
+					} else {
+						const dlUrl = makeFileUrl(
+							fsUrl,
+							uuid,
+							username,
+							filePath,
+							{
+								download: true,
+							},
+						)
+						const nonDlUrl = makeFileUrl(
+							fsUrl,
+							uuid,
+							username,
+							filePath,
+						)
+
+						const dirBrowsePath = makeBrowsePath(uuid, username, item.data.directoryPath)
+						console.log(item.data)
+
+						return {
+							prefix: prefix,
+							actions: (
+								<>
+									<A
+										title="Open Directory"
+										href={dirBrowsePath}
+									>
+										📁
+									</A>
+									<a
+										title="Open File"
+										href={nonDlUrl}
+										target="_blank"
+									>
+										🔗
+									</a>
+									<a
+										title="Download File"
+										href={dlUrl}
+									>
+										💾
+									</a>
+								</>
+							),
+							onClick: () => {
+								state.previewFile(uuid, username, filePath)
+							},
+						}
+					}
+				}}
+			/>
 		</div>
 	)
 }

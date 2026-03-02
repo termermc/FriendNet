@@ -67,3 +67,21 @@ body {
 a {
 	color: white;
 }
+
+input[type="text"], input[type="password"], input[type="number"] {
+    border: 0.1rem solid rgba(0, 0, 0, 0.5);
+    color: white;
+    background-color: rgba(255, 255, 255, 0.1);
+    margin: 0.2rem;
+}
+input[type="submit"], button {
+    border: 0.1rem solid rgba(0, 0, 0, 0.5);
+    color: white;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+input[type="submit"]:hover, button:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+input[type="submit"]:active, button:active {
+    background-color: rgba(0, 0, 0, 0.1);
+}

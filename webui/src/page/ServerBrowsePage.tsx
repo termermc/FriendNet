@@ -150,10 +150,19 @@ const Page: Component = () => {
 						return {
 							actions: (
 								<>
-									<a href={nonDlUrl} target="_blank">
+									<a
+										title="Open File"
+										href={nonDlUrl}
+										target="_blank"
+									>
 										🔗
 									</a>
-									<a href={dlUrl}>💾</a>
+									<a
+										title="Download File"
+										href={dlUrl}
+									>
+										💾
+									</a>
 								</>
 							),
 							onClick: () => {

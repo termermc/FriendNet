@@ -331,7 +331,7 @@ from share_index_fts
 where
     share in (?` + strings.Repeat(", ?", len(uuids)-1) + `) and
 	index_id in (?` + strings.Repeat(", ?", len(indexIds)-1) + `) and
-	(video_fts match ?) order by rank limit ?
+	(share_index_fts match ?) order by rank limit ?
 	`
 	params := make([]any, 0, len(uuids)+len(indexIds)+2)
 	for _, u := range uuids {

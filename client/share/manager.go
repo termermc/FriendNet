@@ -506,8 +506,19 @@ func (m *ServerShareManager) SearchShares(ctx context.Context, query string, lim
 		meta.IsDir = rec.IsDirectory
 		meta.Size = uint64(rec.Size)
 
+		segments := rec.Path.ToSegments()
+		var dirPath common.ProtoPath
+		dirPath, err = common.SegmentsToPath(segments[:len(segments)-1])
+		if err != nil {
+			return nil, fmt.Errorf(`failed to convert segments to path: %w`, err)
+		}
+
 		result := &results[i]
-		result.DirectoryPath = "/" + share.Name() + rec.Path.String()
+		if dirPath.IsRoot() {
+			result.DirectoryPath = "/" + share.Name()
+		} else {
+			result.DirectoryPath = "/" + share.Name() + dirPath.String()
+		}
 		result.File = meta
 	}
 

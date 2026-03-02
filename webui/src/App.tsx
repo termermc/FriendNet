@@ -11,6 +11,7 @@ import { makeBrowsePath } from './util'
 import { LogsPage } from './page/LogsPage'
 import { ChangeServerPasswordPage } from './page/ChangeServerPasswordPage'
 import { SettingsPage } from './page/SettingsPage'
+import { ServerSearchPage } from './page/ServerSearchPage'
 
 const App: Component = () => {
 	const routes: RouteDefinition[] = [
@@ -44,6 +45,10 @@ const App: Component = () => {
 		{
 			path: '/server/:uuid/changepassword',
 			component: ChangeServerPasswordPage,
+		},
+		{
+			path: '/server/:uuid/search',
+			component: ServerSearchPage,
 		},
 
 		{

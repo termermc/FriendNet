@@ -3,3 +3,30 @@
     flex-direction: column;
     width: 100%;
 }
+
+.form {
+    border-bottom: 0.2rem solid rgba(0, 0, 0, 0.5);
+    height: 2rem;
+    display: flex;
+}
+.form input {
+    display: flex;
+}
+
+.fieldUsername {
+
+}
+.fieldQuery {
+    flex: 1;
+}
+.fieldSubmit {
+
+}
+
+.username {
+    display: inline-block;
+    padding-right: 0.5rem;
+    margin-right: 0.5rem;
+    font-weight: bold;
+    border-right: 0.1rem solid rgba(0, 0, 0, 0.5);
+}
