@@ -142,7 +142,9 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 		setPendingStateChange(false)
 	})
 
-	const doConnect = async () => {
+	const doConnect = async (e: Event) => {
+		e.preventDefault()
+
 		if (isPendingStateChange()) {
 			return
 		}
@@ -150,7 +152,9 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 		setPendingStateChange(true)
 		await props.server.connect()
 	}
-	const doDisconnect = async () => {
+	const doDisconnect = async (e: Event) => {
+		e.preventDefault()
+
 		if (isPendingStateChange()) {
 			return
 		}
@@ -232,6 +236,7 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 						<br />
 						<A
 							href=""
+							target="_self"
 							onClick={doDisconnect}
 							classList={{
 								[stylesCommon.opacity05]:
@@ -252,6 +257,7 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 						<br />
 						<A
 							href=""
+							target="_self"
 							onClick={doConnect}
 							classList={{
 								[stylesCommon.opacity05]:
