@@ -84,26 +84,34 @@ func (c *Conn) AdoptDirectConn(conn protocol.ProtoConn, username common.Normaliz
 
 	// Ping loop.
 	go func() {
+		ticker := time.NewTicker(ServerPingInterval)
+		defer ticker.Stop()
+
 		for {
-			_, pingErr := protocol.SendAndReceiveExpect[*pb.MsgPong](
-				conn,
-				pb.MsgType_MSG_TYPE_PING,
-				&pb.MsgPing{},
-				pb.MsgType_MSG_TYPE_PONG,
-			)
-			if pingErr != nil {
-				if protocol.IsErrorConnCloseOrCancel(pingErr) {
+			select {
+			case <-c.Context.Done():
+				return
+			case <-ticker.C:
+				_, pingErr := protocol.SendAndReceiveExpect[*pb.MsgPong](
+					conn,
+					pb.MsgType_MSG_TYPE_PING,
+					&pb.MsgPing{},
+					pb.MsgType_MSG_TYPE_PONG,
+				)
+				if pingErr != nil {
+					if protocol.IsErrorConnCloseOrCancel(pingErr) {
+						return
+					}
+
+					c.logger.Error("error pinging directly connected client",
+						"service", "room.Conn",
+						"room", c.RoomName.String(),
+						"username", username.String(),
+						"remote_addr", conn.RemoteAddr().String(),
+						"err", pingErr,
+					)
 					return
 				}
-
-				c.logger.Error("error pinging directly connected client",
-					"service", "room.Conn",
-					"room", c.RoomName.String(),
-					"username", username.String(),
-					"remote_addr", conn.RemoteAddr().String(),
-					"err", pingErr,
-				)
-				return
 			}
 		}
 	}()
