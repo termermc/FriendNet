@@ -16,6 +16,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"runtime/pprof"
 	"sync"
 	"syscall"
 	"time"
@@ -118,6 +119,7 @@ func main() {
 	var noLock bool
 	var installCa bool
 	var uninstallCa bool
+	var pprofFile string
 
 	flag.StringVar(&dataDir, "datadir", "", "path to server config JSON")
 	flag.StringVar(&rpcAddr, "rpcaddr", "https://localhost:20039", "RPC server address")
@@ -127,6 +129,7 @@ func main() {
 	flag.BoolVar(&noLock, "nolock", false, "do not use a lock to prevent multiple instances of the client from running")
 	flag.BoolVar(&installCa, "installca", false, "if set, tries to install the client's root CA for HTTPS on the web UI")
 	flag.BoolVar(&uninstallCa, "uninstallca", false, "if set, tries to uninstall the client's root CA")
+	flag.StringVar(&pprofFile, "pproffile", "", "write CPU profile data in the pprof format to this file, e.g. \"cpu.pprof\"")
 
 	// Prevent headless mode on Windows.
 	// It just causes the process to go to the background and not stay in the terminal.
@@ -135,6 +138,20 @@ func main() {
 	}
 
 	flag.Parse()
+
+	var profilerFile *os.File
+	if pprofFile != "" {
+		var err error
+		profilerFile, err = os.Create(pprofFile)
+		if err != nil {
+			panic(fmt.Errorf(`failed to create pprof file: %w`, err))
+		}
+		if err = pprof.StartCPUProfile(profilerFile); err != nil {
+			_ = profilerFile.Close()
+			panic(fmt.Errorf(`failed to start CPU profile: %w`, err))
+		}
+		println("Running profiler, writing data to " + pprofFile)
+	}
 
 	if headless {
 		noBrowser = true
@@ -459,4 +476,10 @@ func main() {
 	stop()
 
 	shutdownWg.Wait()
+
+	if profilerFile != nil {
+		pprof.StopCPUProfile()
+		_ = profilerFile.Close()
+		println("Profiler stopped")
+	}
 }
