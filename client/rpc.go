@@ -34,6 +34,7 @@ var errIncorrectPassword = connect.NewError(connect.CodeInvalidArgument, errors.
 var errInvalidDefaultPort = connect.NewError(connect.CodeInvalidArgument, errors.New("default port must be between 1024 and 65535 (inclusive), or 0 for random"))
 var errInvalidUpnpTimeout = connect.NewError(connect.CodeInvalidArgument, errors.New("UPnP timeout must be between 0 and 60000 (inclusive)"))
 var errIndexingDisabled = connect.NewError(connect.CodeFailedPrecondition, errors.New("share has indexing disabled"))
+var errEmptySearchQuery = connect.NewError(connect.CodeInvalidArgument, errors.New("search query cannot be empty"))
 
 type RpcServer struct {
 	clogHandler   clog.Handler
@@ -571,7 +572,7 @@ func (s *RpcServer) ChangeAccountPassword(ctx context.Context, request *v1.Chang
 	return &v1.ChangeAccountPasswordResponse{}, nil
 }
 
-func (s *RpcServer) ServerConnect(ctx context.Context, request *v1.ServerConnectRequest) (*v1.ServerConnectResponse, error) {
+func (s *RpcServer) ServerConnect(_ context.Context, request *v1.ServerConnectRequest) (*v1.ServerConnectResponse, error) {
 	srv, has := s.client.GetByUuid(request.Uuid)
 	if !has {
 		return nil, errServerNotFound
@@ -582,7 +583,7 @@ func (s *RpcServer) ServerConnect(ctx context.Context, request *v1.ServerConnect
 	return &v1.ServerConnectResponse{}, nil
 }
 
-func (s *RpcServer) ServerDisconnect(ctx context.Context, request *v1.ServerDisconnectRequest) (*v1.ServerDisconnectResponse, error) {
+func (s *RpcServer) ServerDisconnect(_ context.Context, request *v1.ServerDisconnectRequest) (*v1.ServerDisconnectResponse, error) {
 	srv, has := s.client.GetByUuid(request.Uuid)
 	if !has {
 		return nil, errServerNotFound
@@ -704,4 +705,86 @@ func (s *RpcServer) IndexShare(_ context.Context, request *v1.IndexShareRequest)
 	}
 
 	return &v1.IndexShareResponse{}, nil
+}
+
+func (s *RpcServer) StreamSearch(ctx context.Context, request *v1.StreamSearchRequest, conn *connect.ServerStream[v1.StreamSearchResponse]) error {
+	if request.Query == "" {
+		return errEmptySearchQuery
+	}
+
+	srv, has := s.client.GetByUuid(request.ServerUuid)
+	if !has {
+		return errServerNotFound
+	}
+
+	return srv.Do(ctx, func(ctx context.Context, c *room.Conn) error {
+		if request.Username == nil {
+			// Stream from server.
+			stream, err := c.Search(request.Query)
+			if err != nil {
+				return err
+			}
+			defer func() {
+				_ = stream.Close()
+			}()
+
+			for {
+				next, nextErr := stream.ReadNext()
+				if nextErr != nil {
+					if protocol.IsErrorConnCloseOrCancel(nextErr) {
+						return nil
+					}
+				}
+
+				err = conn.Send(&v1.StreamSearchResponse{
+					Username:      next.Username,
+					DirectoryPath: next.Result.DirectoryPath,
+					File:          s.metaToInfo(next.Result.File),
+				})
+				if err != nil {
+					if protocol.IsErrorConnCloseOrCancel(err) {
+						return nil
+					}
+					return err
+				}
+			}
+		} else {
+			// Stream from client.
+			username, usernameOk := common.NormalizeUsername(*request.Username)
+			if !usernameOk {
+				return errInvalidUsername
+			}
+
+			peer := c.GetVirtualC2cConn(username, false)
+
+			stream, err := peer.Search(request.Query)
+			if err != nil {
+				return err
+			}
+			defer func() {
+				_ = stream.Close()
+			}()
+
+			for {
+				next, nextErr := stream.ReadNext()
+				if nextErr != nil {
+					if protocol.IsErrorConnCloseOrCancel(nextErr) {
+						return nil
+					}
+				}
+
+				err = conn.Send(&v1.StreamSearchResponse{
+					Username:      peer.Username.String(),
+					DirectoryPath: next.DirectoryPath,
+					File:          s.metaToInfo(next.File),
+				})
+				if err != nil {
+					if protocol.IsErrorConnCloseOrCancel(err) {
+						return nil
+					}
+					return err
+				}
+			}
+		}
+	})
 }

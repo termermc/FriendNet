@@ -149,8 +149,10 @@ func (c VirtualC2cConn) GetFile(req *pb.MsgGetFile) (meta *pb.MsgFileMeta, reade
 }
 
 // Search returns a stream of search results for the specified query.
-func (c VirtualC2cConn) Search(msg *pb.MsgSearch) (protocol.Stream[*pb.MsgSearchResult], error) {
-	bidi, err := c.OpenBidiWithMsg(pb.MsgType_MSG_TYPE_SEARCH, msg)
+func (c VirtualC2cConn) Search(query string) (protocol.Stream[*pb.MsgSearchResult], error) {
+	bidi, err := c.OpenBidiWithMsg(pb.MsgType_MSG_TYPE_SEARCH, &pb.MsgSearch{
+		Query: query,
+	})
 	if err != nil {
 		return nil, err
 	}

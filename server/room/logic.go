@@ -372,6 +372,10 @@ func (l LogicImpl) OnChangeAccountPassword(ctx context.Context, client *Client, 
 }
 
 func (l LogicImpl) OnSearch(ctx context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgSearch]) error {
+	if msg.Payload.Query == "" {
+		return bidi.WriteError(pb.ErrType_ERR_TYPE_INVALID_FIELDS, "query cannot be empty")
+	}
+
 	clients := client.Room.GetAllClients()
 
 	resChan := make(chan *pb.MsgSearchRoomResult, 100)

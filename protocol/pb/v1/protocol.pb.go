@@ -153,6 +153,7 @@ const (
 	// Expected: Either:
 	//   - If C2C: Repeated message MSG_TYPE_SEARCH_RESULT until stream is closed by receiver.
 	//   - If C2C: Repeated message MSG_TYPE_SEARCH_ROOM_RESULT until stream is closed by receiver.
+	//   - Message MSG_TYPE_ERROR of ERR_TYPE_INVALID_FIELDS if the query is empty.
 	MsgType_MSG_TYPE_SEARCH MsgType = 39
 	// [C2S, C2C] A search result.
 	MsgType_MSG_TYPE_SEARCH_RESULT MsgType = 40

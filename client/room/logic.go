@@ -341,6 +341,11 @@ func (l *LogicImpl) OnClientOffline(_ context.Context, room *Conn, _ protocol.Pr
 
 func (l *LogicImpl) OnSearch(ctx context.Context, _ *Conn, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgSearch]) error {
 	query := msg.Payload.Query
+
+	if query == "" {
+		return bidi.WriteError(pb.ErrType_ERR_TYPE_INVALID_FIELDS, "query cannot be empty")
+	}
+
 	results, err := l.shares.SearchShares(ctx, query, l.searchLimit)
 	if err != nil {
 		return fmt.Errorf("failed to get search results for %q: %w", query, err)

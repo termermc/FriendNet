@@ -461,6 +461,27 @@ message IndexShareResponse {
 
 }
 
+message StreamSearchRequest {
+    // The associated server's UUID.
+    string server_uuid = 1;
+
+    // The username of the client to search, or omit to search all clients.
+    optional string username = 2;
+
+    // The search query.
+    string query = 3;
+}
+message StreamSearchResponse {
+    // The username of the client the result came from.
+    string username = 1;
+
+    // The file's containing directory path.
+    string directory_path = 2;
+
+    // The file that was found.
+    FileMeta file = 3;
+}
+
 // ClientRpcService provides an RPC interface to a running FriendNet client.
 // It can query state and perform actions.
 //
@@ -586,4 +607,12 @@ service ClientRpcService {
     // Returns NOT_FOUND if no such share exists.
     // Returns FAILED_PRECONDITION if the share does not have indexing enabled.
     rpc IndexShare(IndexShareRequest) returns (IndexShareResponse) {}
+
+    // StreamSearch requests to search a specific client or all clients.
+    // It streams the results as they come in.
+    //
+    // Returns NOT_FOUND if no such server exists.
+    // Returns INVALID_ARGUMENT if the search query is empty.
+    // Returns UNAVAILABLE if the user is offline or otherwise cannot be reached (if a specific client was specified).
+    rpc StreamSearch(StreamSearchRequest) returns (stream StreamSearchResponse) {}
 }

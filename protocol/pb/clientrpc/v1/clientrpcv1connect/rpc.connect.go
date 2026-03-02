@@ -98,6 +98,9 @@ const (
 	// ClientRpcServiceIndexShareProcedure is the fully-qualified name of the ClientRpcService's
 	// IndexShare RPC.
 	ClientRpcServiceIndexShareProcedure = "/pb.clientrpc.v1.ClientRpcService/IndexShare"
+	// ClientRpcServiceStreamSearchProcedure is the fully-qualified name of the ClientRpcService's
+	// StreamSearch RPC.
+	ClientRpcServiceStreamSearchProcedure = "/pb.clientrpc.v1.ClientRpcService/StreamSearch"
 )
 
 // ClientRpcServiceClient is a client for the pb.clientrpc.v1.ClientRpcService service.
@@ -200,6 +203,12 @@ type ClientRpcServiceClient interface {
 	// Returns NOT_FOUND if no such share exists.
 	// Returns FAILED_PRECONDITION if the share does not have indexing enabled.
 	IndexShare(context.Context, *v1.IndexShareRequest) (*v1.IndexShareResponse, error)
+	// StreamSearch requests to search a specific client or all clients.
+	// It streams the results as they come in.
+	//
+	// Returns NOT_FOUND if no such server exists.
+	// Returns UNAVAILABLE if the user is offline or otherwise cannot be reached (if a specific client was specified).
+	StreamSearch(context.Context, *v1.StreamSearchRequest) (*connect.ServerStreamForClient[v1.StreamSearchResponse], error)
 }
 
 // NewClientRpcServiceClient constructs a client for the pb.clientrpc.v1.ClientRpcService service.
@@ -345,6 +354,12 @@ func NewClientRpcServiceClient(httpClient connect.HTTPClient, baseURL string, op
 			connect.WithSchema(clientRpcServiceMethods.ByName("IndexShare")),
 			connect.WithClientOptions(opts...),
 		),
+		streamSearch: connect.NewClient[v1.StreamSearchRequest, v1.StreamSearchResponse](
+			httpClient,
+			baseURL+ClientRpcServiceStreamSearchProcedure,
+			connect.WithSchema(clientRpcServiceMethods.ByName("StreamSearch")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -372,6 +387,7 @@ type clientRpcServiceClient struct {
 	getDirectSettings     *connect.Client[v1.GetDirectSettingsRequest, v1.GetDirectSettingsResponse]
 	updateDirectSettings  *connect.Client[v1.UpdateDirectSettingsRequest, v1.UpdateDirectSettingsResponse]
 	indexShare            *connect.Client[v1.IndexShareRequest, v1.IndexShareResponse]
+	streamSearch          *connect.Client[v1.StreamSearchRequest, v1.StreamSearchResponse]
 }
 
 // StreamLogs calls pb.clientrpc.v1.ClientRpcService.StreamLogs.
@@ -556,6 +572,11 @@ func (c *clientRpcServiceClient) IndexShare(ctx context.Context, req *v1.IndexSh
 	return nil, err
 }
 
+// StreamSearch calls pb.clientrpc.v1.ClientRpcService.StreamSearch.
+func (c *clientRpcServiceClient) StreamSearch(ctx context.Context, req *v1.StreamSearchRequest) (*connect.ServerStreamForClient[v1.StreamSearchResponse], error) {
+	return c.streamSearch.CallServerStream(ctx, connect.NewRequest(req))
+}
+
 // ClientRpcServiceHandler is an implementation of the pb.clientrpc.v1.ClientRpcService service.
 type ClientRpcServiceHandler interface {
 	// StreamLogs returns an ongoing stream of log messages from the client.
@@ -656,6 +677,12 @@ type ClientRpcServiceHandler interface {
 	// Returns NOT_FOUND if no such share exists.
 	// Returns FAILED_PRECONDITION if the share does not have indexing enabled.
 	IndexShare(context.Context, *v1.IndexShareRequest) (*v1.IndexShareResponse, error)
+	// StreamSearch requests to search a specific client or all clients.
+	// It streams the results as they come in.
+	//
+	// Returns NOT_FOUND if no such server exists.
+	// Returns UNAVAILABLE if the user is offline or otherwise cannot be reached (if a specific client was specified).
+	StreamSearch(context.Context, *v1.StreamSearchRequest, *connect.ServerStream[v1.StreamSearchResponse]) error
 }
 
 // NewClientRpcServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -797,6 +824,12 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 		connect.WithSchema(clientRpcServiceMethods.ByName("IndexShare")),
 		connect.WithHandlerOptions(opts...),
 	)
+	clientRpcServiceStreamSearchHandler := connect.NewServerStreamHandlerSimple(
+		ClientRpcServiceStreamSearchProcedure,
+		svc.StreamSearch,
+		connect.WithSchema(clientRpcServiceMethods.ByName("StreamSearch")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/pb.clientrpc.v1.ClientRpcService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ClientRpcServiceStreamLogsProcedure:
@@ -843,6 +876,8 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 			clientRpcServiceUpdateDirectSettingsHandler.ServeHTTP(w, r)
 		case ClientRpcServiceIndexShareProcedure:
 			clientRpcServiceIndexShareHandler.ServeHTTP(w, r)
+		case ClientRpcServiceStreamSearchProcedure:
+			clientRpcServiceStreamSearchHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -938,4 +973,8 @@ func (UnimplementedClientRpcServiceHandler) UpdateDirectSettings(context.Context
 
 func (UnimplementedClientRpcServiceHandler) IndexShare(context.Context, *v1.IndexShareRequest) (*v1.IndexShareResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.IndexShare is not implemented"))
+}
+
+func (UnimplementedClientRpcServiceHandler) StreamSearch(context.Context, *v1.StreamSearchRequest, *connect.ServerStream[v1.StreamSearchResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.StreamSearch is not implemented"))
 }

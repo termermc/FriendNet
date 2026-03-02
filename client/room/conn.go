@@ -648,3 +648,19 @@ func (c *Conn) GetOnlineUsers() (protocol.Stream[*pb.MsgOnlineUsers], error) {
 		},
 	), nil
 }
+
+// Search requests the server to search all online clients' shares and stream back the results as they come in.
+func (c *Conn) Search(query string) (protocol.Stream[*pb.MsgSearchRoomResult], error) {
+	bidi, err := c.serverConn.OpenBidiWithMsg(pb.MsgType_MSG_TYPE_SEARCH, &pb.MsgSearch{
+		Query: query,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return protocol.NewTransformerStream(
+		protocol.NewTypedMsgStream[*pb.MsgSearchRoomResult](bidi, pb.MsgType_MSG_TYPE_SEARCH_ROOM_RESULT),
+		func(msg *protocol.TypedProtoMsg[*pb.MsgSearchRoomResult]) *pb.MsgSearchRoomResult {
+			return msg.Payload
+		},
+	), nil
+}
