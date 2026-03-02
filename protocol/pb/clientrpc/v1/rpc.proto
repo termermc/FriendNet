@@ -135,8 +135,12 @@ message ShareInfo {
     // The share's path on disk.
     string path = 3;
 
+    // Whether links should be followed.
+    // Links are symbolic links or the OS equivalent.
+    bool follow_links = 4;
+
     // The UNIX timestamp when the share was created.
-    int64 created_ts = 4;
+    int64 created_ts = 5;
 }
 
 // OnlineUserInfo is information about an online user.
@@ -337,6 +341,9 @@ message CreateShareRequest {
 
     // The share's path on disk.
     string path = 3;
+
+    // Whether to follow links.
+    bool follow_links = 4;
 }
 message CreateShareResponse {
     // The newly created share.

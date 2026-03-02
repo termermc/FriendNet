@@ -22,9 +22,13 @@ var ErrShareExists = errors.New("share with same name exists")
 // ErrIndexingDisabled is returned when trying to index a share that has indexing disabled.
 var ErrIndexingDisabled = errors.New("indexing disabled for share")
 
-type shareAndRecord struct {
-	share  Share
-	record storage.ShareRecord
+// ErrTooManyFiles is returned when trying to index a share that has too many files.
+var ErrTooManyFiles = errors.New("too many files in share, indexing canceled")
+
+type shareData struct {
+	share       Share
+	record      storage.ShareRecord
+	lastIndexId int64
 }
 
 // ServerShareManager manages shares for a server.
@@ -41,10 +45,11 @@ type ServerShareManager struct {
 	storage    *storage.Storage
 
 	// A mapping of share names to their underlying Share instances.
-	shareMap map[string]shareAndRecord
+	shareMap map[string]*shareData
 
 	indexerInterval time.Duration
 	indexingShares  map[string]struct{}
+	indexerMaxFiles int
 }
 
 // NewServerShareManager creates a new share manager for the given server.
@@ -63,11 +68,15 @@ func NewServerShareManager(
 		return nil, fmt.Errorf(`failed to get share records for server %q: %w`, serverUuid, err)
 	}
 
-	shareMap := make(map[string]shareAndRecord, len(records))
+	shareMap := make(map[string]*shareData, len(records))
 	for _, record := range records {
 		var share Share
-		share, err = NewDirShare(record.Name, record.Path.String())
-		shareMap[record.Name] = shareAndRecord{
+		share, err = NewDirShare(
+			record.Name,
+			record.Path.String(),
+			record.FollowLinks,
+		)
+		shareMap[record.Name] = &shareData{
 			share:  share,
 			record: record,
 		}
@@ -86,6 +95,7 @@ func NewServerShareManager(
 
 		indexerInterval: 10 * time.Minute,
 		indexingShares:  make(map[string]struct{}),
+		indexerMaxFiles: 1_000_000,
 	}
 
 	go m.indexerDaemon()
@@ -118,9 +128,13 @@ func (m *ServerShareManager) indexerDaemon() {
 		}
 		m.mu.RUnlock()
 
+		var wg sync.WaitGroup
 		for _, rec := range recs {
-			m.doIndexShare(rec)
+			wg.Go(func() {
+				m.doIndexShare(rec)
+			})
 		}
+		wg.Wait()
 	}
 
 	do()
@@ -155,15 +169,39 @@ func (m *ServerShareManager) doIndexShare(rec storage.ShareRecord) {
 	}()
 
 	m.logger.Info("indexing share",
+		"service", "share.ServerShareManager",
 		"uuid", rec.Uuid,
 		"name", rec.Name,
+		"path", rec.Path,
 	)
 
 	count, _, idxErr := m.IndexShare(m.ctx, rec.Name)
 	if idxErr != nil {
+		if errors.Is(idxErr, ErrIndexingDisabled) {
+			m.logger.Info("indexing disabled for share",
+				"service", "share.ServerShareManager",
+				"uuid", rec.Uuid,
+				"name", rec.Name,
+				"path", rec.Path,
+			)
+			return
+		}
+		if errors.Is(idxErr, ErrTooManyFiles) {
+			m.logger.Warn("share has too many files, indexing canceled",
+				"service", "share.ServerShareManager",
+				"uuid", rec.Uuid,
+				"name", rec.Name,
+				"path", rec.Path,
+				"file_count", count,
+			)
+			return
+		}
+
 		m.logger.Error("failed to index share",
+			"service", "share.ServerShareManager",
 			"uuid", rec.Uuid,
 			"name", rec.Name,
+			"path", rec.Path,
 			"err", idxErr,
 		)
 		return
@@ -172,6 +210,7 @@ func (m *ServerShareManager) doIndexShare(rec storage.ShareRecord) {
 	m.logger.Info("indexed share",
 		"uuid", rec.Uuid,
 		"name", rec.Name,
+		"path", rec.Path,
 		"file_count", count,
 	)
 }
@@ -205,7 +244,12 @@ func (m *ServerShareManager) GetByName(name string) (Share, bool) {
 // Add creates a new server share.
 // If a share with the same name exists, returns ErrShareExists.
 // Triggers an index in the background when the share is created.
-func (m *ServerShareManager) Add(ctx context.Context, name string, path string) (Share, error) {
+func (m *ServerShareManager) Add(
+	ctx context.Context,
+	name string,
+	path string,
+	followLinks bool,
+) (Share, error) {
 	m.mu.Lock()
 
 	if m.isClosed {
@@ -221,7 +265,7 @@ func (m *ServerShareManager) Add(ctx context.Context, name string, path string) 
 	}
 
 	// Create in storage.
-	err := m.storage.CreateShare(ctx, m.serverUuid, name, path)
+	err := m.storage.CreateShare(ctx, m.serverUuid, name, path, followLinks)
 	if err != nil {
 		return nil, fmt.Errorf(`failed to create new share %q: %w`, name, err)
 	}
@@ -233,13 +277,17 @@ func (m *ServerShareManager) Add(ctx context.Context, name string, path string) 
 	}
 
 	// Create instance.
-	share, err := NewDirShare(name, path)
+	share, err := NewDirShare(
+		name,
+		path,
+		followLinks,
+	)
 	if err != nil {
 		return nil, fmt.Errorf(`failed to create share instance for newly created share %q: %w`, name, err)
 	}
 
 	m.mu.Lock()
-	m.shareMap[name] = shareAndRecord{
+	m.shareMap[name] = &shareData{
 		share:  share,
 		record: rec,
 	}
@@ -290,17 +338,19 @@ func (m *ServerShareManager) Delete(ctx context.Context, name string) error {
 // It returns the number of files indexed, whether the share existed, and any error that occurred.
 // Refuses to index the share if it has indexing disabled, returning ErrIndexingDisabled.
 func (m *ServerShareManager) IndexShare(ctx context.Context, name string) (count int, hasShare bool, err error) {
-	m.mu.RLock()
+	m.mu.Lock()
 	if m.isClosed {
-		m.mu.RUnlock()
+		m.mu.Unlock()
 		return 0, false, ErrServerManagerClosed
 	}
 	val, has := m.shareMap[name]
-	m.mu.RUnlock()
-
 	if !has {
+		m.mu.Unlock()
 		return 0, false, nil
 	}
+	curIndexId := time.Now().UnixMilli()
+	val.lastIndexId = curIndexId
+	m.mu.Unlock()
 
 	share := val.share
 	rec := val.record
@@ -309,10 +359,22 @@ func (m *ServerShareManager) IndexShare(ctx context.Context, name string) (count
 		return 0, true, ErrIndexingDisabled
 	}
 
-	err = m.storage.ClearShareIndex(ctx, rec.Uuid)
-	if err != nil {
-		return count, true, fmt.Errorf(`failed to clear share %q index before indexing: %w`, rec.Uuid, err)
-	}
+	shouldClearOld := false
+	defer func() {
+		if !shouldClearOld {
+			return
+		}
+
+		err = m.storage.ClearShareIndex(ctx, rec.Uuid, curIndexId)
+		if err != nil {
+			m.logger.Error("failed to clear old indexes for share",
+				"service", "share.ServerShareManager",
+				"share_uuid", rec.Uuid,
+				"err", err,
+			)
+			return
+		}
+	}()
 
 	dirs := []string{"/"}
 
@@ -323,6 +385,11 @@ func (m *ServerShareManager) IndexShare(ctx context.Context, name string) (count
 		var files []*pb.MsgFileMeta
 		files, err = share.DirFiles(common.UncheckedCreateProtoPath(dir))
 		for _, file := range files {
+			if count >= m.indexerMaxFiles {
+				shouldClearOld = true
+				return count, true, ErrTooManyFiles
+			}
+
 			count++
 
 			var path string
@@ -338,6 +405,7 @@ func (m *ServerShareManager) IndexShare(ctx context.Context, name string) (count
 
 			err = m.storage.InsertShareIndex(ctx,
 				rec.Uuid,
+				curIndexId,
 				path,
 				file.IsDir,
 				int64(file.Size),
@@ -347,6 +415,8 @@ func (m *ServerShareManager) IndexShare(ctx context.Context, name string) (count
 			}
 		}
 	}
+
+	shouldClearOld = true
 
 	return count, true, nil
 }
@@ -368,13 +438,9 @@ func (m *ServerShareManager) Close() error {
 	m.ctxCancel()
 
 	// Close all shares.
-	var wg sync.WaitGroup
 	for _, share := range shares {
-		wg.Go(func() {
-			_ = share.Close()
-		})
+		_ = share.Close()
 	}
-	wg.Wait()
 
 	return nil
 }
@@ -389,6 +455,7 @@ func (m *ServerShareManager) SearchShares(ctx context.Context, query string, lim
 		return nil, ErrServerManagerClosed
 	}
 
+	indexIds := make([]int64, 0, len(m.shareMap))
 	uuids := make([]string, 0, len(m.shareMap))
 	uuidToShare := make(map[string]Share)
 	for _, share := range m.shareMap {
@@ -396,12 +463,13 @@ func (m *ServerShareManager) SearchShares(ctx context.Context, query string, lim
 			continue
 		}
 
+		indexIds = append(indexIds, share.lastIndexId)
 		uuids = append(uuids, share.record.Uuid)
 		uuidToShare[share.record.Uuid] = share.share
 	}
 	m.mu.RUnlock()
 
-	recs, err := m.storage.QueryShareIndexByShareUuids(ctx, uuids, query, limit)
+	recs, err := m.storage.QueryShareIndexByShareUuids(ctx, uuids, indexIds, query, limit)
 	if err != nil {
 		return nil, fmt.Errorf(`failed to search shares: %w`, err)
 	}

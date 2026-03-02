@@ -85,10 +85,11 @@ func (s *RpcServer) metaToInfo(meta *pb.MsgFileMeta) *v1.FileMeta {
 }
 func (s *RpcServer) shareRecToInfo(share storage.ShareRecord) *v1.ShareInfo {
 	return &v1.ShareInfo{
-		ServerUuid: share.Server,
-		Name:       share.Name,
-		Path:       share.Path.String(),
-		CreatedTs:  share.CreatedTs.Unix(),
+		ServerUuid:  share.Server,
+		Name:        share.Name,
+		Path:        share.Path.String(),
+		CreatedTs:   share.CreatedTs.Unix(),
+		FollowLinks: share.FollowLinks,
 	}
 }
 func (s *RpcServer) writeLogMsgPtr(rec clog.MessageRecord, ptr *v1.LogMessage) {
@@ -349,7 +350,7 @@ func (s *RpcServer) CreateShare(ctx context.Context, request *v1.CreateShareRequ
 		return nil, errServerNotFound
 	}
 
-	_, err := srv.ShareMgr.Add(ctx, request.Name, request.Path)
+	_, err := srv.ShareMgr.Add(ctx, request.Name, request.Path, request.FollowLinks)
 	if err != nil {
 		return nil, err
 	}

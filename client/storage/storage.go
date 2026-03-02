@@ -79,19 +79,21 @@ func NewStorage(path string) (*Storage, error) {
 		}
 	}
 
-	// Check database integrity.
-	icRes := db.QueryRow(`PRAGMA integrity_check`)
-	var icVal string
-	err = icRes.Scan(&icVal)
-	if err != nil {
-		return nil, fmt.Errorf("failed to check database integrity: %w", err)
-	}
+	// With large share indexes, this is way too slow.
+	// We'll leave this commented out until a better solution is found.
+	//// Check database integrity.
+	//icRes := db.QueryRow(`PRAGMA integrity_check`)
+	//var icVal string
+	//err = icRes.Scan(&icVal)
+	//if err != nil {
+	//	return nil, fmt.Errorf("failed to check database integrity: %w", err)
+	//}
+	//
+	//if icVal != "ok" {
+	//	return nil, fmt.Errorf("database integrity check failed: %s", icVal)
+	//}
 
-	if icVal != "ok" {
-		return nil, fmt.Errorf("database integrity check failed: %s", icVal)
-	}
-
-	insertShareIndexStmt, err := db.Prepare(`insert into share_index_fts (share, path, is_directory, size) values (?, ?, ?, ?)`)
+	insertShareIndexStmt, err := db.Prepare(`insert into share_index_fts (share, index_id, path, is_directory, size) values (?, ?, ?, ?, ?)`)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare insert into share_index_fts: %w", err)
 	}
@@ -207,17 +209,19 @@ func (s *Storage) CreateShare(
 	serverUuid string,
 	name string,
 	path string,
+	followLinks bool,
 ) error {
 	uuidRaw, err := uuid.NewV7()
 	if err != nil {
 		return err
 	}
 
-	_, err = s.Exec(ctx, `insert into share (server, name, path, uuid) values (?, ?, ?, ?)`,
+	_, err = s.Exec(ctx, `insert into share (server, name, path, uuid, follow_links) values (?, ?, ?, ?, ?)`,
 		serverUuid,
 		name,
 		path,
 		uuidRaw.String(),
+		followLinks,
 	)
 	return err
 }
@@ -283,8 +287,9 @@ func (s *Storage) DeleteShareByUuid(
 }
 
 // ClearShareIndex clears the search index for the share with the specified UUID.
-func (s *Storage) ClearShareIndex(ctx context.Context, uuid string) error {
-	_, err := s.Exec(ctx, `delete from share_index_fts where share = ?`, uuid)
+// It excludes all indexes that have an index ID lower than curIndexId.
+func (s *Storage) ClearShareIndex(ctx context.Context, uuid string, curIndexId int64) error {
+	_, err := s.Exec(ctx, `delete from share_index_fts where share = ? and index_id < ?`, uuid, curIndexId)
 	if err != nil {
 		return fmt.Errorf("failed to clear index for share %q: %w", uuid, err)
 	}
@@ -292,8 +297,8 @@ func (s *Storage) ClearShareIndex(ctx context.Context, uuid string) error {
 }
 
 // InsertShareIndex inserts a new entry into the search index for the share with the specified UUID.
-func (s *Storage) InsertShareIndex(ctx context.Context, uuid string, path string, isDir bool, size int64) error {
-	_, err := s.insertShareIndexStmt.ExecContext(ctx, uuid, path, isDir, size)
+func (s *Storage) InsertShareIndex(ctx context.Context, uuid string, indexId int64, path string, isDir bool, size int64) error {
+	_, err := s.insertShareIndexStmt.ExecContext(ctx, uuid, indexId, path, isDir, size)
 	return err
 }
 
@@ -303,8 +308,8 @@ func (s *Storage) InsertShareIndex(ctx context.Context, uuid string, path string
 // The query is a full-text search query.
 //
 // The limit is the maximum number of records to return.
-func (s *Storage) QueryShareIndexByShareUuids(ctx context.Context, uuids []string, query string, limit int64) ([]ShareIndexRecord, error) {
-	if len(uuids) == 0 {
+func (s *Storage) QueryShareIndexByShareUuids(ctx context.Context, uuids []string, indexIds []int64, query string, limit int64) ([]ShareIndexRecord, error) {
+	if len(uuids) == 0 || len(indexIds) == 0 {
 		return nil, nil
 	}
 
@@ -320,8 +325,23 @@ func (s *Storage) QueryShareIndexByShareUuids(ctx context.Context, uuids []strin
 		q += part + "* "
 	}
 
-	ql := `select * from share_index_fts where share in (?` + strings.Repeat(", ?", len(uuids)-1) + `) and (video_fts match ?) order by rank limit ?`
-	rows, err := s.Query(ctx, ql, append([]any{uuids}, q, limit)...)
+	ql := `
+select *
+from share_index_fts
+where
+    share in (?` + strings.Repeat(", ?", len(uuids)-1) + `) and
+	index_id in (?` + strings.Repeat(", ?", len(indexIds)-1) + `) and
+	(video_fts match ?) order by rank limit ?
+	`
+	params := make([]any, 0, len(uuids)+len(indexIds)+2)
+	for _, u := range uuids {
+		params = append(params, u)
+	}
+	for _, i := range indexIds {
+		params = append(params, i)
+	}
+	params = append(params, q, limit)
+	rows, err := s.Query(ctx, ql, params...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query share index: %w", err)
 	}

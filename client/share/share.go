@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"friendnet.org/common"
 	pb "friendnet.org/protocol/pb/v1"
@@ -63,9 +64,10 @@ type Share interface {
 
 // DirShare is an implementation of Share backed by a directory.
 type DirShare struct {
-	name string
-	dir  string
-	fsys fs.FS
+	name        string
+	dir         string
+	followLinks bool
+	fsys        fs.FS
 }
 
 var _ Share = (*DirShare)(nil)
@@ -76,17 +78,84 @@ func (s *DirShare) Close() error {
 }
 
 // NewDirShare creates a new DirShare backed by the specified directory.
-func NewDirShare(name string, dir string) (*DirShare, error) {
+// If followLinks is false, symlinks will be treated as if they do not exist.
+func NewDirShare(
+	name string,
+	dir string,
+	followLinks bool,
+) (*DirShare, error) {
 	abs, err := filepath.Abs(dir)
 	if err != nil {
 		return nil, err
 	}
 
 	return &DirShare{
-		name: name,
-		dir:  abs,
-		fsys: os.DirFS(abs),
+		name:        name,
+		dir:         abs,
+		followLinks: followLinks,
+		fsys:        os.DirFS(abs),
 	}, nil
+}
+
+func (s *DirShare) isInfoOk(info fs.FileInfo) bool {
+	if s.followLinks {
+		return true
+	}
+
+	mode := info.Mode()
+	return mode.IsRegular() || mode.IsDir()
+}
+func (s *DirShare) stat(path common.ProtoPath) (fs.FileInfo, error) {
+	var stat fs.FileInfo
+	var err error
+	if path.IsRoot() {
+		if s.followLinks {
+			stat, err = os.Stat(s.dir)
+		} else {
+			stat, err = os.Lstat(s.dir)
+		}
+	} else {
+		if s.followLinks {
+			stat, err = fs.Stat(s.fsys, path.String()[1:])
+		} else {
+			stat, err = fs.Lstat(s.fsys, path.String()[1:])
+		}
+	}
+	if err != nil {
+		// fs.Stat already returns errors compatible with fs.ErrNotExist and fs.ErrPermission.
+		return nil, err
+	}
+
+	if !s.isInfoOk(stat) {
+		return nil, fs.ErrNotExist
+	}
+
+	return stat, nil
+}
+func (s *DirShare) pathOk(path common.ProtoPath) bool {
+	if s.followLinks {
+		return true
+	}
+	if path.IsRoot() {
+		return true
+	}
+
+	// Symlinks are now allowed.
+	// Go through containing directories and check if any of them are symlinks.
+
+	segments := path.ToSegments()
+
+	for i := 0; i < len(segments); i++ {
+		stat, err := s.stat(common.UncheckedCreateProtoPath("/" + strings.Join(segments[:i+1], "/")))
+		if err != nil {
+			return false
+		}
+		if stat.Mode()&os.ModeSymlink != 0 {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (s *DirShare) Name() string {
@@ -102,9 +171,12 @@ func (s *DirShare) GetFileMeta(path common.ProtoPath) (*pb.MsgFileMeta, error) {
 		}, nil
 	}
 
-	info, err := fs.Stat(s.fsys, path.String()[1:])
+	if !s.pathOk(path) {
+		return nil, fs.ErrNotExist
+	}
+
+	info, err := s.stat(path)
 	if err != nil {
-		// fs.Stat already returns errors compatible with fs.ErrNotExist and fs.ErrPermission.
 		return nil, err
 	}
 
@@ -112,6 +184,10 @@ func (s *DirShare) GetFileMeta(path common.ProtoPath) (*pb.MsgFileMeta, error) {
 }
 
 func (s *DirShare) DirFiles(path common.ProtoPath) ([]*pb.MsgFileMeta, error) {
+	if !s.pathOk(path) {
+		return nil, fs.ErrNotExist
+	}
+
 	var entries []fs.DirEntry
 	var readDirErr error
 	if path.IsRoot() {
@@ -128,7 +204,30 @@ func (s *DirShare) DirFiles(path common.ProtoPath) ([]*pb.MsgFileMeta, error) {
 	for _, entry := range entries {
 		info, err := entry.Info()
 		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			}
 			return nil, err
+		}
+
+		if s.followLinks && info.Mode()&os.ModeSymlink != 0 {
+			var statPath string
+			if path.IsRoot() {
+				statPath = "/" + entry.Name()
+			} else {
+				statPath = path.String() + "/" + entry.Name()
+			}
+			info, err = s.stat(common.UncheckedCreateProtoPath(statPath))
+			if err != nil {
+				if errors.Is(err, fs.ErrNotExist) {
+					continue
+				}
+				return nil, err
+			}
+		}
+
+		if !s.isInfoOk(info) {
+			continue
 		}
 		out = append(out, fileInfoToMeta(info))
 	}
@@ -149,8 +248,11 @@ func (s *DirShare) GetFile(
 		}, common.EofReadCloser{}, nil
 	}
 
-	relativePath := path.String()[1:]
-	info, err := fs.Stat(s.fsys, relativePath)
+	if !s.pathOk(path) {
+		return nil, nil, fs.ErrNotExist
+	}
+
+	info, err := s.stat(path)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -166,7 +268,7 @@ func (s *DirShare) GetFile(
 		return meta, common.EofReadCloser{}, nil
 	}
 
-	f, err := s.fsys.Open(relativePath)
+	f, err := s.fsys.Open(path.String()[1:])
 	if err != nil {
 		return nil, nil, err
 	}

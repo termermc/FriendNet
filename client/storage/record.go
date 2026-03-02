@@ -81,6 +81,7 @@ type ShareRecord struct {
 	EnableIndexing    bool
 	EnableDirectories bool
 	IsInternal        bool
+	FollowLinks       bool
 }
 
 func ScanShareRecord(row common.Scannable) (record ShareRecord, has bool, err error) {
@@ -92,6 +93,7 @@ func ScanShareRecord(row common.Scannable) (record ShareRecord, has bool, err er
 	var enableIndexing bool
 	var enableDirectories bool
 	var isInternal bool
+	var followLinks bool
 
 	err = row.Scan(
 		&server,
@@ -102,6 +104,7 @@ func ScanShareRecord(row common.Scannable) (record ShareRecord, has bool, err er
 		&enableIndexing,
 		&enableDirectories,
 		&isInternal,
+		&followLinks,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -118,12 +121,14 @@ func ScanShareRecord(row common.Scannable) (record ShareRecord, has bool, err er
 	record.EnableIndexing = enableIndexing
 	record.EnableDirectories = enableDirectories
 	record.IsInternal = isInternal
+	record.FollowLinks = followLinks
 
 	return record, true, nil
 }
 
 type ShareIndexRecord struct {
 	Share       string
+	IndexId     int64
 	Path        common.ProtoPath
 	IsDirectory bool
 	Size        int64
@@ -131,11 +136,12 @@ type ShareIndexRecord struct {
 
 func ScanShareIndexRecord(row common.Scannable) (record ShareIndexRecord, has bool, err error) {
 	var share string
+	var indexId int64
 	var path string
 	var isDirectory bool
 	var size int64
 
-	err = row.Scan(&share, &path, &isDirectory, &size)
+	err = row.Scan(&share, &indexId, &path, &isDirectory, &size)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return record, false, nil
@@ -144,6 +150,7 @@ func ScanShareIndexRecord(row common.Scannable) (record ShareIndexRecord, has bo
 	}
 
 	record.Share = share
+	record.IndexId = indexId
 	record.Path = common.UncheckedCreateProtoPath(path)
 	record.IsDirectory = isDirectory
 	record.Size = size

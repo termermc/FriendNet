@@ -31,7 +31,8 @@ create table share_tmp
     uuid text null primary key,
     enable_indexing boolean default true not null,
 	enable_directories boolean default true not null,
-	is_internal boolean default false not null
+	is_internal boolean default false not null,
+	follow_links boolean default true not null
 );
 
 insert into share_tmp(server, name, path, created_ts)
@@ -95,11 +96,12 @@ create table share_tmp
     uuid text not null primary key,
     enable_indexing boolean default true not null,
 	enable_directories boolean default true not null,
-	is_internal boolean default false not null
+	is_internal boolean default false not null,
+	follow_links boolean default true not null
 );
 
-insert into share_tmp(server, name, path, created_ts, uuid, enable_indexing, enable_directories, is_internal)
-select server, name, path, created_ts, uuid, enable_indexing, enable_directories, is_internal
+insert into share_tmp(server, name, path, created_ts, uuid, enable_indexing, enable_directories, is_internal, follow_links)
+select server, name, path, created_ts, uuid, enable_indexing, enable_directories, is_internal, follow_links
 from share;
 
 drop table share;
@@ -115,6 +117,7 @@ create unique index share_server_name_uindex
 
 create virtual table share_index_fts using fts5(
     share unindexed,
+    index_id unindexed,
     path,
     is_directory,
     size unindexed

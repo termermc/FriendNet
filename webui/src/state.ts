@@ -74,11 +74,13 @@ export class OnlineUser {
 export class ServerShare {
 	readonly name: string
 	readonly path: string
+	readonly followLinks: boolean
 	readonly createdTs: Date
 
 	constructor(info: ShareInfo) {
 		this.name = info.name
 		this.path = info.path
+		this.followLinks = info.followLinks
 		this.createdTs = new Date(Number(info.createdTs) * 1_000)
 	}
 

@@ -503,8 +503,11 @@ type ShareInfo struct {
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	// The share's path on disk.
 	Path string `protobuf:"bytes,3,opt,name=path,proto3" json:"path,omitempty"`
+	// Whether links should be followed.
+	// Links are symbolic links or the OS equivalent.
+	FollowLinks bool `protobuf:"varint,4,opt,name=follow_links,json=followLinks,proto3" json:"follow_links,omitempty"`
 	// The UNIX timestamp when the share was created.
-	CreatedTs     int64 `protobuf:"varint,4,opt,name=created_ts,json=createdTs,proto3" json:"created_ts,omitempty"`
+	CreatedTs     int64 `protobuf:"varint,5,opt,name=created_ts,json=createdTs,proto3" json:"created_ts,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -558,6 +561,13 @@ func (x *ShareInfo) GetPath() string {
 		return x.Path
 	}
 	return ""
+}
+
+func (x *ShareInfo) GetFollowLinks() bool {
+	if x != nil {
+		return x.FollowLinks
+	}
+	return false
 }
 
 func (x *ShareInfo) GetCreatedTs() int64 {
@@ -1824,7 +1834,9 @@ type CreateShareRequest struct {
 	// The share's name.
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	// The share's path on disk.
-	Path          string `protobuf:"bytes,3,opt,name=path,proto3" json:"path,omitempty"`
+	Path string `protobuf:"bytes,3,opt,name=path,proto3" json:"path,omitempty"`
+	// Whether to follow links.
+	FollowLinks   bool `protobuf:"varint,4,opt,name=follow_links,json=followLinks,proto3" json:"follow_links,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1878,6 +1890,13 @@ func (x *CreateShareRequest) GetPath() string {
 		return x.Path
 	}
 	return ""
+}
+
+func (x *CreateShareRequest) GetFollowLinks() bool {
+	if x != nil {
+		return x.FollowLinks
+	}
+	return false
 }
 
 type CreateShareResponse struct {
@@ -2977,14 +2996,15 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"created_ts\x18\a \x01(\x03R\tcreatedTs\x1aH\n" +
 	"\x05State\x12?\n" +
 	"\n" +
-	"conn_state\x18\x01 \x01(\x0e2 .pb.clientrpc.v1.ServerConnStateR\tconnState\"s\n" +
+	"conn_state\x18\x01 \x01(\x0e2 .pb.clientrpc.v1.ServerConnStateR\tconnState\"\x96\x01\n" +
 	"\tShareInfo\x12\x1f\n" +
 	"\vserver_uuid\x18\x01 \x01(\tR\n" +
 	"serverUuid\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
-	"\x04path\x18\x03 \x01(\tR\x04path\x12\x1d\n" +
+	"\x04path\x18\x03 \x01(\tR\x04path\x12!\n" +
+	"\ffollow_links\x18\x04 \x01(\bR\vfollowLinks\x12\x1d\n" +
 	"\n" +
-	"created_ts\x18\x04 \x01(\x03R\tcreatedTs\",\n" +
+	"created_ts\x18\x05 \x01(\x03R\tcreatedTs\",\n" +
 	"\x0eOnlineUserInfo\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\"I\n" +
 	"\bFileMeta\x12\x12\n" +
@@ -3053,12 +3073,13 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\vserver_uuid\x18\x01 \x01(\tR\n" +
 	"serverUuid\"G\n" +
 	"\x11GetSharesResponse\x122\n" +
-	"\x06shares\x18\x01 \x03(\v2\x1a.pb.clientrpc.v1.ShareInfoR\x06shares\"]\n" +
+	"\x06shares\x18\x01 \x03(\v2\x1a.pb.clientrpc.v1.ShareInfoR\x06shares\"\x80\x01\n" +
 	"\x12CreateShareRequest\x12\x1f\n" +
 	"\vserver_uuid\x18\x01 \x01(\tR\n" +
 	"serverUuid\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
-	"\x04path\x18\x03 \x01(\tR\x04path\"G\n" +
+	"\x04path\x18\x03 \x01(\tR\x04path\x12!\n" +
+	"\ffollow_links\x18\x04 \x01(\bR\vfollowLinks\"G\n" +
 	"\x13CreateShareResponse\x120\n" +
 	"\x05share\x18\x01 \x01(\v2\x1a.pb.clientrpc.v1.ShareInfoR\x05share\"I\n" +
 	"\x12DeleteShareRequest\x12\x1f\n" +
