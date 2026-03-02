@@ -13,6 +13,7 @@ type PreviewerProps = {
 type CatProps = {
 	info: PreviewInfo
 	url: string
+	cacheUrl: string
 	filename: string
 	dir: string
 }
@@ -43,7 +44,7 @@ const CatOther: Component<CatProps> = (props) => {
 const CatImage: Component<CatProps> = (props) => {
 	return (
 		<div class={styles.catImage}>
-			<img src={props.url} alt={props.filename} />
+			<img src={props.cacheUrl} alt={props.filename} />
 		</div>
 	)
 }
@@ -51,7 +52,7 @@ const CatImage: Component<CatProps> = (props) => {
 const CatVideo: Component<CatProps> = (props) => {
 	return (
 		<div class={styles.catVideo}>
-			<video autoplay={true} src={props.url} controls={true} />
+			<video autoplay={true} src={props.cacheUrl} controls={true} />
 		</div>
 	)
 }
@@ -135,7 +136,7 @@ const CatAudio: Component<CatProps> = (props) => {
 			<video
 				autoplay={true}
 				poster={coverUrl()}
-				src={props.url}
+				src={props.cacheUrl}
 				controls={true}
 			/>
 		</div>
@@ -161,11 +162,13 @@ export const Previewer: Component<PreviewerProps> = (props) => {
 	}
 
 	const url = makeFileUrl(fsUrl, info.serverUuid, info.username, info.path)
+	const cacheUrl = makeFileUrl(fsUrl, info.serverUuid, info.username, info.path, { allowCache: true })
 
 	const cat = guessFileCategory(filename)
 	const catProps: CatProps = {
 		info,
 		url,
+		cacheUrl,
 		filename,
 		dir,
 	}
