@@ -9,7 +9,7 @@ import { FileMeta } from '../pb/clientrpc/v1/rpc_pb'
 /**
  * A file to display in {@link FileTable}.
  */
-export type TableFile<T = void> = {
+export type FileTableItem<T = void> = {
 	/**
 	 * The file's metadata.
 	 */
@@ -41,13 +41,13 @@ export type FileTableProps<T> = {
 	 * The files to display.
 	 * All items will be rendered, even if {@link isLoading} is true.
 	 */
-	files: TableFile<T>[]
+	items: FileTableItem<T>[]
 
 	/**
 	 * Function that is run for each file.
 	 * It returns the options necessary to display the file.
 	 */
-	forItem: (item: TableFile<T>) => {
+	forItem: (item: FileTableItem<T>) => {
 		/**
 		 * Actions markup for the file.
 		 */
@@ -118,7 +118,7 @@ export const FileTable = (<T,>(props: FileTableProps<T>) => {
 							</td>
 						</tr>
 					</Show>
-					<For each={props.files}>
+					<For each={props.items}>
 						{(item) => {
 							const meta = item.meta
 

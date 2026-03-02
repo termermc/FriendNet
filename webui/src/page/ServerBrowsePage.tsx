@@ -112,7 +112,7 @@ const Page: Component = () => {
 			<FileTable
 				isLoading={isLoading()}
 				error={error()}
-				files={files().map((x) => ({ meta: x, data: undefined }))}
+				items={files().map((x) => ({ meta: x, data: undefined }))}
 				parentHref={
 					pathSegments.length !== 0
 						? makeBrowsePath(
