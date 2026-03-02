@@ -408,6 +408,9 @@ func (s *RpcServer) GetDirFiles(ctx context.Context, request *v1.GetDirFilesRequ
 		if err != nil {
 			return err
 		}
+		defer func() {
+			_ = stream.Close()
+		}()
 
 		for {
 			var msg *pb.MsgDirFiles
@@ -492,6 +495,9 @@ func (s *RpcServer) GetOnlineUsers(ctx context.Context, request *v1.GetOnlineUse
 		if err != nil {
 			return err
 		}
+		defer func() {
+			_ = stream.Close()
+		}()
 
 		for {
 			var msg *pb.MsgOnlineUsers

@@ -90,6 +90,8 @@ func MsgTypeToEmptyMsg(typ pb.MsgType) proto.Message {
 		return &pb.MsgSearch{}
 	case pb.MsgType_MSG_TYPE_SEARCH_RESULT:
 		return &pb.MsgSearchResult{}
+	case pb.MsgType_MSG_TYPE_SEARCH_ROOM_RESULT:
+		return &pb.MsgSearchRoomResult{}
 	default:
 		return nil
 	}

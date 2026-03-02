@@ -91,6 +91,8 @@ func (c *Client) msgHandler(bidi protocol.ProtoBidi, firstMsg *protocol.UntypedP
 		return c.logic.OnRedeemConnHandshakeToken(ctx, c, bidi, protocol.ToTyped[*pb.MsgRedeemConnHandshakeToken](firstMsg))
 	case pb.MsgType_MSG_TYPE_CHANGE_ACCOUNT_PASSWORD:
 		return c.logic.OnChangeAccountPassword(ctx, c, bidi, protocol.ToTyped[*pb.MsgChangeAccountPassword](firstMsg))
+	case pb.MsgType_MSG_TYPE_SEARCH:
+		return c.logic.OnSearch(ctx, c, bidi, protocol.ToTyped[*pb.MsgSearch](firstMsg))
 
 	default:
 		c.logger.Error("client sent unknown message type",
@@ -233,4 +235,19 @@ func (c *Client) GetConnMethods() []*pb.ConnMethod {
 		slice = append(slice, method)
 	}
 	return slice
+}
+
+// Search returns a stream of search results for the specified query.
+func (c *Client) Search(msg *pb.MsgSearch) (protocol.Stream[*pb.MsgSearchResult], error) {
+	bidi, err := c.conn.OpenBidiWithMsg(pb.MsgType_MSG_TYPE_SEARCH, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	return protocol.NewTransformerStream(
+		protocol.NewTypedMsgStream[*pb.MsgSearchResult](bidi, pb.MsgType_MSG_TYPE_SEARCH_RESULT),
+		func(msg *protocol.TypedProtoMsg[*pb.MsgSearchResult]) *pb.MsgSearchResult {
+			return msg.Payload
+		},
+	), nil
 }

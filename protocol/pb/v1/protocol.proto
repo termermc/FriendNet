@@ -167,15 +167,19 @@ enum MsgType {
     // [S2C] Notification that a client went offline.
     MSG_TYPE_CLIENT_OFFLINE = 38;
 
-    // [C2S, S2C, C2C] Submits a query to search for in shares.
-    // If C2S, the server will send the query to all connected clients and relay the results.
-    // If S2C or C2C, the client is expected to return search results in its shares and return the results.
-    // Expected:
-    //  - Repeated message MSG_TYPE_SEARCH_RESULT until stream is closed by receiver.
+    // [S2C, C2C] Submits a search query.
+    // If C2C, the client is expected to return search results in its shares and return the results.
+    // If C2C, the server will stream results from clients as they come in.
+    // Expected: Either:
+    //  - If C2C: Repeated message MSG_TYPE_SEARCH_RESULT until stream is closed by receiver.
+    //  - If C2C: Repeated message MSG_TYPE_SEARCH_ROOM_RESULT until stream is closed by receiver.
     MSG_TYPE_SEARCH = 39;
 
-    // [S2C, C2S, C2C] A search result.
+    // [C2S, C2C] A search result.
     MSG_TYPE_SEARCH_RESULT = 40;
+
+    // [S2C] A search result from a client in the room.
+    MSG_TYPE_SEARCH_ROOM_RESULT = 41;
 }
 
 // Ping message.
@@ -666,4 +670,13 @@ message MsgSearchResult {
 
     // The file that was found.
     MsgFileMeta file = 2;
+}
+
+// See MSG_TYPE_SEARCH_ROOM_RESULT.
+message MsgSearchRoomResult {
+    // The username of the client where the search result originated from.
+    string username = 1;
+
+    // The search result.
+    MsgSearchResult result = 2;
 }

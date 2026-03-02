@@ -15,6 +15,9 @@ type Stream[T any] interface {
 	// Returns io.EOF when the stream has ended.
 	// Any later calls to Read after the stream has ended will continue to return io.EOF.
 	ReadNext() (T, error)
+
+	// Close closes the stream and its underlying source.
+	Close() error
 }
 
 // TypedMsgStream is a stream that reads protocol messages of a specific type.
@@ -73,6 +76,10 @@ func (s TransformerStream[T, R]) ReadNext() (R, error) {
 	}
 
 	return s.fn(val), nil
+}
+
+func (s TransformerStream[T, R]) Close() error {
+	return s.stream.Close()
 }
 
 // ReadCloserWithFunc wraps an io.Reader and a function to close it.

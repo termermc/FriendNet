@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"strings"
+	"sync"
 	"time"
 
 	"friendnet.org/common"
@@ -108,12 +109,22 @@ type Logic interface {
 		bidi protocol.ProtoBidi,
 		msg *protocol.TypedProtoMsg[*pb.MsgChangeAccountPassword],
 	) error
+
+	// OnSearch handles an incoming search request.
+	// Implementations must follow the documentation on MSG_TYPE_SEARCH.
+	OnSearch(
+		ctx context.Context,
+		client *Client,
+		bidi protocol.ProtoBidi,
+		msg *protocol.TypedProtoMsg[*pb.MsgSearch],
+	) error
 }
 
 type LogicImpl struct {
 	logger *slog.Logger
 
 	directConnTestTimeout time.Duration
+	searchTimeout         time.Duration
 }
 
 var _ Logic = (*LogicImpl)(nil)
@@ -123,6 +134,7 @@ func NewLogicImpl(logger *slog.Logger) *LogicImpl {
 		logger: logger,
 
 		directConnTestTimeout: 10 * time.Second,
+		searchTimeout:         1 * time.Minute,
 	}
 }
 
@@ -357,4 +369,90 @@ func (l LogicImpl) OnChangeAccountPassword(ctx context.Context, client *Client, 
 	}
 
 	return bidi.WriteAck()
+}
+
+func (l LogicImpl) OnSearch(ctx context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgSearch]) error {
+	clients := client.Room.GetAllClients()
+
+	resChan := make(chan *pb.MsgSearchRoomResult, 100)
+
+	timeoutCtx, cancel := context.WithTimeout(ctx, l.searchTimeout)
+	defer cancel()
+
+	// Send query to all connected clients and relay the results.
+	go func() {
+		var wg sync.WaitGroup
+		for _, c := range clients {
+			wg.Go(func() {
+				stream, err := c.Search(msg.Payload)
+				if err != nil {
+					if protocol.IsErrorConnCloseOrCancel(err) {
+						return
+					}
+
+					l.logger.Warn("failed to search client",
+						"service", "room.LogicImpl",
+						"room", c.Room.Name.String(),
+						"client", c.Username.String(),
+						"error", err,
+					)
+					return
+				}
+				defer func() {
+					_ = stream.Close()
+				}()
+
+				for {
+					select {
+					case <-timeoutCtx.Done():
+						return
+					default:
+					}
+
+					next, nextErr := stream.ReadNext()
+					if nextErr != nil {
+						if protocol.IsErrorConnCloseOrCancel(nextErr) {
+							return
+						}
+
+						l.logger.Warn("failed to read next search result from client",
+							"service", "room.LogicImpl",
+							"room", c.Room.Name.String(),
+							"client", c.Username.String(),
+							"error", nextErr,
+						)
+						return
+					}
+
+					select {
+					case <-timeoutCtx.Done():
+						return
+					case resChan <- &pb.MsgSearchRoomResult{
+						Username: c.Username.String(),
+						Result:   next,
+					}:
+						continue
+					}
+				}
+			})
+		}
+		wg.Wait()
+		cancel()
+	}()
+
+	for {
+		select {
+		case <-timeoutCtx.Done():
+			return nil
+		case res := <-resChan:
+			err := bidi.Write(pb.MsgType_MSG_TYPE_SEARCH_ROOM_RESULT, res)
+			if err != nil {
+				if protocol.IsErrorConnCloseOrCancel(err) {
+					return nil
+				}
+
+				return err
+			}
+		}
+	}
 }
