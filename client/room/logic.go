@@ -3,6 +3,7 @@ package room
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 
@@ -56,18 +57,25 @@ type Logic interface {
 	//
 	// S2C
 	OnClientOffline(ctx context.Context, room *Conn, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgClientOffline]) error
+
+	// OnSearch handles an incoming search request.
+	//
+	// C2C, S2C
+	OnSearch(ctx context.Context, room *Conn, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgSearch]) error
 }
 
 // LogicImpl implements Logic.
 type LogicImpl struct {
-	shares *share.ServerShareManager
+	shares      *share.ServerShareManager
+	searchLimit int64
 }
 
 var _ Logic = (*LogicImpl)(nil)
 
 func NewLogicImpl(shares *share.ServerShareManager) *LogicImpl {
 	return &LogicImpl{
-		shares: shares,
+		shares:      shares,
+		searchLimit: 100,
 	}
 }
 
@@ -328,5 +336,27 @@ func (l *LogicImpl) OnClientOffline(_ context.Context, room *Conn, _ protocol.Pr
 			Username: username.String(),
 		},
 	})
+	return nil
+}
+
+func (l *LogicImpl) OnSearch(ctx context.Context, _ *Conn, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgSearch]) error {
+	query := msg.Payload.Query
+	results, err := l.shares.SearchShares(ctx, query, l.searchLimit)
+	if err != nil {
+		return fmt.Errorf("failed to get search results for %q: %w", query, err)
+	}
+
+	for i := range results {
+		result := &results[i]
+		err = bidi.Write(pb.MsgType_MSG_TYPE_SEARCH_RESULT, result)
+		if err != nil {
+			if protocol.IsErrorConnCloseOrCancel(err) {
+				return nil
+			}
+
+			return fmt.Errorf("failed to send search result for %q: %w", query, err)
+		}
+	}
+
 	return nil
 }

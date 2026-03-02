@@ -87,6 +87,8 @@ loop:
 					err = c.logic.OnGetFile(c.Context, c, bidi, protocol.ToTyped[*pb.MsgGetFile](rawMsg))
 				case pb.MsgType_MSG_TYPE_CONNECT_TO_ME:
 					err = c.logic.OnConnectToMe(c.Context, c, bidi, protocol.ToTyped[*pb.MsgConnectToMe](rawMsg))
+				case pb.MsgType_MSG_TYPE_SEARCH:
+					err = c.logic.OnSearch(c.Context, c, bidi.ProtoBidi, protocol.ToTyped[*pb.MsgSearch](rawMsg))
 				default:
 					err = bidi.WriteUnimplementedError(rawMsg.Type)
 				}

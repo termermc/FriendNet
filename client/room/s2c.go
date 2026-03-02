@@ -80,6 +80,8 @@ func (c *Conn) s2cLoop() {
 				err = c.logic.OnClientOnline(c.Context, c, bidi, protocol.ToTyped[*pb.MsgClientOnline](rawMsg))
 			case pb.MsgType_MSG_TYPE_CLIENT_OFFLINE:
 				err = c.logic.OnClientOffline(c.Context, c, bidi, protocol.ToTyped[*pb.MsgClientOffline](rawMsg))
+			case pb.MsgType_MSG_TYPE_SEARCH:
+				err = c.logic.OnSearch(c.Context, c, bidi, protocol.ToTyped[*pb.MsgSearch](rawMsg))
 			default:
 				err = bidi.WriteUnimplementedError(rawMsg.Type)
 			}
