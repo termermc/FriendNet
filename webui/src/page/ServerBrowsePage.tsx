@@ -1,19 +1,18 @@
 import { Component, createSignal, For, onMount, Show } from 'solid-js'
 
 import styles from './ServerBrowsePage.module.css'
-import stylesCommon from '../common.module.css'
 
 import { useFileServerUrl, useGlobalState, useRpcClient } from '../ctx'
 import { ConnectError } from '@connectrpc/connect'
 import { A, useLocation, useParams } from '@solidjs/router'
 import { FileMeta } from '../../pb/clientrpc/v1/rpc_pb'
 import {
-	guessFileCategory,
 	makeBrowsePath,
 	makeFileUrl,
 	normalizePath,
 	trimStrEllipsis,
 } from '../util'
+import { FileTable } from '../FileTable'
 
 const Page: Component = () => {
 	const {
@@ -110,156 +109,60 @@ const Page: Component = () => {
 				</For>
 			</div>
 
-			<div class={styles.files}>
-				<table>
-					<thead>
-						<tr>
-							<th>File</th>
-							<th>Actions</th>
-						</tr>
-					</thead>
-					<tbody>
-						<Show when={isLoading()}>
-							<tr>
-								<td colspan="2">Loading...</td>
-							</tr>
-						</Show>
-						<Show when={error()}>
-							<tr>
-								<td
-									colspan="2"
-									class={stylesCommon.errorMessage}
-								>
-									{error()}
-								</td>
-							</tr>
-						</Show>
+			<FileTable
+				isLoading={isLoading()}
+				error={error()}
+				files={files().map((x) => ({ meta: x, data: undefined }))}
+				parentHref={
+					pathSegments.length !== 0
+						? makeBrowsePath(
+								uuid,
+								username,
+								pathSegments.slice(0, -1).join('/'),
+							)
+						: undefined
+				}
+				forItem={(item) => {
+					const pth = path === '/' ? '' : path
+					const filePath = pth + '/' + item.meta.name
 
-						<Show when={pathSegments.length !== 0}>
-							<tr>
-								<td>
-									<A
-										href={makeBrowsePath(
-											uuid,
-											username,
-											pathSegments.slice(0, -1).join('/'),
-										)}
-										title="Up a directory"
-										classList={{
-											[stylesCommon.w100]: true,
-											[stylesCommon.displayInlineBlock]: true,
-										}}
-									>
-										▲ ..
-									</A>
-								</td>
-							</tr>
-						</Show>
-						<For each={files()}>
-							{(meta) => {
-								let pth = path === '/' ? '' : path
+					if (item.meta.isDir) {
+						return {
+							href: makeBrowsePath(uuid, username, filePath),
+						}
+					} else {
+						const dlUrl = makeFileUrl(
+							fsUrl,
+							uuid,
+							username,
+							filePath,
+							{
+								download: true,
+							},
+						)
+						const nonDlUrl = makeFileUrl(
+							fsUrl,
+							uuid,
+							username,
+							filePath,
+						)
 
-								const filePath = pth + '/' + meta.name
-								const dlUrl = makeFileUrl(
-									fsUrl,
-									uuid,
-									username,
-									filePath,
-									{
-										download: true,
-									},
-								)
-								const nonDlUrl = makeFileUrl(
-									fsUrl,
-									uuid,
-									username,
-									filePath,
-								)
-
-								let emoji: string
-								if (meta.isDir) {
-									emoji = '📁'
-								} else {
-									const cat = guessFileCategory(meta.name)
-									switch (cat) {
-										case 'text':
-											emoji = '📜'
-											break
-										case 'image':
-											emoji = '🖼️'
-											break
-										case 'video':
-											emoji = '🎞️'
-											break
-										case 'audio':
-											emoji = '🎵'
-											break
-										case 'other':
-											emoji = '📄'
-											break
-									}
-								}
-
-								const label = trimStrEllipsis(
-									emoji + ' ' + meta.name,
-									100,
-								)
-
-								return (
-									<tr>
-										<Show
-											when={meta.isDir}
-											fallback={
-												<td
-													title={meta.name}
-													onClick={() =>
-														state.previewFile(
-															uuid,
-															username,
-															filePath,
-														)
-													}
-													class={styles.label}
-												>
-													<span>{label}</span>
-												</td>
-											}
-										>
-											<td
-												title={meta.name}
-												class={styles.label}
-											>
-												<A
-													href={makeBrowsePath(
-														uuid,
-														username,
-														filePath,
-													)}
-												>
-													{label}
-												</A>
-											</td>
-										</Show>
-										<td class={styles.actionsTd}>
-											<div class={styles.actions}>
-												<Show when={!meta.isDir}>
-													<a
-														href={nonDlUrl}
-														target="_blank"
-													>
-														🔗
-													</a>
-													<a href={dlUrl}>💾</a>
-												</Show>
-											</div>
-										</td>
-									</tr>
-								)
-							}}
-						</For>
-					</tbody>
-				</table>
-			</div>
+						return {
+							actions: (
+								<>
+									<a href={nonDlUrl} target="_blank">
+										🔗
+									</a>
+									<a href={dlUrl}>💾</a>
+								</>
+							),
+							onClick: () => {
+								state.previewFile(uuid, username, filePath)
+							},
+						}
+					}
+				}}
+			/>
 		</div>
 	)
 }
