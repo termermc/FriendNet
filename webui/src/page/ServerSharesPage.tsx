@@ -87,6 +87,27 @@ const Page: Component = () => {
 		}
 	}
 
+	const indexPendingNames = new Set<string>()
+	const doIndex = async (name: string) => {
+		if (indexPendingNames.has(name)) {
+			return
+		}
+		indexPendingNames.add(name)
+		try {
+			await server.scheduleShareIndex(name)
+
+			alert('The share is being indexed in the background')
+		} catch (err) {
+			console.error('failed to index share:', err)
+
+			if (err instanceof ConnectError) {
+				alert(err.message)
+			}
+		} finally {
+			indexPendingNames.delete(name)
+		}
+	}
+
 	return (
 		<div
 			classList={{
@@ -112,6 +133,10 @@ const Page: Component = () => {
 								<br/>
 								<button onClick={() => doDelete(share.name)}>
 									Delete
+								</button>
+								{' '}
+								<button onClick={() => doIndex(share.name)}>
+									Index Now
 								</button>
 							</div>
 						)}

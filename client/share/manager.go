@@ -93,7 +93,7 @@ func NewServerShareManager(
 
 		shareMap: shareMap,
 
-		indexerInterval: 10 * time.Minute,
+		indexerInterval: 1 * time.Hour,
 		indexingShares:  make(map[string]struct{}),
 		indexerMaxFiles: 1_000_000,
 	}
@@ -131,7 +131,7 @@ func (m *ServerShareManager) indexerDaemon() {
 		var wg sync.WaitGroup
 		for _, rec := range recs {
 			wg.Go(func() {
-				m.doIndexShare(rec)
+				m.indexShareWithLockAndLogging(rec)
 			})
 		}
 		wg.Wait()
@@ -152,7 +152,90 @@ func (m *ServerShareManager) indexerDaemon() {
 	}
 }
 
-func (m *ServerShareManager) doIndexShare(rec storage.ShareRecord) {
+// indexShare indexes all files in the share with the specified name.
+// It returns the number of files indexed, whether the share existed, and any error that occurred.
+// Refuses to index the share if it has indexing disabled, returning ErrIndexingDisabled.
+func (m *ServerShareManager) indexShare(ctx context.Context, name string) (count int, hasShare bool, err error) {
+	m.mu.Lock()
+	val, has := m.shareMap[name]
+	if !has {
+		m.mu.Unlock()
+		return 0, false, nil
+	}
+	curIndexId := time.Now().UnixMilli()
+	val.lastIndexId = curIndexId
+	m.mu.Unlock()
+
+	share := val.share
+	rec := val.record
+
+	if !rec.EnableIndexing {
+		return 0, true, ErrIndexingDisabled
+	}
+
+	shouldClearOld := false
+	defer func() {
+		if !shouldClearOld {
+			return
+		}
+
+		err = m.storage.ClearShareIndex(ctx, rec.Uuid, curIndexId)
+		if err != nil {
+			m.logger.Error("failed to clear old indexes for share",
+				"service", "share.ServerShareManager",
+				"share_uuid", rec.Uuid,
+				"err", err,
+			)
+			return
+		}
+	}()
+
+	dirs := []string{"/"}
+
+	for len(dirs) > 0 {
+		dir := dirs[0]
+		dirs = dirs[1:]
+
+		var files []*pb.MsgFileMeta
+		files, err = share.DirFiles(common.UncheckedCreateProtoPath(dir))
+		for _, file := range files {
+			if count >= m.indexerMaxFiles {
+				shouldClearOld = true
+				return count, true, ErrTooManyFiles
+			}
+
+			count++
+
+			var path string
+			if dir == "/" {
+				path = "/" + file.Name
+			} else {
+				path = dir + "/" + file.Name
+			}
+
+			if file.IsDir {
+				dirs = append(dirs, path)
+			}
+
+			err = m.storage.InsertShareIndex(ctx,
+				rec.Uuid,
+				curIndexId,
+				path,
+				file.IsDir,
+				int64(file.Size),
+			)
+			if err != nil {
+				return count, true, fmt.Errorf(`failed to insert share %q index for file %q: %w`, rec.Uuid, path, err)
+			}
+		}
+	}
+
+	shouldClearOld = true
+
+	return count, true, nil
+}
+
+func (m *ServerShareManager) indexShareWithLockAndLogging(rec storage.ShareRecord) {
 	m.mu.Lock()
 	_, has := m.indexingShares[rec.Uuid]
 	if has {
@@ -175,7 +258,7 @@ func (m *ServerShareManager) doIndexShare(rec storage.ShareRecord) {
 		"path", rec.Path,
 	)
 
-	count, _, idxErr := m.IndexShare(m.ctx, rec.Name)
+	count, _, idxErr := m.indexShare(m.ctx, rec.Name)
 	if idxErr != nil {
 		if errors.Is(idxErr, ErrIndexingDisabled) {
 			m.logger.Info("indexing disabled for share",
@@ -213,6 +296,32 @@ func (m *ServerShareManager) doIndexShare(rec storage.ShareRecord) {
 		"path", rec.Path,
 		"file_count", count,
 	)
+}
+
+// ScheduleShareIndex schedules an index of the share with the specified name.
+// If the share does not exist, this is no-op.
+// If the share has indexing disabled, returns ErrIndexingDisabled.
+// If the manager is closed, returns ErrServerManagerClosed.
+func (m *ServerShareManager) ScheduleShareIndex(name string) error {
+	m.mu.RLock()
+	if m.isClosed {
+		m.mu.RUnlock()
+		return ErrServerManagerClosed
+	}
+	val, has := m.shareMap[name]
+	m.mu.RUnlock()
+	if !has {
+		return nil
+	}
+
+	if !val.record.EnableIndexing {
+		return ErrIndexingDisabled
+	}
+
+	go func() {
+		m.indexShareWithLockAndLogging(val.record)
+	}()
+	return nil
 }
 
 // GetAll returns all current shares for the server.
@@ -295,7 +404,7 @@ func (m *ServerShareManager) Add(
 
 	if rec.EnableIndexing {
 		go func() {
-			m.doIndexShare(rec)
+			m.indexShareWithLockAndLogging(rec)
 		}()
 	}
 
@@ -332,93 +441,6 @@ func (m *ServerShareManager) Delete(ctx context.Context, name string) error {
 	m.mu.Unlock()
 
 	return nil
-}
-
-// IndexShare indexes all files in the share with the specified name.
-// It returns the number of files indexed, whether the share existed, and any error that occurred.
-// Refuses to index the share if it has indexing disabled, returning ErrIndexingDisabled.
-func (m *ServerShareManager) IndexShare(ctx context.Context, name string) (count int, hasShare bool, err error) {
-	m.mu.Lock()
-	if m.isClosed {
-		m.mu.Unlock()
-		return 0, false, ErrServerManagerClosed
-	}
-	val, has := m.shareMap[name]
-	if !has {
-		m.mu.Unlock()
-		return 0, false, nil
-	}
-	curIndexId := time.Now().UnixMilli()
-	val.lastIndexId = curIndexId
-	m.mu.Unlock()
-
-	share := val.share
-	rec := val.record
-
-	if !rec.EnableIndexing {
-		return 0, true, ErrIndexingDisabled
-	}
-
-	shouldClearOld := false
-	defer func() {
-		if !shouldClearOld {
-			return
-		}
-
-		err = m.storage.ClearShareIndex(ctx, rec.Uuid, curIndexId)
-		if err != nil {
-			m.logger.Error("failed to clear old indexes for share",
-				"service", "share.ServerShareManager",
-				"share_uuid", rec.Uuid,
-				"err", err,
-			)
-			return
-		}
-	}()
-
-	dirs := []string{"/"}
-
-	for len(dirs) > 0 {
-		dir := dirs[0]
-		dirs = dirs[1:]
-
-		var files []*pb.MsgFileMeta
-		files, err = share.DirFiles(common.UncheckedCreateProtoPath(dir))
-		for _, file := range files {
-			if count >= m.indexerMaxFiles {
-				shouldClearOld = true
-				return count, true, ErrTooManyFiles
-			}
-
-			count++
-
-			var path string
-			if dir == "/" {
-				path = "/" + file.Name
-			} else {
-				path = dir + "/" + file.Name
-			}
-
-			if file.IsDir {
-				dirs = append(dirs, path)
-			}
-
-			err = m.storage.InsertShareIndex(ctx,
-				rec.Uuid,
-				curIndexId,
-				path,
-				file.IsDir,
-				int64(file.Size),
-			)
-			if err != nil {
-				return count, true, fmt.Errorf(`failed to insert share %q index for file %q: %w`, rec.Uuid, path, err)
-			}
-		}
-	}
-
-	shouldClearOld = true
-
-	return count, true, nil
 }
 
 // Close closes all shares managed by the manager, then the manager itself.

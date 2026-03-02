@@ -126,21 +126,24 @@ message ServerInfo {
 
 // Information about a server share.
 message ShareInfo {
+    // The share's UUID.
+    string uuid = 1;
+
     // The UUID of the associated server.
-    string server_uuid = 1;
+    string server_uuid = 2;
 
     // The share's name.
-    string name = 2;
+    string name = 3;
 
     // The share's path on disk.
-    string path = 3;
+    string path = 4;
 
     // Whether links should be followed.
     // Links are symbolic links or the OS equivalent.
-    bool follow_links = 4;
+    bool follow_links = 5;
 
     // The UNIX timestamp when the share was created.
-    int64 created_ts = 5;
+    int64 created_ts = 6;
 }
 
 // OnlineUserInfo is information about an online user.
@@ -447,6 +450,17 @@ message UpdateDirectSettingsResponse {
 
 }
 
+message IndexShareRequest {
+    // The associated server UUID.
+    string server_uuid = 1;
+
+    // The share's name.
+    string name = 2;
+}
+message IndexShareResponse {
+
+}
+
 // ClientRpcService provides an RPC interface to a running FriendNet client.
 // It can query state and perform actions.
 //
@@ -564,4 +578,12 @@ service ClientRpcService {
     // Changes will not take effect until the client is restarted.
     // All fields must be filled, default values will not be omitted.
     rpc UpdateDirectSettings(UpdateDirectSettingsRequest) returns (UpdateDirectSettingsResponse) {}
+
+    // IndexShare requests that a share be indexed.
+    // The share will be scheduled to be indexed in the background.
+    //
+    // Returns NOT_FOUND if no such server exists.
+    // Returns NOT_FOUND if no such share exists.
+    // Returns FAILED_PRECONDITION if the share does not have indexing enabled.
+    rpc IndexShare(IndexShareRequest) returns (IndexShareResponse) {}
 }

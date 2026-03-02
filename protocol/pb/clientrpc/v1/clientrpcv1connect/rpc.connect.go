@@ -95,6 +95,9 @@ const (
 	// ClientRpcServiceUpdateDirectSettingsProcedure is the fully-qualified name of the
 	// ClientRpcService's UpdateDirectSettings RPC.
 	ClientRpcServiceUpdateDirectSettingsProcedure = "/pb.clientrpc.v1.ClientRpcService/UpdateDirectSettings"
+	// ClientRpcServiceIndexShareProcedure is the fully-qualified name of the ClientRpcService's
+	// IndexShare RPC.
+	ClientRpcServiceIndexShareProcedure = "/pb.clientrpc.v1.ClientRpcService/IndexShare"
 )
 
 // ClientRpcServiceClient is a client for the pb.clientrpc.v1.ClientRpcService service.
@@ -190,6 +193,13 @@ type ClientRpcServiceClient interface {
 	// Changes will not take effect until the client is restarted.
 	// All fields must be filled, default values will not be omitted.
 	UpdateDirectSettings(context.Context, *v1.UpdateDirectSettingsRequest) (*v1.UpdateDirectSettingsResponse, error)
+	// IndexShare requests that a share be indexed.
+	// The share will be scheduled to be indexed in the background.
+	//
+	// Returns NOT_FOUND if no such server exists.
+	// Returns NOT_FOUND if no such share exists.
+	// Returns FAILED_PRECONDITION if the share does not have indexing enabled.
+	IndexShare(context.Context, *v1.IndexShareRequest) (*v1.IndexShareResponse, error)
 }
 
 // NewClientRpcServiceClient constructs a client for the pb.clientrpc.v1.ClientRpcService service.
@@ -329,6 +339,12 @@ func NewClientRpcServiceClient(httpClient connect.HTTPClient, baseURL string, op
 			connect.WithSchema(clientRpcServiceMethods.ByName("UpdateDirectSettings")),
 			connect.WithClientOptions(opts...),
 		),
+		indexShare: connect.NewClient[v1.IndexShareRequest, v1.IndexShareResponse](
+			httpClient,
+			baseURL+ClientRpcServiceIndexShareProcedure,
+			connect.WithSchema(clientRpcServiceMethods.ByName("IndexShare")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -355,6 +371,7 @@ type clientRpcServiceClient struct {
 	serverDisconnect      *connect.Client[v1.ServerDisconnectRequest, v1.ServerDisconnectResponse]
 	getDirectSettings     *connect.Client[v1.GetDirectSettingsRequest, v1.GetDirectSettingsResponse]
 	updateDirectSettings  *connect.Client[v1.UpdateDirectSettingsRequest, v1.UpdateDirectSettingsResponse]
+	indexShare            *connect.Client[v1.IndexShareRequest, v1.IndexShareResponse]
 }
 
 // StreamLogs calls pb.clientrpc.v1.ClientRpcService.StreamLogs.
@@ -530,6 +547,15 @@ func (c *clientRpcServiceClient) UpdateDirectSettings(ctx context.Context, req *
 	return nil, err
 }
 
+// IndexShare calls pb.clientrpc.v1.ClientRpcService.IndexShare.
+func (c *clientRpcServiceClient) IndexShare(ctx context.Context, req *v1.IndexShareRequest) (*v1.IndexShareResponse, error) {
+	response, err := c.indexShare.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // ClientRpcServiceHandler is an implementation of the pb.clientrpc.v1.ClientRpcService service.
 type ClientRpcServiceHandler interface {
 	// StreamLogs returns an ongoing stream of log messages from the client.
@@ -623,6 +649,13 @@ type ClientRpcServiceHandler interface {
 	// Changes will not take effect until the client is restarted.
 	// All fields must be filled, default values will not be omitted.
 	UpdateDirectSettings(context.Context, *v1.UpdateDirectSettingsRequest) (*v1.UpdateDirectSettingsResponse, error)
+	// IndexShare requests that a share be indexed.
+	// The share will be scheduled to be indexed in the background.
+	//
+	// Returns NOT_FOUND if no such server exists.
+	// Returns NOT_FOUND if no such share exists.
+	// Returns FAILED_PRECONDITION if the share does not have indexing enabled.
+	IndexShare(context.Context, *v1.IndexShareRequest) (*v1.IndexShareResponse, error)
 }
 
 // NewClientRpcServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -758,6 +791,12 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 		connect.WithSchema(clientRpcServiceMethods.ByName("UpdateDirectSettings")),
 		connect.WithHandlerOptions(opts...),
 	)
+	clientRpcServiceIndexShareHandler := connect.NewUnaryHandlerSimple(
+		ClientRpcServiceIndexShareProcedure,
+		svc.IndexShare,
+		connect.WithSchema(clientRpcServiceMethods.ByName("IndexShare")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/pb.clientrpc.v1.ClientRpcService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ClientRpcServiceStreamLogsProcedure:
@@ -802,6 +841,8 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 			clientRpcServiceGetDirectSettingsHandler.ServeHTTP(w, r)
 		case ClientRpcServiceUpdateDirectSettingsProcedure:
 			clientRpcServiceUpdateDirectSettingsHandler.ServeHTTP(w, r)
+		case ClientRpcServiceIndexShareProcedure:
+			clientRpcServiceIndexShareHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -893,4 +934,8 @@ func (UnimplementedClientRpcServiceHandler) GetDirectSettings(context.Context, *
 
 func (UnimplementedClientRpcServiceHandler) UpdateDirectSettings(context.Context, *v1.UpdateDirectSettingsRequest) (*v1.UpdateDirectSettingsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.UpdateDirectSettings is not implemented"))
+}
+
+func (UnimplementedClientRpcServiceHandler) IndexShare(context.Context, *v1.IndexShareRequest) (*v1.IndexShareResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.IndexShare is not implemented"))
 }

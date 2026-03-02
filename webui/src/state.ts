@@ -72,12 +72,14 @@ export class OnlineUser {
  * Represents a server share.
  */
 export class ServerShare {
+	readonly uuid: string
 	readonly name: string
 	readonly path: string
 	readonly followLinks: boolean
 	readonly createdTs: Date
 
 	constructor(info: ShareInfo) {
+		this.uuid = info.uuid
 		this.name = info.name
 		this.path = info.path
 		this.followLinks = info.followLinks
@@ -241,6 +243,14 @@ export class Server {
 
 		this.#setShares(this.shares().filter((x) => x.name !== name))
 		return true
+	}
+
+	/**
+	 * Schedules for a share to be indexed in the background.
+	 * @param name The name of the share to index.
+	 */
+	async scheduleShareIndex(name: string): Promise<void> {
+		await this.#client.indexShare({ serverUuid: this.uuid, name })
 	}
 
 	updateFromInfo(info: ServerInfo): void {

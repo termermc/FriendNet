@@ -15,6 +15,7 @@ import (
 	"friendnet.org/client/direct"
 	"friendnet.org/client/event"
 	"friendnet.org/client/room"
+	"friendnet.org/client/share"
 	"friendnet.org/client/storage"
 	"friendnet.org/common"
 	"friendnet.org/protocol"
@@ -32,6 +33,7 @@ var errFileNotFound = connect.NewError(connect.CodeNotFound, errors.New("file no
 var errIncorrectPassword = connect.NewError(connect.CodeInvalidArgument, errors.New("incorrect password"))
 var errInvalidDefaultPort = connect.NewError(connect.CodeInvalidArgument, errors.New("default port must be between 1024 and 65535 (inclusive), or 0 for random"))
 var errInvalidUpnpTimeout = connect.NewError(connect.CodeInvalidArgument, errors.New("UPnP timeout must be between 0 and 60000 (inclusive)"))
+var errIndexingDisabled = connect.NewError(connect.CodeFailedPrecondition, errors.New("share has indexing disabled"))
 
 type RpcServer struct {
 	clogHandler   clog.Handler
@@ -85,6 +87,7 @@ func (s *RpcServer) metaToInfo(meta *pb.MsgFileMeta) *v1.FileMeta {
 }
 func (s *RpcServer) shareRecToInfo(share storage.ShareRecord) *v1.ShareInfo {
 	return &v1.ShareInfo{
+		Uuid:        share.Uuid,
 		ServerUuid:  share.Server,
 		Name:        share.Name,
 		Path:        share.Path.String(),
@@ -672,4 +675,27 @@ func (s *RpcServer) UpdateDirectSettings(ctx context.Context, request *v1.Update
 	}
 
 	return &v1.UpdateDirectSettingsResponse{}, nil
+}
+
+func (s *RpcServer) IndexShare(_ context.Context, request *v1.IndexShareRequest) (*v1.IndexShareResponse, error) {
+	srv, has := s.client.GetByUuid(request.ServerUuid)
+	if !has {
+		return nil, errServerNotFound
+	}
+
+	_, has = srv.ShareMgr.GetByName(request.Name)
+	if !has {
+		return nil, errShareNotFound
+	}
+
+	err := srv.ShareMgr.ScheduleShareIndex(request.Name)
+	if err != nil {
+		if errors.Is(err, share.ErrIndexingDisabled) {
+			return nil, errIndexingDisabled
+		}
+
+		return nil, err
+	}
+
+	return &v1.IndexShareResponse{}, nil
 }
