@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"sync"
+	"syscall"
 	"time"
 
 	"friendnet.org/client/storage"
@@ -213,7 +214,7 @@ func (m *ServerShareManager) indexShare(ctx context.Context, name string) (count
 		files, err = share.DirFiles(common.UncheckedCreateProtoPath(dir))
 		if err != nil {
 			// Skip files that were removed or we do not have permission to access.
-			if os.IsNotExist(err) || os.IsPermission(err) {
+			if os.IsNotExist(err) || os.IsPermission(err) || errors.Is(err, syscall.ESRCH) {
 				continue
 			}
 
