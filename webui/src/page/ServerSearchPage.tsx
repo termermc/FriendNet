@@ -32,6 +32,7 @@ const Page: Component = () => {
 		FileTableItem<StreamSearchResponse>[]
 	>([])
 
+	const maxItems = 1_000
 	const newItems: FileTableItem<StreamSearchResponse>[] = []
 	const debounceInterval = setInterval(() => {
 		const q = searchParams.query
@@ -63,7 +64,12 @@ const Page: Component = () => {
 		// Remove "ext:" filters from search term before using it with Fuse.
 		const fuzzyQ = q.replace(/(^|\W)ext:\w*/g, ' ')
 
+		// Truncate results to limit.
 		const fuzzyRes = fuse.search(fuzzyQ)
+		if (fuzzyRes.length > maxItems) {
+			fuzzyRes.length = maxItems
+		}
+
 		setResults(fuzzyRes.map((x) => x.item))
 
 		newItems.length = 0
