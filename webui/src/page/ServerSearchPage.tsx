@@ -133,7 +133,12 @@ const Page: Component = () => {
 		const q = searchParams.query?.trim() || ''
 		const u = searchParams.username?.trim() || ''
 
+		fieldQueryElem?.focus()
+
 		if (!q) {
+			setResults([])
+			setQuery('')
+			setUsername('')
 			return
 		}
 
