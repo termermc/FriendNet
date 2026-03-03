@@ -444,6 +444,7 @@ func (l LogicImpl) OnSearch(ctx context.Context, client *Client, bidi protocol.P
 		close(resChan)
 	}()
 
+recvLoop:
 	for {
 		select {
 		case <-timeoutCtx.Done():
@@ -451,7 +452,7 @@ func (l LogicImpl) OnSearch(ctx context.Context, client *Client, bidi protocol.P
 		case res := <-resChan:
 			if res == nil {
 				// No more results.
-				break
+				break recvLoop
 			}
 
 			err := bidi.Write(pb.MsgType_MSG_TYPE_SEARCH_ROOM_RESULT, res)
