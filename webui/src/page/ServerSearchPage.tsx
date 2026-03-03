@@ -226,7 +226,6 @@ const Page: Component = () => {
 							username,
 							item.data.directoryPath,
 						)
-						console.log(item.data)
 
 						return {
 							prefix: prefix,
