@@ -441,7 +441,7 @@ func (l LogicImpl) OnSearch(ctx context.Context, client *Client, bidi protocol.P
 			})
 		}
 		wg.Wait()
-		cancel()
+		close(resChan)
 	}()
 
 	for {
@@ -449,6 +449,11 @@ func (l LogicImpl) OnSearch(ctx context.Context, client *Client, bidi protocol.P
 		case <-timeoutCtx.Done():
 			return nil
 		case res := <-resChan:
+			if res == nil {
+				// No more results.
+				break
+			}
+
 			err := bidi.Write(pb.MsgType_MSG_TYPE_SEARCH_ROOM_RESULT, res)
 			if err != nil {
 				if protocol.IsErrorConnCloseOrCancel(err) {
