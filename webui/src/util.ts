@@ -40,7 +40,7 @@ export function makeFileUrl(
 		query.set('zip', '1')
 	}
 
-	return `${base}/content/${serverUuid}/${username}/${path}?${query}`
+	return `${base}/content/${serverUuid}/${username}/${escapePathSegments(path)}?${query}`
 }
 
 /**
@@ -183,6 +183,10 @@ export function normalizePath(path: string): {
 	}
 }
 
+function escapePathSegments(path: string): string {
+	return path.split('/').map((x) => encodeURIComponent(x)).join('/')
+}
+
 export function makeBrowsePath(
 	serverUuid: string,
 	username: string,
@@ -193,7 +197,7 @@ export function makeBrowsePath(
 	}
 
 	const { path: normPath } = normalizePath(path)
-	return `/server/${serverUuid}/browse/${username}${normPath}`
+	return `/server/${serverUuid}/browse/${username}${escapePathSegments(normPath)}`
 }
 
 export function trimStrEllipsis(str: string, len: number): string {
