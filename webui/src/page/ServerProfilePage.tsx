@@ -126,6 +126,69 @@ const Page: Component = () => {
 				}
 			}
 
+			const pathErr = (path: string, elem: Element) => {
+				if (path.startsWith('/')) {
+					return (
+						<div>
+							<p>Profile contains invalid paths.</p>
+							<p>
+								Paths must be relative.
+							</p>
+							<div class={styles.code}>{elem.outerHTML}</div>
+						</div>
+					)
+				}
+
+				if (path.includes('\\')) {
+					return (
+						<div>
+							<p>Profile contains invalid paths.</p>
+							<p>
+								Paths must not contain backslashes.
+							</p>
+							<div class={styles.code}>{elem.outerHTML}</div>
+						</div>
+					)
+				}
+
+				const parts = path.split('/')
+				for (const part of parts) {
+					if (part === '..') {
+						return (
+							<div>
+								<p>Profile contains invalid paths.</p>
+								<p>
+									Paths must not contain "..".
+								</p>
+								<div class={styles.code}>{elem.outerHTML}</div>
+							</div>
+						)
+					}
+				}
+
+				// Path is ok.
+				return undefined
+			}
+
+			// Find paths that try to escape their root directory.
+			for (const elem of root.querySelectorAll('[src], [href]')) {
+				const src = elem.getAttribute('src')
+				if (src) {
+					const err = pathErr(src, elem)
+					if (err) {
+						return err
+					}
+				}
+
+				const href = elem.getAttribute('href')
+				if (href) {
+					const err = pathErr(href, elem)
+					if (err) {
+						return err
+					}
+				}
+			}
+
 			return <iframe src={indexUrl} sandbox="" />
 		} catch (err) {
 			console.error('failed to resolve profile:', err)
