@@ -118,7 +118,7 @@ const Page: Component = () => {
 						<div>
 							<p>Profile contains invalid links.</p>
 							<p>Links must have target="_blank".</p>
-							<div className={styles.code}>{link.outerHTML}</div>
+							<div class={styles.code}>{link.outerHTML}</div>
 						</div>
 					)
 				}
