@@ -10,9 +10,9 @@
 }
 
 .code {
-    background-color: rgba(0, 0, 0, 0.1);
-    padding: 0.5rem;
-    font-family: monospace;
-    white-space: pre-wrap;
-    display: inline-block;
+	background-color: rgba(0, 0, 0, 0.1);
+	padding: 0.5rem;
+	font-family: monospace;
+	white-space: pre-wrap;
+	display: inline-block;
 }

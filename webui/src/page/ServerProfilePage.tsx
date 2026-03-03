@@ -90,7 +90,9 @@ const Page: Component = () => {
 				const url = new URL(fsUrl)
 				fsOrigin = url.origin.substring(url.protocol.length)
 			}
-			const uiOrigin = window.location.origin.substring(window.location.protocol.length)
+			const uiOrigin = window.location.origin.substring(
+				window.location.protocol.length,
+			)
 
 			// Check links.
 			// Requirements:
