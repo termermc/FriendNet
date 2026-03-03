@@ -30,7 +30,7 @@ const NoRpc: Component = () => {
 				<input
 					type="text"
 					name="rpc"
-					placeholder="https://localhost:20039"
+					placeholder="https://localhost:20040"
 				/>
 				<input type="submit" />
 			</form>
@@ -164,7 +164,18 @@ export const Loader: Component = () => {
 	return (
 		<Suspense fallback={<div>Loading...</div>}>
 			<ErrorBoundary
-				fallback={<div>Failed to connect to client RPC</div>}
+				fallback={
+					<div>
+						<p>Failed to connect to client RPC.</p>
+						<button onClick={() => {
+							localStorage.removeItem(rpcUrlKey)
+							localStorage.removeItem(bearerTokenKey)
+							window.location.reload()
+						}}>
+							Clear RPC URL and token.
+						</button>
+					</div>
+				}
 			>
 				<Show when={everything()}>
 					<FileServerUrlCtx.Provider

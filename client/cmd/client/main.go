@@ -122,9 +122,9 @@ func main() {
 	var pprofFile string
 
 	flag.StringVar(&dataDir, "datadir", "", "path to server config JSON")
-	flag.StringVar(&rpcAddr, "rpcaddr", "https://localhost:20039", "RPC server address")
-	flag.StringVar(&fileAddr, "fileaddr", "https://localhost:20040", "File server address")
-	flag.StringVar(&uiAddr, "uiaddr", "https://localhost:20041", "Web UI server address")
+	flag.StringVar(&rpcAddr, "rpcaddr", "https://localhost:20040", "RPC server address")
+	flag.StringVar(&fileAddr, "fileaddr", "https://localhost:20041", "File server address")
+	flag.StringVar(&uiAddr, "uiaddr", "https://localhost:20042", "Web UI server address")
 	flag.BoolVar(&noBrowser, "nobrowser", false, "do not open web UI in browser")
 	flag.BoolVar(&noLock, "nolock", false, "do not use a lock to prevent multiple instances of the client from running")
 	flag.BoolVar(&installCa, "installca", false, "if set, tries to install the client's root CA for HTTPS on the web UI")
