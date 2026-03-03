@@ -1,7 +1,7 @@
 import styles from './Previewer.module.css'
 import stylesCommon from '../common.module.css'
 
-import { Component, createSignal, Match, onMount, Switch } from 'solid-js'
+import { Component, createSignal, Match, onMount, Show, Switch } from 'solid-js'
 import { PreviewInfo } from '../state'
 import { guessFileCategory, makeFileUrl } from '../util'
 import { useFileServerUrl, useGlobalState } from '../ctx'
@@ -31,13 +31,29 @@ const CatOther: Component<CatProps> = (props) => {
 		},
 	)
 
+	const [viewAsText, setViewAsText] = createSignal(false)
+
 	return (
-		<div class={styles.catOther}>
-			<span>No Preview Available.</span>
-			<br />
-			<br />
-			<a href={dlUrl}>💾 Download</a>
-		</div>
+		<Show when={viewAsText()} fallback={
+			<div class={styles.catOther}>
+				<span>No Preview Available.</span>
+				<br />
+				<br />
+				<a href={dlUrl}>💾 Download</a>
+				<br/>
+				<a
+					href=""
+					onClick={(e) => {
+						e.preventDefault()
+						setViewAsText(true)
+					}}
+				>
+					📜 View as Text
+				</a>
+			</div>
+		}>
+			<CatText {...props} />
+		</Show>
 	)
 }
 
