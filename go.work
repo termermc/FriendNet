@@ -8,6 +8,5 @@ use (
 	./rpcclient
 	./server
 	./upnp
-	./webdav
 	./webui
 )
