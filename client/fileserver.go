@@ -89,6 +89,8 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Strict CSP for pages served from peers.
 	w.Header().Set("Content-Security-Policy", "default-src 'none'; frame-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self' data:; base-uri 'none'; form-action 'none'; sandbox")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Referrer-Policy", "no-referrer")
 
 	if url.Query().Has("allowCache") {
 		w.Header().Set("Cache-Control", "private, max-age=600, must-revalidate")
