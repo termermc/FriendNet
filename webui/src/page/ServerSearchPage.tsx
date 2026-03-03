@@ -1,6 +1,6 @@
 import styles from './ServerSearchPage.module.css'
 
-import { Component, createEffect, createSignal, onCleanup, Show } from 'solid-js'
+import { Component, createEffect, createSignal, onCleanup, onMount, Show } from 'solid-js'
 import { useFileServerUrl, useGlobalState, useRpcClient } from '../ctx'
 import { Code, ConnectError } from '@connectrpc/connect'
 import { A, useLocation, useParams, useSearchParams } from '@solidjs/router'
@@ -19,6 +19,11 @@ const Page: Component = () => {
 	if (!server) {
 		return <h1>No such server "{uuid}"</h1>
 	}
+
+	let fieldQueryElem: HTMLInputElement | undefined
+	onMount(() => {
+		fieldQueryElem?.focus()
+	})
 
 	const [searchParams, setSearchParams] = useSearchParams<{ query?: string, username?: string }>()
 
@@ -151,6 +156,7 @@ const Page: Component = () => {
 				/>
 
 				<input
+					ref={fieldQueryElem}
 					class={styles.fieldQuery}
 					type="text"
 					placeholder="Search Query"
