@@ -35,6 +35,7 @@ var errInvalidDefaultPort = connect.NewError(connect.CodeInvalidArgument, errors
 var errInvalidUpnpTimeout = connect.NewError(connect.CodeInvalidArgument, errors.New("UPnP timeout must be between 0 and 60000 (inclusive)"))
 var errIndexingDisabled = connect.NewError(connect.CodeFailedPrecondition, errors.New("share has indexing disabled"))
 var errEmptySearchQuery = connect.NewError(connect.CodeInvalidArgument, errors.New("search query cannot be empty"))
+var errInvalidShareName = connect.NewError(connect.CodeInvalidArgument, share.ErrInvalidShareName)
 
 type RpcServer struct {
 	clogHandler   clog.Handler
@@ -356,6 +357,10 @@ func (s *RpcServer) CreateShare(ctx context.Context, request *v1.CreateShareRequ
 
 	_, err := srv.ShareMgr.Add(ctx, request.Name, request.Path, request.FollowLinks)
 	if err != nil {
+		if errors.Is(err, share.ErrInvalidShareName) {
+			return nil, errInvalidShareName
+		}
+
 		return nil, err
 	}
 

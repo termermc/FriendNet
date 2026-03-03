@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -26,6 +27,9 @@ var ErrIndexingDisabled = errors.New("indexing disabled for share")
 
 // ErrTooManyFiles is returned when trying to index a share that has too many files.
 var ErrTooManyFiles = errors.New("too many files in share, indexing canceled")
+
+// ErrInvalidShareName is returned when trying to create a share with an invalid name.
+var ErrInvalidShareName = errors.New("invalid share name")
 
 type shareData struct {
 	share       Share
@@ -431,6 +435,21 @@ func (m *Manager) Add(
 	path string,
 	followLinks bool,
 ) (Share, error) {
+	// Validate name.
+	if name == "" {
+		return nil, ErrInvalidShareName
+	}
+	if strings.ContainsRune(name, '/') {
+		return nil, ErrInvalidShareName
+	}
+
+	// Parse as path.
+	// If it cannot be parsed as a valid path (with "/" prepended), it is not a valid share name.
+	_, pathErr := common.ValidatePath("/" + name)
+	if pathErr != nil {
+		return nil, ErrInvalidShareName
+	}
+
 	m.mu.Lock()
 
 	if m.isClosed {

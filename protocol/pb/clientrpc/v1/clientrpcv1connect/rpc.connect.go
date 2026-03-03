@@ -144,6 +144,8 @@ type ClientRpcServiceClient interface {
 	GetShares(context.Context, *v1.GetSharesRequest) (*v1.GetSharesResponse, error)
 	// CreateShare creates a new server share.
 	//
+	// Returns NOT_FOUND if no such server exists.
+	// Returns INVALID_ARGUMENT if the share name is invalid.
 	// Returns ALREADY_EXISTS if a share with the same name already exists.
 	CreateShare(context.Context, *v1.CreateShareRequest) (*v1.CreateShareResponse, error)
 	// DeleteShare deletes an existing server share.
@@ -619,6 +621,8 @@ type ClientRpcServiceHandler interface {
 	GetShares(context.Context, *v1.GetSharesRequest) (*v1.GetSharesResponse, error)
 	// CreateShare creates a new server share.
 	//
+	// Returns NOT_FOUND if no such server exists.
+	// Returns INVALID_ARGUMENT if the share name is invalid.
 	// Returns ALREADY_EXISTS if a share with the same name already exists.
 	CreateShare(context.Context, *v1.CreateShareRequest) (*v1.CreateShareResponse, error)
 	// DeleteShare deletes an existing server share.
