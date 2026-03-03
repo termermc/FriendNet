@@ -206,7 +206,6 @@ const Page: Component = () => {
 									onChange={(e) =>
 										setFollowLinks(e.currentTarget.checked)
 									}
-									required={true}
 								/>
 							</td>
 						</tr>

@@ -298,6 +298,27 @@ func (s *Storage) ClearShareIndex(ctx context.Context, uuid string, curIndexId i
 	return nil
 }
 
+// ClearOrphanedShareIndexes clears share indexes whose share no longer exists.
+// If limit is more than 0, it will only delete up to that many rows.
+// Returns the number of rows deleted.
+func (s *Storage) ClearOrphanedShareIndexes(ctx context.Context, limit int64) (int64, error) {
+	var res sql.Result
+	var err error
+	if limit > 0 {
+		res, err = s.Exec(ctx, `delete from share_index_fts where rowid in (select rowid from share_index_fts where share not in (select uuid from share) limit (?))`, limit)
+	} else {
+		res, err = s.Exec(ctx, `delete from share_index_fts where share not in (select uuid from share)`)
+	}
+	if err != nil {
+		return 0, fmt.Errorf("failed to clear orphaned share indexes: %w", err)
+	}
+	num, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get number of rows deleted when deleting orphaned share indexes: %w", err)
+	}
+	return num, nil
+}
+
 func indexPathParts(pathStr string) (name string, dir string, ext string) {
 	name = path.Base(pathStr)
 	dir = path.Dir(pathStr)

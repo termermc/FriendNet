@@ -49,9 +49,10 @@ type ServerShareManager struct {
 	// A mapping of share names to their underlying Share instances.
 	shareMap map[string]*shareData
 
-	indexerInterval time.Duration
-	indexingShares  map[string]struct{}
-	indexerMaxFiles int
+	indexerInterval         time.Duration
+	indexingShares          map[string]struct{}
+	indexerMaxFiles         int
+	orphanedIndexGcInterval time.Duration
 }
 
 // NewServerShareManager creates a new share manager for the given server.
@@ -95,12 +96,14 @@ func NewServerShareManager(
 
 		shareMap: shareMap,
 
-		indexerInterval: 1 * time.Hour,
-		indexingShares:  make(map[string]struct{}),
-		indexerMaxFiles: 1_000_000,
+		indexerInterval:         1 * time.Hour,
+		indexingShares:          make(map[string]struct{}),
+		indexerMaxFiles:         1_000_000,
+		orphanedIndexGcInterval: 10 * time.Minute,
 	}
 
 	go m.indexerDaemon()
+	go m.orphanedIndexGc()
 
 	return m, nil
 }
@@ -142,6 +145,49 @@ func (m *ServerShareManager) indexerDaemon() {
 	do()
 
 	ticker := time.NewTicker(m.indexerInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-m.ctx.Done():
+			return
+		case <-ticker.C:
+			do()
+		}
+	}
+}
+
+func (m *ServerShareManager) orphanedIndexGc() {
+	do := func() {
+		var totalDeleted int64
+		for {
+			deleted, err := m.storage.ClearOrphanedShareIndexes(m.ctx, 100)
+			if err != nil {
+				m.logger.Error("failed to clear orphaned indexes",
+					"service", "share.ServerShareManager",
+					"err", err,
+				)
+				break
+			}
+
+			if deleted == 0 {
+				break
+			}
+
+			totalDeleted += deleted
+		}
+
+		if totalDeleted > 0 {
+			m.logger.Info("deleted orphaned share indexes",
+				"service", "share.ServerShareManager",
+				"total", totalDeleted,
+			)
+		}
+	}
+
+	do()
+
+	ticker := time.NewTicker(m.orphanedIndexGcInterval)
 	defer ticker.Stop()
 
 	for {

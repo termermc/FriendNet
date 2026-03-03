@@ -127,13 +127,6 @@ create virtual table share_index_fts using fts5(
     prefix = '2 3 4',
     tokenize = 'unicode61'
 );
-
-create trigger share_delete_index
-after delete on share
-for each row
-begin
-    delete from share_index_fts where share = old.uuid;
-end;
 	`
 	_, err = tx.Exec(q2)
 	if err != nil {
