@@ -35,6 +35,10 @@ const Page: Component = () => {
 		decodeURIComponent(pathRaw),
 	)
 
+	const dirDlUrl = makeFileUrl(fsUrl, uuid, username, path, {
+		zip: true,
+	})
+
 	const [files, setFiles] = createSignal<FileMeta[]>([])
 	const [isLoading, setLoading] = createSignal(false)
 	const [error, setError] = createSignal('')
@@ -78,6 +82,18 @@ const Page: Component = () => {
 
 	return (
 		<div class={styles.container}>
+			<Show when={!error()}>
+				<div class={styles.actions}>
+					<a
+						title="Download Directory as Zip File"
+						href={dirDlUrl}
+						class={styles.action}
+					>
+						💾 Download Folder
+					</a>
+				</div>
+			</Show>
+
 			<div class={styles.location}>
 				<div class={styles.segment}>🖧 {server.name()}</div>
 				<A

@@ -22,6 +22,7 @@ export function makeFileUrl(
 	options: {
 		download?: boolean
 		allowCache?: boolean
+		zip?: boolean
 	} = {},
 ): string {
 	if (path.startsWith('/')) {
@@ -35,8 +36,11 @@ export function makeFileUrl(
 	if (options.download) {
 		query.set('download', '1')
 	}
+	if (options.zip) {
+		query.set('zip', '1')
+	}
 
-	return `${base}/${serverUuid}/${username}/${path}?${query}`
+	return `${base}/content/${serverUuid}/${username}/${path}?${query}`
 }
 
 /**

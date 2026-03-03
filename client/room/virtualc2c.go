@@ -89,9 +89,9 @@ func (c VirtualC2cConn) SendAndReceiveAck(typ pb.MsgType, msg proto.Message) err
 var _ protocol.ProtoConn = VirtualC2cConn{}
 
 // GetDirFiles returns a stream of files in the specified directory.
-func (c VirtualC2cConn) GetDirFiles(path string) (protocol.Stream[*pb.MsgDirFiles], error) {
+func (c VirtualC2cConn) GetDirFiles(path common.ProtoPath) (protocol.Stream[*pb.MsgDirFiles], error) {
 	bidi, err := c.OpenBidiWithMsg(pb.MsgType_MSG_TYPE_GET_DIR_FILES, &pb.MsgGetDirFiles{
-		Path: path,
+		Path: path.String(),
 	})
 	if err != nil {
 		return nil, err

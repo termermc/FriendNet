@@ -1,6 +1,13 @@
 import styles from './ServerSearchPage.module.css'
 
-import { Component, createEffect, createSignal, onCleanup, onMount, Show } from 'solid-js'
+import {
+	Component,
+	createEffect,
+	createSignal,
+	onCleanup,
+	onMount,
+	Show,
+} from 'solid-js'
 import { useFileServerUrl, useGlobalState, useRpcClient } from '../ctx'
 import { Code, ConnectError } from '@connectrpc/connect'
 import { A, useLocation, useParams, useSearchParams } from '@solidjs/router'
@@ -25,7 +32,10 @@ const Page: Component = () => {
 		fieldQueryElem?.focus()
 	})
 
-	const [searchParams, setSearchParams] = useSearchParams<{ query?: string, username?: string }>()
+	const [searchParams, setSearchParams] = useSearchParams<{
+		query?: string
+		username?: string
+	}>()
 
 	const [query, setQuery] = createSignal(searchParams.query ?? '')
 	const [username, setUsername] = createSignal(searchParams.username ?? '')

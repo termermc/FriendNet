@@ -1,6 +1,7 @@
 package client
 
 import (
+	"archive/zip"
 	"context"
 	"errors"
 	"fmt"
@@ -26,6 +27,8 @@ import (
 // TODO Protect with some kind of token?
 // Maybe the URL should include the token as the first segment or something.
 // I want to make sure that relative paths can load so that a profile page can be iframe'd.
+
+// TODO Zip folder downloads
 
 // FileServerHandler is an HTTP handler that serves files from remote peers.
 type FileServerHandler struct {
@@ -67,8 +70,8 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		text(w, r, http.StatusInternalServerError, fmt.Sprintf("internal error:\n\n%v\n", err))
 	}
 
-	const schemeMsg = "Files are served based on the path scheme: /SERVER/USERNAME/PATH"
-	const indexMsg = "Hi, you've reached the peer proxy HTTP server.\n" + schemeMsg + "\nYou can specify ?download=1 to signal browsers to download the file.\nHave fun!\n"
+	const schemeMsg = "Files are served based on the path scheme: /content/:SERVER/:USERNAME/:PATH..."
+	const indexMsg = "Hi, you've reached the peer proxy HTTP server.\n\n" + schemeMsg + "\n\nPossible query parameter options:\n - ?download=1 signals for the browser to download the file\n - ?allowCache=1 sets caching headers to allow browser to cache the file\n - ?zip=1 on a directory downloads a zip of the directory's contents\n\nHave fun!\n"
 
 	switch r.Method {
 	case http.MethodGet, http.MethodHead:
@@ -104,6 +107,11 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !strings.HasPrefix(url.Path, "/content/") {
+		http.NotFound(w, r)
+		return
+	}
+
 	pathParts := strings.Split(strings.TrimSuffix(url.Path[1:], "/"), "/")
 
 	if len(pathParts) < 3 {
@@ -111,9 +119,9 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serverUuid := pathParts[0]
-	usernameRaw := pathParts[1]
-	pathRaw := "/" + strings.Join(pathParts[2:], "/")
+	serverUuid := pathParts[1]
+	usernameRaw := pathParts[2]
+	pathRaw := "/" + strings.Join(pathParts[3:], "/")
 	path, err := common.ValidatePath(pathRaw)
 	if err != nil {
 		text(w, r, http.StatusBadRequest, fmt.Sprintf("invalid path %q: %v\n", pathRaw, err))
@@ -156,8 +164,157 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if meta.IsDir {
-			text(w, r, http.StatusNotImplemented, "path points to a directory\n")
-			return nil
+			doZip := url.Query().Has("zip")
+			if !doZip {
+				text(w, r, http.StatusNotImplemented, "Path points to a directory.\n\nTo download the directory's content as a zip, specify ?zip=1.\n")
+				return nil
+			}
+
+			// Zip folder contents.
+
+			w.Header().Set("Content-Type", "application/zip")
+			w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.zip"`, meta.Name))
+
+			// We will scan through the directory while writing the files to a zip output stream.
+			// The scanning will happen in the background while we receive the entries in this thread and write them.
+
+			zipCtx, cancel := context.WithCancelCause(ctx)
+
+			type zipEntry struct {
+				path common.ProtoPath
+				meta *pb.MsgFileMeta
+			}
+
+			entries := make(chan zipEntry, 1_000)
+
+			go func() {
+				toCrawl := []common.ProtoPath{path}
+
+				for len(toCrawl) > 0 {
+					crawlPath := toCrawl[0]
+					toCrawl = toCrawl[1:]
+
+					fileStream, streamErr := peer.GetDirFiles(crawlPath)
+					if streamErr != nil {
+						if errors.Is(streamErr, protocol.ErrPeerUnreachable) {
+							cancel(protocol.ErrPeerUnreachable)
+							return
+						}
+
+						cancel(fmt.Errorf(`failed to read contents in directory %q: %w`, crawlPath.String(), streamErr))
+					}
+
+					for {
+						next, nextErr := fileStream.ReadNext()
+						if nextErr != nil {
+							if errors.Is(nextErr, io.EOF) {
+								break
+							}
+
+							if protoErr, ok := errors.AsType[protocol.ProtoMsgError](nextErr); ok {
+								// File might change while we are crawling it.
+								// Just skip errors that might happen if the directory is changing.
+								if protoErr.Msg.Type == pb.ErrType_ERR_TYPE_FILE_NOT_EXIST ||
+									protoErr.Msg.Type == pb.ErrType_ERR_TYPE_PATH_NOT_DIRECTORY {
+									break
+								}
+							}
+
+							_ = fileStream.Close()
+							cancel(fmt.Errorf(`failed to read next file in directory %q: %w`, crawlPath.String(), nextErr))
+							return
+						}
+
+						for _, file := range next.Files {
+							filePath := common.UncheckedCreateProtoPath(crawlPath.String() + "/" + file.Name)
+
+							entries <- zipEntry{
+								path: filePath,
+								meta: file,
+							}
+
+							if file.IsDir {
+								toCrawl = append(toCrawl, filePath)
+							}
+						}
+					}
+					_ = fileStream.Close()
+				}
+
+				close(entries)
+			}()
+
+			zipErr := func() error {
+				zw := zip.NewWriter(w)
+
+			entryLoop:
+				for {
+					select {
+					case <-zipCtx.Done():
+						if ctxErr := zipCtx.Err(); ctxErr != nil {
+							return ctxErr
+						}
+
+						// If the context was canceled without an error, something weird happened.
+						return errors.New("directory zip streaming context canceled without an error, this should not happen")
+
+					case entry := <-entries:
+						if entry.meta == nil {
+							// No more entries.
+							break entryLoop
+						}
+
+						entryPath := strings.TrimPrefix(entry.path.String(), path.String())[1:]
+
+						if entry.meta.IsDir {
+							_, fileErr := zw.Create(entryPath + "/")
+							if fileErr != nil {
+								return fileErr
+							}
+							continue
+						}
+
+						fileW, fileErr := zw.Create(entryPath)
+						if fileErr != nil {
+							return fileErr
+						}
+
+						_, reader, getErr := peer.GetFile(&pb.MsgGetFile{
+							Path: entry.path.String(),
+						})
+						if getErr != nil {
+							return getErr
+						}
+
+						_, copyErr := io.Copy(fileW, reader)
+						if copyErr != nil {
+							return copyErr
+						}
+					}
+				}
+
+				return zw.Close()
+			}()
+			if zipErr != nil {
+				s.logger.Error("error while streaming directory zip",
+					"service", "client.FileServerHandler",
+					"server", serverUuid,
+					"username", username.String(),
+					"path", path.String(),
+					"err", zipErr,
+				)
+
+				hijacker, ok := w.(http.Hijacker)
+				if ok {
+					// Force-close the connection so the client knows that the sending failed.
+					conn, _, _ := hijacker.Hijack()
+					if conn != nil {
+						_ = conn.Close()
+					}
+				}
+
+				return nil
+			}
 		}
 
 		fileExt := filepath.Ext(path.String())
@@ -265,6 +422,9 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if _, ok := errors.AsType[*quic.StreamError](err); ok {
+			return
+		}
+		if strings.Contains(err.Error(), "http2: stream closed") {
 			return
 		}
 

@@ -398,6 +398,11 @@ func (s *RpcServer) GetDirFiles(ctx context.Context, request *v1.GetDirFilesRequ
 		return errInvalidUsername
 	}
 
+	path, pathErr := common.ValidatePath(request.Path)
+	if pathErr != nil {
+		return connect.NewError(connect.CodeInvalidArgument, pathErr)
+	}
+
 	srv, has := s.client.GetByUuid(request.ServerUuid)
 	if !has {
 		return errServerNotFound
@@ -405,7 +410,7 @@ func (s *RpcServer) GetDirFiles(ctx context.Context, request *v1.GetDirFilesRequ
 
 	return srv.Do(ctx, func(ctx context.Context, c *room.Conn) error {
 		peer := c.GetVirtualC2cConn(username, false)
-		stream, err := peer.GetDirFiles(request.Path)
+		stream, err := peer.GetDirFiles(path)
 		if err != nil {
 			return err
 		}
