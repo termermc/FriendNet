@@ -102,7 +102,24 @@ const CatText: Component<CatProps> = (props) => {
 const CatAudio: Component<CatProps> = (props) => {
 	const fsUrl = useFileServerUrl()
 
-	const coverFilenames = ['cover.jpg', 'cover.jpeg', 'cover.png']
+	let withoutExt: string
+	{
+		const dotIdx = props.filename.lastIndexOf('.')
+		if (dotIdx === -1) {
+			withoutExt = props.filename
+		} else {
+			withoutExt = props.filename.substring(0, dotIdx)
+		}
+	}
+
+	const coverFilenames = [
+		'cover.jpg',
+		'cover.jpeg',
+		'cover.png',
+		`${withoutExt}.jpg`,
+		`${withoutExt}.jpeg`,
+		`${withoutExt}.png`,
+	]
 
 	const [coverUrl, setCoverUrl] = createSignal<string | undefined>()
 
