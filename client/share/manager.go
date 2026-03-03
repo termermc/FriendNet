@@ -416,7 +416,10 @@ func (m *ServerShareManager) GetByName(name string) (Share, bool) {
 	}
 
 	share, has := m.shareMap[name]
-	return share.share, has
+	if !has {
+		return nil, false
+	}
+	return share.share, true
 }
 
 // Add creates a new server share.
