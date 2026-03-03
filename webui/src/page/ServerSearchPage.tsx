@@ -1,9 +1,9 @@
 import styles from './ServerSearchPage.module.css'
 
-import { Component, createSignal, onCleanup, Show } from 'solid-js'
+import { Component, createEffect, createSignal, onCleanup, Show } from 'solid-js'
 import { useFileServerUrl, useGlobalState, useRpcClient } from '../ctx'
 import { Code, ConnectError } from '@connectrpc/connect'
-import { A, useLocation, useParams } from '@solidjs/router'
+import { A, useLocation, useParams, useSearchParams } from '@solidjs/router'
 import { FileTable, FileTableItem } from '../FileTable'
 import { StreamSearchResponse } from '../../pb/clientrpc/v1/rpc_pb'
 import Fuse from 'fuse.js'
@@ -20,9 +20,10 @@ const Page: Component = () => {
 		return <h1>No such server "{uuid}"</h1>
 	}
 
-	const [username, setUsername] = createSignal('')
-	const [query, setQuery] = createSignal('')
-	let submittedQuery = ''
+	const [searchParams, setSearchParams] = useSearchParams<{ query?: string, username?: string }>()
+
+	const [query, setQuery] = createSignal(searchParams.query ?? '')
+	const [username, setUsername] = createSignal(searchParams.username ?? '')
 
 	const [error, setError] = createSignal('')
 	const [isLoading, setLoading] = createSignal(false)
@@ -33,6 +34,11 @@ const Page: Component = () => {
 
 	const newItems: FileTableItem<StreamSearchResponse>[] = []
 	const debounceInterval = setInterval(() => {
+		const q = searchParams.query
+		if (!q) {
+			return
+		}
+
 		if (newItems.length === 0) {
 			return
 		}
@@ -55,7 +61,7 @@ const Page: Component = () => {
 		})
 
 		// Remove "ext:" filters from search term before using it with Fuse.
-		const fuzzyQ = submittedQuery.replace(/(^|\W)ext:\w*/g, ' ')
+		const fuzzyQ = q.replace(/(^|\W)ext:\w*/g, ' ')
 
 		const fuzzyRes = fuse.search(fuzzyQ)
 		setResults(fuzzyRes.map((x) => x.item))
@@ -72,13 +78,10 @@ const Page: Component = () => {
 	const submit = async function (event: SubmitEvent) {
 		event.preventDefault()
 
-		const q = query()
-		if (!q) {
-			return
-		}
+		setSearchParams({ query: query().trim(), username: username().trim() })
+	}
 
-		submittedQuery = q
-
+	async function doSearch(query: string, username: string) {
 		abortController?.abort()
 		abortController = new AbortController()
 
@@ -89,8 +92,8 @@ const Page: Component = () => {
 		try {
 			const stream = client.streamSearch({
 				serverUuid: uuid,
-				username: username().trim() || undefined,
-				query: q,
+				username: username || undefined,
+				query: query,
 			})
 
 			for await (const res of stream) {
@@ -114,6 +117,21 @@ const Page: Component = () => {
 			setLoading(false)
 		}
 	}
+
+	createEffect(() => {
+		const q = searchParams.query?.trim() || ''
+		const u = searchParams.username?.trim() || ''
+
+		if (!q) {
+			return
+		}
+
+		setQuery(q)
+		setUsername(u)
+
+		// noinspection JSIgnoredPromiseFromCall
+		doSearch(q, u)
+	})
 
 	return (
 		<div class={styles.container}>
