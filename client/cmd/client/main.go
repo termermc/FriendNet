@@ -106,10 +106,6 @@ func (l *Locker) Unlock() {
 func main() {
 	runId := time.Now().UnixMilli()
 
-	// TODO Bearer token stored in DB
-	// TODO Flag to reset bearer token
-	rpcBearerToken := "abc123"
-
 	var dataDir string
 	var rpcAddr string
 	var fileAddr string
@@ -119,6 +115,7 @@ func main() {
 	var noLock bool
 	var installCa bool
 	var uninstallCa bool
+	var resetToken bool
 	var pprofFile string
 
 	flag.StringVar(&dataDir, "datadir", "", "path to server config JSON")
@@ -129,6 +126,7 @@ func main() {
 	flag.BoolVar(&noLock, "nolock", false, "do not use a lock to prevent multiple instances of the client from running")
 	flag.BoolVar(&installCa, "installca", false, "if set, tries to install the client's root CA for HTTPS on the web UI")
 	flag.BoolVar(&uninstallCa, "uninstallca", false, "if set, tries to uninstall the client's root CA")
+	flag.BoolVar(&resetToken, "resettoken", false, "if set, resets the bearer token for the RPC server")
 	flag.StringVar(&pprofFile, "pproffile", "", "write CPU profile data in the pprof format to this file, e.g. \"cpu.pprof\"")
 
 	// Prevent headless mode on Windows.
@@ -142,6 +140,7 @@ func main() {
 	var profilerFile *os.File
 	if pprofFile != "" {
 		var err error
+		//goland:noinspection GoResourceLeak
 		profilerFile, err = os.Create(pprofFile)
 		if err != nil {
 			panic(fmt.Errorf(`failed to create pprof file: %w`, err))
@@ -257,6 +256,23 @@ func main() {
 			os.Exit(1)
 		}
 		return
+	}
+
+	// Get or set bearer token.
+	var rpcBearerToken string
+	const rpcTokenSetting = "rpc_bearer_token"
+	{
+		const byteLen = 32
+		if resetToken {
+			rpcBearerToken = common.RandomB64UrlStr(byteLen)
+			err = store.PutSetting(context.Background(), rpcTokenSetting, rpcBearerToken)
+		} else {
+			rpcBearerToken, err = store.GetSettingOrPut(context.Background(), rpcTokenSetting, common.RandomB64UrlStr(byteLen))
+		}
+		if err != nil {
+			logger.Error(`failed to get or set RPC bearer token`, "err", err)
+			os.Exit(1)
+		}
 	}
 
 	if !headless && !mc.CheckPlatform() {
@@ -431,7 +447,7 @@ func main() {
 	wg.Go(func() {
 		logger.Info(`RPC server listening`,
 			"addr", rpcAddr,
-			"bearerToken", rpcBearerToken,
+			"bearer_token", rpcBearerToken,
 		)
 		if listenErr := rpc.Serve(); listenErr != nil {
 			panic(fmt.Errorf(`RPC server ended with error: %w`, listenErr))

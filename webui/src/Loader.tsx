@@ -25,6 +25,9 @@ const NoRpc: Component = () => {
 				The URL you opened should have contained an RPC URL in it,
 				ending in something like <code>?rpc=</code>.
 			</p>
+			<p>
+				You can also find it by searching "bearer_token" in the log output of your client process.
+			</p>
 			<p>You can manually enter the URL below:</p>
 			<form method="get" action="">
 				<input
