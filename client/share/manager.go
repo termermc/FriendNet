@@ -15,7 +15,7 @@ import (
 	pb "friendnet.org/protocol/pb/v1"
 )
 
-// ErrServerManagerClosed is returned by ServerShareManager methods when it is closed.
+// ErrServerManagerClosed is returned by Manager methods when it is closed.
 var ErrServerManagerClosed = errors.New("server manager is closed")
 
 // ErrShareExists is returned when trying to create a new share with a name that already exists.
@@ -33,8 +33,8 @@ type shareData struct {
 	lastIndexId int64
 }
 
-// ServerShareManager manages shares for a server.
-type ServerShareManager struct {
+// Manager manages shares for a server.
+type Manager struct {
 	mu       sync.RWMutex
 	isClosed bool
 
@@ -55,13 +55,13 @@ type ServerShareManager struct {
 	orphanedIndexGcInterval time.Duration
 }
 
-// NewServerShareManager creates a new share manager for the given server.
+// NewManager creates a new share manager for the given server.
 // It gets share records for the server and instantiates Share instances for them.
-func NewServerShareManager(
+func NewManager(
 	logger *slog.Logger,
 	serverUuid string,
 	storage *storage.Storage,
-) (*ServerShareManager, error) {
+) (*Manager, error) {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
 	// Get shares for server.
@@ -85,7 +85,7 @@ func NewServerShareManager(
 		}
 	}
 
-	m := &ServerShareManager{
+	m := &Manager{
 		ctx:       ctx,
 		ctxCancel: ctxCancel,
 
@@ -108,7 +108,7 @@ func NewServerShareManager(
 	return m, nil
 }
 
-func (m *ServerShareManager) snapshotSharesNoLock() []Share {
+func (m *Manager) snapshotSharesNoLock() []Share {
 	slice := make([]Share, 0, len(m.shareMap))
 	for _, share := range m.shareMap {
 		slice = append(slice, share.share)
@@ -116,7 +116,7 @@ func (m *ServerShareManager) snapshotSharesNoLock() []Share {
 	return slice
 }
 
-func (m *ServerShareManager) indexerDaemon() {
+func (m *Manager) indexerDaemon() {
 	defer func() {
 		if rec := recover(); rec != nil {
 			m.logger.Error("share indexer daemon panicked",
@@ -157,14 +157,14 @@ func (m *ServerShareManager) indexerDaemon() {
 	}
 }
 
-func (m *ServerShareManager) orphanedIndexGc() {
+func (m *Manager) orphanedIndexGc() {
 	do := func() {
 		var totalDeleted int64
 		for {
 			deleted, err := m.storage.ClearOrphanedShareIndexes(m.ctx, 100)
 			if err != nil {
 				m.logger.Error("failed to clear orphaned indexes",
-					"service", "share.ServerShareManager",
+					"service", "share.Manager",
 					"err", err,
 				)
 				break
@@ -179,7 +179,7 @@ func (m *ServerShareManager) orphanedIndexGc() {
 
 		if totalDeleted > 0 {
 			m.logger.Info("deleted orphaned share indexes",
-				"service", "share.ServerShareManager",
+				"service", "share.Manager",
 				"total", totalDeleted,
 			)
 		}
@@ -203,7 +203,7 @@ func (m *ServerShareManager) orphanedIndexGc() {
 // indexShare indexes all files in the share with the specified name.
 // It returns the number of files indexed, whether the share existed, and any error that occurred.
 // Refuses to index the share if it has indexing disabled, returning ErrIndexingDisabled.
-func (m *ServerShareManager) indexShare(ctx context.Context, name string) (count int, hasShare bool, err error) {
+func (m *Manager) indexShare(ctx context.Context, name string) (count int, hasShare bool, err error) {
 	m.mu.Lock()
 	val, has := m.shareMap[name]
 	if !has {
@@ -231,7 +231,7 @@ func (m *ServerShareManager) indexShare(ctx context.Context, name string) (count
 		err = m.storage.ClearShareIndex(ctx, rec.Uuid, curIndexId)
 		if err != nil {
 			m.logger.Error("failed to clear old indexes for share",
-				"service", "share.ServerShareManager",
+				"service", "share.Manager",
 				"share_uuid", rec.Uuid,
 				"err", err,
 			)
@@ -242,7 +242,7 @@ func (m *ServerShareManager) indexShare(ctx context.Context, name string) (count
 			optErr := m.storage.OptimizeShareIndex(ctx)
 			if optErr != nil {
 				m.logger.Warn("failed to optimize share index",
-					"service", "share.ServerShareManager",
+					"service", "share.Manager",
 					"share_uuid", rec.Uuid,
 					"err", optErr,
 				)
@@ -304,7 +304,7 @@ func (m *ServerShareManager) indexShare(ctx context.Context, name string) (count
 	return count, true, nil
 }
 
-func (m *ServerShareManager) indexShareWithLockAndLogging(rec storage.ShareRecord) {
+func (m *Manager) indexShareWithLockAndLogging(rec storage.ShareRecord) {
 	m.mu.Lock()
 	_, has := m.indexingShares[rec.Uuid]
 	if has {
@@ -321,7 +321,7 @@ func (m *ServerShareManager) indexShareWithLockAndLogging(rec storage.ShareRecor
 	}()
 
 	m.logger.Info("indexing share",
-		"service", "share.ServerShareManager",
+		"service", "share.Manager",
 		"uuid", rec.Uuid,
 		"name", rec.Name,
 		"path", rec.Path,
@@ -331,7 +331,7 @@ func (m *ServerShareManager) indexShareWithLockAndLogging(rec storage.ShareRecor
 	if idxErr != nil {
 		if errors.Is(idxErr, ErrIndexingDisabled) {
 			m.logger.Info("indexing disabled for share",
-				"service", "share.ServerShareManager",
+				"service", "share.Manager",
 				"uuid", rec.Uuid,
 				"name", rec.Name,
 				"path", rec.Path,
@@ -340,7 +340,7 @@ func (m *ServerShareManager) indexShareWithLockAndLogging(rec storage.ShareRecor
 		}
 		if errors.Is(idxErr, ErrTooManyFiles) {
 			m.logger.Warn("share has too many files, indexing canceled",
-				"service", "share.ServerShareManager",
+				"service", "share.Manager",
 				"uuid", rec.Uuid,
 				"name", rec.Name,
 				"path", rec.Path,
@@ -350,7 +350,7 @@ func (m *ServerShareManager) indexShareWithLockAndLogging(rec storage.ShareRecor
 		}
 
 		m.logger.Error("failed to index share",
-			"service", "share.ServerShareManager",
+			"service", "share.Manager",
 			"uuid", rec.Uuid,
 			"name", rec.Name,
 			"path", rec.Path,
@@ -371,7 +371,7 @@ func (m *ServerShareManager) indexShareWithLockAndLogging(rec storage.ShareRecor
 // If the share does not exist, this is no-op.
 // If the share has indexing disabled, returns ErrIndexingDisabled.
 // If the manager is closed, returns ErrServerManagerClosed.
-func (m *ServerShareManager) ScheduleShareIndex(name string) error {
+func (m *Manager) ScheduleShareIndex(name string) error {
 	m.mu.RLock()
 	if m.isClosed {
 		m.mu.RUnlock()
@@ -396,7 +396,7 @@ func (m *ServerShareManager) ScheduleShareIndex(name string) error {
 // GetAll returns all current shares for the server.
 // Returns empty if the manager is closed.
 // Note that this method creates a new slice each time it is called.
-func (m *ServerShareManager) GetAll() []Share {
+func (m *Manager) GetAll() []Share {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	if m.isClosed {
@@ -408,7 +408,7 @@ func (m *ServerShareManager) GetAll() []Share {
 
 // GetByName returns the share with the specified name and true, or nil and false if no such share name exists.
 // Always returns nil and false if the manager is closed.
-func (m *ServerShareManager) GetByName(name string) (Share, bool) {
+func (m *Manager) GetByName(name string) (Share, bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	if m.isClosed {
@@ -425,7 +425,7 @@ func (m *ServerShareManager) GetByName(name string) (Share, bool) {
 // Add creates a new server share.
 // If a share with the same name exists, returns ErrShareExists.
 // Triggers an index in the background when the share is created.
-func (m *ServerShareManager) Add(
+func (m *Manager) Add(
 	ctx context.Context,
 	name string,
 	path string,
@@ -485,7 +485,7 @@ func (m *ServerShareManager) Add(
 
 // Delete deletes an existing server share.
 // If the share does not exist, this is no-op.
-func (m *ServerShareManager) Delete(ctx context.Context, name string) error {
+func (m *Manager) Delete(ctx context.Context, name string) error {
 	m.mu.Lock()
 	if m.isClosed {
 		m.mu.Unlock()
@@ -516,7 +516,7 @@ func (m *ServerShareManager) Delete(ctx context.Context, name string) error {
 }
 
 // Close closes all shares managed by the manager, then the manager itself.
-func (m *ServerShareManager) Close() error {
+func (m *Manager) Close() error {
 	m.mu.Lock()
 
 	if m.isClosed {
@@ -542,7 +542,7 @@ func (m *ServerShareManager) Close() error {
 // SearchShares searches the indexes of shares managed by the manager for the specified query.
 // It returns a slice of search results.
 // Shares that have indexing disabled will not be searched.
-func (m *ServerShareManager) SearchShares(ctx context.Context, query string, limit int64) ([]pb.MsgSearchResult, error) {
+func (m *Manager) SearchShares(ctx context.Context, query string, limit int64) ([]pb.MsgSearchResult, error) {
 	m.mu.RLock()
 	if m.isClosed {
 		m.mu.RUnlock()

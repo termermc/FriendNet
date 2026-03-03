@@ -66,13 +66,13 @@ type Logic interface {
 
 // LogicImpl implements Logic.
 type LogicImpl struct {
-	shares      *share.ServerShareManager
+	shares      *share.Manager
 	searchLimit int64
 }
 
 var _ Logic = (*LogicImpl)(nil)
 
-func NewLogicImpl(shares *share.ServerShareManager) *LogicImpl {
+func NewLogicImpl(shares *share.Manager) *LogicImpl {
 	return &LogicImpl{
 		shares:      shares,
 		searchLimit: 100,

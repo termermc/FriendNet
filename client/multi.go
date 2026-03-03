@@ -38,7 +38,7 @@ type Server struct {
 
 	// The server's share manager.
 	// Do not update.
-	ShareMgr *share.ServerShareManager
+	ShareMgr *share.Manager
 
 	*ConnNanny
 }
@@ -168,8 +168,8 @@ func (c *MultiClient) GetByUuid(uuid string) (*Server, bool) {
 }
 
 func (c *MultiClient) createServerInstance(record storage.ServerRecord) (*Server, error) {
-	var shareMgr *share.ServerShareManager
-	shareMgr, err := share.NewServerShareManager(
+	var shareMgr *share.Manager
+	shareMgr, err := share.NewManager(
 		c.logger,
 		record.Uuid,
 		c.storage,
