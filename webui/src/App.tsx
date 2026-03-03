@@ -12,6 +12,7 @@ import { LogsPage } from './page/LogsPage'
 import { ChangeServerPasswordPage } from './page/ChangeServerPasswordPage'
 import { SettingsPage } from './page/SettingsPage'
 import { ServerSearchPage } from './page/ServerSearchPage'
+import { ServerProfilePage } from './page/ServerProfilePage'
 
 const App: Component = () => {
 	const routes: RouteDefinition[] = [
@@ -49,6 +50,10 @@ const App: Component = () => {
 		{
 			path: '/server/:uuid/search',
 			component: ServerSearchPage,
+		},
+		{
+			path: '/server/:uuid/profile/:username',
+			component: ServerProfilePage,
 		},
 
 		{
