@@ -1,4 +1,4 @@
-package client
+package multifs
 
 import (
 	"context"
@@ -10,101 +10,12 @@ import (
 	"sync"
 	"time"
 
+	"friendnet.org/client"
 	"friendnet.org/client/room"
 	"friendnet.org/common"
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
 )
-
-// Owner: read-only
-// Group: read-only
-// Other: read-only
-const multiFsFilePerms fs.FileMode = 0o444
-
-// 1970/01/01 00:00:00 UTC
-var multiFsModTime = time.Unix(0, 0)
-
-// DummyDirFsWrapper is a directory name that implements fs.FileInfo and fs.DirEntry.
-// The name must be a valid filename, so it must not contain any slashes.
-type DummyDirFsWrapper string
-
-var _ fs.FileInfo = DummyDirFsWrapper("")
-var _ fs.DirEntry = DummyDirFsWrapper("")
-
-func (w DummyDirFsWrapper) Name() string {
-	return string(w)
-}
-func (w DummyDirFsWrapper) Size() int64 {
-	return 0
-}
-func (w DummyDirFsWrapper) Mode() fs.FileMode {
-	return fs.ModeDir | multiFsFilePerms
-}
-func (w DummyDirFsWrapper) ModTime() time.Time {
-	return multiFsModTime
-}
-func (w DummyDirFsWrapper) IsDir() bool {
-	return true
-}
-func (w DummyDirFsWrapper) Sys() any {
-	return nil
-}
-func (w DummyDirFsWrapper) Type() fs.FileMode {
-	return fs.ModeDir
-}
-func (w DummyDirFsWrapper) Info() (fs.FileInfo, error) {
-	return w, nil
-}
-
-// MetaFsWrapper wraps a *pb.MsgFileMeta and implements fs.FileInfo and fs.DirEntry.
-// It should be passed by value, not by reference.
-type MetaFsWrapper struct {
-	meta *pb.MsgFileMeta
-}
-
-var _ fs.FileInfo = MetaFsWrapper{}
-var _ fs.DirEntry = MetaFsWrapper{}
-
-// MetaToFs wraps the provided *pb.MsgFileMeta in a type that implements fs.FileInfo and fs.DirEntry.
-func MetaToFs(meta *pb.MsgFileMeta) MetaFsWrapper {
-	return MetaFsWrapper{meta: meta}
-}
-
-func (p MetaFsWrapper) Name() string {
-	return p.meta.Name
-}
-func (p MetaFsWrapper) Size() int64 {
-	return int64(p.meta.Size)
-}
-func (p MetaFsWrapper) Mode() fs.FileMode {
-	if p.meta.IsDir {
-		return fs.ModeDir | multiFsFilePerms
-	}
-	return multiFsFilePerms
-}
-func (p MetaFsWrapper) ModTime() time.Time {
-	return multiFsModTime
-}
-func (p MetaFsWrapper) IsDir() bool {
-	return p.meta.IsDir
-}
-func (p MetaFsWrapper) Sys() any {
-	return nil
-}
-func (p MetaFsWrapper) Type() fs.FileMode {
-	if p.meta.IsDir {
-		return fs.ModeDir
-	}
-	return 0
-}
-func (p MetaFsWrapper) Info() (fs.FileInfo, error) {
-	return p, nil
-}
-
-type metaCacheEntry struct {
-	meta  *pb.MsgFileMeta
-	expTs time.Time
-}
 
 type pathParts struct {
 	// If serverDirName is set, serverUuid will also be set.
@@ -133,18 +44,11 @@ type pathParts struct {
 type MultiFs struct {
 	mu sync.RWMutex
 
-	ctx       context.Context
-	ctxCancel context.CancelFunc
-
-	cache                   map[string]metaCacheEntry
-	cacheEntryValidDuration time.Duration
-	cacheGcInterval         time.Duration
-
-	multi *MultiClient
+	multi *client.MultiClient
 }
 
 // NewMultiFs creates a new MultiFs instance with the specified MultiClient.
-func NewMultiFs(multi *MultiClient) *MultiFs {
+func NewMultiFs(multi *client.MultiClient) *MultiFs {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
 	m := &MultiFs{
@@ -161,26 +65,6 @@ func NewMultiFs(multi *MultiClient) *MultiFs {
 	go m.cacheGc()
 
 	return m
-}
-
-func (m *MultiFs) cacheGc() {
-	ticker := time.NewTicker(m.cacheGcInterval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-m.ctx.Done():
-			return
-		case <-ticker.C:
-			m.mu.Lock()
-			for key, entry := range m.cache {
-				if entry.expTs.Before(time.Now()) {
-					delete(m.cache, key)
-				}
-			}
-			m.mu.Unlock()
-		}
-	}
 }
 
 func (m *MultiFs) mkKey(parts pathParts) string {
