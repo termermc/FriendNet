@@ -63,7 +63,7 @@ var _ fs.StatFS = (*PeerFs)(nil)
 var _ fs.ReadFileFS = (*PeerFs)(nil)
 var _ fs.ReadDirFS = (*PeerFs)(nil)
 
-func (f *PeerFs) refineError(err error) error {
+func (pfs *PeerFs) refineError(err error) error {
 	if errors.Is(err, protocol.ErrPeerUnreachable) {
 		return fs.ErrNotExist
 	}
@@ -80,7 +80,7 @@ func (f *PeerFs) refineError(err error) error {
 // It returns fs.ErrNotExist if the file does not exist.
 // Tries to use the cache if available.
 // Its error return value does not need to be refined.
-func (f *PeerFs) getMeta(pathStr string) (*pb.MsgFileMeta, common.ProtoPath, error) {
+func (pfs *PeerFs) getMeta(pathStr string) (*pb.MsgFileMeta, common.ProtoPath, error) {
 	path, err := common.NormalizePath(pathStr)
 	if err != nil {
 		return nil, common.ZeroProtoPath, fs.ErrInvalid
@@ -89,21 +89,21 @@ func (f *PeerFs) getMeta(pathStr string) (*pb.MsgFileMeta, common.ProtoPath, err
 	var meta *pb.MsgFileMeta
 
 	// First, check for cached entry.
-	if f.cacheOrNil != nil {
-		meta, _ = f.cacheOrNil.Get(f.cachePrefix, path)
+	if pfs.cacheOrNil != nil {
+		meta, _ = pfs.cacheOrNil.Get(pfs.cachePrefix, path)
 		if meta != nil {
 			return meta, path, nil
 		}
 	}
 
 	// Get from peer.
-	meta, err = f.peer.GetFileMeta(path)
+	meta, err = pfs.peer.GetFileMeta(path)
 	if err != nil {
-		return nil, common.ZeroProtoPath, f.refineError(err)
+		return nil, common.ZeroProtoPath, pfs.refineError(err)
 	}
 
-	if f.cacheOrNil != nil {
-		f.cacheOrNil.Set(f.cachePrefix, path, meta)
+	if pfs.cacheOrNil != nil {
+		pfs.cacheOrNil.Set(pfs.cachePrefix, path, meta)
 	}
 
 	return meta, path, nil
@@ -111,21 +111,21 @@ func (f *PeerFs) getMeta(pathStr string) (*pb.MsgFileMeta, common.ProtoPath, err
 
 // Open returns a DirFile or RegularFile for the specified path.
 // Its error return value does not need to be refined.
-func (f *PeerFs) Open(name string) (fs.File, error) {
-	meta, path, err := f.getMeta(name)
+func (pfs *PeerFs) Open(name string) (fs.File, error) {
+	meta, path, err := pfs.getMeta(name)
 	if err != nil {
 		return nil, err
 	}
 
 	if meta.IsDir {
-		return NewPeerFsDirFile(f, path, meta), nil
+		return NewPeerFsDirFile(pfs, path, meta), nil
 	}
 
-	return NewRegularFile(f, path, meta), nil
+	return NewRegularFile(pfs, path, meta), nil
 }
 
-func (f *PeerFs) Stat(name string) (fs.FileInfo, error) {
-	meta, _, err := f.getMeta(name)
+func (pfs *PeerFs) Stat(name string) (fs.FileInfo, error) {
+	meta, _, err := pfs.getMeta(name)
 	if err != nil {
 		return nil, err
 	}
@@ -133,8 +133,8 @@ func (f *PeerFs) Stat(name string) (fs.FileInfo, error) {
 	return MetaToFs(meta), nil
 }
 
-func (f *PeerFs) ReadFile(name string) ([]byte, error) {
-	file, err := f.Open(name)
+func (pfs *PeerFs) ReadFile(name string) ([]byte, error) {
+	file, err := pfs.Open(name)
 	if err != nil {
 		return nil, err
 	}
@@ -145,17 +145,17 @@ func (f *PeerFs) ReadFile(name string) ([]byte, error) {
 	return io.ReadAll(file)
 }
 
-func (f *PeerFs) ReadDir(name string) ([]fs.DirEntry, error) {
-	meta, path, err := f.getMeta(name)
+func (pfs *PeerFs) ReadDir(name string) ([]fs.DirEntry, error) {
+	meta, path, err := pfs.getMeta(name)
 	if err != nil {
 		return nil, err
 	}
 
 	if !meta.IsDir {
-		return nil, fmt.Errorf(`open %s: not a directory`, name)
+		return nil, fmt.Errorf(`tried to get files in peer %q path %q, but it was not directory`, pfs.username.String(), path.String())
 	}
 
-	file := NewPeerFsDirFile(f, path, meta)
+	file := NewPeerFsDirFile(pfs, path, meta)
 	defer func() {
 		_ = file.Close()
 	}()
@@ -357,7 +357,7 @@ func (f *DirFile) Stat() (fs.FileInfo, error) {
 	return MetaToFs(f.meta), nil
 }
 func (f *DirFile) Read(_ []byte) (int, error) {
-	return 0, fmt.Errorf(`read %s: is a directory`, f.meta.Name)
+	return 0, fmt.Errorf(`tried to get file content in peer %q path %q, but it was directory`, f.pfs.username.String(), f.path.String())
 }
 
 func (f *DirFile) ReadDir(n int) ([]fs.DirEntry, error) {

@@ -24,8 +24,10 @@ type NannyFs struct {
 }
 
 // NewNannyFs creates a new NannyFs with the specified ConnNanny, peer username, and PeerFs options.
+// See PeerFs for more information.
 //
 // The context passed to it will be used for timing out waits for an open connection.
+// The context can be nil to use context.Background().
 //
 // Keep in mind that opened files are from PeerFs, and so if the connection they were opened with is
 // severed, they will break as if we were not using NannyFs.

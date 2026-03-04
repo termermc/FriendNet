@@ -3,21 +3,26 @@ package multifs
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"io/fs"
+	"math"
 	"net/url"
 	"strings"
 	"sync"
 	"time"
 
 	"friendnet.org/client"
+	"friendnet.org/client/fsys"
+	"friendnet.org/client/fsys/peerfs"
 	"friendnet.org/client/room"
 	"friendnet.org/common"
-	"friendnet.org/protocol"
-	pb "friendnet.org/protocol/pb/v1"
 )
 
+// pathParts are the constituent parts of a path passed to MultiFs.
 type pathParts struct {
+	// The unparsed server directory name.
+	// It could be something like "my server 6b74f955-e61f-4bcd-ae7a-49f246b85d46".
 	// If serverDirName is set, serverUuid will also be set.
 	serverDirName string
 	serverUuid    string
@@ -27,8 +32,30 @@ type pathParts struct {
 	path     common.ProtoPath
 }
 
+// Option is a function that configures a MultiFs.
+type Option func(m *MultiFs)
+
+// WithMetaCache configures a MultiFs to use a MetaCache for metadata caching.
+//
+// If cache is nil, metadata caching is disabled.
+func WithMetaCache(cache *fsys.MetaCache) Option {
+	return func(mfs *MultiFs) {
+		mfs.cacheOrNil = cache
+	}
+}
+
+// WithServerConnectTimeout configures a MultiFs to use the specified timeout for waiting for open server connections.
+func WithServerConnectTimeout(timeout time.Duration) Option {
+	return func(mfs *MultiFs) {
+		mfs.nannyFsTimeout = timeout
+	}
+}
+
 // MultiFs implements fs.FS in a way that provides a user-friendly, browsable filesystem for all
 // servers and clients within them.
+//
+// It is stateless but can optionally use a MetaCache to cache metadata.
+// It does not close any resources it uses, including the MetaCache.
 //
 // The path format is as follows:
 // /<any string> <server UUID>/<username>/<path>...
@@ -45,103 +72,28 @@ type MultiFs struct {
 	mu sync.RWMutex
 
 	multi *client.MultiClient
+
+	cacheOrNil     *fsys.MetaCache
+	nannyFsTimeout time.Duration
 }
 
 // NewMultiFs creates a new MultiFs instance with the specified MultiClient.
-func NewMultiFs(multi *client.MultiClient) *MultiFs {
-	ctx, ctxCancel := context.WithCancel(context.Background())
-
-	m := &MultiFs{
-		ctx:       ctx,
-		ctxCancel: ctxCancel,
-
-		cache:                   make(map[string]metaCacheEntry),
-		cacheEntryValidDuration: 10 * time.Second,
-		cacheGcInterval:         5 * time.Minute,
-
+func NewMultiFs(multi *client.MultiClient, opts ...Option) *MultiFs {
+	mfs := &MultiFs{
 		multi: multi,
 	}
 
-	go m.cacheGc()
+	for _, opt := range opts {
+		opt(mfs)
+	}
 
-	return m
+	return mfs
 }
 
-func (m *MultiFs) mkKey(parts pathParts) string {
-	if parts.serverUuid == "" {
-		panic("BUG: mkKey: serverUuid is empty")
-	}
-	if parts.username.IsZero() {
-		panic("BUG: mkKey: username is zero")
-	}
-	if parts.path.IsZero() {
-		panic("BUG: mkKey: path is zero")
-	}
-
-	return parts.serverUuid + "/" + parts.username.String() + "/" + parts.path.String()
-}
-
-func (m *MultiFs) putCache(parts pathParts, meta *pb.MsgFileMeta) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	key := m.mkKey(parts)
-
-	m.cache[key] = metaCacheEntry{
-		meta:  meta,
-		expTs: time.Now().Add(m.cacheEntryValidDuration),
-	}
-}
-
-// getMeta returns metadata for the specified path.
-// All fields must be filled.
-//
-// If a cache entry exists, it will be returned.
-// If not, the metadata will be fetched from the relevant peer and the cache will be filled.
-//
-// If the file does not exist, returns fs.ErrNotExist.
-func (m *MultiFs) getMeta(ctx context.Context, parts pathParts) (*pb.MsgFileMeta, error) {
-	cacheKey := m.mkKey(parts)
-
-	// Check for cache entry.
-	m.mu.RLock()
-	entry, has := m.cache[cacheKey]
-	m.mu.RUnlock()
-
-	if has && entry.expTs.After(time.Now()) {
-		return entry.meta, nil
-	}
-
-	// No cached entry.
-
-	srv, has := m.multi.GetByUuid(parts.serverUuid)
-	if !has {
-		return nil, fs.ErrNotExist
-	}
-
-	return DoValue[*pb.MsgFileMeta](srv.ConnNanny, ctx, func(ctx context.Context, c *room.Conn) (*pb.MsgFileMeta, error) {
-		peer := c.GetVirtualC2cConn(parts.username, false)
-
-		meta, err := peer.GetFileMeta(parts.path)
-		if err != nil {
-			if errors.Is(err, protocol.ErrPeerUnreachable) {
-				return nil, fs.ErrNotExist
-			}
-			if protoErr, ok := errors.AsType[protocol.ProtoMsgError](err); ok {
-				if protoErr.Msg.Type == pb.ErrType_ERR_TYPE_FILE_NOT_EXIST {
-					return nil, fs.ErrNotExist
-				}
-			}
-
-			return nil, err
-		}
-
-		// Put cache entry.
-		m.putCache(parts, meta)
-
-		return meta, nil
-	})
-}
+var _ fs.FS = (*MultiFs)(nil)
+var _ fs.StatFS = (*MultiFs)(nil)
+var _ fs.ReadFileFS = (*MultiFs)(nil)
+var _ fs.ReadDirFS = (*MultiFs)(nil)
 
 // parseUrlPath parses a path in a URL and tries to get the relevant parts of it.
 // If the path cannot be parsed, valid will be false.
@@ -153,7 +105,7 @@ func (m *MultiFs) getMeta(ctx context.Context, parts pathParts) (*pb.MsgFileMeta
 // will contain the server UUID field and username, but not the path.
 //
 // The path "/" will not contain any fields but is nevertheless valid.
-func (m *MultiFs) parseUrlPath(path string) (res pathParts, valid bool) {
+func (mfs *MultiFs) parseUrlPath(path string) (res pathParts, valid bool) {
 	if strings.HasPrefix(path, "/") {
 		path = path[1:]
 	}
@@ -218,69 +170,212 @@ func (m *MultiFs) parseUrlPath(path string) (res pathParts, valid bool) {
 	return res, true
 }
 
-func (m *MultiFs) Open(name string) (fs.File, error) {
-	// TODO Get meta if applicable.
-}
-
-var _ fs.FS = (*MultiFs)(nil)
-var _ fs.StatFS = (*MultiFs)(nil)
-var _ fs.ReadFileFS = (*MultiFs)(nil)
-var _ fs.ReadDirFS = (*MultiFs)(nil)
-
-type MultiFsFile struct {
-	mfs *MultiFs
-
-	parts pathParts
-
-	// meta should only be set if parts.path is not zero.
-	// The constructor must check if the file exists before making this struct.
-	meta *pb.MsgFileMeta
-
-	curReader io.ReadCloser
-}
-
-func (m MultiFsFile) Stat() (fs.FileInfo, error) {
-	if !m.parts.path.IsZero() {
-		// File exists, send its meta.
-		return MetaToFs(m.meta), nil
+func (mfs *MultiFs) mkCnTimeoutCtx() (context.Context, context.CancelFunc) {
+	if mfs.nannyFsTimeout == 0 {
+		return context.Background(), func() {}
 	}
 
-	if m.parts.serverUuid != "" {
-		// Check if server exists and return dummy folder.
-		_, has := m.mfs.multi.GetByUuid(m.parts.serverUuid)
+	return context.WithTimeout(context.Background(), mfs.nannyFsTimeout)
+}
+func (mfs *MultiFs) mkNannyFs(srv *client.Server, username common.NormalizedUsername) (*peerfs.NannyFs, context.CancelFunc) {
+	var opts []peerfs.Option
+	if mfs.cacheOrNil != nil {
+		opts = append(opts, peerfs.WithMetaCache(mfs.cacheOrNil, srv.Uuid+"/"+username.String()))
+	}
+
+	ctx, cancel := mfs.mkCnTimeoutCtx()
+	return peerfs.NewNannyFs(ctx, srv.ConnNanny, username, opts...), cancel
+}
+
+func (mfs *MultiFs) Open(name string) (fs.File, error) {
+	parts, partsOk := mfs.parseUrlPath(name)
+	if !partsOk {
+		return nil, fs.ErrNotExist
+	}
+
+	var srv *client.Server
+	if parts.serverUuid != "" {
+		var has bool
+		srv, has = mfs.multi.GetByUuid(parts.serverUuid)
 		if !has {
 			return nil, fs.ErrNotExist
 		}
-
-		return DummyDirFsWrapper(m.parts.serverDirName), nil
 	}
 
-	// Root, return dummy folder.
-	return DummyDirFsWrapper("/"), nil
+	if !parts.path.IsZero() {
+		// Get file on peer.
+
+		// It thinks srv might be nil, but I know that it isn't because path is not zero.
+		//goland:noinspection GoMaybeNil
+		nfs, cancel := mfs.mkNannyFs(srv, parts.username)
+		defer cancel()
+
+		return nfs.Open(parts.path.String())
+	}
+
+	if srv != nil {
+		// Server folder opened.
+		return NewServerFile(mfs, parts.serverDirName, srv), nil
+	}
+
+	// Root folder opened.
+	return NewRootFile(mfs), nil
 }
 
-func (m MultiFsFile) Read(bytes []byte) (int, error) {
-	if m.meta == nil {
-		return 0, io.EOF
+func (mfs *MultiFs) Stat(name string) (fs.FileInfo, error) {
+	file, err := mfs.Open(name)
+	if err != nil {
+		return nil, err
 	}
-	if m.meta.IsDir {
-		return 0, io.EOF
-	}
-
-	if m.curReader != nil {
-		return m.curReader.Read(bytes)
-	}
-
-	// TODO Try to get file and set reader.
+	defer func() {
+		_ = file.Close()
+	}()
+	return file.Stat()
 }
 
-func (m MultiFsFile) Close() error {
-	if m.curReader != nil {
-		return m.curReader.Close()
+func (mfs *MultiFs) ReadFile(name string) ([]byte, error) {
+	file, err := mfs.Open(name)
+	if err != nil {
+		return nil, err
 	}
+	defer func() {
+		_ = file.Close()
+	}()
+
+	return io.ReadAll(file)
+}
+
+func (mfs *MultiFs) ReadDir(name string) ([]fs.DirEntry, error) {
+	parts, partsOk := mfs.parseUrlPath(name)
+	if !partsOk {
+		return nil, fs.ErrNotExist
+	}
+
+	if parts.path.IsZero() {
+		return nil, fmt.Errorf("%q is a directory, it cannot be read", name)
+	}
+
+	srv, has := mfs.multi.GetByUuid(parts.serverUuid)
+	if !has {
+		return nil, fs.ErrNotExist
+	}
+
+	nfs, cancel := mfs.mkNannyFs(srv, parts.username)
+	defer cancel()
+
+	return nfs.ReadDir(parts.path.String())
+}
+
+// RootFile is the fs.File returned when opening "/" or "".
+type RootFile struct {
+	mfs *MultiFs
+}
+
+func NewRootFile(mfs *MultiFs) RootFile {
+	return RootFile{
+		mfs: mfs,
+	}
+}
+
+var _ fs.File = (*RootFile)(nil)
+var _ fs.ReadDirFile = (*RootFile)(nil)
+
+func (f RootFile) Stat() (fs.FileInfo, error) {
+	return fsys.DummyDirFsWrapper("/"), nil
+}
+func (f RootFile) Read(_ []byte) (int, error) {
+	return 0, errors.New("root directory is a directory, it cannot be read")
+}
+func (f RootFile) Close() error {
 	return nil
 }
+func (f RootFile) ReadDir(n int) ([]fs.DirEntry, error) {
+	servers := f.mfs.multi.GetAll()
+	limit := min(n, len(servers))
+	if limit < 1 {
+		limit = len(servers)
+	}
 
-var _ fs.File = (*MultiFsFile)(nil)
-var _ fs.ReadDirFile = (*MultiFsFile)(nil)
-var _ io.ReaderAt = (*MultiFsFile)(nil)
+	entries := make([]fs.DirEntry, limit)
+	for i := 0; i < limit; i++ {
+		entries[i] = fsys.DummyDirFsWrapper(servers[i].Name)
+	}
+
+	return entries, nil
+}
+
+// ServerFile is the fs.File returned when opening a server directory.
+type ServerFile struct {
+	mfs     *MultiFs
+	dirName string
+	srv     *client.Server
+}
+
+func NewServerFile(mfs *MultiFs, dirName string, srv *client.Server) ServerFile {
+	return ServerFile{
+		mfs:     mfs,
+		dirName: dirName,
+		srv:     srv,
+	}
+}
+
+var _ fs.File = (*ServerFile)(nil)
+var _ fs.ReadDirFile = (*ServerFile)(nil)
+
+func (f ServerFile) Stat() (fs.FileInfo, error) {
+	return fsys.DummyDirFsWrapper(f.dirName), nil
+}
+func (f ServerFile) Read(_ []byte) (int, error) {
+	return 0, fmt.Errorf("%q is a directory, it cannot be read", f.dirName)
+}
+func (f ServerFile) Close() error {
+	return nil
+}
+func (f ServerFile) ReadDir(n int) ([]fs.DirEntry, error) {
+	var limit int
+	if n < 1 {
+		n = 0
+		limit = math.MaxInt
+	} else {
+		limit = n
+	}
+
+	ctx, cancel := f.mfs.mkCnTimeoutCtx()
+	defer cancel()
+	return client.DoValue[[]fs.DirEntry](f.srv.ConnNanny, ctx, func(_ context.Context, c *room.Conn) ([]fs.DirEntry, error) {
+		stream, err := c.GetOnlineUsers()
+		if err != nil {
+			return nil, err
+		}
+		defer func() {
+			_ = stream.Close()
+		}()
+
+		var entries []fs.DirEntry
+		if n > 0 {
+			entries = make([]fs.DirEntry, 0, n)
+		} else {
+			entries = make([]fs.DirEntry, 0)
+		}
+
+		for {
+			next, nextErr := stream.ReadNext()
+			if nextErr != nil {
+				if errors.Is(nextErr, io.EOF) {
+					break
+				}
+				return nil, err
+			}
+
+			for _, user := range next.Users {
+				if len(entries) >= limit {
+					break
+				}
+
+				entries = append(entries, fsys.DummyDirFsWrapper(user.Username))
+			}
+		}
+
+		return entries, nil
+	})
+}
