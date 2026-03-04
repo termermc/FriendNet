@@ -16,6 +16,7 @@ const (
 	PathErrCodePathContainsDots  PathErrCode = `path contains "." or ".." segment`
 	PathErrCodePathEndsWithSlash PathErrCode = `path ends with "/"`
 	PathErrCodeDuplicateSlash    PathErrCode = `path contains multiple consecutive slashes`
+	PathErrCodeReferencesParent  PathErrCode = `path references parent directory`
 )
 
 // PathError is an error returned when a path is invalid.
@@ -103,14 +104,20 @@ func (u ProtoPath) Name() string {
 
 // IsRoot returns whether the path is "/".
 func (u ProtoPath) IsRoot() bool {
-	return u.string == "/"
+	return u == RootProtoPath
 }
 
 // ZeroProtoPath is the zero value of ProtoPath.
 // It is invalid.
 var ZeroProtoPath = ProtoPath{}
 
+// RootProtoPath is the root path "/".
+var RootProtoPath = UncheckedCreateProtoPath("/")
+
 // ValidatePath validates a protocol path and returns a PathError if it is invalid.
+// This function expects an already correctly normalized path.
+//
+// To normalize a path before validating it, use NormalizePath.
 func ValidatePath(path string) (ProtoPath, error) {
 	if path == "" {
 		return ProtoPath{}, NewPathError(PathErrCodeBlank, path)
@@ -204,4 +211,33 @@ func SegmentsToPath(segments []string) (ProtoPath, error) {
 	}
 
 	return UncheckedCreateProtoPath(outStr), nil
+}
+
+// NormalizePath normalizes a path before validating it.
+// If you have a path you already expect to be valid, use ValidatePath instead.
+//
+// For example, "/foo/../bar" -> "/bar".
+//
+// Returns a PathError if the path references a parent directory or the path cannot be validated.
+func NormalizePath(path string) (ProtoPath, error) {
+	parts := strings.Split(path, "/")
+	segments := make([]string, 0, len(parts))
+
+	for _, part := range parts {
+		if part == "" || part == "." {
+			continue
+		}
+		if part == ".." {
+			if len(segments) == 0 {
+				return ZeroProtoPath, NewPathError(PathErrCodeReferencesParent, path)
+			}
+
+			segments = segments[:len(segments)-1]
+
+			continue
+		}
+		segments = append(segments, part)
+	}
+
+	return ValidatePath("/" + strings.Join(segments, "/"))
 }
