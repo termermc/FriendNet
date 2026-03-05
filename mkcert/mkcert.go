@@ -247,7 +247,7 @@ func commandWithSudo(cmd ...string) *exec.Cmd {
 			cmdStr += " " + fmt.Sprintf("%q", arg)
 		}
 
-		terminalScript := "#!/bin/bash\n" + cmdStr + "\ntouch " + notifyPath + "\nexit"
+		terminalScript := "#!/bin/bash\nprintf \"\n\n\n\nEnter your account password:\n\n\"\nsudo " + cmdStr + "\ntouch " + notifyPath + "\nexit"
 		scriptPath := "/tmp/friendnet-rootca-script-" + common.RandomB64UrlStr(4) + ".sh"
 
 		_ = os.WriteFile(scriptPath, []byte(terminalScript), 0777)
@@ -288,9 +288,9 @@ func commandWithSudo(cmd ...string) *exec.Cmd {
 		}()
 		select {
 		case <-ctx.Done():
-			return exec.Command("exit", "1")
+			return exec.Command("bash", "-c", "exit 1")
 		case <-okChan:
-			return exec.Command("exit", "0")
+			return exec.Command("bash", "-c", "exit 0")
 		}
 	}
 
