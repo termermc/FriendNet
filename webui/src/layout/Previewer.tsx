@@ -94,7 +94,7 @@ const CatText: Component<CatProps> = (props) => {
 
 			setContent(await res.text())
 		} catch (err) {
-			console.log('failed to load text from URL:', props.url, err)
+			console.error('failed to load text from URL:', props.url, err)
 			setError('Failed to get text content, see error in console')
 		} finally {
 			setLoading(false)
