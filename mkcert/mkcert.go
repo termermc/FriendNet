@@ -17,6 +17,7 @@ import (
 	"os/exec"
 	"os/user"
 	"regexp"
+	"runtime"
 	"sync"
 
 	"golang.org/x/net/idna"
@@ -224,6 +225,10 @@ func binaryExists(name string) bool {
 var sudoWarningOnce sync.Once
 
 func commandWithSudo(cmd ...string) *exec.Cmd {
+	if runtime.GOOS == "darwin" {
+		return exec.Command(cmd[0], cmd[1:]...)
+	}
+
 	if u, err := user.Current(); err == nil && u.Uid == "0" {
 		return exec.Command(cmd[0], cmd[1:]...)
 	}
