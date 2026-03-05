@@ -231,10 +231,9 @@ func commandWithSudo(cmd ...string) *exec.Cmd {
 	if runtime.GOOS == "darwin" {
 		// We have to do some insane things to make a graphical prompt on MacOS.
 		// Running a command with elevated privileges without sudo is possible,
-		// but some commands fail due to lack of permission when this is done.
+		// but it fails because it has no user interaction, according to the OS.
 		//
-		// Our only other option is to open a terminal and run the command with
-		// sudo in it.
+		// Our only other option is to open a terminal and run the command.
 		// Since opening the terminal and making it run a command is asynchronous,
 		// we are forced to make it touch a file in tmp to notify us when it is
 		// done.
@@ -247,9 +246,19 @@ func commandWithSudo(cmd ...string) *exec.Cmd {
 		for _, arg := range cmd[1:] {
 			cmdStr += " " + fmt.Sprintf("%q", arg)
 		}
-		scriptCmd := exec.Command("osascript",
-			"-e", `tell application "Terminal" to activate`,
-			"-e", fmt.Sprintf(`tell application "Terminal" to do script %q`, fmt.Sprintf(`printf "\n\n\nEnter your account password:\n"; sudo %s; touch %s; exit`, cmdStr, notifyPath)),
+
+		terminalScript := "#!/bin/bash\n" + cmdStr + "\ntouch " + notifyPath + "\nexit"
+		scriptPath := "/tmp/friendnet-rootca-script-" + common.RandomB64UrlStr(4) + ".sh"
+
+		_ = os.WriteFile(scriptPath, []byte(terminalScript), 0777)
+
+		defer func() {
+			_ = os.Remove(notifyPath)
+			_ = os.Remove(scriptPath)
+		}()
+
+		scriptCmd := exec.Command("open",
+			"-a", "Terminal.app", scriptPath,
 		)
 		if err := scriptCmd.Wait(); err != nil {
 			panic(err)
@@ -269,7 +278,6 @@ func commandWithSudo(cmd ...string) *exec.Cmd {
 				case <-ticker.C:
 					if pathExists(notifyPath) {
 						close(okChan)
-						_ = os.Remove(notifyPath)
 						return
 					}
 				}
