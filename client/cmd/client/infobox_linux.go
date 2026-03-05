@@ -45,7 +45,7 @@ func xmessage(title string, content string) {
 }
 
 func ttyEnter(title string, content string) {
-	// Println title and content, then wait for enter to be pressed
+	// Println title and content, then wait for enter to be pressed.
 	if title != "" {
 		fmt.Println(title)
 		fmt.Println(strings.Repeat("-", len([]rune(title))))
