@@ -247,10 +247,13 @@ func commandWithSudo(cmd ...string) *exec.Cmd {
 		for _, arg := range cmd[1:] {
 			cmdStr += " " + fmt.Sprintf("%q", arg)
 		}
-		_ = exec.Command("osascript",
+		scriptCmd := exec.Command("osascript",
 			"-e", `tell application "Terminal" to activate`,
 			"-e", fmt.Sprintf(`tell application "Terminal" to do script %q`, fmt.Sprintf(`printf "\n\n\nEnter your account password:\n"; sudo %s; touch %s; exit`, cmdStr, notifyPath)),
 		)
+		if err := scriptCmd.Wait(); err != nil {
+			panic(err)
+		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 		defer cancel()
