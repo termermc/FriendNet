@@ -260,6 +260,9 @@ func commandWithSudo(cmd ...string) *exec.Cmd {
 		scriptCmd := exec.Command("open",
 			"-a", "Terminal.app", scriptPath,
 		)
+		if err := scriptCmd.Start(); err != nil {
+			panic(err)
+		}
 		if err := scriptCmd.Wait(); err != nil {
 			panic(err)
 		}
