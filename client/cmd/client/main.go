@@ -413,7 +413,6 @@ func main() {
 		Protocols: httpProto,
 	}
 
-	// TODO Make it require a dummy username and the bearer token as password.
 	metaCache := fsys.NewMetaCache(30*time.Second, 5*time.Minute)
 	multiFs := multifs.NewMultiFs(multi,
 		multifs.WithMetaCache(metaCache),
