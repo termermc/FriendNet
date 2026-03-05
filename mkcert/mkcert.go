@@ -227,11 +227,17 @@ func commandWithSudo(cmd ...string) *exec.Cmd {
 	if u, err := user.Current(); err == nil && u.Uid == "0" {
 		return exec.Command(cmd[0], cmd[1:]...)
 	}
-	if !binaryExists("sudo") {
-		sudoWarningOnce.Do(func() {
-			log.Println(`Warning: "sudo" is not available, and the program is not running as root. The (un)Install operation might fail.️`)
-		})
-		return exec.Command(cmd[0], cmd[1:]...)
+
+	if binaryExists("pkexec") {
+		return exec.Command("pkexec", cmd...)
 	}
-	return exec.Command("sudo", append([]string{"--prompt=Sudo password:", "--"}, cmd...)...)
+
+	if binaryExists("sudo") {
+		return exec.Command("sudo", append([]string{"--prompt=Sudo password:", "--"}, cmd...)...)
+	}
+
+	sudoWarningOnce.Do(func() {
+		log.Println(`Warning: "sudo" is not available, and the program is not running as root. The (un)Install operation might fail.️`)
+	})
+	return exec.Command(cmd[0], cmd[1:]...)
 }
