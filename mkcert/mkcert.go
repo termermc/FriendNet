@@ -230,7 +230,10 @@ func commandWithSudo(cmd ...string) *exec.Cmd {
 		for _, arg := range cmd[1:] {
 			cmdStr += " " + fmt.Sprintf("%q", arg)
 		}
-		return exec.Command("osascript", "-e", fmt.Sprintf("do shell script %q with administrator privileges", cmdStr))
+		return exec.Command("osascript",
+			"-e", `tell application "Terminal" to activate`,
+			"-e", fmt.Sprintf(`tell application "Terminal" to do script %q`, fmt.Sprintf("sudo %s; exit", cmdStr)),
+		)
 	}
 
 	if u, err := user.Current(); err == nil && u.Uid == "0" {
