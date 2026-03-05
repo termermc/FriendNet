@@ -414,6 +414,8 @@ func main() {
 	}
 
 	// TODO Make it require a dummy username and the bearer token as password.
+	// TODO Figure out why Windows Explorer says certain directories (like my music videos directory) are permission denied.
+	// TODO It appears that the music videos folder has a problematic file in it that's causing Dolphin to also fail loading it part-way.
 	metaCache := fsys.NewMetaCache(30*time.Second, 5*time.Minute)
 	multiFs := multifs.NewMultiFs(multi,
 		multifs.WithMetaCache(metaCache),
