@@ -2,8 +2,7 @@
 <module type="JAVA_MODULE" version="4">
   <component name="Go" enabled="true">
     <buildTags>
-      <option name="os" value="darwin" />
-      <option name="arch" value="arm64" />
+      <option name="arch" value="amd64" />
     </buildTags>
   </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">

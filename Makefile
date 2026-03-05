@@ -8,6 +8,8 @@
 	client-windows \
 	client-noui \
 	client-windows-noui \
+	client-darwin-arm64 \
+	client-darwin-arm64-noui \
 	rpcclient \
 	run-rpcclient
 
@@ -38,6 +40,12 @@ client-noui:
 
 client-windows:
 	cd webui && go generate && cd ../client && GOOS=windows GOARCH=amd64 go build -ldflags="-H windowsgui" -o friendnet-client.exe friendnet.org/client/cmd/client
+
+client-darwin-arm64:
+	cd webui && go generate && cd ../client && GOOS=darwin GOARCH=arm64 go build -o friendnet-client friendnet.org/client/cmd/client
+
+client-darwin-arm64-noui:
+	cd client && GOOS=darwin GOARCH=arm64 go build -o friendnet-client friendnet.org/client/cmd/client
 
 client-windows-noui:
 	cd client && GOOS=windows GOARCH=amd64 go build -ldflags="-H windowsgui" -o friendnet-client.exe friendnet.org/client/cmd/client
