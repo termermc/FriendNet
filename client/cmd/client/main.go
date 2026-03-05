@@ -289,7 +289,7 @@ func main() {
 	}
 
 	if !headless && !mc.CheckPlatform() {
-		InfoBox("FriendNet Client", "It looks like this is your first time running the FriendNet client.\n\nThe web UI requires HTTPS and a custom certificate, so that will be installed now. If it is not installed, the web UI will not work in your browser.\n\nYou may need to restart your browser afterward.")
+		InfoBox("FriendNet Client", "It looks like this is your first time running the FriendNet client.\n\nThe web UI requires HTTPS and a custom certificate, so that will be installed now. If it is not installed, the web UI will not work in your browser.\n\nYou may be asked for your password a multiple times.\n\nYou may need to restart your browser afterward.")
 		if err = mc.Install(); err != nil {
 			logger.Error(`failed to install client root CA`, "err", err)
 			InfoBox("Error", "Failed to install FriendNet client root CA. Please try again or install it manually by running the client with the -installca option.\n\nError: "+err.Error())
