@@ -6,6 +6,8 @@ import (
 	"io"
 	"io/fs"
 	"math"
+	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -14,6 +16,7 @@ import (
 	"friendnet.org/common"
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
+	"golang.org/x/net/webdav"
 )
 
 // Option is a function that configures a PeerFs.
@@ -189,7 +192,7 @@ func (p MetaFsWrapper) Mode() fs.FileMode {
 	return fsys.FsFilePerms
 }
 func (p MetaFsWrapper) ModTime() time.Time {
-	return fsys.FsModTime
+	return time.Now()
 }
 func (p MetaFsWrapper) IsDir() bool {
 	return p.meta.IsDir
@@ -233,6 +236,9 @@ func NewRegularFile(pfs *PeerFs, path common.ProtoPath, meta *pb.MsgFileMeta) *R
 
 var _ fs.File = (*RegularFile)(nil)
 var _ io.Seeker = (*RegularFile)(nil)
+var _ fs.ReadDirFile = (*RegularFile)(nil)
+var _ http.File = (*RegularFile)(nil)
+var _ webdav.File = (*RegularFile)(nil)
 
 func (f *RegularFile) Stat() (fs.FileInfo, error) {
 	return MetaToFs(f.meta), nil
@@ -271,13 +277,17 @@ func (f *RegularFile) Read(bytes []byte) (int, error) {
 	return n, err
 }
 
+func (f *RegularFile) Write(_ []byte) (n int, err error) {
+	return 0, os.ErrPermission
+}
+
 var errSeekNegative = errors.New("seek offset cannot resolve to an index before the start of the file")
 
 func (f *RegularFile) Seek(offset int64, whence int) (int64, error) {
 	f.mu.RLock()
 	oldReader := f.curReader
 	oldCursor := f.readCursor
-	f.mu.Unlock()
+	f.mu.RUnlock()
 
 	fsize := int64(f.meta.Size)
 
@@ -319,6 +329,15 @@ func (f *RegularFile) Seek(offset int64, whence int) (int64, error) {
 	return newCursor, nil
 }
 
+func (f *RegularFile) ReadDir(_ int) ([]fs.DirEntry, error) {
+	return nil, fmt.Errorf(`tried to get files in peer %q path %q, but it was not directory`, f.pfs.username.String(), f.path.String())
+}
+
+func (f *RegularFile) Readdir(count int) ([]fs.FileInfo, error) {
+	_, err := f.ReadDir(count)
+	return nil, err
+}
+
 func (f *RegularFile) Close() error {
 	f.mu.Lock()
 	r := f.curReader
@@ -331,7 +350,8 @@ func (f *RegularFile) Close() error {
 }
 
 // DirFile represents a directory shared by a peer.
-// It implements fs.File and fs.ReadDirFile, and it makes GetDirFiles calls to the peer under the hood.
+// It implements fs.File, fs.ReadDirFile, and http.File.
+// It makes GetDirFiles calls to the peer under the hood.
 type DirFile struct {
 	mu sync.RWMutex
 
@@ -339,6 +359,9 @@ type DirFile struct {
 
 	path common.ProtoPath
 	meta *pb.MsgFileMeta
+
+	dirStream protocol.Stream[*pb.MsgDirFiles]
+	ended     bool
 }
 
 func NewPeerFsDirFile(pfs *PeerFs, path common.ProtoPath, meta *pb.MsgFileMeta) *DirFile {
@@ -351,13 +374,20 @@ func NewPeerFsDirFile(pfs *PeerFs, path common.ProtoPath, meta *pb.MsgFileMeta) 
 }
 
 var _ fs.File = (*DirFile)(nil)
+var _ io.Seeker = (*DirFile)(nil)
 var _ fs.ReadDirFile = (*DirFile)(nil)
+var _ http.File = (*DirFile)(nil)
+var _ webdav.File = (*DirFile)(nil)
 
 func (f *DirFile) Stat() (fs.FileInfo, error) {
 	return MetaToFs(f.meta), nil
 }
 func (f *DirFile) Read(_ []byte) (int, error) {
 	return 0, fmt.Errorf(`tried to get file content in peer %q path %q, but it was directory`, f.pfs.username.String(), f.path.String())
+}
+
+func (f *DirFile) Write(_ []byte) (n int, err error) {
+	return 0, os.ErrPermission
 }
 
 func (f *DirFile) ReadDir(n int) ([]fs.DirEntry, error) {
@@ -369,13 +399,30 @@ func (f *DirFile) ReadDir(n int) ([]fs.DirEntry, error) {
 		limit = n
 	}
 
-	stream, err := f.pfs.peer.GetDirFiles(f.path)
-	if err != nil {
-		return nil, f.pfs.refineError(err)
+	f.mu.RLock()
+	if f.ended {
+		f.mu.RUnlock()
+
+		if n > 0 {
+			return nil, io.EOF
+		}
+
+		return nil, nil
 	}
-	defer func() {
-		_ = stream.Close()
-	}()
+
+	stream := f.dirStream
+	f.mu.RUnlock()
+
+	if stream == nil {
+		var err error
+		stream, err = f.pfs.peer.GetDirFiles(f.path)
+		if err != nil {
+			return nil, f.pfs.refineError(err)
+		}
+		f.mu.Lock()
+		f.dirStream = stream
+		f.mu.Unlock()
+	}
 
 	var entries []fs.DirEntry
 	if n > 0 {
@@ -387,19 +434,25 @@ func (f *DirFile) ReadDir(n int) ([]fs.DirEntry, error) {
 	cache := f.pfs.cacheOrNil
 	keyPrefix := f.pfs.cachePrefix
 
+	var wasEof bool
+readLoop:
 	for {
 		next, nextErr := stream.ReadNext()
 		if nextErr != nil {
 			if errors.Is(nextErr, io.EOF) {
+				wasEof = true
+				_ = stream.Close()
 				break
 			}
-			return nil, f.pfs.refineError(nextErr)
+			return entries, f.pfs.refineError(nextErr)
 		}
 
 		for _, file := range next.Files {
-			if len(entries) < limit {
-				entries = append(entries, MetaToFs(file))
+			if len(entries) >= limit {
+				break readLoop
 			}
+
+			entries = append(entries, MetaToFs(file))
 
 			if cache != nil {
 				path := common.UncheckedCreateProtoPath(f.path.String() + "/" + file.Name)
@@ -408,9 +461,41 @@ func (f *DirFile) ReadDir(n int) ([]fs.DirEntry, error) {
 		}
 	}
 
+	if wasEof {
+		f.mu.Lock()
+		f.ended = true
+		f.mu.Unlock()
+
+		if n > 0 {
+			return entries, io.EOF
+		}
+	}
+
 	return entries, nil
 }
 
+func (f *DirFile) Readdir(count int) ([]fs.FileInfo, error) {
+	entries, err := f.ReadDir(count)
+	infos := make([]fs.FileInfo, len(entries))
+	for i, entry := range entries {
+		// MetaFsWrapper does not return an error on Info().
+		infos[i], _ = entry.Info()
+	}
+	return infos, err
+}
+
+func (f *DirFile) Seek(offset int64, whence int) (int64, error) {
+	return fsys.DummySeek(offset, whence)
+}
+
 func (f *DirFile) Close() error {
+	f.mu.RLock()
+	stream := f.dirStream
+	f.mu.RUnlock()
+
+	if stream != nil {
+		return stream.Close()
+	}
+
 	return nil
 }

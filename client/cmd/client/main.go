@@ -27,6 +27,8 @@ import (
 	"friendnet.org/client/clog"
 	"friendnet.org/client/direct"
 	"friendnet.org/client/event"
+	"friendnet.org/client/fsys"
+	"friendnet.org/client/fsys/multifs"
 	"friendnet.org/client/storage"
 	"friendnet.org/common"
 	"friendnet.org/common/machine"
@@ -35,6 +37,7 @@ import (
 	"friendnet.org/protocol/pb/clientrpc/v1/clientrpcv1connect"
 	"friendnet.org/webui"
 	"github.com/pkg/browser"
+	"golang.org/x/net/webdav"
 )
 
 const lockFilename = "client-lock.json"
@@ -110,6 +113,7 @@ func main() {
 	var rpcAddr string
 	var fileAddr string
 	var uiAddr string
+	var davAddr string
 	var headless bool
 	var noBrowser bool
 	var noLock bool
@@ -122,6 +126,7 @@ func main() {
 	flag.StringVar(&rpcAddr, "rpcaddr", "https://localhost:20040", "RPC server address")
 	flag.StringVar(&fileAddr, "fileaddr", "https://localhost:20041", "File server address")
 	flag.StringVar(&uiAddr, "uiaddr", "https://localhost:20042", "Web UI server address")
+	flag.StringVar(&davAddr, "davaddr", "https://localhost:20043", "WebDAV server address")
 	flag.BoolVar(&noBrowser, "nobrowser", false, "do not open web UI in browser")
 	flag.BoolVar(&noLock, "nolock", false, "do not use a lock to prevent multiple instances of the client from running")
 	flag.BoolVar(&installCa, "installca", false, "if set, tries to install the client's root CA for HTTPS on the web UI")
@@ -195,6 +200,14 @@ func main() {
 	}
 	if uiUrl.Scheme != "https" {
 		panic(fmt.Errorf(`web UI server address must start with "https://" scheme`))
+	}
+
+	davUrl, err := url.Parse(davAddr)
+	if err != nil {
+		panic(fmt.Errorf(`failed to parse WebDAV server address %q: %w`, davAddr, err))
+	}
+	if davUrl.Scheme != "https" {
+		panic(fmt.Errorf(`WebDAV server address must start with "https://" scheme`))
 	}
 
 	if !noLock {
@@ -400,6 +413,22 @@ func main() {
 		Protocols: httpProto,
 	}
 
+	// TODO Make it require a dummy username and the bearer token as password.
+	metaCache := fsys.NewMetaCache(30*time.Second, 5*time.Minute)
+	multiFs := multifs.NewMultiFs(multi,
+		multifs.WithMetaCache(metaCache),
+	)
+	webdavHandler := &webdav.Handler{
+		FileSystem: multifs.NewWebDavWrapper(multiFs),
+		LockSystem: webdav.NewMemLS(),
+	}
+	davServer := http.Server{
+		Addr:      davUrl.Host,
+		Handler:   webdavHandler,
+		TLSConfig: httpsTlsCfg,
+		Protocols: httpProto,
+	}
+
 	// Close client on SIGTERM.
 	var shutdownWg sync.WaitGroup
 	defer stop()
@@ -428,6 +457,7 @@ func main() {
 		doWithTimeout(1*time.Second, func(ctx context.Context) {
 			_ = uiServer.Shutdown(ctx)
 			_ = fileServer.Shutdown(ctx)
+			_ = davServer.Shutdown(ctx)
 		})
 		doWithTimeout(1*time.Second, func(_ context.Context) {
 			_ = rpc.Close()
@@ -461,6 +491,16 @@ func main() {
 				return
 			}
 			panic(fmt.Errorf(`file server ended with error: %w`, listenErr))
+		}
+	})
+	wg.Go(func() {
+		logger.Info(`WebDAV server listening`, "addr", davAddr)
+		listenErr := davServer.ListenAndServeTLS("", "")
+		if listenErr != nil {
+			if errors.Is(listenErr, http.ErrServerClosed) {
+				return
+			}
+			panic(fmt.Errorf(`webDAV server ended with error: %w`, listenErr))
 		}
 	})
 	if !headless {

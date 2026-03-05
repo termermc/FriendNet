@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/fs"
 	"math"
+	"net/http"
 	"net/url"
 	"strings"
 	"sync"
@@ -17,6 +18,9 @@ import (
 	"friendnet.org/client/fsys/peerfs"
 	"friendnet.org/client/room"
 	"friendnet.org/common"
+	"friendnet.org/protocol"
+	pb "friendnet.org/protocol/pb/v1"
+	"golang.org/x/net/webdav"
 )
 
 // pathParts are the constituent parts of a path passed to MultiFs.
@@ -109,64 +113,58 @@ func (mfs *MultiFs) parseUrlPath(path string) (res pathParts, valid bool) {
 	if strings.HasPrefix(path, "/") {
 		path = path[1:]
 	}
+	if strings.HasSuffix(path, "/") {
+		path = path[:len(path)-1]
+	}
 
-	var cursor int
-	var slashIdx int
-
-	slashIdx = strings.IndexRune(path, '/')
-	if slashIdx == -1 {
+	if path == "" || path == "." {
 		return res, true
 	}
-	{
-		serverUuidPart := path[:slashIdx]
-		spaceIdx := strings.LastIndexByte(serverUuidPart, ' ')
-		if spaceIdx == -1 {
+
+	parts := strings.SplitN(path, "/", 3)
+
+	if len(parts) >= 1 {
+		serverPart := parts[0]
+		spaceIdx := strings.LastIndexByte(serverPart, ' ')
+		if spaceIdx == -1 || spaceIdx == len(serverPart)-1 {
 			return res, false
 		}
-
-		res.serverDirName = serverUuidPart
-		res.serverUuid = serverUuidPart[:spaceIdx]
+		res.serverDirName = serverPart
+		res.serverUuid = serverPart[spaceIdx+1:]
 	}
-	cursor += slashIdx + 1
 
-	slashIdx = strings.IndexRune(path[cursor:], '/')
-	if slashIdx == -1 {
-		return res, true
-	}
-	{
-		usernamePart := path[cursor : cursor+slashIdx]
+	if len(parts) >= 2 {
+		usernamePart := parts[1]
 		username, ok := common.NormalizeUsername(usernamePart)
 		if !ok {
 			return res, false
 		}
 		res.username = username
 	}
-	cursor += slashIdx + 1
 
-	pathPart := path[cursor:]
-	if pathPart == "" {
-		res.path = common.RootProtoPath
-		return res, true
-	}
+	if len(parts) >= 3 {
+		// Sanitize and normalize path.
 
-	// Sanitize and normalize path.
+		pathPart := strings.TrimSuffix(parts[2], "/")
 
-	pathPart = strings.TrimSuffix(pathPart, "/")
-
-	// Try to query unescape string.
-	{
-		unescaped, err := url.QueryUnescape(pathPart)
-		if err == nil {
-			pathPart = unescaped
+		// Try to query unescape string.
+		{
+			unescaped, err := url.QueryUnescape(pathPart)
+			if err == nil {
+				pathPart = unescaped
+			}
 		}
+
+		protoPath, pathErr := common.NormalizePath(pathPart)
+		if pathErr != nil {
+			return res, false
+		}
+
+		res.path = protoPath
+	} else if len(parts) == 2 {
+		res.path = common.RootProtoPath
 	}
 
-	protoPath, pathErr := common.NormalizePath(pathPart)
-	if pathErr != nil {
-		return res, false
-	}
-
-	res.path = protoPath
 	return res, true
 }
 
@@ -266,72 +264,53 @@ func (mfs *MultiFs) ReadDir(name string) ([]fs.DirEntry, error) {
 	return nfs.ReadDir(parts.path.String())
 }
 
-// RootFile is the fs.File returned when opening "/" or "".
-type RootFile struct {
-	mfs *MultiFs
-}
-
-func NewRootFile(mfs *MultiFs) RootFile {
-	return RootFile{
-		mfs: mfs,
-	}
-}
-
-var _ fs.File = (*RootFile)(nil)
-var _ fs.ReadDirFile = (*RootFile)(nil)
-
-func (f RootFile) Stat() (fs.FileInfo, error) {
-	return fsys.DummyDirFsWrapper("/"), nil
-}
-func (f RootFile) Read(_ []byte) (int, error) {
-	return 0, errors.New("root directory is a directory, it cannot be read")
-}
-func (f RootFile) Close() error {
-	return nil
-}
-func (f RootFile) ReadDir(n int) ([]fs.DirEntry, error) {
-	servers := f.mfs.multi.GetAll()
-	limit := min(n, len(servers))
-	if limit < 1 {
-		limit = len(servers)
+func NewRootFile(mfs *MultiFs) *fsys.DirWithChildrenFile {
+	servers := mfs.multi.GetAll()
+	entries := make([]fs.DirEntry, len(servers))
+	for i, srv := range servers {
+		entries[i] = fsys.DummyDirFsWrapper(srv.Name + " " + srv.Uuid)
 	}
 
-	entries := make([]fs.DirEntry, limit)
-	for i := 0; i < limit; i++ {
-		entries[i] = fsys.DummyDirFsWrapper(servers[i].Name)
-	}
-
-	return entries, nil
+	return fsys.NewDirWithChildrenFile("/", entries)
 }
 
 // ServerFile is the fs.File returned when opening a server directory.
 type ServerFile struct {
-	mfs     *MultiFs
+	mu sync.RWMutex
+
+	mfs *MultiFs
+
 	dirName string
 	srv     *client.Server
+
+	userStream protocol.Stream[*pb.MsgOnlineUsers]
+	ended      bool
 }
 
-func NewServerFile(mfs *MultiFs, dirName string, srv *client.Server) ServerFile {
-	return ServerFile{
-		mfs:     mfs,
+var _ fs.File = (*ServerFile)(nil)
+var _ io.Seeker = (*ServerFile)(nil)
+var _ fs.ReadDirFile = (*ServerFile)(nil)
+var _ http.File = (*ServerFile)(nil)
+var _ webdav.File = (*ServerFile)(nil)
+
+func NewServerFile(mfs *MultiFs, dirName string, srv *client.Server) *ServerFile {
+	return &ServerFile{
+		mfs: mfs,
+
 		dirName: dirName,
 		srv:     srv,
 	}
 }
 
-var _ fs.File = (*ServerFile)(nil)
-var _ fs.ReadDirFile = (*ServerFile)(nil)
-
-func (f ServerFile) Stat() (fs.FileInfo, error) {
+func (f *ServerFile) Stat() (fs.FileInfo, error) {
 	return fsys.DummyDirFsWrapper(f.dirName), nil
 }
-func (f ServerFile) Read(_ []byte) (int, error) {
+
+func (f *ServerFile) Read(_ []byte) (int, error) {
 	return 0, fmt.Errorf("%q is a directory, it cannot be read", f.dirName)
 }
-func (f ServerFile) Close() error {
-	return nil
-}
-func (f ServerFile) ReadDir(n int) ([]fs.DirEntry, error) {
+
+func (f *ServerFile) ReadDir(n int) ([]fs.DirEntry, error) {
 	var limit int
 	if n < 1 {
 		n = 0
@@ -340,42 +319,106 @@ func (f ServerFile) ReadDir(n int) ([]fs.DirEntry, error) {
 		limit = n
 	}
 
-	ctx, cancel := f.mfs.mkCnTimeoutCtx()
-	defer cancel()
-	return client.DoValue[[]fs.DirEntry](f.srv.ConnNanny, ctx, func(_ context.Context, c *room.Conn) ([]fs.DirEntry, error) {
-		stream, err := c.GetOnlineUsers()
+	f.mu.RLock()
+	if f.ended {
+		f.mu.RUnlock()
+
+		if n > 0 {
+			return nil, io.EOF
+		}
+
+		return nil, nil
+	}
+
+	stream := f.userStream
+	f.mu.RUnlock()
+
+	if stream == nil {
+		ctx, cancel := f.mfs.mkCnTimeoutCtx()
+		defer cancel()
+
+		var err error
+		stream, err = client.DoValue[protocol.Stream[*pb.MsgOnlineUsers]](f.srv.ConnNanny, ctx, func(_ context.Context, c *room.Conn) (protocol.Stream[*pb.MsgOnlineUsers], error) {
+			return c.GetOnlineUsers()
+		})
 		if err != nil {
 			return nil, err
 		}
-		defer func() {
-			_ = stream.Close()
-		}()
 
-		var entries []fs.DirEntry
+		f.mu.Lock()
+		f.userStream = stream
+		f.mu.Unlock()
+	}
+
+	var entries []fs.DirEntry
+	if n > 0 {
+		entries = make([]fs.DirEntry, 0, n)
+	} else {
+		entries = make([]fs.DirEntry, 0)
+	}
+
+	var wasEof bool
+readLoop:
+	for {
+		next, nextErr := stream.ReadNext()
+		if nextErr != nil {
+			if errors.Is(nextErr, io.EOF) {
+				wasEof = true
+				_ = stream.Close()
+				break
+			}
+			return entries, nextErr
+		}
+
+		for _, user := range next.Users {
+			if len(entries) >= limit {
+				break readLoop
+			}
+
+			entries = append(entries, fsys.DummyDirFsWrapper(user.Username))
+		}
+	}
+
+	if wasEof {
+		f.mu.Lock()
+		f.ended = true
+		f.mu.Unlock()
+
 		if n > 0 {
-			entries = make([]fs.DirEntry, 0, n)
-		} else {
-			entries = make([]fs.DirEntry, 0)
+			return entries, io.EOF
 		}
+	}
 
-		for {
-			next, nextErr := stream.ReadNext()
-			if nextErr != nil {
-				if errors.Is(nextErr, io.EOF) {
-					break
-				}
-				return nil, err
-			}
+	return entries, nil
+}
 
-			for _, user := range next.Users {
-				if len(entries) >= limit {
-					break
-				}
+func (f *ServerFile) Readdir(count int) ([]fs.FileInfo, error) {
+	entries, err := f.ReadDir(count)
+	infos := make([]fs.FileInfo, len(entries))
+	for i, entry := range entries {
+		// DummyDirFsWrapper does not return an error on Info().
+		info, _ := entry.Info()
+		infos[i] = info
+	}
+	return infos, err
+}
 
-				entries = append(entries, fsys.DummyDirFsWrapper(user.Username))
-			}
-		}
+func (f *ServerFile) Seek(offset int64, whence int) (int64, error) {
+	return fsys.DummySeek(offset, whence)
+}
 
-		return entries, nil
-	})
+func (f *ServerFile) Write(_ []byte) (n int, err error) {
+	return 0, fmt.Errorf(`file %q is a directory, it cannot be written to`, f.dirName)
+}
+
+func (f *ServerFile) Close() error {
+	f.mu.RLock()
+	stream := f.userStream
+	f.mu.RUnlock()
+
+	if stream != nil {
+		return stream.Close()
+	}
+
+	return nil
 }
