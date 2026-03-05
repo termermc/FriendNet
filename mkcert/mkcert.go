@@ -226,7 +226,11 @@ var sudoWarningOnce sync.Once
 
 func commandWithSudo(cmd ...string) *exec.Cmd {
 	if runtime.GOOS == "darwin" {
-		return exec.Command(cmd[0], cmd[1:]...)
+		cmdStr := cmd[0]
+		for _, arg := range cmd[1:] {
+			cmdStr += " " + fmt.Sprintf("%q", arg)
+		}
+		return exec.Command("osascript", "-e", fmt.Sprintf("do shell script %q with administrator privileges", cmdStr))
 	}
 
 	if u, err := user.Current(); err == nil && u.Uid == "0" {
