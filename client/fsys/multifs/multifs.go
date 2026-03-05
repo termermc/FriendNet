@@ -8,7 +8,6 @@ import (
 	"io/fs"
 	"math"
 	"net/http"
-	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -99,7 +98,7 @@ var _ fs.StatFS = (*MultiFs)(nil)
 var _ fs.ReadFileFS = (*MultiFs)(nil)
 var _ fs.ReadDirFS = (*MultiFs)(nil)
 
-// parseUrlPath parses a path in a URL and tries to get the relevant parts of it.
+// parsePath parses a path in a URL and tries to get the relevant parts of it.
 // If the path cannot be parsed, valid will be false.
 //
 // Always check for fields being zero!
@@ -109,7 +108,7 @@ var _ fs.ReadDirFS = (*MultiFs)(nil)
 // will contain the server UUID field and username, but not the path.
 //
 // The path "/" will not contain any fields but is nevertheless valid.
-func (mfs *MultiFs) parseUrlPath(path string) (res pathParts, valid bool) {
+func (mfs *MultiFs) parsePath(path string) (res pathParts, valid bool) {
 	if strings.HasPrefix(path, "/") {
 		path = path[1:]
 	}
@@ -147,14 +146,6 @@ func (mfs *MultiFs) parseUrlPath(path string) (res pathParts, valid bool) {
 
 		pathPart := strings.TrimSuffix(parts[2], "/")
 
-		// Try to query unescape string.
-		{
-			unescaped, err := url.QueryUnescape(pathPart)
-			if err == nil {
-				pathPart = unescaped
-			}
-		}
-
 		protoPath, pathErr := common.NormalizePath(pathPart)
 		if pathErr != nil {
 			return res, false
@@ -186,7 +177,7 @@ func (mfs *MultiFs) mkNannyFs(srv *client.Server, username common.NormalizedUser
 }
 
 func (mfs *MultiFs) Open(name string) (fs.File, error) {
-	parts, partsOk := mfs.parseUrlPath(name)
+	parts, partsOk := mfs.parsePath(name)
 	if !partsOk {
 		return nil, fs.ErrNotExist
 	}
@@ -244,7 +235,7 @@ func (mfs *MultiFs) ReadFile(name string) ([]byte, error) {
 }
 
 func (mfs *MultiFs) ReadDir(name string) ([]fs.DirEntry, error) {
-	parts, partsOk := mfs.parseUrlPath(name)
+	parts, partsOk := mfs.parsePath(name)
 	if !partsOk {
 		return nil, fs.ErrNotExist
 	}
