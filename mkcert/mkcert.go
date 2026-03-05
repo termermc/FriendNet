@@ -6,6 +6,7 @@
 package mkcert
 
 import (
+	"context"
 	"crypto"
 	"crypto/x509"
 	"fmt"
@@ -19,7 +20,9 @@ import (
 	"regexp"
 	"runtime"
 	"sync"
+	"time"
 
+	"friendnet.org/common"
 	"golang.org/x/net/idna"
 )
 
@@ -226,14 +229,55 @@ var sudoWarningOnce sync.Once
 
 func commandWithSudo(cmd ...string) *exec.Cmd {
 	if runtime.GOOS == "darwin" {
+		// We have to do some insane things to make a graphical prompt on MacOS.
+		// Running a command with elevated privileges without sudo is possible,
+		// but some commands fail due to lack of permission when this is done.
+		//
+		// Our only other option is to open a terminal and run the command with
+		// sudo in it.
+		// Since opening the terminal and making it run a command is asynchronous,
+		// we are forced to make it touch a file in tmp to notify us when it is
+		// done.
+		//
+		// I didn't expect this to be so complicated, but here we are.
+
+		notifyPath := "/tmp/friendnet-rootca-notify-" + common.RandomB64UrlStr(4) + ".txt"
+
 		cmdStr := cmd[0]
 		for _, arg := range cmd[1:] {
 			cmdStr += " " + fmt.Sprintf("%q", arg)
 		}
-		return exec.Command("osascript",
+		_ = exec.Command("osascript",
 			"-e", `tell application "Terminal" to activate`,
-			"-e", fmt.Sprintf(`tell application "Terminal" to do script %q`, fmt.Sprintf("sudo %s; exit", cmdStr)),
+			"-e", fmt.Sprintf(`tell application "Terminal" to do script %q`, fmt.Sprintf(`printf "\n\n\nEnter your account password:\n"; sudo %s; touch %s; exit`, cmdStr, notifyPath)),
 		)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer cancel()
+		okChan := make(chan struct{})
+		go func() {
+			// Check for file every second.
+			ticker := time.NewTicker(1 * time.Second)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ticker.C:
+					if pathExists(notifyPath) {
+						close(okChan)
+						_ = os.Remove(notifyPath)
+						return
+					}
+				}
+			}
+		}()
+		select {
+		case <-ctx.Done():
+			return exec.Command("exit", "1")
+		case <-okChan:
+			return exec.Command("exit", "0")
+		}
 	}
 
 	if u, err := user.Current(); err == nil && u.Uid == "0" {
