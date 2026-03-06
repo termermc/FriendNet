@@ -132,3 +132,7 @@ summary.docs-nav-section-label {
     flex: 4;
     flex-direction: column;
 }
+.docs-content pre, .docs-content :not(pre) > code {
+    background-color: rgba(0, 0, 0, 0.25);
+    padding: 0.5rem;
+}
