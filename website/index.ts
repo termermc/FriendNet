@@ -27,7 +27,7 @@ const mountDocSection = (section: DocSection, pathRelative: string) => {
 		ssg.page(path, () =>
 			DocPage({
 				rootSection: rootDocSection,
-				page: section.page,
+				section: section,
 				docsRoot: docsRoot,
 				curRelativePath: pathRelative,
 			}),

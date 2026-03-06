@@ -12,9 +12,9 @@ also completely free and open-source, letting users host their own servers and s
 The intention is not to replace public networks like Soulseek, but to provide an easy-to-use P2P file sharing system for
 small groups of people without the hassle that normally comes with such systems.
 
-Want to host a server for your friends/group? Check out the [server setup guide](server/setup/).
+Want to host a server for your friends/group? Check out the [server setup guide](server/setup/index_setup.md).
 
-If you already have a server or someone else is hosting one for your group, check out the [installation guide](client/installation/).
+If you already have a server or someone else is hosting one for your group, check out the [installation guide](client/installation.md).
 
 If you're interested in learning more about how FriendNet works technically, check out the
-[technical overview](technical-overview/).
+[technical overview](technical-overview/index_technical-overview.md).

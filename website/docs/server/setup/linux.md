@@ -31,7 +31,7 @@ sudo iptables -A OUTPUT -p udp -m udp --sport 20038 -j ACCEPT
 
 Now that we have allowed the server's port through our firewall, we can download the server.
 
-First, go to the FriendNet [releases](https://github.com/termermc/FriendNet) page on Github and
+First, go to the FriendNet [releases](https://github.com/termermc/FriendNet/releases) page on GitHub and
 download the binary for your architecture. You most likely want `friendnet-server-linux_amd64.tar.gz`.
 
 Extract the files in the archive:

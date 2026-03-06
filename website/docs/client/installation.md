@@ -9,4 +9,4 @@ to work properly. Otherwise, you will see errors in your browser and the page wi
 If you still see an error in your browser after installing it, restart your browser and open
 it again.
 
-Next: [Adding a Server](../adding-a-server/)
+Next: [Adding a Server](adding-a-server.md)

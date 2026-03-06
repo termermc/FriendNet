@@ -4,15 +4,15 @@ On its own, a FriendNet client can't do anything; it needs a server to find othe
 and to share files with them. Your client can connect to as many server as you'd like at
 once, and share different folders for each.
 
-> Want to create your own server? Check out the [setup guide](../../server/setup/).
+> Want to create your own server? Check out the [setup guide](../server/setup/index_setup.md).
 
 To add a server, click the ➕️ icon on the `Servers` label:
 
-![add server icon](../add-server-icon.png)
+![add server icon](add-server-icon.png)
 
 From there, you will be presented with a form:
 
-![add server form](../add-server-form.png)
+![add server form](add-server-form.png)
 
 In the `Name` field, you can put whatever you want; it is the label shown only in your client.
 
@@ -21,7 +21,7 @@ The `Address` field is how to reach the server. It can be a domain name with a p
 is the default, `20038`), or a bare IP address with or without port, depending on whether the
 server is using the default port.
 
-The `Room` field is the name of the [room](../../rooms/) to join.
+The `Room` field is the name of the [room](../rooms.md) to join.
 
 The `Username` and `Password` fields are the credentials for the room account you are signing
 in with.
@@ -30,7 +30,7 @@ Once you have filled in all the fields, click the `Add Server` field to add it.
 
 You should see the server you just added in the server browser panel on the left:
 
-![server](../server.png)
+![server](server.png)
 
 If you made any mistakes, you can click the `📝️` icon on the server to edit it.
 
@@ -46,7 +46,7 @@ your own folders.
 
 To add a share, click `📁 Manage Shares` on the server:
 
-![manage shares](../manage-shares.png)
+![manage shares](manage-shares.png)
 
 The `Name` field is the name to give to the share. This is the name other users will see when
 browsing your shares.
@@ -66,8 +66,8 @@ servers you are connected to.
 
 To confirm that you have added the share, click `📂 Browse` on yourself under the server.
 
-![self shares](../self-shares.png)
+![self shares](self-shares.png)
 
 Congratulations! You have now shared your first folder.
 
-Next: [Profiles](../profiles/)
+Next: [Profiles](profiles.md)

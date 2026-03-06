@@ -10,10 +10,10 @@ your house. Otherwise, you can use any number of VPS providers.
 
 First, select the operating system you will be installing the server on:
 
-## [Linux](linux)
+## [Linux](linux.md)
 
-## [Windows](windows)
+## [Windows](windows.md)
 
-## [MacOS (Apple Silicon and Intel)](macos)
+## [MacOS (Apple Silicon and Intel)](macos.md)
 
-## [Anything Else (Compile Yourself)](other)
+## [Anything Else (Compile Yourself)](other.md)
