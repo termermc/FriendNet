@@ -1,13 +1,8 @@
 import config from '../../config.ts'
 
-import {
-	type Component,
-	type RenderFragments,
-	BehaviorLoader,
-	html,
-} from 'wunphile'
+import { type Component, type RenderFragments, html } from 'wunphile'
 
-export type LayoutProps = {
+export type BaseLayoutProps = {
 	/**
 	 * The page title.
 	 * Optional.
@@ -37,7 +32,7 @@ export type LayoutProps = {
 /**
  * The main page layout.
  */
-export const Layout: Component<LayoutProps, RenderFragments> = (
+export const BaseLayout: Component<BaseLayoutProps, RenderFragments> = (
 	{ title, description, stylesheets, scripts },
 	children,
 ) => {
@@ -70,16 +65,30 @@ export const Layout: Component<LayoutProps, RenderFragments> = (
 						`
 					: ''}
 
+				<link rel="stylesheet" href="/css/main.css" />
 				${(stylesheets ?? []).map(
 					(uri) => html` <link rel="stylesheet" href="${uri}" /> `,
 				)}
 			</head>
 			<body>
-				${children}
+				<header>
+					<a href="/" class="header-title">${config.title}</a>
+					<div class="header-nav">
+						<a href="/download/" class="header-nav-item"
+							>Download</a
+						>
+						<a href="/docs/" class="header-nav-item"
+							>Documentation</a
+						>
+						<a href="${config.githubUrl}" class="header-nav-item"
+							>GitHub</a
+						>
+					</div>
+				</header>
+				<main>${children}</main>
 				${(scripts ?? []).map(
-					(uri) => html` <script src="${uri}"></script> `,
+					(uri) => html`<script src="${uri}"></script>`,
 				)}
-				${BehaviorLoader()}
 			</body>
 		</html>
 	`

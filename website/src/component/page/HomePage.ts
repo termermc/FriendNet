@@ -1,16 +1,16 @@
 import { html } from 'wunphile'
 import type { Component } from 'wunphile'
-import { Layout } from '../Layout.ts'
+import { BaseLayout } from '../BaseLayout.ts'
 
 /**
  * The homepage.
  */
 export const HomePage: Component<void, void> = () => {
-	return Layout(
+	return BaseLayout(
 		{
-			description: 'Welcome home!',
+			description:
+				'Self-hostable file sharing for friends, like a mini-Soulseek. No port forwarding needed!',
 			stylesheets: ['/css/home.css'],
-			scripts: ['/js/home.js'],
 		},
 		html`
 			<h1>Welcome</h1>

@@ -1,12 +1,12 @@
 import { html } from 'wunphile'
 import type { Component } from 'wunphile'
-import { Layout } from '../Layout.ts'
+import { BaseLayout } from '../BaseLayout.ts'
 
 /**
  * The "not found" page.
  */
 export const NotFoundPage: Component<void, void> = () => {
-	return Layout(
+	return BaseLayout(
 		{
 			title: 'Not Found',
 			description: 'Page not found',

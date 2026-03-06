@@ -4,7 +4,7 @@ import { NotFoundPage } from './src/component/page/NotFoundPage.ts'
 import { HomePage } from './src/component/page/HomePage.ts'
 import { type DocSection, scanDirForDocHierarchy } from './src/util/docs.ts'
 import { DocPage } from './src/component/page/DocPage.ts'
-import {basename} from "node:path";
+import { basename } from 'node:path'
 
 const ssg = new Wunphile(import.meta.url)
 
@@ -21,7 +21,7 @@ const docsRoot = '/docs'
 
 const mountDocSection = (section: DocSection, pathRelative: string) => {
 	if (section.page) {
-        const dir = docsRoot + pathRelative
+		const dir = docsRoot + pathRelative
 		const path = dir + '/index.html'
 
 		ssg.page(path, () =>
@@ -33,11 +33,11 @@ const mountDocSection = (section: DocSection, pathRelative: string) => {
 			}),
 		)
 
-        for (const filePathFull of section.staticFilePaths) {
-            const filename = basename(filePathFull)
-            const filePath = filePathFull.substring(import.meta.dirname.length)
-            ssg.staticFile(dir + '/' + filename, filePath)
-        }
+		for (const filePathFull of section.staticFilePaths) {
+			const filename = basename(filePathFull)
+			const filePath = filePathFull.substring(import.meta.dirname.length)
+			ssg.staticFile(dir + '/' + filename, filePath)
+		}
 	}
 
 	for (const child of section.children) {

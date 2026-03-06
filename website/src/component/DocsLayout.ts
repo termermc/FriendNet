@@ -1,6 +1,6 @@
 import { type Component, html, type RenderFragments } from 'wunphile'
 import { type DocSection } from '../util/docs.ts'
-import { Layout, type LayoutProps } from './Layout.ts'
+import { BaseLayout, type BaseLayoutProps } from './BaseLayout.ts'
 
 export type DocsLayoutProps = {
 	/**
@@ -20,7 +20,7 @@ export type DocsLayoutProps = {
 	 * If it is the root of the docs, must be an empty string.
 	 */
 	curRelativePath: string
-} & Omit<LayoutProps, 'stylesheets'>
+} & Omit<BaseLayoutProps, 'stylesheets'>
 
 /**
  * The layout used for documentation pages.
@@ -66,14 +66,16 @@ export const DocsLayout: Component<DocsLayoutProps, RenderFragments> = (
 		}
 	}
 
-	return Layout(
-        {
-            ...props,
-            stylesheets: ['/css/docs.css'],
-        },
+	return BaseLayout(
+		{
+			...props,
+			stylesheets: ['/css/docs.css'],
+		},
 		html`
-			<div class="docs-nav">${mkSection(props.rootSection, '')}</div>
-			<div class="docs-content">${children}</div>
+			<div class="docs">
+				<div class="docs-nav">${mkSection(props.rootSection, '')}</div>
+				<div class="docs-content">${children}</div>
+			</div>
 		`,
 	)
 }

@@ -16,4 +16,4 @@ First, select the operating system you will be installing the server on:
 
 ## [MacOS (Apple Silicon and Intel)](macos)
 
-## [Anything Else (or Compile Yourself)](other)
+## [Anything Else (Compile Yourself)](other)

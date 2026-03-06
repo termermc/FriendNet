@@ -1,138 +1,59 @@
-/* latin-ext */
-@font-face {
-    font-family: 'Atkinson Hyperlegible Mono';
-    font-style: italic;
-    font-weight: 200 800;
-    font-display: swap;
-    src: url(/asset/font/atkinsonhyperlegiblemono-italic-latin-ext.woff2)
-    format('woff2');
-    unicode-range:
-            U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
-            U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
-            U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-/* latin */
-@font-face {
-    font-family: 'Atkinson Hyperlegible Mono';
-    font-style: italic;
-    font-weight: 200 800;
-    font-display: swap;
-    src: url(/asset/font/atkinsonhyperlegiblemono-italic-latin.woff2)
-    format('woff2');
-    unicode-range:
-            U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
-            U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
-            U+2212, U+2215, U+FEFF, U+FFFD;
-}
-/* latin-ext */
-@font-face {
-    font-family: 'Atkinson Hyperlegible Mono';
-    font-style: normal;
-    font-weight: 200 800;
-    font-display: swap;
-    src: url(/asset/font/atkinsonhyperlegiblemono-normal-latin-ext.woff2)
-    format('woff2');
-    unicode-range:
-            U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
-            U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
-            U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-/* latin */
-@font-face {
-    font-family: 'Atkinson Hyperlegible Mono';
-    font-style: normal;
-    font-weight: 200 800;
-    font-display: swap;
-    src: url(/asset/font/atkinsonhyperlegiblemono-normal-latin.woff2)
-    format('woff2');
-    unicode-range:
-            U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
-            U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
-            U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
-:root {
-    --panelColor: #282c34;
-}
-
-input[type='text'],
-input[type='password'],
-input[type='number'] {
-    border: 0.1rem solid rgba(0, 0, 0, 0.5);
-    color: white;
-    background-color: rgba(255, 255, 255, 0.1);
-    margin: 0.2rem;
-}
-input[type='submit'],
-button {
-    border: 0.1rem solid rgba(0, 0, 0, 0.5);
-    color: white;
-    background-color: rgba(255, 255, 255, 0.1);
-}
-input[type='submit']:hover,
-button:hover {
-    background-color: rgba(255, 255, 255, 0.25);
-}
-input[type='submit']:active,
-button:active {
-    background-color: rgba(0, 0, 0, 0.1);
-}
-
-a {
-    color: white;
-}
-
-body {
-    font-family: 'Atkinson Hyperlegible Mono', sans-serif;
-    font-optical-sizing: auto;
-    font-weight: 400;
-    font-style: normal;
-
-    margin: 0;
-    padding: 0.5rem;
-
-    background: rgb(25, 25, 25);
-    color: white;
-
+.docs {
     display: flex;
-
-    min-width: 100vh;
+    flex-direction: row;
 }
 
-.docs-nav, .docs-content {
-    background-color: var(--panelColor);
-    height: 100%;
-    padding: 1rem;
+.docs-nav,
+.docs-content {
+	background-color: var(--panelColor);
+	height: 100%;
+	padding: 1rem;
 }
 
 .docs-nav {
-    display: flex;
-    flex: 1;
-    margin-right: 0.5rem;
+	display: flex;
+	flex: 1;
+	margin-right: 0.5rem;
 }
 .docs-nav-section {
-    width: 100%;
+	width: 100%;
 }
 .docs-nav-section-children {
-    margin-left: 0.75rem;
+	margin-left: 0.75rem;
 }
 .docs-nav-section-label {
-    cursor: pointer;
-    width: 100%;
+	cursor: pointer;
+	width: 100%;
 }
 summary.docs-nav-section-label {
-    font-weight: bold;
-    background: rgba(0, 0, 0, 0.25);
-    margin-bottom: 0.25rem;
-    margin-top: 0.25rem;
+	font-weight: bold;
+	background: rgba(0, 0, 0, 0.25);
+	margin-bottom: 0.25rem;
+	margin-top: 0.25rem;
 }
 
 .docs-content {
-    display: flex;
-    flex: 4;
-    flex-direction: column;
+	display: flex;
+	flex: 4;
+	flex-direction: column;
 }
-.docs-content pre, .docs-content :not(pre) > code {
-    background-color: rgba(0, 0, 0, 0.25);
-    padding: 0.5rem;
+.docs-content pre,
+.docs-content :not(pre) > code {
+	background-color: rgba(0, 0, 0, 0.25);
+	padding: 0.5rem;
+}
+
+@media (max-width: 46rem) {
+	.docs-nav {
+		margin-bottom: 0.5rem;
+		flex: 1;
+		max-width: calc(100vw - 2rem);
+	}
+	.docs-content {
+		flex: 1;
+		max-width: calc(100vw - 2rem);
+	}
+    .docs {
+        flex-direction: column;
+    }
 }

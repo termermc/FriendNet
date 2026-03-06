@@ -14,6 +14,7 @@ guide. If you used something else, replace `20038` with whatever you are using.
 ```shell
 sudo ufw allow 20038/udp comment 'FriendNet'
 ```
+
 </details>
 
 <details>
@@ -23,6 +24,7 @@ sudo ufw allow 20038/udp comment 'FriendNet'
 sudo iptables -A INPUT -p udp -m udp --dport 20038 -j ACCEPT
 sudo iptables -A OUTPUT -p udp -m udp --sport 20038 -j ACCEPT
 ```
+
 </details>
 
 ---
@@ -44,5 +46,3 @@ You should now have two files:
 friendnet-server
 friendnet-rpcclient
 ```
-
-
