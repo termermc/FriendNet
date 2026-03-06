@@ -1,0 +1,20 @@
+{
+	"name": "friendnet-website",
+	"main": "index.ts",
+	"type": "module",
+	"scripts": {
+		"build": "node .",
+		"dev": "node . --dev",
+		"fmt": "prettier --write ."
+	},
+	"dependencies": {
+		"marked": "^17.0.4",
+		"wunphile": "^1.1.2"
+	},
+	"devDependencies": {
+		"@types/node": "^25.3.3",
+		"chokidar": "^5.0.0",
+		"mime-db": "^1.54.0",
+		"prettier": "^3.8.1"
+	}
+}
