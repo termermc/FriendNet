@@ -20,7 +20,7 @@ export type DocsLayoutProps = {
 	 * If it is the root of the docs, must be an empty string.
 	 */
 	curRelativePath: string
-} & LayoutProps
+} & Omit<LayoutProps, 'stylesheets'>
 
 /**
  * The layout used for documentation pages.
@@ -35,28 +35,42 @@ export const DocsLayout: Component<DocsLayoutProps, RenderFragments> = (
 	): RenderFragments => {
 		const isOpen = props.curRelativePath.startsWith(relativePath)
 
-		return html`
-			<details class="docs-nav-section" ${isOpen ? 'open' : ''}>
-				<summary>
-					${section.page
-						? html`
-								<a href="${props.docsRoot}/${relativePath}/">
-									${section.page.title}
-								</a>
-							`
-						: html` <span> ${section.slug} </span> `}
-				</summary>
-				<div class="docs-nav-section-children">
-					${section.children.map((child) =>
-						mkSection(child, `${relativePath}/${child.slug}`),
-					)}
+		let label: RenderFragments
+		if (section.page) {
+			label = html`
+				<a href="${props.docsRoot}${relativePath}/">
+					${section.page.title}
+				</a>
+			`
+		} else {
+			label = html`<span>${section.slug}</span>`
+		}
+
+		if (section.children.length > 0) {
+			return html`
+				<details class="docs-nav-section" ${isOpen ? 'open' : ''}>
+					<summary class="docs-nav-section-label">${label}</summary>
+					<div class="docs-nav-section-children">
+						${section.children.map((child) =>
+							mkSection(child, `${relativePath}/${child.slug}`),
+						)}
+					</div>
+				</details>
+			`
+		} else {
+			return html`
+				<div class="docs-nav-section" ${isOpen ? 'open' : ''}>
+					<span class="docs-nav-section-label">${label}</span>
 				</div>
-			</details>
-		`
+			`
+		}
 	}
 
 	return Layout(
-		props,
+        {
+            ...props,
+            stylesheets: ['/css/docs.css'],
+        },
 		html`
 			<div class="docs-nav">${mkSection(props.rootSection, '')}</div>
 			<div class="docs-content">${children}</div>

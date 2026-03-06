@@ -70,7 +70,6 @@ export const Layout: Component<LayoutProps, RenderFragments> = (
 						`
 					: ''}
 
-				<link rel="stylesheet" href="/css/main.css" />
 				${(stylesheets ?? []).map(
 					(uri) => html` <link rel="stylesheet" href="${uri}" /> `,
 				)}

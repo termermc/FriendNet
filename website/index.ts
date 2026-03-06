@@ -2,15 +2,14 @@ import { Wunphile } from 'wunphile'
 
 import { NotFoundPage } from './src/component/page/NotFoundPage.ts'
 import { HomePage } from './src/component/page/HomePage.ts'
-import { ExamplePage } from './src/component/page/ExamplePage.ts'
 import { type DocSection, scanDirForDocHierarchy } from './src/util/docs.ts'
 import { DocPage } from './src/component/page/DocPage.ts'
+import {basename} from "node:path";
 
 const ssg = new Wunphile(import.meta.url)
 
 // Basic pages.
 ssg.page('/index.html', HomePage)
-ssg.page('/example/index.html', ExamplePage)
 
 // Mount static files.
 ssg.staticDir('/', './static')
@@ -22,12 +21,8 @@ const docsRoot = '/docs'
 
 const mountDocSection = (section: DocSection, pathRelative: string) => {
 	if (section.page) {
-		let path: string
-		if (section.slug === '') {
-			path = `${docsRoot}/index.html`
-		} else {
-			path = `${docsRoot}/${pathRelative}/${section.slug}/index.html`
-		}
+        const dir = docsRoot + pathRelative
+		const path = dir + '/index.html'
 
 		ssg.page(path, () =>
 			DocPage({
@@ -37,6 +32,12 @@ const mountDocSection = (section: DocSection, pathRelative: string) => {
 				curRelativePath: pathRelative,
 			}),
 		)
+
+        for (const filePathFull of section.staticFilePaths) {
+            const filename = basename(filePathFull)
+            const filePath = filePathFull.substring(import.meta.dirname.length)
+            ssg.staticFile(dir + '/' + filename, filePath)
+        }
 	}
 
 	for (const child of section.children) {
