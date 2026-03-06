@@ -1,3 +1,0 @@
-# Client Installation
-
-TODO

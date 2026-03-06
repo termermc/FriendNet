@@ -43,6 +43,17 @@ summary.docs-nav-section-label {
 	padding: 0.5rem;
 }
 
+.docs-content blockquote {
+    margin: 0;
+    border-left: 0.5rem solid rgba(0, 0, 0, 0.25);
+    padding: 0.1rem 0.1rem 0.1rem 1rem;
+    background-color: rgba(0, 0, 0, 0.15);
+}
+
+.docs-content img {
+    max-width: 100%;
+}
+
 @media (max-width: 46rem) {
 	.docs-nav {
 		margin-bottom: 0.5rem;
