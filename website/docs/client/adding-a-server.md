@@ -21,7 +21,7 @@ The `Address` field is how to reach the server. It can be a domain name with a p
 is the default, `20038`), or a bare IP address with or without port, depending on whether the
 server is using the default port.
 
-The `Room` field is the name of the [room](../rooms.md) to join.
+The `Room` field is the name of the [room](../server/rooms.md) to join.
 
 The `Username` and `Password` fields are the credentials for the room account you are signing
 in with.

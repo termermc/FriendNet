@@ -1,8 +1,11 @@
-# FriendNet Documentation
+# Documentation
 
 FriendNet is a peer-to-peer file sharing system very similar to Soulseek (or Napster if you're a bit older).
 What sets it apart from other file sharing systems is that you can host your own server, and port forwarding is
 optional for sharing files.
+
+![logo](logo.png)
+
 
 For those completely new to the concept, FriendNet allows users to share files with one another, directly from their computers.
 Unlike services like Dropbox, users do not upload files and then share a link; instead, they choose which folders to share
