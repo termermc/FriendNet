@@ -25,11 +25,20 @@
 	cursor: pointer;
 	width: 100%;
 }
-summary.docs-nav-section-label {
+.docs-nav-section-label {
 	font-weight: bold;
 	background: rgba(0, 0, 0, 0.25);
 	margin-bottom: 0.25rem;
 	margin-top: 0.25rem;
+}
+span.docs-nav-section-label {
+    display: block;
+}
+span.docs-nav-section-label::before {
+    content: '•';
+}
+.docs-nav-section-current > .docs-nav-section-label {
+    background: rgba(255, 0, 0, 0.25);
 }
 
 .docs-content {

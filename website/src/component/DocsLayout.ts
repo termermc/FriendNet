@@ -34,6 +34,7 @@ export const DocsLayout: Component<DocsLayoutProps, RenderFragments> = (
 		relativePath: string,
 	): RenderFragments => {
 		const isOpen = props.curRelativePath.startsWith(relativePath)
+		const isCur = props.curRelativePath === relativePath
 
 		let label: RenderFragments
 		if (section.page) {
@@ -48,7 +49,7 @@ export const DocsLayout: Component<DocsLayoutProps, RenderFragments> = (
 
 		if (section.children.length > 0) {
 			return html`
-				<details class="docs-nav-section" ${isOpen ? 'open' : ''}>
+				<details class="docs-nav-section ${isCur ? 'docs-nav-section-current' : ''}" ${isOpen ? 'open' : ''}>
 					<summary class="docs-nav-section-label">${label}</summary>
 					<div class="docs-nav-section-children">
 						${section.children.map((child) =>
@@ -59,7 +60,7 @@ export const DocsLayout: Component<DocsLayoutProps, RenderFragments> = (
 			`
 		} else {
 			return html`
-				<div class="docs-nav-section" ${isOpen ? 'open' : ''}>
+				<div class="docs-nav-section ${isCur ? 'docs-nav-section-current' : ''}" ${isOpen ? 'open' : ''}>
 					<span class="docs-nav-section-label">${label}</span>
 				</div>
 			`
