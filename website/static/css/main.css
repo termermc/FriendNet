@@ -100,7 +100,7 @@ body {
 
 main {
 	display: flex;
-    flex-direction: column;
+	flex-direction: column;
 }
 header {
 	background-color: var(--panelColor);
@@ -109,8 +109,8 @@ header {
 	display: flex;
 }
 .header-title {
-    display: flex;
-    align-self: center;
+	display: flex;
+	align-self: center;
 	font-weight: bold;
 	font-size: 1.5rem;
 	text-decoration: none;
@@ -119,16 +119,16 @@ header {
 	border-right: 0.25rem solid rgba(0, 0, 0, 0.5);
 }
 .header-nav {
-    position: relative;
-    top: 0.3rem;
-    display: flex;
-    flex-flow: wrap;
-    justify-content: center;
-    align-self: center;
+	position: relative;
+	top: 0.3rem;
+	display: flex;
+	flex-flow: wrap;
+	justify-content: center;
+	align-self: center;
 }
 .header-nav-item {
 	padding: 0.5rem;
 	background-color: rgba(0, 0, 0, 0.25);
-    margin-right: 0.5rem;
-    margin-bottom: 0.5rem;
+	margin-right: 0.5rem;
+	margin-bottom: 0.5rem;
 }

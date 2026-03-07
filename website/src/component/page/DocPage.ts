@@ -25,51 +25,70 @@ export const DocPage: Component<DocPageProps, void> = (props) => {
 
 	if (page?.content?.trim()) {
 		// Rewrite links.
-		const content = page.content.replace(mdLinkRegex, function (substring, label: string, link: string) {
-			if (link.startsWith('/')) {
-				return substring
-			}
-			if (link.startsWith('http://') || link.startsWith('https://')) {
-				return substring
-			}
-
-			let mdDir: string
-			if (section.children.length === 0) {
-				mdDir = props.curRelativePath.substring(0, props.curRelativePath.lastIndexOf('/'))
-			} else {
-				mdDir = props.curRelativePath
-			}
-
-			let newLink: string
-			if (link.endsWith('.md')) {
-				const filename = basename(link)
-				if (filename === 'index.md' || filename.startsWith('index_')) {
-					newLink = mdDir + '/' + link.substring(0, link.lastIndexOf(filename))
-				} else {
-					newLink = mdDir + '/' + link.substring(0, link.length - '.md'.length) + '/'
+		const content = page.content.replace(
+			mdLinkRegex,
+			function (substring, label: string, link: string) {
+				if (link.startsWith('/')) {
+					return substring
 				}
-			} else {
-				newLink = mdDir + '/' + link
-			}
+				if (link.startsWith('http://') || link.startsWith('https://')) {
+					return substring
+				}
 
-			return `[${label}](${props.docsRoot}${newLink})`
-		})
+				let mdDir: string
+				if (section.children.length === 0) {
+					mdDir = props.curRelativePath.substring(
+						0,
+						props.curRelativePath.lastIndexOf('/'),
+					)
+				} else {
+					mdDir = props.curRelativePath
+				}
+
+				let newLink: string
+				if (link.endsWith('.md')) {
+					const filename = basename(link)
+					if (
+						filename === 'index.md' ||
+						filename.startsWith('index_')
+					) {
+						newLink =
+							mdDir +
+							'/' +
+							link.substring(0, link.lastIndexOf(filename))
+					} else {
+						newLink =
+							mdDir +
+							'/' +
+							link.substring(0, link.length - '.md'.length) +
+							'/'
+					}
+				} else {
+					newLink = mdDir + '/' + link
+				}
+
+				return `[${label}](${props.docsRoot}${newLink})`
+			},
+		)
 
 		// Render markdown with marked library.
 		renderContent = html(marked.parse(content, { async: false }))
 	} else if (section.children.length === 0) {
-		renderContent = html`
-			<i>This section has no content.</i>
-		`
+		renderContent = html` <i>This section has no content.</i> `
 	} else {
 		renderContent = html`
 			Sub-sections:
 			<ul>
-				${section.children.map((child) => html`
-					<li>
-						<a href="${props.docsRoot}${props.curRelativePath}/${child.slug}/">${child.slug}</a>
-					</li>
-				`)}
+				${section.children.map(
+					(child) => html`
+						<li>
+							<a
+								href="${props.docsRoot}${props.curRelativePath}/${child.slug}/"
+								>${child.slug}</a
+							>
+						</li>
+					`,
+				)}
 			</ul>
 		`
 	}
