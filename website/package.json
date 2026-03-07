@@ -9,7 +9,7 @@
 	},
 	"dependencies": {
 		"marked": "^17.0.4",
-		"wunphile": "^1.1.3"
+		"wunphile": "^1.1.4"
 	},
 	"devDependencies": {
 		"@types/node": "^25.3.3",
