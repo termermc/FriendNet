@@ -129,6 +129,8 @@ export async function scanDirForDocHierarchy(
 	while (toScan.length > 0) {
 		const { dir, section } = toScan.shift()!
 
+		let toc: string[] | undefined = undefined
+
 		const entries = await readdir(dir, { withFileTypes: true })
 		for (const entry of entries) {
 			const entryPath = join(dir, entry.name)
@@ -156,6 +158,11 @@ export async function scanDirForDocHierarchy(
 				continue
 			}
 
+			if (name === 'toc.txt') {
+				toc = (await readFile(entryPath, 'utf8')).trim().split('\n')
+				continue
+			}
+
 			if (!name.endsWith('.md')) {
 				section.staticFilePaths.push(entryPath)
 				continue
@@ -173,6 +180,15 @@ export async function scanDirForDocHierarchy(
 				page: page,
 				staticFilePaths: [],
 				children: [],
+			})
+		}
+
+		// Sort children based on table of contents.
+		if (toc != null) {
+			section.children.sort((a, b) => {
+				const aIndex = toc.indexOf(a.slug)
+				const bIndex = toc.indexOf(b.slug)
+				return aIndex - bIndex
 			})
 		}
 	}
