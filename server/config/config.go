@@ -57,6 +57,7 @@ var Default = &ServerConfig{
 					"GetOnlineUserInfo",
 					"GetAccounts",
 				},
+				CorsAllowAllOrigins: true,
 			},
 		},
 	},
