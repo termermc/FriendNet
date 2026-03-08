@@ -46,3 +46,35 @@ You should now have two files:
 friendnet-server
 friendnet-rpcclient
 ```
+
+To create the server's config file, run it:
+
+```shell
+./friendnet-server
+```
+
+And then close it by pressing `Ctrl+C`.
+
+---
+
+Before modifying settings, you can optionally add a systemd service file.
+
+Replace `/path/to/friendnet` with the path to the directory where the server and RPC client are located.
+
+```
+[Unit]
+Description=FriendNet Server
+After=network.target
+
+[Service]
+ExecStart=/path/to/friendnet/friendnet-server
+Restart=unless-stopped
+RestartSec=30
+User=friendnet
+Group=friendnet
+WorkingDirectory=/path/to/friendnet
+```
+
+---
+
+Next: [Configuration](configuration.md)
