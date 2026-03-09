@@ -17,6 +17,7 @@ import {
 import { RpcClient } from './protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
 import { sleep } from './util'
+import { isDev } from 'solid-js/web'
 
 class Refresher {
 	onlineUsers = new Set<string>()
@@ -724,8 +725,10 @@ export class State {
 
 		// Listen to server events.
 		this.event.addEventListener(Event_Type.STOP, () => {
-			window.close()
-			setTimeout(() => window.location.assign('about:blank'), 100)
+			if (!isDev) {
+				window.close()
+				setTimeout(() => window.location.assign('about:blank'), 100)
+			}
 		})
 		this.event.addEventListener(Event_Type.NEW_UPDATE, (event) => {
 			this.#setLatestUpdate(event.newUpdate!.info)
