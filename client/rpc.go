@@ -831,15 +831,8 @@ func (s *RpcServer) GetUpdateInfo(_ context.Context, _ *v1.GetUpdateInfoRequest)
 	}, nil
 }
 
-func (s *RpcServer) CheckForNewUpdate(ctx context.Context, _ *v1.CheckForNewUpdateRequest) (*v1.CheckForNewUpdateResponse, error) {
-	newChan := s.updateChecker.NewUpdateChan()
-
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	case <-newChan:
-		return &v1.CheckForNewUpdateResponse{
-			NewInfo: s.updateToInfo(s.updateChecker.GetNewUpdate()),
-		}, nil
-	}
+func (s *RpcServer) CheckForNewUpdate(_ context.Context, _ *v1.CheckForNewUpdateRequest) (*v1.CheckForNewUpdateResponse, error) {
+	return &v1.CheckForNewUpdateResponse{
+		NewInfo: s.updateToInfo(s.updateChecker.CheckNow()),
+	}, nil
 }
