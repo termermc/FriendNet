@@ -131,9 +131,7 @@ const Page: Component = () => {
 					return (
 						<div>
 							<p>Profile contains invalid paths.</p>
-							<p>
-								Paths must be relative.
-							</p>
+							<p>Paths must be relative.</p>
 							<div class={styles.code}>{elem.outerHTML}</div>
 						</div>
 					)
@@ -143,9 +141,7 @@ const Page: Component = () => {
 					return (
 						<div>
 							<p>Profile contains invalid paths.</p>
-							<p>
-								Paths must not contain backslashes.
-							</p>
+							<p>Paths must not contain backslashes.</p>
 							<div class={styles.code}>{elem.outerHTML}</div>
 						</div>
 					)
@@ -157,9 +153,7 @@ const Page: Component = () => {
 						return (
 							<div>
 								<p>Profile contains invalid paths.</p>
-								<p>
-									Paths must not contain "..".
-								</p>
+								<p>Paths must not contain "..".</p>
 								<div class={styles.code}>{elem.outerHTML}</div>
 							</div>
 						)

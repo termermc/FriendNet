@@ -34,24 +34,27 @@ const CatOther: Component<CatProps> = (props) => {
 	const [viewAsText, setViewAsText] = createSignal(false)
 
 	return (
-		<Show when={viewAsText()} fallback={
-			<div class={styles.catOther}>
-				<span>No Preview Available.</span>
-				<br />
-				<br />
-				<a href={dlUrl}>💾 Download</a>
-				<br/>
-				<a
-					href=""
-					onClick={(e) => {
-						e.preventDefault()
-						setViewAsText(true)
-					}}
-				>
-					📜 View as Text
-				</a>
-			</div>
-		}>
+		<Show
+			when={viewAsText()}
+			fallback={
+				<div class={styles.catOther}>
+					<span>No Preview Available.</span>
+					<br />
+					<br />
+					<a href={dlUrl}>💾 Download</a>
+					<br />
+					<a
+						href=""
+						onClick={(e) => {
+							e.preventDefault()
+							setViewAsText(true)
+						}}
+					>
+						📜 View as Text
+					</a>
+				</div>
+			}
+		>
 			<CatText {...props} />
 		</Show>
 	)

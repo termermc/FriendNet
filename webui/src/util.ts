@@ -184,7 +184,10 @@ export function normalizePath(path: string): {
 }
 
 function escapePathSegments(path: string): string {
-	return path.split('/').map((x) => encodeURIComponent(x)).join('/')
+	return path
+		.split('/')
+		.map((x) => encodeURIComponent(x))
+		.join('/')
 }
 
 export function makeBrowsePath(

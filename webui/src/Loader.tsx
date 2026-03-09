@@ -26,7 +26,8 @@ const NoRpc: Component = () => {
 				ending in something like <code>?rpc=</code>.
 			</p>
 			<p>
-				You can also find it by searching "bearer_token" in the log output of your client process.
+				You can also find it by searching "bearer_token" in the log
+				output of your client process.
 			</p>
 			<p>You can manually enter the URL below:</p>
 			<form method="get" action="">
@@ -170,11 +171,13 @@ export const Loader: Component = () => {
 				fallback={
 					<div>
 						<p>Failed to connect to client RPC.</p>
-						<button onClick={() => {
-							localStorage.removeItem(rpcUrlKey)
-							localStorage.removeItem(bearerTokenKey)
-							window.location.reload()
-						}}>
+						<button
+							onClick={() => {
+								localStorage.removeItem(rpcUrlKey)
+								localStorage.removeItem(bearerTokenKey)
+								window.location.reload()
+							}}
+						>
 							Clear RPC URL and token.
 						</button>
 					</div>
