@@ -374,7 +374,7 @@ func NewRpcServer[T io.Closer](
 			bearerToken: cfg.BearerToken,
 
 			isAllMethodsAllowed: isAllAllowed,
-			allowedMethods:      make(map[string]struct{}),
+			allowedMethods:      allowedMethods,
 		}),
 	)
 	mux := http.NewServeMux()
