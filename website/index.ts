@@ -47,6 +47,9 @@ const mountDocSection = (section: DocSection, pathRelative: string) => {
 
 mountDocSection(rootDocSection, '')
 
+// Mount updater dir.
+ssg.staticDir('/updater', './updater')
+
 // Set the 404 page.
 ssg.notFoundPage(NotFoundPage)
 

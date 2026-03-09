@@ -5,7 +5,8 @@
 	"scripts": {
 		"build": "node .",
 		"dev": "node . --dev",
-		"fmt": "prettier --write ."
+		"fmt": "prettier --write .",
+		"publish-update-client": "node script/publish-update-client.ts"
 	},
 	"dependencies": {
 		"marked": "^17.0.4",
