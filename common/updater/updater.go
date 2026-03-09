@@ -257,7 +257,7 @@ func (c *UpdateChecker) loop() {
 			}
 
 			if errors.Is(err, ErrInvalidSignature) {
-				c.logger.Warn("update signature is invalid",
+				c.logger.Warn("got update from server, but its signature is invalid; do not trust it!",
 					"service", "updater.UpdateChecker",
 				)
 				notifyNew(nil, err)
