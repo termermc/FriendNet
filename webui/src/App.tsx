@@ -13,6 +13,7 @@ import { ChangeServerPasswordPage } from './page/ChangeServerPasswordPage'
 import { SettingsPage } from './page/SettingsPage'
 import { ServerSearchPage } from './page/ServerSearchPage'
 import { ServerProfilePage } from './page/ServerProfilePage'
+import { UpdatePage } from './page/UpdatePage'
 
 const App: Component = () => {
 	const routes: RouteDefinition[] = [
@@ -28,6 +29,10 @@ const App: Component = () => {
 		{
 			path: '/logs',
 			component: LogsPage,
+		},
+		{
+			path: '/update',
+			component: UpdatePage,
 		},
 
 		{

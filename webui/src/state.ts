@@ -792,6 +792,15 @@ export class State {
 	}
 
 	/**
+	 * Checks for a new update.
+	 * If there is a new update, it will be set in {@link latestUpdate}.
+	 */
+	async checkForNewUpdate() {
+		const res = await this.#client.checkForNewUpdate({})
+		this.#setLatestUpdate(res.newInfo)
+	}
+
+	/**
 	 * Sets a file to be previewed.
 	 * @param serverUuid The UUID of the server the file is exposed through.
 	 * @param username The username of the user hosting the file.
