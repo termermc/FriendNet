@@ -372,6 +372,44 @@ func main() {
 		appinfo.Ed25519Pubkey,
 		appinfo.UpdateCheckerInterval,
 	)
+	go func() {
+		for {
+			newChan := updateChecker.NewUpdateChan()
+
+			select {
+			case <-ctx.Done():
+				return
+			case <-newChan:
+				update, updateErr := updateChecker.GetNewUpdate()
+
+				var newInfo *v1.UpdateInfo
+				if updateErr != nil {
+					newInfo = &v1.UpdateInfo{
+						IsValid: false,
+					}
+				} else if update != nil {
+					newInfo = &v1.UpdateInfo{
+						IsValid:     true,
+						CreatedTs:   update.CreatedTs,
+						Version:     update.Version,
+						Description: update.Description,
+						Url:         update.Url,
+					}
+				} else {
+					continue
+				}
+
+				eventBus.
+					CreatePublisher(&v1.EventContext{}).
+					Publish(&v1.Event{
+						Type: v1.Event_TYPE_NEW_UPDATE,
+						NewUpdate: &v1.Event_NewUpdate{
+							Info: newInfo,
+						},
+					})
+			}
+		}
+	}()
 
 	rpc, err := common.NewRpcServer(
 		logger,
