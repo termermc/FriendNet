@@ -36,4 +36,5 @@ package-lock.json
 yarn.lock
 server
 
+pb
 src/pb
