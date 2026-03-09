@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file pb/clientrpc/v1/rpc.proto.
  */
 export const file_pb_clientrpc_v1_rpc: GenFile = /*@__PURE__*/
-  fileDesc("ChlwYi9jbGllbnRycGMvdjEvcnBjLnByb3RvEg9wYi5jbGllbnRycGMudjEi4AQKBUV2ZW50EikKBHR5cGUYASABKA4yGy5wYi5jbGllbnRycGMudjEuRXZlbnQuVHlwZRJGCgtzZXJ2ZXJfY29ubhgCIAEoCzIsLnBiLmNsaWVudHJwYy52MS5FdmVudC5TZXJ2ZXJDb25uU3RhdGVDaGFuZ2VIAIgBARI/Cg1jbGllbnRfb25saW5lGAMgASgLMiMucGIuY2xpZW50cnBjLnYxLkV2ZW50LkNsaWVudE9ubGluZUgBiAEBEkEKDmNsaWVudF9vZmZsaW5lGAQgASgLMiQucGIuY2xpZW50cnBjLnYxLkV2ZW50LkNsaWVudE9mZmxpbmVIAogBARpIChVTZXJ2ZXJDb25uU3RhdGVDaGFuZ2USLwoFc3RhdGUYAiABKA4yIC5wYi5jbGllbnRycGMudjEuU2VydmVyQ29ublN0YXRlGj0KDENsaWVudE9ubGluZRItCgRpbmZvGAEgASgLMh8ucGIuY2xpZW50cnBjLnYxLk9ubGluZVVzZXJJbmZvGiEKDUNsaWVudE9mZmxpbmUSEAoIdXNlcm5hbWUYASABKAkifwoEVHlwZRIUChBUWVBFX1VOU1BFQ0lGSUVEEAASDQoJVFlQRV9TVE9QEAESIQodVFlQRV9TRVJWRVJfQ09OTl9TVEFURV9DSEFOR0UQAhIWChJUWVBFX0NMSUVOVF9PTkxJTkUQAxIXChNUWVBFX0NMSUVOVF9PRkZMSU5FEARCDgoMX3NlcnZlcl9jb25uQhAKDl9jbGllbnRfb25saW5lQhEKD19jbGllbnRfb2ZmbGluZSIjCgxFdmVudENvbnRleHQSEwoLc2VydmVyX3V1aWQYASABKAkiOgoOTG9nTWVzc2FnZUF0dHISDAoEa2luZBgBIAEoCRILCgNrZXkYAiABKAkSDQoFdmFsdWUYAyABKAkibgoKTG9nTWVzc2FnZRILCgN1aWQYASABKAkSEgoKY3JlYXRlZF90cxgCIAEoAxIPCgdtZXNzYWdlGAMgASgJEi4KBWF0dHJzGAQgAygLMh8ucGIuY2xpZW50cnBjLnYxLkxvZ01lc3NhZ2VBdHRyIt4BCgpTZXJ2ZXJJbmZvEjAKBXN0YXRlGAEgASgLMiEucGIuY2xpZW50cnBjLnYxLlNlcnZlckluZm8uU3RhdGUSDAoEdXVpZBgCIAEoCRIMCgRuYW1lGAMgASgJEg8KB2FkZHJlc3MYBCABKAkSDAoEcm9vbRgFIAEoCRIQCgh1c2VybmFtZRgGIAEoCRISCgpjcmVhdGVkX3RzGAcgASgDGj0KBVN0YXRlEjQKCmNvbm5fc3RhdGUYASABKA4yIC5wYi5jbGllbnRycGMudjEuU2VydmVyQ29ublN0YXRlInQKCVNoYXJlSW5mbxIMCgR1dWlkGAEgASgJEhMKC3NlcnZlcl91dWlkGAIgASgJEgwKBG5hbWUYAyABKAkSDAoEcGF0aBgEIAEoCRIUCgxmb2xsb3dfbGlua3MYBSABKAgSEgoKY3JlYXRlZF90cxgGIAEoAyIiCg5PbmxpbmVVc2VySW5mbxIQCgh1c2VybmFtZRgBIAEoCSI2CghGaWxlTWV0YRIMCgRuYW1lGAEgASgJEg4KBmlzX2RpchgCIAEoCBIMCgRzaXplGAMgASgEIuUBCg5EaXJlY3RTZXR0aW5ncxIPCgdkaXNhYmxlGAEgASgIEhEKCWFkZHJlc3NlcxgCIAMoCRIUCgxkZWZhdWx0X3BvcnQYAyABKA0SJgoeZGlzYWJsZV9wcm9iZV9pcHNfdG9fYWR2ZXJ0aXNlGAQgASgIEh0KFWFkdmVydGlzZV9wcml2YXRlX2lwcxgFIAEoCBIjChtkaXNhYmxlX3B1YmxpY19pcF9kaXNjb3ZlcnkYBiABKAgSFAoMZGlzYWJsZV91cG5wGAcgASgIEhcKD3VwbnBfdGltZW91dF9tcxgIIAEoDSIVChNTdHJlYW1FdmVudHNSZXF1ZXN0Im0KFFN0cmVhbUV2ZW50c1Jlc3BvbnNlEiUKBWV2ZW50GAEgASgLMhYucGIuY2xpZW50cnBjLnYxLkV2ZW50Ei4KB2NvbnRleHQYAiABKAsyHS5wYi5jbGllbnRycGMudjEuRXZlbnRDb250ZXh0IksKEVN0cmVhbUxvZ3NSZXF1ZXN0Eh8KEnNlbmRfbG9nc19hZnRlcl90cxgBIAEoA0gAiAEBQhUKE19zZW5kX2xvZ3NfYWZ0ZXJfdHMiPwoSU3RyZWFtTG9nc1Jlc3BvbnNlEikKBGxvZ3MYASADKAsyGy5wYi5jbGllbnRycGMudjEuTG9nTWVzc2FnZSINCgtTdG9wUmVxdWVzdCIOCgxTdG9wUmVzcG9uc2UiFgoUR2V0Q2xpZW50SW5mb1JlcXVlc3QiMAoVR2V0Q2xpZW50SW5mb1Jlc3BvbnNlEhcKD2ZpbGVfc2VydmVyX3VybBgBIAEoCSITChFHZXRTZXJ2ZXJzUmVxdWVzdCJCChJHZXRTZXJ2ZXJzUmVzcG9uc2USLAoHc2VydmVycxgBIAMoCzIbLnBiLmNsaWVudHJwYy52MS5TZXJ2ZXJJbmZvImYKE0NyZWF0ZVNlcnZlclJlcXVlc3QSDAoEbmFtZRgBIAEoCRIPCgdhZGRyZXNzGAIgASgJEgwKBHJvb20YAyABKAkSEAoIdXNlcm5hbWUYBCABKAkSEAoIcGFzc3dvcmQYBSABKAkiQwoUQ3JlYXRlU2VydmVyUmVzcG9uc2USKwoGc2VydmVyGAEgASgLMhsucGIuY2xpZW50cnBjLnYxLlNlcnZlckluZm8iIwoTRGVsZXRlU2VydmVyUmVxdWVzdBIMCgR1dWlkGAEgASgJIhYKFERlbGV0ZVNlcnZlclJlc3BvbnNlIiQKFENvbm5lY3RTZXJ2ZXJSZXF1ZXN0EgwKBHV1aWQYASABKAkiFwoVQ29ubmVjdFNlcnZlclJlc3BvbnNlIicKF0Rpc2Nvbm5lY3RTZXJ2ZXJSZXF1ZXN0EgwKBHV1aWQYASABKAkiGgoYRGlzY29ubmVjdFNlcnZlclJlc3BvbnNlIsUBChNVcGRhdGVTZXJ2ZXJSZXF1ZXN0EgwKBHV1aWQYASABKAkSEQoEbmFtZRgCIAEoCUgAiAEBEhQKB2FkZHJlc3MYAyABKAlIAYgBARIRCgRyb29tGAQgASgJSAKIAQESFQoIdXNlcm5hbWUYBSABKAlIA4gBARIVCghwYXNzd29yZBgGIAEoCUgEiAEBQgcKBV9uYW1lQgoKCF9hZGRyZXNzQgcKBV9yb29tQgsKCV91c2VybmFtZUILCglfcGFzc3dvcmQiQwoUVXBkYXRlU2VydmVyUmVzcG9uc2USKwoGc2VydmVyGAEgASgLMhsucGIuY2xpZW50cnBjLnYxLlNlcnZlckluZm8iJwoQR2V0U2hhcmVzUmVxdWVzdBITCgtzZXJ2ZXJfdXVpZBgBIAEoCSI/ChFHZXRTaGFyZXNSZXNwb25zZRIqCgZzaGFyZXMYASADKAsyGi5wYi5jbGllbnRycGMudjEuU2hhcmVJbmZvIlsKEkNyZWF0ZVNoYXJlUmVxdWVzdBITCgtzZXJ2ZXJfdXVpZBgBIAEoCRIMCgRuYW1lGAIgASgJEgwKBHBhdGgYAyABKAkSFAoMZm9sbG93X2xpbmtzGAQgASgIIkAKE0NyZWF0ZVNoYXJlUmVzcG9uc2USKQoFc2hhcmUYASABKAsyGi5wYi5jbGllbnRycGMudjEuU2hhcmVJbmZvIjcKEkRlbGV0ZVNoYXJlUmVxdWVzdBITCgtzZXJ2ZXJfdXVpZBgBIAEoCRIMCgRuYW1lGAIgASgJIhUKE0RlbGV0ZVNoYXJlUmVzcG9uc2UiSQoSR2V0RGlyRmlsZXNSZXF1ZXN0EhMKC3NlcnZlcl91dWlkGAEgASgJEhAKCHVzZXJuYW1lGAIgASgJEgwKBHBhdGgYAyABKAkiQQoTR2V0RGlyRmlsZXNSZXNwb25zZRIqCgdjb250ZW50GAIgAygLMhkucGIuY2xpZW50cnBjLnYxLkZpbGVNZXRhIkkKEkdldEZpbGVNZXRhUmVxdWVzdBITCgtzZXJ2ZXJfdXVpZBgBIAEoCRIQCgh1c2VybmFtZRgCIAEoCRIMCgRwYXRoGAMgASgJIj4KE0dldEZpbGVNZXRhUmVzcG9uc2USJwoEbWV0YRgBIAEoCzIZLnBiLmNsaWVudHJwYy52MS5GaWxlTWV0YSIsChVHZXRPbmxpbmVVc2Vyc1JlcXVlc3QSEwoLc2VydmVyX3V1aWQYASABKAkiSAoWR2V0T25saW5lVXNlcnNSZXNwb25zZRIuCgV1c2VycxgBIAMoCzIfLnBiLmNsaWVudHJwYy52MS5PbmxpbmVVc2VySW5mbyJjChxDaGFuZ2VBY2NvdW50UGFzc3dvcmRSZXF1ZXN0EhMKC3NlcnZlcl91dWlkGAEgASgJEhgKEGN1cnJlbnRfcGFzc3dvcmQYAiABKAkSFAoMbmV3X3Bhc3N3b3JkGAMgASgJIh8KHUNoYW5nZUFjY291bnRQYXNzd29yZFJlc3BvbnNlIiQKFFNlcnZlckNvbm5lY3RSZXF1ZXN0EgwKBHV1aWQYASABKAkiFwoVU2VydmVyQ29ubmVjdFJlc3BvbnNlIicKF1NlcnZlckRpc2Nvbm5lY3RSZXF1ZXN0EgwKBHV1aWQYASABKAkiGgoYU2VydmVyRGlzY29ubmVjdFJlc3BvbnNlIhoKGEdldERpcmVjdFNldHRpbmdzUmVxdWVzdCJOChlHZXREaXJlY3RTZXR0aW5nc1Jlc3BvbnNlEjEKCHNldHRpbmdzGAEgASgLMh8ucGIuY2xpZW50cnBjLnYxLkRpcmVjdFNldHRpbmdzIlAKG1VwZGF0ZURpcmVjdFNldHRpbmdzUmVxdWVzdBIxCghzZXR0aW5ncxgBIAEoCzIfLnBiLmNsaWVudHJwYy52MS5EaXJlY3RTZXR0aW5ncyIeChxVcGRhdGVEaXJlY3RTZXR0aW5nc1Jlc3BvbnNlIjYKEUluZGV4U2hhcmVSZXF1ZXN0EhMKC3NlcnZlcl91dWlkGAEgASgJEgwKBG5hbWUYAiABKAkiFAoSSW5kZXhTaGFyZVJlc3BvbnNlIl0KE1N0cmVhbVNlYXJjaFJlcXVlc3QSEwoLc2VydmVyX3V1aWQYASABKAkSFQoIdXNlcm5hbWUYAiABKAlIAIgBARINCgVxdWVyeRgDIAEoCUILCglfdXNlcm5hbWUiegoUU3RyZWFtU2VhcmNoUmVzcG9uc2USEAoIdXNlcm5hbWUYASABKAkSFgoOZGlyZWN0b3J5X3BhdGgYAiABKAkSJwoEZmlsZRgDIAEoCzIZLnBiLmNsaWVudHJwYy52MS5GaWxlTWV0YRIPCgdzbmlwcGV0GAQgASgJKo0BCg9TZXJ2ZXJDb25uU3RhdGUSIQodU0VSVkVSX0NPTk5fU1RBVEVfVU5TUEVDSUZJRUQQABIcChhTRVJWRVJfQ09OTl9TVEFURV9DTE9TRUQQARIdChlTRVJWRVJfQ09OTl9TVEFURV9PUEVOSU5HEAISGgoWU0VSVkVSX0NPTk5fU1RBVEVfT1BFThADMs8RChBDbGllbnRScGNTZXJ2aWNlElkKClN0cmVhbUxvZ3MSIi5wYi5jbGllbnRycGMudjEuU3RyZWFtTG9nc1JlcXVlc3QaIy5wYi5jbGllbnRycGMudjEuU3RyZWFtTG9nc1Jlc3BvbnNlIgAwARJfCgxTdHJlYW1FdmVudHMSJC5wYi5jbGllbnRycGMudjEuU3RyZWFtRXZlbnRzUmVxdWVzdBolLnBiLmNsaWVudHJwYy52MS5TdHJlYW1FdmVudHNSZXNwb25zZSIAMAESRQoEU3RvcBIcLnBiLmNsaWVudHJwYy52MS5TdG9wUmVxdWVzdBodLnBiLmNsaWVudHJwYy52MS5TdG9wUmVzcG9uc2UiABJgCg1HZXRDbGllbnRJbmZvEiUucGIuY2xpZW50cnBjLnYxLkdldENsaWVudEluZm9SZXF1ZXN0GiYucGIuY2xpZW50cnBjLnYxLkdldENsaWVudEluZm9SZXNwb25zZSIAElcKCkdldFNlcnZlcnMSIi5wYi5jbGllbnRycGMudjEuR2V0U2VydmVyc1JlcXVlc3QaIy5wYi5jbGllbnRycGMudjEuR2V0U2VydmVyc1Jlc3BvbnNlIgASXQoMQ3JlYXRlU2VydmVyEiQucGIuY2xpZW50cnBjLnYxLkNyZWF0ZVNlcnZlclJlcXVlc3QaJS5wYi5jbGllbnRycGMudjEuQ3JlYXRlU2VydmVyUmVzcG9uc2UiABJdCgxEZWxldGVTZXJ2ZXISJC5wYi5jbGllbnRycGMudjEuRGVsZXRlU2VydmVyUmVxdWVzdBolLnBiLmNsaWVudHJwYy52MS5EZWxldGVTZXJ2ZXJSZXNwb25zZSIAEmAKDUNvbm5lY3RTZXJ2ZXISJS5wYi5jbGllbnRycGMudjEuQ29ubmVjdFNlcnZlclJlcXVlc3QaJi5wYi5jbGllbnRycGMudjEuQ29ubmVjdFNlcnZlclJlc3BvbnNlIgASaQoQRGlzY29ubmVjdFNlcnZlchIoLnBiLmNsaWVudHJwYy52MS5EaXNjb25uZWN0U2VydmVyUmVxdWVzdBopLnBiLmNsaWVudHJwYy52MS5EaXNjb25uZWN0U2VydmVyUmVzcG9uc2UiABJdCgxVcGRhdGVTZXJ2ZXISJC5wYi5jbGllbnRycGMudjEuVXBkYXRlU2VydmVyUmVxdWVzdBolLnBiLmNsaWVudHJwYy52MS5VcGRhdGVTZXJ2ZXJSZXNwb25zZSIAElQKCUdldFNoYXJlcxIhLnBiLmNsaWVudHJwYy52MS5HZXRTaGFyZXNSZXF1ZXN0GiIucGIuY2xpZW50cnBjLnYxLkdldFNoYXJlc1Jlc3BvbnNlIgASWgoLQ3JlYXRlU2hhcmUSIy5wYi5jbGllbnRycGMudjEuQ3JlYXRlU2hhcmVSZXF1ZXN0GiQucGIuY2xpZW50cnBjLnYxLkNyZWF0ZVNoYXJlUmVzcG9uc2UiABJaCgtEZWxldGVTaGFyZRIjLnBiLmNsaWVudHJwYy52MS5EZWxldGVTaGFyZVJlcXVlc3QaJC5wYi5jbGllbnRycGMudjEuRGVsZXRlU2hhcmVSZXNwb25zZSIAElwKC0dldERpckZpbGVzEiMucGIuY2xpZW50cnBjLnYxLkdldERpckZpbGVzUmVxdWVzdBokLnBiLmNsaWVudHJwYy52MS5HZXREaXJGaWxlc1Jlc3BvbnNlIgAwARJaCgtHZXRGaWxlTWV0YRIjLnBiLmNsaWVudHJwYy52MS5HZXRGaWxlTWV0YVJlcXVlc3QaJC5wYi5jbGllbnRycGMudjEuR2V0RmlsZU1ldGFSZXNwb25zZSIAEmUKDkdldE9ubGluZVVzZXJzEiYucGIuY2xpZW50cnBjLnYxLkdldE9ubGluZVVzZXJzUmVxdWVzdBonLnBiLmNsaWVudHJwYy52MS5HZXRPbmxpbmVVc2Vyc1Jlc3BvbnNlIgAwARJ4ChVDaGFuZ2VBY2NvdW50UGFzc3dvcmQSLS5wYi5jbGllbnRycGMudjEuQ2hhbmdlQWNjb3VudFBhc3N3b3JkUmVxdWVzdBouLnBiLmNsaWVudHJwYy52MS5DaGFuZ2VBY2NvdW50UGFzc3dvcmRSZXNwb25zZSIAEmAKDVNlcnZlckNvbm5lY3QSJS5wYi5jbGllbnRycGMudjEuU2VydmVyQ29ubmVjdFJlcXVlc3QaJi5wYi5jbGllbnRycGMudjEuU2VydmVyQ29ubmVjdFJlc3BvbnNlIgASaQoQU2VydmVyRGlzY29ubmVjdBIoLnBiLmNsaWVudHJwYy52MS5TZXJ2ZXJEaXNjb25uZWN0UmVxdWVzdBopLnBiLmNsaWVudHJwYy52MS5TZXJ2ZXJEaXNjb25uZWN0UmVzcG9uc2UiABJsChFHZXREaXJlY3RTZXR0aW5ncxIpLnBiLmNsaWVudHJwYy52MS5HZXREaXJlY3RTZXR0aW5nc1JlcXVlc3QaKi5wYi5jbGllbnRycGMudjEuR2V0RGlyZWN0U2V0dGluZ3NSZXNwb25zZSIAEnUKFFVwZGF0ZURpcmVjdFNldHRpbmdzEiwucGIuY2xpZW50cnBjLnYxLlVwZGF0ZURpcmVjdFNldHRpbmdzUmVxdWVzdBotLnBiLmNsaWVudHJwYy52MS5VcGRhdGVEaXJlY3RTZXR0aW5nc1Jlc3BvbnNlIgASVwoKSW5kZXhTaGFyZRIiLnBiLmNsaWVudHJwYy52MS5JbmRleFNoYXJlUmVxdWVzdBojLnBiLmNsaWVudHJwYy52MS5JbmRleFNoYXJlUmVzcG9uc2UiABJfCgxTdHJlYW1TZWFyY2gSJC5wYi5jbGllbnRycGMudjEuU3RyZWFtU2VhcmNoUmVxdWVzdBolLnBiLmNsaWVudHJwYy52MS5TdHJlYW1TZWFyY2hSZXNwb25zZSIAMAFCIlogZnJpZW5kbmV0Lm9yZy9wcm90b2NvbC9jbGllbnRycGNiBnByb3RvMw");
+  fileDesc("ChlwYi9jbGllbnRycGMvdjEvcnBjLnByb3RvEg9wYi5jbGllbnRycGMudjEi+AUKBUV2ZW50EikKBHR5cGUYASABKA4yGy5wYi5jbGllbnRycGMudjEuRXZlbnQuVHlwZRJGCgtzZXJ2ZXJfY29ubhgCIAEoCzIsLnBiLmNsaWVudHJwYy52MS5FdmVudC5TZXJ2ZXJDb25uU3RhdGVDaGFuZ2VIAIgBARI/Cg1jbGllbnRfb25saW5lGAMgASgLMiMucGIuY2xpZW50cnBjLnYxLkV2ZW50LkNsaWVudE9ubGluZUgBiAEBEkEKDmNsaWVudF9vZmZsaW5lGAQgASgLMiQucGIuY2xpZW50cnBjLnYxLkV2ZW50LkNsaWVudE9mZmxpbmVIAogBARI5CgpuZXdfdXBkYXRlGAUgASgLMiAucGIuY2xpZW50cnBjLnYxLkV2ZW50Lk5ld1VwZGF0ZUgDiAEBGkgKFVNlcnZlckNvbm5TdGF0ZUNoYW5nZRIvCgVzdGF0ZRgCIAEoDjIgLnBiLmNsaWVudHJwYy52MS5TZXJ2ZXJDb25uU3RhdGUaPQoMQ2xpZW50T25saW5lEi0KBGluZm8YASABKAsyHy5wYi5jbGllbnRycGMudjEuT25saW5lVXNlckluZm8aIQoNQ2xpZW50T2ZmbGluZRIQCgh1c2VybmFtZRgBIAEoCRo2CglOZXdVcGRhdGUSKQoEaW5mbxgBIAEoCzIbLnBiLmNsaWVudHJwYy52MS5VcGRhdGVJbmZvIpQBCgRUeXBlEhQKEFRZUEVfVU5TUEVDSUZJRUQQABINCglUWVBFX1NUT1AQARIhCh1UWVBFX1NFUlZFUl9DT05OX1NUQVRFX0NIQU5HRRACEhYKElRZUEVfQ0xJRU5UX09OTElORRADEhcKE1RZUEVfQ0xJRU5UX09GRkxJTkUQBBITCg9UWVBFX05FV19VUERBVEUQBUIOCgxfc2VydmVyX2Nvbm5CEAoOX2NsaWVudF9vbmxpbmVCEQoPX2NsaWVudF9vZmZsaW5lQg0KC19uZXdfdXBkYXRlIiMKDEV2ZW50Q29udGV4dBITCgtzZXJ2ZXJfdXVpZBgBIAEoCSI6Cg5Mb2dNZXNzYWdlQXR0chIMCgRraW5kGAEgASgJEgsKA2tleRgCIAEoCRINCgV2YWx1ZRgDIAEoCSJuCgpMb2dNZXNzYWdlEgsKA3VpZBgBIAEoCRISCgpjcmVhdGVkX3RzGAIgASgDEg8KB21lc3NhZ2UYAyABKAkSLgoFYXR0cnMYBCADKAsyHy5wYi5jbGllbnRycGMudjEuTG9nTWVzc2FnZUF0dHIiZQoKVXBkYXRlSW5mbxIQCghpc192YWxpZBgBIAEoCBISCgpjcmVhdGVkX3RzGAIgASgDEg8KB3ZlcnNpb24YAyABKAkSEwoLZGVzY3JpcHRpb24YBCABKAkSCwoDdXJsGAUgASgJIt4BCgpTZXJ2ZXJJbmZvEjAKBXN0YXRlGAEgASgLMiEucGIuY2xpZW50cnBjLnYxLlNlcnZlckluZm8uU3RhdGUSDAoEdXVpZBgCIAEoCRIMCgRuYW1lGAMgASgJEg8KB2FkZHJlc3MYBCABKAkSDAoEcm9vbRgFIAEoCRIQCgh1c2VybmFtZRgGIAEoCRISCgpjcmVhdGVkX3RzGAcgASgDGj0KBVN0YXRlEjQKCmNvbm5fc3RhdGUYASABKA4yIC5wYi5jbGllbnRycGMudjEuU2VydmVyQ29ublN0YXRlInQKCVNoYXJlSW5mbxIMCgR1dWlkGAEgASgJEhMKC3NlcnZlcl91dWlkGAIgASgJEgwKBG5hbWUYAyABKAkSDAoEcGF0aBgEIAEoCRIUCgxmb2xsb3dfbGlua3MYBSABKAgSEgoKY3JlYXRlZF90cxgGIAEoAyIiCg5PbmxpbmVVc2VySW5mbxIQCgh1c2VybmFtZRgBIAEoCSI2CghGaWxlTWV0YRIMCgRuYW1lGAEgASgJEg4KBmlzX2RpchgCIAEoCBIMCgRzaXplGAMgASgEIuUBCg5EaXJlY3RTZXR0aW5ncxIPCgdkaXNhYmxlGAEgASgIEhEKCWFkZHJlc3NlcxgCIAMoCRIUCgxkZWZhdWx0X3BvcnQYAyABKA0SJgoeZGlzYWJsZV9wcm9iZV9pcHNfdG9fYWR2ZXJ0aXNlGAQgASgIEh0KFWFkdmVydGlzZV9wcml2YXRlX2lwcxgFIAEoCBIjChtkaXNhYmxlX3B1YmxpY19pcF9kaXNjb3ZlcnkYBiABKAgSFAoMZGlzYWJsZV91cG5wGAcgASgIEhcKD3VwbnBfdGltZW91dF9tcxgIIAEoDSIVChNTdHJlYW1FdmVudHNSZXF1ZXN0Im0KFFN0cmVhbUV2ZW50c1Jlc3BvbnNlEiUKBWV2ZW50GAEgASgLMhYucGIuY2xpZW50cnBjLnYxLkV2ZW50Ei4KB2NvbnRleHQYAiABKAsyHS5wYi5jbGllbnRycGMudjEuRXZlbnRDb250ZXh0IksKEVN0cmVhbUxvZ3NSZXF1ZXN0Eh8KEnNlbmRfbG9nc19hZnRlcl90cxgBIAEoA0gAiAEBQhUKE19zZW5kX2xvZ3NfYWZ0ZXJfdHMiPwoSU3RyZWFtTG9nc1Jlc3BvbnNlEikKBGxvZ3MYASADKAsyGy5wYi5jbGllbnRycGMudjEuTG9nTWVzc2FnZSINCgtTdG9wUmVxdWVzdCIOCgxTdG9wUmVzcG9uc2UiFgoUR2V0Q2xpZW50SW5mb1JlcXVlc3QiMAoVR2V0Q2xpZW50SW5mb1Jlc3BvbnNlEhcKD2ZpbGVfc2VydmVyX3VybBgBIAEoCSITChFHZXRTZXJ2ZXJzUmVxdWVzdCJCChJHZXRTZXJ2ZXJzUmVzcG9uc2USLAoHc2VydmVycxgBIAMoCzIbLnBiLmNsaWVudHJwYy52MS5TZXJ2ZXJJbmZvImYKE0NyZWF0ZVNlcnZlclJlcXVlc3QSDAoEbmFtZRgBIAEoCRIPCgdhZGRyZXNzGAIgASgJEgwKBHJvb20YAyABKAkSEAoIdXNlcm5hbWUYBCABKAkSEAoIcGFzc3dvcmQYBSABKAkiQwoUQ3JlYXRlU2VydmVyUmVzcG9uc2USKwoGc2VydmVyGAEgASgLMhsucGIuY2xpZW50cnBjLnYxLlNlcnZlckluZm8iIwoTRGVsZXRlU2VydmVyUmVxdWVzdBIMCgR1dWlkGAEgASgJIhYKFERlbGV0ZVNlcnZlclJlc3BvbnNlIiQKFENvbm5lY3RTZXJ2ZXJSZXF1ZXN0EgwKBHV1aWQYASABKAkiFwoVQ29ubmVjdFNlcnZlclJlc3BvbnNlIicKF0Rpc2Nvbm5lY3RTZXJ2ZXJSZXF1ZXN0EgwKBHV1aWQYASABKAkiGgoYRGlzY29ubmVjdFNlcnZlclJlc3BvbnNlIsUBChNVcGRhdGVTZXJ2ZXJSZXF1ZXN0EgwKBHV1aWQYASABKAkSEQoEbmFtZRgCIAEoCUgAiAEBEhQKB2FkZHJlc3MYAyABKAlIAYgBARIRCgRyb29tGAQgASgJSAKIAQESFQoIdXNlcm5hbWUYBSABKAlIA4gBARIVCghwYXNzd29yZBgGIAEoCUgEiAEBQgcKBV9uYW1lQgoKCF9hZGRyZXNzQgcKBV9yb29tQgsKCV91c2VybmFtZUILCglfcGFzc3dvcmQiQwoUVXBkYXRlU2VydmVyUmVzcG9uc2USKwoGc2VydmVyGAEgASgLMhsucGIuY2xpZW50cnBjLnYxLlNlcnZlckluZm8iJwoQR2V0U2hhcmVzUmVxdWVzdBITCgtzZXJ2ZXJfdXVpZBgBIAEoCSI/ChFHZXRTaGFyZXNSZXNwb25zZRIqCgZzaGFyZXMYASADKAsyGi5wYi5jbGllbnRycGMudjEuU2hhcmVJbmZvIlsKEkNyZWF0ZVNoYXJlUmVxdWVzdBITCgtzZXJ2ZXJfdXVpZBgBIAEoCRIMCgRuYW1lGAIgASgJEgwKBHBhdGgYAyABKAkSFAoMZm9sbG93X2xpbmtzGAQgASgIIkAKE0NyZWF0ZVNoYXJlUmVzcG9uc2USKQoFc2hhcmUYASABKAsyGi5wYi5jbGllbnRycGMudjEuU2hhcmVJbmZvIjcKEkRlbGV0ZVNoYXJlUmVxdWVzdBITCgtzZXJ2ZXJfdXVpZBgBIAEoCRIMCgRuYW1lGAIgASgJIhUKE0RlbGV0ZVNoYXJlUmVzcG9uc2UiSQoSR2V0RGlyRmlsZXNSZXF1ZXN0EhMKC3NlcnZlcl91dWlkGAEgASgJEhAKCHVzZXJuYW1lGAIgASgJEgwKBHBhdGgYAyABKAkiQQoTR2V0RGlyRmlsZXNSZXNwb25zZRIqCgdjb250ZW50GAIgAygLMhkucGIuY2xpZW50cnBjLnYxLkZpbGVNZXRhIkkKEkdldEZpbGVNZXRhUmVxdWVzdBITCgtzZXJ2ZXJfdXVpZBgBIAEoCRIQCgh1c2VybmFtZRgCIAEoCRIMCgRwYXRoGAMgASgJIj4KE0dldEZpbGVNZXRhUmVzcG9uc2USJwoEbWV0YRgBIAEoCzIZLnBiLmNsaWVudHJwYy52MS5GaWxlTWV0YSIsChVHZXRPbmxpbmVVc2Vyc1JlcXVlc3QSEwoLc2VydmVyX3V1aWQYASABKAkiSAoWR2V0T25saW5lVXNlcnNSZXNwb25zZRIuCgV1c2VycxgBIAMoCzIfLnBiLmNsaWVudHJwYy52MS5PbmxpbmVVc2VySW5mbyJjChxDaGFuZ2VBY2NvdW50UGFzc3dvcmRSZXF1ZXN0EhMKC3NlcnZlcl91dWlkGAEgASgJEhgKEGN1cnJlbnRfcGFzc3dvcmQYAiABKAkSFAoMbmV3X3Bhc3N3b3JkGAMgASgJIh8KHUNoYW5nZUFjY291bnRQYXNzd29yZFJlc3BvbnNlIiQKFFNlcnZlckNvbm5lY3RSZXF1ZXN0EgwKBHV1aWQYASABKAkiFwoVU2VydmVyQ29ubmVjdFJlc3BvbnNlIicKF1NlcnZlckRpc2Nvbm5lY3RSZXF1ZXN0EgwKBHV1aWQYASABKAkiGgoYU2VydmVyRGlzY29ubmVjdFJlc3BvbnNlIhoKGEdldERpcmVjdFNldHRpbmdzUmVxdWVzdCJOChlHZXREaXJlY3RTZXR0aW5nc1Jlc3BvbnNlEjEKCHNldHRpbmdzGAEgASgLMh8ucGIuY2xpZW50cnBjLnYxLkRpcmVjdFNldHRpbmdzIlAKG1VwZGF0ZURpcmVjdFNldHRpbmdzUmVxdWVzdBIxCghzZXR0aW5ncxgBIAEoCzIfLnBiLmNsaWVudHJwYy52MS5EaXJlY3RTZXR0aW5ncyIeChxVcGRhdGVEaXJlY3RTZXR0aW5nc1Jlc3BvbnNlIjYKEUluZGV4U2hhcmVSZXF1ZXN0EhMKC3NlcnZlcl91dWlkGAEgASgJEgwKBG5hbWUYAiABKAkiFAoSSW5kZXhTaGFyZVJlc3BvbnNlIl0KE1N0cmVhbVNlYXJjaFJlcXVlc3QSEwoLc2VydmVyX3V1aWQYASABKAkSFQoIdXNlcm5hbWUYAiABKAlIAIgBARINCgVxdWVyeRgDIAEoCUILCglfdXNlcm5hbWUiegoUU3RyZWFtU2VhcmNoUmVzcG9uc2USEAoIdXNlcm5hbWUYASABKAkSFgoOZGlyZWN0b3J5X3BhdGgYAiABKAkSJwoEZmlsZRgDIAEoCzIZLnBiLmNsaWVudHJwYy52MS5GaWxlTWV0YRIPCgdzbmlwcGV0GAQgASgJIhYKFEdldFVwZGF0ZUluZm9SZXF1ZXN0IosBChVHZXRVcGRhdGVJbmZvUmVzcG9uc2USMQoMY3VycmVudF9pbmZvGAEgASgLMhsucGIuY2xpZW50cnBjLnYxLlVwZGF0ZUluZm8SMgoIbmV3X2luZm8YAiABKAsyGy5wYi5jbGllbnRycGMudjEuVXBkYXRlSW5mb0gAiAEBQgsKCV9uZXdfaW5mbyIaChhDaGVja0Zvck5ld1VwZGF0ZVJlcXVlc3QiWgoZQ2hlY2tGb3JOZXdVcGRhdGVSZXNwb25zZRIxCgduZXdfbmZvGAEgASgLMhsucGIuY2xpZW50cnBjLnYxLlVwZGF0ZUluZm9IAIgBAUIKCghfbmV3X25mbyqNAQoPU2VydmVyQ29ublN0YXRlEiEKHVNFUlZFUl9DT05OX1NUQVRFX1VOU1BFQ0lGSUVEEAASHAoYU0VSVkVSX0NPTk5fU1RBVEVfQ0xPU0VEEAESHQoZU0VSVkVSX0NPTk5fU1RBVEVfT1BFTklORxACEhoKFlNFUlZFUl9DT05OX1NUQVRFX09QRU4QAzKfEwoQQ2xpZW50UnBjU2VydmljZRJZCgpTdHJlYW1Mb2dzEiIucGIuY2xpZW50cnBjLnYxLlN0cmVhbUxvZ3NSZXF1ZXN0GiMucGIuY2xpZW50cnBjLnYxLlN0cmVhbUxvZ3NSZXNwb25zZSIAMAESXwoMU3RyZWFtRXZlbnRzEiQucGIuY2xpZW50cnBjLnYxLlN0cmVhbUV2ZW50c1JlcXVlc3QaJS5wYi5jbGllbnRycGMudjEuU3RyZWFtRXZlbnRzUmVzcG9uc2UiADABEkUKBFN0b3ASHC5wYi5jbGllbnRycGMudjEuU3RvcFJlcXVlc3QaHS5wYi5jbGllbnRycGMudjEuU3RvcFJlc3BvbnNlIgASYAoNR2V0Q2xpZW50SW5mbxIlLnBiLmNsaWVudHJwYy52MS5HZXRDbGllbnRJbmZvUmVxdWVzdBomLnBiLmNsaWVudHJwYy52MS5HZXRDbGllbnRJbmZvUmVzcG9uc2UiABJXCgpHZXRTZXJ2ZXJzEiIucGIuY2xpZW50cnBjLnYxLkdldFNlcnZlcnNSZXF1ZXN0GiMucGIuY2xpZW50cnBjLnYxLkdldFNlcnZlcnNSZXNwb25zZSIAEl0KDENyZWF0ZVNlcnZlchIkLnBiLmNsaWVudHJwYy52MS5DcmVhdGVTZXJ2ZXJSZXF1ZXN0GiUucGIuY2xpZW50cnBjLnYxLkNyZWF0ZVNlcnZlclJlc3BvbnNlIgASXQoMRGVsZXRlU2VydmVyEiQucGIuY2xpZW50cnBjLnYxLkRlbGV0ZVNlcnZlclJlcXVlc3QaJS5wYi5jbGllbnRycGMudjEuRGVsZXRlU2VydmVyUmVzcG9uc2UiABJgCg1Db25uZWN0U2VydmVyEiUucGIuY2xpZW50cnBjLnYxLkNvbm5lY3RTZXJ2ZXJSZXF1ZXN0GiYucGIuY2xpZW50cnBjLnYxLkNvbm5lY3RTZXJ2ZXJSZXNwb25zZSIAEmkKEERpc2Nvbm5lY3RTZXJ2ZXISKC5wYi5jbGllbnRycGMudjEuRGlzY29ubmVjdFNlcnZlclJlcXVlc3QaKS5wYi5jbGllbnRycGMudjEuRGlzY29ubmVjdFNlcnZlclJlc3BvbnNlIgASXQoMVXBkYXRlU2VydmVyEiQucGIuY2xpZW50cnBjLnYxLlVwZGF0ZVNlcnZlclJlcXVlc3QaJS5wYi5jbGllbnRycGMudjEuVXBkYXRlU2VydmVyUmVzcG9uc2UiABJUCglHZXRTaGFyZXMSIS5wYi5jbGllbnRycGMudjEuR2V0U2hhcmVzUmVxdWVzdBoiLnBiLmNsaWVudHJwYy52MS5HZXRTaGFyZXNSZXNwb25zZSIAEloKC0NyZWF0ZVNoYXJlEiMucGIuY2xpZW50cnBjLnYxLkNyZWF0ZVNoYXJlUmVxdWVzdBokLnBiLmNsaWVudHJwYy52MS5DcmVhdGVTaGFyZVJlc3BvbnNlIgASWgoLRGVsZXRlU2hhcmUSIy5wYi5jbGllbnRycGMudjEuRGVsZXRlU2hhcmVSZXF1ZXN0GiQucGIuY2xpZW50cnBjLnYxLkRlbGV0ZVNoYXJlUmVzcG9uc2UiABJcCgtHZXREaXJGaWxlcxIjLnBiLmNsaWVudHJwYy52MS5HZXREaXJGaWxlc1JlcXVlc3QaJC5wYi5jbGllbnRycGMudjEuR2V0RGlyRmlsZXNSZXNwb25zZSIAMAESWgoLR2V0RmlsZU1ldGESIy5wYi5jbGllbnRycGMudjEuR2V0RmlsZU1ldGFSZXF1ZXN0GiQucGIuY2xpZW50cnBjLnYxLkdldEZpbGVNZXRhUmVzcG9uc2UiABJlCg5HZXRPbmxpbmVVc2VycxImLnBiLmNsaWVudHJwYy52MS5HZXRPbmxpbmVVc2Vyc1JlcXVlc3QaJy5wYi5jbGllbnRycGMudjEuR2V0T25saW5lVXNlcnNSZXNwb25zZSIAMAESeAoVQ2hhbmdlQWNjb3VudFBhc3N3b3JkEi0ucGIuY2xpZW50cnBjLnYxLkNoYW5nZUFjY291bnRQYXNzd29yZFJlcXVlc3QaLi5wYi5jbGllbnRycGMudjEuQ2hhbmdlQWNjb3VudFBhc3N3b3JkUmVzcG9uc2UiABJgCg1TZXJ2ZXJDb25uZWN0EiUucGIuY2xpZW50cnBjLnYxLlNlcnZlckNvbm5lY3RSZXF1ZXN0GiYucGIuY2xpZW50cnBjLnYxLlNlcnZlckNvbm5lY3RSZXNwb25zZSIAEmkKEFNlcnZlckRpc2Nvbm5lY3QSKC5wYi5jbGllbnRycGMudjEuU2VydmVyRGlzY29ubmVjdFJlcXVlc3QaKS5wYi5jbGllbnRycGMudjEuU2VydmVyRGlzY29ubmVjdFJlc3BvbnNlIgASbAoRR2V0RGlyZWN0U2V0dGluZ3MSKS5wYi5jbGllbnRycGMudjEuR2V0RGlyZWN0U2V0dGluZ3NSZXF1ZXN0GioucGIuY2xpZW50cnBjLnYxLkdldERpcmVjdFNldHRpbmdzUmVzcG9uc2UiABJ1ChRVcGRhdGVEaXJlY3RTZXR0aW5ncxIsLnBiLmNsaWVudHJwYy52MS5VcGRhdGVEaXJlY3RTZXR0aW5nc1JlcXVlc3QaLS5wYi5jbGllbnRycGMudjEuVXBkYXRlRGlyZWN0U2V0dGluZ3NSZXNwb25zZSIAElcKCkluZGV4U2hhcmUSIi5wYi5jbGllbnRycGMudjEuSW5kZXhTaGFyZVJlcXVlc3QaIy5wYi5jbGllbnRycGMudjEuSW5kZXhTaGFyZVJlc3BvbnNlIgASXwoMU3RyZWFtU2VhcmNoEiQucGIuY2xpZW50cnBjLnYxLlN0cmVhbVNlYXJjaFJlcXVlc3QaJS5wYi5jbGllbnRycGMudjEuU3RyZWFtU2VhcmNoUmVzcG9uc2UiADABEmAKDUdldFVwZGF0ZUluZm8SJS5wYi5jbGllbnRycGMudjEuR2V0VXBkYXRlSW5mb1JlcXVlc3QaJi5wYi5jbGllbnRycGMudjEuR2V0VXBkYXRlSW5mb1Jlc3BvbnNlIgASbAoRQ2hlY2tGb3JOZXdVcGRhdGUSKS5wYi5jbGllbnRycGMudjEuQ2hlY2tGb3JOZXdVcGRhdGVSZXF1ZXN0GioucGIuY2xpZW50cnBjLnYxLkNoZWNrRm9yTmV3VXBkYXRlUmVzcG9uc2UiAEIiWiBmcmllbmRuZXQub3JnL3Byb3RvY29sL2NsaWVudHJwY2IGcHJvdG8z");
 
 /**
  * Event is an event.
@@ -41,6 +41,11 @@ export type Event = Message<"pb.clientrpc.v1.Event"> & {
    * @generated from field: optional pb.clientrpc.v1.Event.ClientOffline client_offline = 4;
    */
   clientOffline?: Event_ClientOffline;
+
+  /**
+   * @generated from field: optional pb.clientrpc.v1.Event.NewUpdate new_update = 5;
+   */
+  newUpdate?: Event_NewUpdate;
 };
 
 /**
@@ -108,6 +113,25 @@ export const Event_ClientOfflineSchema: GenMessage<Event_ClientOffline> = /*@__P
   messageDesc(file_pb_clientrpc_v1_rpc, 0, 2);
 
 /**
+ * @generated from message pb.clientrpc.v1.Event.NewUpdate
+ */
+export type Event_NewUpdate = Message<"pb.clientrpc.v1.Event.NewUpdate"> & {
+  /**
+   * The new update's info.
+   *
+   * @generated from field: pb.clientrpc.v1.UpdateInfo info = 1;
+   */
+  info?: UpdateInfo;
+};
+
+/**
+ * Describes the message pb.clientrpc.v1.Event.NewUpdate.
+ * Use `create(Event_NewUpdateSchema)` to create a new message.
+ */
+export const Event_NewUpdateSchema: GenMessage<Event_NewUpdate> = /*@__PURE__*/
+  messageDesc(file_pb_clientrpc_v1_rpc, 0, 3);
+
+/**
  * @generated from enum pb.clientrpc.v1.Event.Type
  */
 export enum Event_Type {
@@ -145,6 +169,13 @@ export enum Event_Type {
    * @generated from enum value: TYPE_CLIENT_OFFLINE = 4;
    */
   CLIENT_OFFLINE = 4,
+
+  /**
+   * A new update is available or the update checked was invalid.
+   *
+   * @generated from enum value: TYPE_NEW_UPDATE = 5;
+   */
+  NEW_UPDATE = 5,
 }
 
 /**
@@ -253,6 +284,59 @@ export const LogMessageSchema: GenMessage<LogMessage> = /*@__PURE__*/
   messageDesc(file_pb_clientrpc_v1_rpc, 3);
 
 /**
+ * Information about an update.
+ *
+ * @generated from message pb.clientrpc.v1.UpdateInfo
+ */
+export type UpdateInfo = Message<"pb.clientrpc.v1.UpdateInfo"> & {
+  /**
+   * Whether the checked update was valid.
+   * If false, no other fields will be filled.
+   * An invalid update is caused by an invalid signature on an update,
+   * which is indicative of a larger problem.
+   *
+   * @generated from field: bool is_valid = 1;
+   */
+  isValid: boolean;
+
+  /**
+   * The release timestamp.
+   *
+   * @generated from field: int64 created_ts = 2;
+   */
+  createdTs: bigint;
+
+  /**
+   * The version string.
+   *
+   * @generated from field: string version = 3;
+   */
+  version: string;
+
+  /**
+   * The description.
+   *
+   * @generated from field: string description = 4;
+   */
+  description: string;
+
+  /**
+   * The URL to get the update.
+   * It is not a URL to a binary, it is a URL to a page to get the binary.
+   *
+   * @generated from field: string url = 5;
+   */
+  url: string;
+};
+
+/**
+ * Describes the message pb.clientrpc.v1.UpdateInfo.
+ * Use `create(UpdateInfoSchema)` to create a new message.
+ */
+export const UpdateInfoSchema: GenMessage<UpdateInfo> = /*@__PURE__*/
+  messageDesc(file_pb_clientrpc_v1_rpc, 4);
+
+/**
  * Information about a server.
  *
  * @generated from message pb.clientrpc.v1.ServerInfo
@@ -313,7 +397,7 @@ export type ServerInfo = Message<"pb.clientrpc.v1.ServerInfo"> & {
  * Use `create(ServerInfoSchema)` to create a new message.
  */
 export const ServerInfoSchema: GenMessage<ServerInfo> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 4);
+  messageDesc(file_pb_clientrpc_v1_rpc, 5);
 
 /**
  * @generated from message pb.clientrpc.v1.ServerInfo.State
@@ -332,7 +416,7 @@ export type ServerInfo_State = Message<"pb.clientrpc.v1.ServerInfo.State"> & {
  * Use `create(ServerInfo_StateSchema)` to create a new message.
  */
 export const ServerInfo_StateSchema: GenMessage<ServerInfo_State> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 4, 0);
+  messageDesc(file_pb_clientrpc_v1_rpc, 5, 0);
 
 /**
  * Information about a server share.
@@ -389,7 +473,7 @@ export type ShareInfo = Message<"pb.clientrpc.v1.ShareInfo"> & {
  * Use `create(ShareInfoSchema)` to create a new message.
  */
 export const ShareInfoSchema: GenMessage<ShareInfo> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 5);
+  messageDesc(file_pb_clientrpc_v1_rpc, 6);
 
 /**
  * OnlineUserInfo is information about an online user.
@@ -410,7 +494,7 @@ export type OnlineUserInfo = Message<"pb.clientrpc.v1.OnlineUserInfo"> & {
  * Use `create(OnlineUserInfoSchema)` to create a new message.
  */
 export const OnlineUserInfoSchema: GenMessage<OnlineUserInfo> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 6);
+  messageDesc(file_pb_clientrpc_v1_rpc, 7);
 
 /**
  * FileMeta is metadata about a file/folder.
@@ -446,7 +530,7 @@ export type FileMeta = Message<"pb.clientrpc.v1.FileMeta"> & {
  * Use `create(FileMetaSchema)` to create a new message.
  */
 export const FileMetaSchema: GenMessage<FileMeta> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 7);
+  messageDesc(file_pb_clientrpc_v1_rpc, 8);
 
 /**
  * DirectSettings is direct connection settings for the client.
@@ -534,7 +618,7 @@ export type DirectSettings = Message<"pb.clientrpc.v1.DirectSettings"> & {
  * Use `create(DirectSettingsSchema)` to create a new message.
  */
 export const DirectSettingsSchema: GenMessage<DirectSettings> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 8);
+  messageDesc(file_pb_clientrpc_v1_rpc, 9);
 
 /**
  * @generated from message pb.clientrpc.v1.StreamEventsRequest
@@ -547,7 +631,7 @@ export type StreamEventsRequest = Message<"pb.clientrpc.v1.StreamEventsRequest">
  * Use `create(StreamEventsRequestSchema)` to create a new message.
  */
 export const StreamEventsRequestSchema: GenMessage<StreamEventsRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 9);
+  messageDesc(file_pb_clientrpc_v1_rpc, 10);
 
 /**
  * @generated from message pb.clientrpc.v1.StreamEventsResponse
@@ -573,7 +657,7 @@ export type StreamEventsResponse = Message<"pb.clientrpc.v1.StreamEventsResponse
  * Use `create(StreamEventsResponseSchema)` to create a new message.
  */
 export const StreamEventsResponseSchema: GenMessage<StreamEventsResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 10);
+  messageDesc(file_pb_clientrpc_v1_rpc, 11);
 
 /**
  * @generated from message pb.clientrpc.v1.StreamLogsRequest
@@ -593,7 +677,7 @@ export type StreamLogsRequest = Message<"pb.clientrpc.v1.StreamLogsRequest"> & {
  * Use `create(StreamLogsRequestSchema)` to create a new message.
  */
 export const StreamLogsRequestSchema: GenMessage<StreamLogsRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 11);
+  messageDesc(file_pb_clientrpc_v1_rpc, 12);
 
 /**
  * @generated from message pb.clientrpc.v1.StreamLogsResponse
@@ -615,7 +699,7 @@ export type StreamLogsResponse = Message<"pb.clientrpc.v1.StreamLogsResponse"> &
  * Use `create(StreamLogsResponseSchema)` to create a new message.
  */
 export const StreamLogsResponseSchema: GenMessage<StreamLogsResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 12);
+  messageDesc(file_pb_clientrpc_v1_rpc, 13);
 
 /**
  * @generated from message pb.clientrpc.v1.StopRequest
@@ -628,7 +712,7 @@ export type StopRequest = Message<"pb.clientrpc.v1.StopRequest"> & {
  * Use `create(StopRequestSchema)` to create a new message.
  */
 export const StopRequestSchema: GenMessage<StopRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 13);
+  messageDesc(file_pb_clientrpc_v1_rpc, 14);
 
 /**
  * @generated from message pb.clientrpc.v1.StopResponse
@@ -641,7 +725,7 @@ export type StopResponse = Message<"pb.clientrpc.v1.StopResponse"> & {
  * Use `create(StopResponseSchema)` to create a new message.
  */
 export const StopResponseSchema: GenMessage<StopResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 14);
+  messageDesc(file_pb_clientrpc_v1_rpc, 15);
 
 /**
  * @generated from message pb.clientrpc.v1.GetClientInfoRequest
@@ -654,7 +738,7 @@ export type GetClientInfoRequest = Message<"pb.clientrpc.v1.GetClientInfoRequest
  * Use `create(GetClientInfoRequestSchema)` to create a new message.
  */
 export const GetClientInfoRequestSchema: GenMessage<GetClientInfoRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 15);
+  messageDesc(file_pb_clientrpc_v1_rpc, 16);
 
 /**
  * @generated from message pb.clientrpc.v1.GetClientInfoResponse
@@ -673,7 +757,7 @@ export type GetClientInfoResponse = Message<"pb.clientrpc.v1.GetClientInfoRespon
  * Use `create(GetClientInfoResponseSchema)` to create a new message.
  */
 export const GetClientInfoResponseSchema: GenMessage<GetClientInfoResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 16);
+  messageDesc(file_pb_clientrpc_v1_rpc, 17);
 
 /**
  * @generated from message pb.clientrpc.v1.GetServersRequest
@@ -686,7 +770,7 @@ export type GetServersRequest = Message<"pb.clientrpc.v1.GetServersRequest"> & {
  * Use `create(GetServersRequestSchema)` to create a new message.
  */
 export const GetServersRequestSchema: GenMessage<GetServersRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 17);
+  messageDesc(file_pb_clientrpc_v1_rpc, 18);
 
 /**
  * @generated from message pb.clientrpc.v1.GetServersResponse
@@ -705,7 +789,7 @@ export type GetServersResponse = Message<"pb.clientrpc.v1.GetServersResponse"> &
  * Use `create(GetServersResponseSchema)` to create a new message.
  */
 export const GetServersResponseSchema: GenMessage<GetServersResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 18);
+  messageDesc(file_pb_clientrpc_v1_rpc, 19);
 
 /**
  * @generated from message pb.clientrpc.v1.CreateServerRequest
@@ -752,7 +836,7 @@ export type CreateServerRequest = Message<"pb.clientrpc.v1.CreateServerRequest">
  * Use `create(CreateServerRequestSchema)` to create a new message.
  */
 export const CreateServerRequestSchema: GenMessage<CreateServerRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 19);
+  messageDesc(file_pb_clientrpc_v1_rpc, 20);
 
 /**
  * @generated from message pb.clientrpc.v1.CreateServerResponse
@@ -771,7 +855,7 @@ export type CreateServerResponse = Message<"pb.clientrpc.v1.CreateServerResponse
  * Use `create(CreateServerResponseSchema)` to create a new message.
  */
 export const CreateServerResponseSchema: GenMessage<CreateServerResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 20);
+  messageDesc(file_pb_clientrpc_v1_rpc, 21);
 
 /**
  * @generated from message pb.clientrpc.v1.DeleteServerRequest
@@ -790,7 +874,7 @@ export type DeleteServerRequest = Message<"pb.clientrpc.v1.DeleteServerRequest">
  * Use `create(DeleteServerRequestSchema)` to create a new message.
  */
 export const DeleteServerRequestSchema: GenMessage<DeleteServerRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 21);
+  messageDesc(file_pb_clientrpc_v1_rpc, 22);
 
 /**
  * @generated from message pb.clientrpc.v1.DeleteServerResponse
@@ -803,7 +887,7 @@ export type DeleteServerResponse = Message<"pb.clientrpc.v1.DeleteServerResponse
  * Use `create(DeleteServerResponseSchema)` to create a new message.
  */
 export const DeleteServerResponseSchema: GenMessage<DeleteServerResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 22);
+  messageDesc(file_pb_clientrpc_v1_rpc, 23);
 
 /**
  * @generated from message pb.clientrpc.v1.ConnectServerRequest
@@ -822,7 +906,7 @@ export type ConnectServerRequest = Message<"pb.clientrpc.v1.ConnectServerRequest
  * Use `create(ConnectServerRequestSchema)` to create a new message.
  */
 export const ConnectServerRequestSchema: GenMessage<ConnectServerRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 23);
+  messageDesc(file_pb_clientrpc_v1_rpc, 24);
 
 /**
  * @generated from message pb.clientrpc.v1.ConnectServerResponse
@@ -835,7 +919,7 @@ export type ConnectServerResponse = Message<"pb.clientrpc.v1.ConnectServerRespon
  * Use `create(ConnectServerResponseSchema)` to create a new message.
  */
 export const ConnectServerResponseSchema: GenMessage<ConnectServerResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 24);
+  messageDesc(file_pb_clientrpc_v1_rpc, 25);
 
 /**
  * @generated from message pb.clientrpc.v1.DisconnectServerRequest
@@ -854,7 +938,7 @@ export type DisconnectServerRequest = Message<"pb.clientrpc.v1.DisconnectServerR
  * Use `create(DisconnectServerRequestSchema)` to create a new message.
  */
 export const DisconnectServerRequestSchema: GenMessage<DisconnectServerRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 25);
+  messageDesc(file_pb_clientrpc_v1_rpc, 26);
 
 /**
  * @generated from message pb.clientrpc.v1.DisconnectServerResponse
@@ -867,7 +951,7 @@ export type DisconnectServerResponse = Message<"pb.clientrpc.v1.DisconnectServer
  * Use `create(DisconnectServerResponseSchema)` to create a new message.
  */
 export const DisconnectServerResponseSchema: GenMessage<DisconnectServerResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 26);
+  messageDesc(file_pb_clientrpc_v1_rpc, 27);
 
 /**
  * @generated from message pb.clientrpc.v1.UpdateServerRequest
@@ -921,7 +1005,7 @@ export type UpdateServerRequest = Message<"pb.clientrpc.v1.UpdateServerRequest">
  * Use `create(UpdateServerRequestSchema)` to create a new message.
  */
 export const UpdateServerRequestSchema: GenMessage<UpdateServerRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 27);
+  messageDesc(file_pb_clientrpc_v1_rpc, 28);
 
 /**
  * @generated from message pb.clientrpc.v1.UpdateServerResponse
@@ -940,7 +1024,7 @@ export type UpdateServerResponse = Message<"pb.clientrpc.v1.UpdateServerResponse
  * Use `create(UpdateServerResponseSchema)` to create a new message.
  */
 export const UpdateServerResponseSchema: GenMessage<UpdateServerResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 28);
+  messageDesc(file_pb_clientrpc_v1_rpc, 29);
 
 /**
  * @generated from message pb.clientrpc.v1.GetSharesRequest
@@ -959,7 +1043,7 @@ export type GetSharesRequest = Message<"pb.clientrpc.v1.GetSharesRequest"> & {
  * Use `create(GetSharesRequestSchema)` to create a new message.
  */
 export const GetSharesRequestSchema: GenMessage<GetSharesRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 29);
+  messageDesc(file_pb_clientrpc_v1_rpc, 30);
 
 /**
  * @generated from message pb.clientrpc.v1.GetSharesResponse
@@ -978,7 +1062,7 @@ export type GetSharesResponse = Message<"pb.clientrpc.v1.GetSharesResponse"> & {
  * Use `create(GetSharesResponseSchema)` to create a new message.
  */
 export const GetSharesResponseSchema: GenMessage<GetSharesResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 30);
+  messageDesc(file_pb_clientrpc_v1_rpc, 31);
 
 /**
  * @generated from message pb.clientrpc.v1.CreateShareRequest
@@ -1018,7 +1102,7 @@ export type CreateShareRequest = Message<"pb.clientrpc.v1.CreateShareRequest"> &
  * Use `create(CreateShareRequestSchema)` to create a new message.
  */
 export const CreateShareRequestSchema: GenMessage<CreateShareRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 31);
+  messageDesc(file_pb_clientrpc_v1_rpc, 32);
 
 /**
  * @generated from message pb.clientrpc.v1.CreateShareResponse
@@ -1037,7 +1121,7 @@ export type CreateShareResponse = Message<"pb.clientrpc.v1.CreateShareResponse">
  * Use `create(CreateShareResponseSchema)` to create a new message.
  */
 export const CreateShareResponseSchema: GenMessage<CreateShareResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 32);
+  messageDesc(file_pb_clientrpc_v1_rpc, 33);
 
 /**
  * @generated from message pb.clientrpc.v1.DeleteShareRequest
@@ -1063,7 +1147,7 @@ export type DeleteShareRequest = Message<"pb.clientrpc.v1.DeleteShareRequest"> &
  * Use `create(DeleteShareRequestSchema)` to create a new message.
  */
 export const DeleteShareRequestSchema: GenMessage<DeleteShareRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 33);
+  messageDesc(file_pb_clientrpc_v1_rpc, 34);
 
 /**
  * @generated from message pb.clientrpc.v1.DeleteShareResponse
@@ -1076,7 +1160,7 @@ export type DeleteShareResponse = Message<"pb.clientrpc.v1.DeleteShareResponse">
  * Use `create(DeleteShareResponseSchema)` to create a new message.
  */
 export const DeleteShareResponseSchema: GenMessage<DeleteShareResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 34);
+  messageDesc(file_pb_clientrpc_v1_rpc, 35);
 
 /**
  * @generated from message pb.clientrpc.v1.GetDirFilesRequest
@@ -1109,7 +1193,7 @@ export type GetDirFilesRequest = Message<"pb.clientrpc.v1.GetDirFilesRequest"> &
  * Use `create(GetDirFilesRequestSchema)` to create a new message.
  */
 export const GetDirFilesRequestSchema: GenMessage<GetDirFilesRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 35);
+  messageDesc(file_pb_clientrpc_v1_rpc, 36);
 
 /**
  * @generated from message pb.clientrpc.v1.GetDirFilesResponse
@@ -1128,7 +1212,7 @@ export type GetDirFilesResponse = Message<"pb.clientrpc.v1.GetDirFilesResponse">
  * Use `create(GetDirFilesResponseSchema)` to create a new message.
  */
 export const GetDirFilesResponseSchema: GenMessage<GetDirFilesResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 36);
+  messageDesc(file_pb_clientrpc_v1_rpc, 37);
 
 /**
  * @generated from message pb.clientrpc.v1.GetFileMetaRequest
@@ -1161,7 +1245,7 @@ export type GetFileMetaRequest = Message<"pb.clientrpc.v1.GetFileMetaRequest"> &
  * Use `create(GetFileMetaRequestSchema)` to create a new message.
  */
 export const GetFileMetaRequestSchema: GenMessage<GetFileMetaRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 37);
+  messageDesc(file_pb_clientrpc_v1_rpc, 38);
 
 /**
  * @generated from message pb.clientrpc.v1.GetFileMetaResponse
@@ -1180,7 +1264,7 @@ export type GetFileMetaResponse = Message<"pb.clientrpc.v1.GetFileMetaResponse">
  * Use `create(GetFileMetaResponseSchema)` to create a new message.
  */
 export const GetFileMetaResponseSchema: GenMessage<GetFileMetaResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 38);
+  messageDesc(file_pb_clientrpc_v1_rpc, 39);
 
 /**
  * @generated from message pb.clientrpc.v1.GetOnlineUsersRequest
@@ -1199,7 +1283,7 @@ export type GetOnlineUsersRequest = Message<"pb.clientrpc.v1.GetOnlineUsersReque
  * Use `create(GetOnlineUsersRequestSchema)` to create a new message.
  */
 export const GetOnlineUsersRequestSchema: GenMessage<GetOnlineUsersRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 39);
+  messageDesc(file_pb_clientrpc_v1_rpc, 40);
 
 /**
  * @generated from message pb.clientrpc.v1.GetOnlineUsersResponse
@@ -1218,7 +1302,7 @@ export type GetOnlineUsersResponse = Message<"pb.clientrpc.v1.GetOnlineUsersResp
  * Use `create(GetOnlineUsersResponseSchema)` to create a new message.
  */
 export const GetOnlineUsersResponseSchema: GenMessage<GetOnlineUsersResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 40);
+  messageDesc(file_pb_clientrpc_v1_rpc, 41);
 
 /**
  * @generated from message pb.clientrpc.v1.ChangeAccountPasswordRequest
@@ -1251,7 +1335,7 @@ export type ChangeAccountPasswordRequest = Message<"pb.clientrpc.v1.ChangeAccoun
  * Use `create(ChangeAccountPasswordRequestSchema)` to create a new message.
  */
 export const ChangeAccountPasswordRequestSchema: GenMessage<ChangeAccountPasswordRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 41);
+  messageDesc(file_pb_clientrpc_v1_rpc, 42);
 
 /**
  * @generated from message pb.clientrpc.v1.ChangeAccountPasswordResponse
@@ -1264,7 +1348,7 @@ export type ChangeAccountPasswordResponse = Message<"pb.clientrpc.v1.ChangeAccou
  * Use `create(ChangeAccountPasswordResponseSchema)` to create a new message.
  */
 export const ChangeAccountPasswordResponseSchema: GenMessage<ChangeAccountPasswordResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 42);
+  messageDesc(file_pb_clientrpc_v1_rpc, 43);
 
 /**
  * @generated from message pb.clientrpc.v1.ServerConnectRequest
@@ -1283,7 +1367,7 @@ export type ServerConnectRequest = Message<"pb.clientrpc.v1.ServerConnectRequest
  * Use `create(ServerConnectRequestSchema)` to create a new message.
  */
 export const ServerConnectRequestSchema: GenMessage<ServerConnectRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 43);
+  messageDesc(file_pb_clientrpc_v1_rpc, 44);
 
 /**
  * @generated from message pb.clientrpc.v1.ServerConnectResponse
@@ -1296,7 +1380,7 @@ export type ServerConnectResponse = Message<"pb.clientrpc.v1.ServerConnectRespon
  * Use `create(ServerConnectResponseSchema)` to create a new message.
  */
 export const ServerConnectResponseSchema: GenMessage<ServerConnectResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 44);
+  messageDesc(file_pb_clientrpc_v1_rpc, 45);
 
 /**
  * @generated from message pb.clientrpc.v1.ServerDisconnectRequest
@@ -1315,7 +1399,7 @@ export type ServerDisconnectRequest = Message<"pb.clientrpc.v1.ServerDisconnectR
  * Use `create(ServerDisconnectRequestSchema)` to create a new message.
  */
 export const ServerDisconnectRequestSchema: GenMessage<ServerDisconnectRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 45);
+  messageDesc(file_pb_clientrpc_v1_rpc, 46);
 
 /**
  * @generated from message pb.clientrpc.v1.ServerDisconnectResponse
@@ -1328,7 +1412,7 @@ export type ServerDisconnectResponse = Message<"pb.clientrpc.v1.ServerDisconnect
  * Use `create(ServerDisconnectResponseSchema)` to create a new message.
  */
 export const ServerDisconnectResponseSchema: GenMessage<ServerDisconnectResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 46);
+  messageDesc(file_pb_clientrpc_v1_rpc, 47);
 
 /**
  * @generated from message pb.clientrpc.v1.GetDirectSettingsRequest
@@ -1341,7 +1425,7 @@ export type GetDirectSettingsRequest = Message<"pb.clientrpc.v1.GetDirectSetting
  * Use `create(GetDirectSettingsRequestSchema)` to create a new message.
  */
 export const GetDirectSettingsRequestSchema: GenMessage<GetDirectSettingsRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 47);
+  messageDesc(file_pb_clientrpc_v1_rpc, 48);
 
 /**
  * @generated from message pb.clientrpc.v1.GetDirectSettingsResponse
@@ -1360,7 +1444,7 @@ export type GetDirectSettingsResponse = Message<"pb.clientrpc.v1.GetDirectSettin
  * Use `create(GetDirectSettingsResponseSchema)` to create a new message.
  */
 export const GetDirectSettingsResponseSchema: GenMessage<GetDirectSettingsResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 48);
+  messageDesc(file_pb_clientrpc_v1_rpc, 49);
 
 /**
  * @generated from message pb.clientrpc.v1.UpdateDirectSettingsRequest
@@ -1380,7 +1464,7 @@ export type UpdateDirectSettingsRequest = Message<"pb.clientrpc.v1.UpdateDirectS
  * Use `create(UpdateDirectSettingsRequestSchema)` to create a new message.
  */
 export const UpdateDirectSettingsRequestSchema: GenMessage<UpdateDirectSettingsRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 49);
+  messageDesc(file_pb_clientrpc_v1_rpc, 50);
 
 /**
  * @generated from message pb.clientrpc.v1.UpdateDirectSettingsResponse
@@ -1393,7 +1477,7 @@ export type UpdateDirectSettingsResponse = Message<"pb.clientrpc.v1.UpdateDirect
  * Use `create(UpdateDirectSettingsResponseSchema)` to create a new message.
  */
 export const UpdateDirectSettingsResponseSchema: GenMessage<UpdateDirectSettingsResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 50);
+  messageDesc(file_pb_clientrpc_v1_rpc, 51);
 
 /**
  * @generated from message pb.clientrpc.v1.IndexShareRequest
@@ -1419,7 +1503,7 @@ export type IndexShareRequest = Message<"pb.clientrpc.v1.IndexShareRequest"> & {
  * Use `create(IndexShareRequestSchema)` to create a new message.
  */
 export const IndexShareRequestSchema: GenMessage<IndexShareRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 51);
+  messageDesc(file_pb_clientrpc_v1_rpc, 52);
 
 /**
  * @generated from message pb.clientrpc.v1.IndexShareResponse
@@ -1432,7 +1516,7 @@ export type IndexShareResponse = Message<"pb.clientrpc.v1.IndexShareResponse"> &
  * Use `create(IndexShareResponseSchema)` to create a new message.
  */
 export const IndexShareResponseSchema: GenMessage<IndexShareResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 52);
+  messageDesc(file_pb_clientrpc_v1_rpc, 53);
 
 /**
  * @generated from message pb.clientrpc.v1.StreamSearchRequest
@@ -1465,7 +1549,7 @@ export type StreamSearchRequest = Message<"pb.clientrpc.v1.StreamSearchRequest">
  * Use `create(StreamSearchRequestSchema)` to create a new message.
  */
 export const StreamSearchRequestSchema: GenMessage<StreamSearchRequest> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 53);
+  messageDesc(file_pb_clientrpc_v1_rpc, 54);
 
 /**
  * @generated from message pb.clientrpc.v1.StreamSearchResponse
@@ -1505,7 +1589,79 @@ export type StreamSearchResponse = Message<"pb.clientrpc.v1.StreamSearchResponse
  * Use `create(StreamSearchResponseSchema)` to create a new message.
  */
 export const StreamSearchResponseSchema: GenMessage<StreamSearchResponse> = /*@__PURE__*/
-  messageDesc(file_pb_clientrpc_v1_rpc, 54);
+  messageDesc(file_pb_clientrpc_v1_rpc, 55);
+
+/**
+ * @generated from message pb.clientrpc.v1.GetUpdateInfoRequest
+ */
+export type GetUpdateInfoRequest = Message<"pb.clientrpc.v1.GetUpdateInfoRequest"> & {
+};
+
+/**
+ * Describes the message pb.clientrpc.v1.GetUpdateInfoRequest.
+ * Use `create(GetUpdateInfoRequestSchema)` to create a new message.
+ */
+export const GetUpdateInfoRequestSchema: GenMessage<GetUpdateInfoRequest> = /*@__PURE__*/
+  messageDesc(file_pb_clientrpc_v1_rpc, 56);
+
+/**
+ * @generated from message pb.clientrpc.v1.GetUpdateInfoResponse
+ */
+export type GetUpdateInfoResponse = Message<"pb.clientrpc.v1.GetUpdateInfoResponse"> & {
+  /**
+   * The current update the client is running.
+   *
+   * @generated from field: pb.clientrpc.v1.UpdateInfo current_info = 1;
+   */
+  currentInfo?: UpdateInfo;
+
+  /**
+   * The new update's info, or no new update.
+   * This is cached info.
+   *
+   * @generated from field: optional pb.clientrpc.v1.UpdateInfo new_info = 2;
+   */
+  newInfo?: UpdateInfo;
+};
+
+/**
+ * Describes the message pb.clientrpc.v1.GetUpdateInfoResponse.
+ * Use `create(GetUpdateInfoResponseSchema)` to create a new message.
+ */
+export const GetUpdateInfoResponseSchema: GenMessage<GetUpdateInfoResponse> = /*@__PURE__*/
+  messageDesc(file_pb_clientrpc_v1_rpc, 57);
+
+/**
+ * @generated from message pb.clientrpc.v1.CheckForNewUpdateRequest
+ */
+export type CheckForNewUpdateRequest = Message<"pb.clientrpc.v1.CheckForNewUpdateRequest"> & {
+};
+
+/**
+ * Describes the message pb.clientrpc.v1.CheckForNewUpdateRequest.
+ * Use `create(CheckForNewUpdateRequestSchema)` to create a new message.
+ */
+export const CheckForNewUpdateRequestSchema: GenMessage<CheckForNewUpdateRequest> = /*@__PURE__*/
+  messageDesc(file_pb_clientrpc_v1_rpc, 58);
+
+/**
+ * @generated from message pb.clientrpc.v1.CheckForNewUpdateResponse
+ */
+export type CheckForNewUpdateResponse = Message<"pb.clientrpc.v1.CheckForNewUpdateResponse"> & {
+  /**
+   * The new update's info, or no new update.
+   *
+   * @generated from field: optional pb.clientrpc.v1.UpdateInfo new_nfo = 1;
+   */
+  newNfo?: UpdateInfo;
+};
+
+/**
+ * Describes the message pb.clientrpc.v1.CheckForNewUpdateResponse.
+ * Use `create(CheckForNewUpdateResponseSchema)` to create a new message.
+ */
+export const CheckForNewUpdateResponseSchema: GenMessage<CheckForNewUpdateResponse> = /*@__PURE__*/
+  messageDesc(file_pb_clientrpc_v1_rpc, 59);
 
 /**
  * ServerConnState is possible connection states for a server.
@@ -1848,6 +2004,31 @@ export const ClientRpcService: GenService<{
     methodKind: "server_streaming";
     input: typeof StreamSearchRequestSchema;
     output: typeof StreamSearchResponseSchema;
+  },
+  /**
+   * GetUpdateInfo returns information about the client's current update, and information about any new update that
+   * is available. The new update info is cached and updated periodically.
+   *
+   * To check for a new update, call CheckForNewUpdate.
+   *
+   * @generated from rpc pb.clientrpc.v1.ClientRpcService.GetUpdateInfo
+   */
+  getUpdateInfo: {
+    methodKind: "unary";
+    input: typeof GetUpdateInfoRequestSchema;
+    output: typeof GetUpdateInfoResponseSchema;
+  },
+  /**
+   * CheckForNewUpdate proactively checks for a new update and returns when either a new update is found or it is
+   * confirmed that there is no new update.
+   * The cache is updated after calling this method.
+   *
+   * @generated from rpc pb.clientrpc.v1.ClientRpcService.CheckForNewUpdate
+   */
+  checkForNewUpdate: {
+    methodKind: "unary";
+    input: typeof CheckForNewUpdateRequestSchema;
+    output: typeof CheckForNewUpdateResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_pb_clientrpc_v1_rpc, 0);

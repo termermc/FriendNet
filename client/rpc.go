@@ -800,3 +800,13 @@ func (s *RpcServer) StreamSearch(ctx context.Context, request *v1.StreamSearchRe
 		}
 	})
 }
+
+func (s *RpcServer) GetUpdateInfo(ctx context.Context, request *v1.GetUpdateInfoRequest) (*v1.GetUpdateInfoResponse, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s *RpcServer) CheckForNewUpdate(ctx context.Context, request *v1.CheckForNewUpdateRequest) (*v1.CheckForNewUpdateResponse, error) {
+	//TODO implement me
+	panic("implement me")
+}

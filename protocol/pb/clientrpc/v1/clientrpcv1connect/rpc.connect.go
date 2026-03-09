@@ -101,6 +101,12 @@ const (
 	// ClientRpcServiceStreamSearchProcedure is the fully-qualified name of the ClientRpcService's
 	// StreamSearch RPC.
 	ClientRpcServiceStreamSearchProcedure = "/pb.clientrpc.v1.ClientRpcService/StreamSearch"
+	// ClientRpcServiceGetUpdateInfoProcedure is the fully-qualified name of the ClientRpcService's
+	// GetUpdateInfo RPC.
+	ClientRpcServiceGetUpdateInfoProcedure = "/pb.clientrpc.v1.ClientRpcService/GetUpdateInfo"
+	// ClientRpcServiceCheckForNewUpdateProcedure is the fully-qualified name of the ClientRpcService's
+	// CheckForNewUpdate RPC.
+	ClientRpcServiceCheckForNewUpdateProcedure = "/pb.clientrpc.v1.ClientRpcService/CheckForNewUpdate"
 )
 
 // ClientRpcServiceClient is a client for the pb.clientrpc.v1.ClientRpcService service.
@@ -212,6 +218,15 @@ type ClientRpcServiceClient interface {
 	// Returns INVALID_ARGUMENT if the search query is empty.
 	// Returns UNAVAILABLE if the user is offline or otherwise cannot be reached (if a specific client was specified).
 	StreamSearch(context.Context, *v1.StreamSearchRequest) (*connect.ServerStreamForClient[v1.StreamSearchResponse], error)
+	// GetUpdateInfo returns information about the client's current update, and information about any new update that
+	// is available. The new update info is cached and updated periodically.
+	//
+	// To check for a new update, call CheckForNewUpdate.
+	GetUpdateInfo(context.Context, *v1.GetUpdateInfoRequest) (*v1.GetUpdateInfoResponse, error)
+	// CheckForNewUpdate proactively checks for a new update and returns when either a new update is found or it is
+	// confirmed that there is no new update.
+	// The cache is updated after calling this method.
+	CheckForNewUpdate(context.Context, *v1.CheckForNewUpdateRequest) (*v1.CheckForNewUpdateResponse, error)
 }
 
 // NewClientRpcServiceClient constructs a client for the pb.clientrpc.v1.ClientRpcService service.
@@ -363,6 +378,18 @@ func NewClientRpcServiceClient(httpClient connect.HTTPClient, baseURL string, op
 			connect.WithSchema(clientRpcServiceMethods.ByName("StreamSearch")),
 			connect.WithClientOptions(opts...),
 		),
+		getUpdateInfo: connect.NewClient[v1.GetUpdateInfoRequest, v1.GetUpdateInfoResponse](
+			httpClient,
+			baseURL+ClientRpcServiceGetUpdateInfoProcedure,
+			connect.WithSchema(clientRpcServiceMethods.ByName("GetUpdateInfo")),
+			connect.WithClientOptions(opts...),
+		),
+		checkForNewUpdate: connect.NewClient[v1.CheckForNewUpdateRequest, v1.CheckForNewUpdateResponse](
+			httpClient,
+			baseURL+ClientRpcServiceCheckForNewUpdateProcedure,
+			connect.WithSchema(clientRpcServiceMethods.ByName("CheckForNewUpdate")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -391,6 +418,8 @@ type clientRpcServiceClient struct {
 	updateDirectSettings  *connect.Client[v1.UpdateDirectSettingsRequest, v1.UpdateDirectSettingsResponse]
 	indexShare            *connect.Client[v1.IndexShareRequest, v1.IndexShareResponse]
 	streamSearch          *connect.Client[v1.StreamSearchRequest, v1.StreamSearchResponse]
+	getUpdateInfo         *connect.Client[v1.GetUpdateInfoRequest, v1.GetUpdateInfoResponse]
+	checkForNewUpdate     *connect.Client[v1.CheckForNewUpdateRequest, v1.CheckForNewUpdateResponse]
 }
 
 // StreamLogs calls pb.clientrpc.v1.ClientRpcService.StreamLogs.
@@ -580,6 +609,24 @@ func (c *clientRpcServiceClient) StreamSearch(ctx context.Context, req *v1.Strea
 	return c.streamSearch.CallServerStream(ctx, connect.NewRequest(req))
 }
 
+// GetUpdateInfo calls pb.clientrpc.v1.ClientRpcService.GetUpdateInfo.
+func (c *clientRpcServiceClient) GetUpdateInfo(ctx context.Context, req *v1.GetUpdateInfoRequest) (*v1.GetUpdateInfoResponse, error) {
+	response, err := c.getUpdateInfo.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// CheckForNewUpdate calls pb.clientrpc.v1.ClientRpcService.CheckForNewUpdate.
+func (c *clientRpcServiceClient) CheckForNewUpdate(ctx context.Context, req *v1.CheckForNewUpdateRequest) (*v1.CheckForNewUpdateResponse, error) {
+	response, err := c.checkForNewUpdate.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // ClientRpcServiceHandler is an implementation of the pb.clientrpc.v1.ClientRpcService service.
 type ClientRpcServiceHandler interface {
 	// StreamLogs returns an ongoing stream of log messages from the client.
@@ -689,6 +736,15 @@ type ClientRpcServiceHandler interface {
 	// Returns INVALID_ARGUMENT if the search query is empty.
 	// Returns UNAVAILABLE if the user is offline or otherwise cannot be reached (if a specific client was specified).
 	StreamSearch(context.Context, *v1.StreamSearchRequest, *connect.ServerStream[v1.StreamSearchResponse]) error
+	// GetUpdateInfo returns information about the client's current update, and information about any new update that
+	// is available. The new update info is cached and updated periodically.
+	//
+	// To check for a new update, call CheckForNewUpdate.
+	GetUpdateInfo(context.Context, *v1.GetUpdateInfoRequest) (*v1.GetUpdateInfoResponse, error)
+	// CheckForNewUpdate proactively checks for a new update and returns when either a new update is found or it is
+	// confirmed that there is no new update.
+	// The cache is updated after calling this method.
+	CheckForNewUpdate(context.Context, *v1.CheckForNewUpdateRequest) (*v1.CheckForNewUpdateResponse, error)
 }
 
 // NewClientRpcServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -836,6 +892,18 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 		connect.WithSchema(clientRpcServiceMethods.ByName("StreamSearch")),
 		connect.WithHandlerOptions(opts...),
 	)
+	clientRpcServiceGetUpdateInfoHandler := connect.NewUnaryHandlerSimple(
+		ClientRpcServiceGetUpdateInfoProcedure,
+		svc.GetUpdateInfo,
+		connect.WithSchema(clientRpcServiceMethods.ByName("GetUpdateInfo")),
+		connect.WithHandlerOptions(opts...),
+	)
+	clientRpcServiceCheckForNewUpdateHandler := connect.NewUnaryHandlerSimple(
+		ClientRpcServiceCheckForNewUpdateProcedure,
+		svc.CheckForNewUpdate,
+		connect.WithSchema(clientRpcServiceMethods.ByName("CheckForNewUpdate")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/pb.clientrpc.v1.ClientRpcService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ClientRpcServiceStreamLogsProcedure:
@@ -884,6 +952,10 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 			clientRpcServiceIndexShareHandler.ServeHTTP(w, r)
 		case ClientRpcServiceStreamSearchProcedure:
 			clientRpcServiceStreamSearchHandler.ServeHTTP(w, r)
+		case ClientRpcServiceGetUpdateInfoProcedure:
+			clientRpcServiceGetUpdateInfoHandler.ServeHTTP(w, r)
+		case ClientRpcServiceCheckForNewUpdateProcedure:
+			clientRpcServiceCheckForNewUpdateHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -983,4 +1055,12 @@ func (UnimplementedClientRpcServiceHandler) IndexShare(context.Context, *v1.Inde
 
 func (UnimplementedClientRpcServiceHandler) StreamSearch(context.Context, *v1.StreamSearchRequest, *connect.ServerStream[v1.StreamSearchResponse]) error {
 	return connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.StreamSearch is not implemented"))
+}
+
+func (UnimplementedClientRpcServiceHandler) GetUpdateInfo(context.Context, *v1.GetUpdateInfoRequest) (*v1.GetUpdateInfoResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.GetUpdateInfo is not implemented"))
+}
+
+func (UnimplementedClientRpcServiceHandler) CheckForNewUpdate(context.Context, *v1.CheckForNewUpdateRequest) (*v1.CheckForNewUpdateResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.CheckForNewUpdate is not implemented"))
 }

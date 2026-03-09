@@ -22,6 +22,9 @@ message Event {
 
         // A client went offline.
         TYPE_CLIENT_OFFLINE = 4;
+
+        // A new update is available or the update checked was invalid.
+        TYPE_NEW_UPDATE = 5;
     }
 
     message ServerConnStateChange {
@@ -36,6 +39,10 @@ message Event {
         // The client's username.
         string username = 1;
     }
+    message NewUpdate {
+        // The new update's info.
+        UpdateInfo info = 1;
+    }
 
     // The event type.
     // The appropriate field will be filled based on the type.
@@ -44,6 +51,7 @@ message Event {
     optional ServerConnStateChange server_conn = 2;
     optional ClientOnline client_online = 3;
     optional ClientOffline client_offline = 4;
+    optional NewUpdate new_update = 5;
 }
 
 // EventContext is the context about where an event was generated.
@@ -78,6 +86,28 @@ message LogMessage {
 
     // The message's attributes.
     repeated LogMessageAttr attrs = 4;
+}
+
+// Information about an update.
+message UpdateInfo {
+    // Whether the checked update was valid.
+    // If false, no other fields will be filled.
+    // An invalid update is caused by an invalid signature on an update,
+    // which is indicative of a larger problem.
+    bool is_valid = 1;
+
+    // The release timestamp.
+    int64 created_ts = 2;
+
+    // The version string.
+    string version = 3;
+
+    // The description.
+    string description = 4;
+
+    // The URL to get the update.
+    // It is not a URL to a binary, it is a URL to a page to get the binary.
+    string url = 5;
 }
 
 // ServerConnState is possible connection states for a server.
@@ -485,6 +515,26 @@ message StreamSearchResponse {
     string snippet = 4;
 }
 
+message GetUpdateInfoRequest {
+
+}
+message GetUpdateInfoResponse {
+    // The current update the client is running.
+    UpdateInfo current_info = 1;
+
+    // The new update's info, or no new update.
+    // This is cached info.
+    optional UpdateInfo new_info = 2;
+}
+
+message CheckForNewUpdateRequest {
+
+}
+message CheckForNewUpdateResponse {
+    // The new update's info, or no new update.
+    optional UpdateInfo new_nfo = 1;
+}
+
 // ClientRpcService provides an RPC interface to a running FriendNet client.
 // It can query state and perform actions.
 //
@@ -620,4 +670,15 @@ service ClientRpcService {
     // Returns INVALID_ARGUMENT if the search query is empty.
     // Returns UNAVAILABLE if the user is offline or otherwise cannot be reached (if a specific client was specified).
     rpc StreamSearch(StreamSearchRequest) returns (stream StreamSearchResponse) {}
+
+    // GetUpdateInfo returns information about the client's current update, and information about any new update that
+    // is available. The new update info is cached and updated periodically.
+    //
+    // To check for a new update, call CheckForNewUpdate.
+    rpc GetUpdateInfo(GetUpdateInfoRequest) returns (GetUpdateInfoResponse) {}
+
+    // CheckForNewUpdate proactively checks for a new update and returns when either a new update is found or it is
+    // confirmed that there is no new update.
+    // The cache is updated after calling this method.
+    rpc CheckForNewUpdate(CheckForNewUpdateRequest) returns (CheckForNewUpdateResponse) {}
 }
