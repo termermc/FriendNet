@@ -227,7 +227,7 @@ func (c *UpdateChecker) Close() error {
 }
 
 func (c *UpdateChecker) loop() {
-	ticker := time.NewTimer(c.interval)
+	ticker := time.NewTicker(c.interval)
 	defer ticker.Stop()
 
 	notifyNew := func(info *UpdateInfo, err error) {
