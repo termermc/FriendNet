@@ -1,6 +1,7 @@
 package updater
 
 import (
+	"bytes"
 	"context"
 	"crypto/ed25519"
 	"encoding/base64"
@@ -56,10 +57,26 @@ func doReq(ctx context.Context, url string) ([]byte, error) {
 		return nil, fmt.Errorf("GET %q: response body too large (content-length: %d, max: %d)", url, res.ContentLength, maxBodySize)
 	}
 
-	body := make([]byte, res.ContentLength)
-	_, err = io.ReadFull(res.Body, body)
-	if err != nil {
-		return nil, fmt.Errorf("GET %q: failed to read body: %w", url, err)
+	var body []byte
+	if res.ContentLength == -1 {
+		var buf bytes.Buffer
+		var n int64
+		n, err = io.CopyN(&buf, res.Body, maxBodySize)
+		if err != nil && !errors.Is(err, io.EOF) {
+			return nil, fmt.Errorf("GET %q: failed to read body: %w", url, err)
+		}
+
+		if n >= maxBodySize {
+			return nil, fmt.Errorf("GET %q: response body too large (stopped reading after %d bytes)", url, n)
+		}
+
+		body = buf.Bytes()
+	} else {
+		body = make([]byte, res.ContentLength)
+		_, err = io.ReadFull(res.Body, body)
+		if err != nil {
+			return nil, fmt.Errorf("GET %q: failed to read body: %w", url, err)
+		}
 	}
 
 	return body, nil
