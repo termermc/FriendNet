@@ -2,9 +2,9 @@
 
 To compile the FriendNet server, you need the following prerequisites:
 
- - The latest [Go compiler](https://go.dev)
- - [Git](https://git-scm.com/)
- - [make](https://www.gnu.org/software/make/) (If you are on Linux, you probably have it already)
+- The latest [Go compiler](https://go.dev)
+- [Git](https://git-scm.com/)
+- [make](https://www.gnu.org/software/make/) (If you are on Linux, you probably have it already)
 
 First, clone the repository:
 

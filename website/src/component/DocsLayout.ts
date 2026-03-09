@@ -49,7 +49,12 @@ export const DocsLayout: Component<DocsLayoutProps, RenderFragments> = (
 
 		if (section.children.length > 0) {
 			return html`
-				<details class="docs-nav-section ${isCur ? 'docs-nav-section-current' : ''}" ${isOpen ? 'open' : ''}>
+				<details
+					class="docs-nav-section ${isCur
+						? 'docs-nav-section-current'
+						: ''}"
+					${isOpen ? 'open' : ''}
+				>
 					<summary class="docs-nav-section-label">${label}</summary>
 					<div class="docs-nav-section-children">
 						${section.children.map((child) =>
@@ -60,7 +65,12 @@ export const DocsLayout: Component<DocsLayoutProps, RenderFragments> = (
 			`
 		} else {
 			return html`
-				<div class="docs-nav-section ${isCur ? 'docs-nav-section-current' : ''}" ${isOpen ? 'open' : ''}>
+				<div
+					class="docs-nav-section ${isCur
+						? 'docs-nav-section-current'
+						: ''}"
+					${isOpen ? 'open' : ''}
+				>
 					<span class="docs-nav-section-label">${label}</span>
 				</div>
 			`

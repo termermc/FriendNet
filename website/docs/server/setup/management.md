@@ -11,7 +11,7 @@ Once the CLI is open, you can type `help` to see a list of commands.
 
 Some useful commands to set up a new server:
 
- - `createroom` Create a new room
- - `createaccount` Create an account for a room
+- `createroom` Create a new room
+- `createaccount` Create an account for a room
 
 The usage for each command is documented in the CLI.

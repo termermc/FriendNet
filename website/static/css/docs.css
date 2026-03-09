@@ -32,13 +32,13 @@
 	margin-top: 0.25rem;
 }
 span.docs-nav-section-label {
-    display: block;
+	display: block;
 }
 span.docs-nav-section-label::before {
-    content: '•';
+	content: '•';
 }
 .docs-nav-section-current > .docs-nav-section-label {
-    background: rgba(255, 0, 0, 0.25);
+	background: rgba(255, 0, 0, 0.25);
 }
 
 .docs-content {

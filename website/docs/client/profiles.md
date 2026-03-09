@@ -19,3 +19,5 @@ but they will not be clickable in the normal way.
 
 Despite these limitations, creating highly detailed profiles with complex CSS and media is very
 easy.
+
+Next: [Updating](updating.md)

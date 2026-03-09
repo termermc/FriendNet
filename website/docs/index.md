@@ -6,7 +6,6 @@ optional for sharing files.
 
 ![logo](logo.png)
 
-
 For those completely new to the concept, FriendNet allows users to share files with one another, directly from their computers.
 Unlike services like Dropbox, users do not upload files and then share a link; instead, they choose which folders to share
 and then allow other users to browse and download files from those folders. Also, unlike those services, FriendNet is
