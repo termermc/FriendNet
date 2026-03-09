@@ -10,4 +10,7 @@ depends on servers, it is functionally decentralized.
 The requirements for hosting a server are minimal, both CPU- and memory-wise. A server can easily be hosted on an old
 low-spec computer or a Raspberry Pi.
 
+It is recommended that the server has access to a fast connection, as clients that cannot open ports for P2P connections
+will use the server as a proxy fallback.
+
 Next: [Setup Guide](setup/index_setup.md)
