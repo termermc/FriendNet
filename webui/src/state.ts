@@ -11,6 +11,7 @@ import {
 	ServerConnState,
 	ServerInfo,
 	ShareInfo,
+	UpdateInfo,
 	UpdateServerRequest,
 } from '../pb/clientrpc/v1/rpc_pb'
 import { RpcClient } from './protobuf'
@@ -692,6 +693,12 @@ export class State {
 	readonly servers: Accessor<Server[]>
 	readonly #setServers: Setter<Server[]>
 
+	readonly currentUpdate: Accessor<UpdateInfo>
+	readonly #setCurrentUpdate: Setter<UpdateInfo>
+
+	readonly latestUpdate: Accessor<UpdateInfo | undefined>
+	readonly #setLatestUpdate: Setter<UpdateInfo | undefined>
+
 	constructor(client: RpcClient) {
 		this.#client = client
 
@@ -702,11 +709,26 @@ export class State {
 		;[this.previewInfo, this.#setPreviewInfo] = createSignal<
 			PreviewInfo | undefined
 		>()
+		;[this.currentUpdate, this.#setCurrentUpdate] =
+			createSignal<UpdateInfo>({
+				$typeName: 'pb.clientrpc.v1.UpdateInfo',
+				isValid: false,
+				createdTs: 0n,
+				version: '',
+				description: '',
+				url: '',
+			})
+		;[this.latestUpdate, this.#setLatestUpdate] = createSignal<
+			UpdateInfo | undefined
+		>()
 
 		// Listen to server events.
 		this.event.addEventListener(Event_Type.STOP, () => {
 			window.close()
 			setTimeout(() => window.location.assign('about:blank'), 100)
+		})
+		this.event.addEventListener(Event_Type.NEW_UPDATE, (event) => {
+			this.#setLatestUpdate(event.newUpdate!.info)
 		})
 		this.event.addEventListener(
 			Event_Type.SERVER_CONN_STATE_CHANGE,
@@ -748,11 +770,22 @@ export class State {
 	 * Does a full state refresh.
 	 */
 	async doFullRefresh() {
+		await this.refreshUpdateInfo()
 		await this.refreshServers()
 
 		for (const server of this.servers()) {
 			server.refreshOnlineUsers()
 		}
+	}
+
+	/**
+	 * Refreshes update information.
+	 * Does not check for new updates; call {@link checkForNewUpdate} to do that.
+	 */
+	async refreshUpdateInfo() {
+		const res = await this.#client.getUpdateInfo({})
+		this.#setCurrentUpdate(res.currentInfo!)
+		this.#setLatestUpdate(res.newInfo)
 	}
 
 	/**

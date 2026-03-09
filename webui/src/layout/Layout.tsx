@@ -52,6 +52,23 @@ export const Layout: Component<LayoutProps> = (props) => {
 					</A>{' '}
 					<A href="/logs" class={styles.option}>
 						🔎 Log Viewer
+					</A>{' '}
+					<A href="/update" class={styles.option}>
+						<span>📌 v{state.currentUpdate().version}</span>
+						<Show when={state.latestUpdate()}>
+							{' '}
+							<Show when={state.latestUpdate()!.isValid}>
+								<span class={styles.updateNew}>
+									New update: v{state.latestUpdate()!.version}{' '}
+									(click for info)
+								</span>
+							</Show>
+							<Show when={!state.latestUpdate()!.isValid}>
+								<span class={styles.updateInvalid}>
+									Update signature invalid, do not update!
+								</span>
+							</Show>
+						</Show>
 					</A>
 				</div>
 

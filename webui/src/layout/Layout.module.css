@@ -44,6 +44,16 @@
 	padding: 0.25rem;
 	font-size: 0.9rem;
 }
+.updateNew {
+	background-color: rgba(0, 255, 0, 0.25);
+	color: lime;
+	font-weight: bold;
+}
+.updateInvalid {
+	background-color: rgba(255, 0, 0, 0.25);
+	color: red;
+	font-weight: bold;
+}
 
 .stopButton {
 	cursor: pointer;

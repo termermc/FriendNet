@@ -160,6 +160,7 @@ export const Loader: Component = () => {
 
 		// Load initial state.
 		const state = new State(client)
+		await state.refreshUpdateInfo()
 		await state.refreshServers()
 
 		return { clientInfo, state }
