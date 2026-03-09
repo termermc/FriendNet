@@ -1,0 +1,42 @@
+{
+	"name": "friendnet-server-widget",
+	"version": "0.0.1",
+	"description": "A widget to show information about a FriendNet server using its RPC interface.",
+	"keywords": [
+		"friendnet",
+		"p2p",
+		"widget",
+		"web",
+		"component"
+	],
+	"homepage": "https://github.com/termermc/FriendNet#readme",
+	"bugs": {
+		"url": "https://github.com/termermc/FriendNet/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/termermc/FriendNet.git"
+	},
+	"license": "AGPL-3.0-only",
+	"author": "termer",
+	"type": "module",
+	"main": "index.js",
+	"scripts": {
+		"dev": "vite --port 5174",
+		"build": "tsc && vite build",
+		"preview": "vite preview",
+		"fmt": "prettier --write ."
+	},
+	"devDependencies": {
+		"@bufbuild/buf": "^1.66.0",
+		"@bufbuild/protoc-gen-es": "^2.11.0",
+		"prettier": "^3.8.1",
+		"typescript": "^5.9.3",
+		"vite": "^7.3.1"
+	},
+	"dependencies": {
+		"@bufbuild/protobuf": "^2.11.0",
+		"@connectrpc/connect": "^2.1.1",
+		"@connectrpc/connect-web": "^2.1.1"
+	}
+}

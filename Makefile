@@ -2,7 +2,6 @@
 	help \
 	install-tools \
 	pb \
-	pbweb \
 	server \
 	client \
 	client-windows \
@@ -24,10 +23,10 @@ install-tools:
 pb:
 	cd protocol && buf lint
 	cd protocol && buf generate
-
-pbweb:
 	cd webui && npx buf lint
 	cd webui && npx buf generate
+	cd server-widget && npx buf lint
+	cd server-widget && npx buf generate
 
 server:
 	cd server && go build -o friendnet-server friendnet.org/server/cmd/server
