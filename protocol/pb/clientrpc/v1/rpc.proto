@@ -532,7 +532,7 @@ message CheckForNewUpdateRequest {
 }
 message CheckForNewUpdateResponse {
     // The new update's info, or no new update.
-    optional UpdateInfo new_nfo = 1;
+    optional UpdateInfo new_info = 1;
 }
 
 // ClientRpcService provides an RPC interface to a running FriendNet client.

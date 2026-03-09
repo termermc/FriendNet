@@ -135,10 +135,13 @@ type UpdateChecker struct {
 
 	logger *slog.Logger
 
-	baseUrl   string
-	curUpdate UpdateInfo
-	pubkey    ed25519.PublicKey
-	interval  time.Duration
+	// CurrentUpdate is the current update the client is running.
+	// Do not update.
+	CurrentUpdate UpdateInfo
+
+	baseUrl  string
+	pubkey   ed25519.PublicKey
+	interval time.Duration
 
 	newUpdate     *UpdateInfo
 	newUpdateErr  error
@@ -171,10 +174,11 @@ func NewUpdateChecker(
 
 		logger: logger,
 
-		baseUrl:   baseUrl,
-		curUpdate: curUpdate,
-		pubkey:    pubkey,
-		interval:  interval,
+		CurrentUpdate: curUpdate,
+
+		baseUrl:  baseUrl,
+		pubkey:   pubkey,
+		interval: interval,
 
 		newUpdateChan: make(chan struct{}),
 		checkNowChan:  make(chan chan struct{}),
@@ -225,7 +229,7 @@ func (c *UpdateChecker) loop() {
 		ctx, cancel := context.WithTimeout(c.ctx, 10*time.Second)
 		defer cancel()
 
-		newUpdate, err := CheckUpdate(ctx, c.baseUrl, c.curUpdate, c.pubkey)
+		newUpdate, err := CheckUpdate(ctx, c.baseUrl, c.CurrentUpdate, c.pubkey)
 		if err != nil {
 			if errors.Is(err, context.DeadlineExceeded) ||
 				errors.Is(err, context.Canceled) {
@@ -252,6 +256,8 @@ func (c *UpdateChecker) loop() {
 
 		notifyNew(newUpdate, nil)
 	}
+
+	doCheck(nil)
 
 	for {
 		select {

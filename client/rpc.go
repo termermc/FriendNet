@@ -18,6 +18,7 @@ import (
 	"friendnet.org/client/share"
 	"friendnet.org/client/storage"
 	"friendnet.org/common"
+	"friendnet.org/common/updater"
 	"friendnet.org/protocol"
 	v1 "friendnet.org/protocol/pb/clientrpc/v1"
 	"friendnet.org/protocol/pb/clientrpc/v1/clientrpcv1connect"
@@ -41,6 +42,7 @@ type RpcServer struct {
 	clogHandler   clog.Handler
 	client        *MultiClient
 	eventBus      *event.Bus
+	updateChecker *updater.UpdateChecker
 	fileServerUrl string
 	stopper       func()
 }
@@ -49,6 +51,7 @@ func NewRpcServer(
 	clogHandler clog.Handler,
 	client *MultiClient,
 	eventBus *event.Bus,
+	updateChecker *updater.UpdateChecker,
 	fileServerUrl string,
 	stopper func(),
 ) *RpcServer {
@@ -56,6 +59,7 @@ func NewRpcServer(
 		clogHandler:   clogHandler,
 		client:        client,
 		eventBus:      eventBus,
+		updateChecker: updateChecker,
 		fileServerUrl: fileServerUrl,
 		stopper:       stopper,
 	}
@@ -801,12 +805,41 @@ func (s *RpcServer) StreamSearch(ctx context.Context, request *v1.StreamSearchRe
 	})
 }
 
-func (s *RpcServer) GetUpdateInfo(ctx context.Context, request *v1.GetUpdateInfoRequest) (*v1.GetUpdateInfoResponse, error) {
-	//TODO implement me
-	panic("implement me")
+func (s *RpcServer) updateToInfo(update *updater.UpdateInfo, updateErr error) *v1.UpdateInfo {
+	var info *v1.UpdateInfo
+	if updateErr != nil {
+		info = &v1.UpdateInfo{
+			IsValid: false,
+		}
+	} else if update != nil {
+		info = &v1.UpdateInfo{
+			IsValid:     true,
+			CreatedTs:   update.CreatedTs,
+			Version:     update.Version,
+			Description: update.Description,
+			Url:         update.Url,
+		}
+	}
+
+	return info
 }
 
-func (s *RpcServer) CheckForNewUpdate(ctx context.Context, request *v1.CheckForNewUpdateRequest) (*v1.CheckForNewUpdateResponse, error) {
-	//TODO implement me
-	panic("implement me")
+func (s *RpcServer) GetUpdateInfo(_ context.Context, _ *v1.GetUpdateInfoRequest) (*v1.GetUpdateInfoResponse, error) {
+	return &v1.GetUpdateInfoResponse{
+		CurrentInfo: s.updateToInfo(&s.updateChecker.CurrentUpdate, nil),
+		NewInfo:     s.updateToInfo(s.updateChecker.GetNewUpdate()),
+	}, nil
+}
+
+func (s *RpcServer) CheckForNewUpdate(ctx context.Context, _ *v1.CheckForNewUpdateRequest) (*v1.CheckForNewUpdateResponse, error) {
+	newChan := s.updateChecker.NewUpdateChan()
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case <-newChan:
+		return &v1.CheckForNewUpdateResponse{
+			NewInfo: s.updateToInfo(s.updateChecker.GetNewUpdate()),
+		}, nil
+	}
 }

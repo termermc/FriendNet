@@ -3226,7 +3226,7 @@ func (*CheckForNewUpdateRequest) Descriptor() ([]byte, []int) {
 type CheckForNewUpdateResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The new update's info, or no new update.
-	NewNfo        *UpdateInfo `protobuf:"bytes,1,opt,name=new_nfo,json=newNfo,proto3,oneof" json:"new_nfo,omitempty"`
+	NewInfo       *UpdateInfo `protobuf:"bytes,1,opt,name=new_info,json=newInfo,proto3,oneof" json:"new_info,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3261,9 +3261,9 @@ func (*CheckForNewUpdateResponse) Descriptor() ([]byte, []int) {
 	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{59}
 }
 
-func (x *CheckForNewUpdateResponse) GetNewNfo() *UpdateInfo {
+func (x *CheckForNewUpdateResponse) GetNewInfo() *UpdateInfo {
 	if x != nil {
-		return x.NewNfo
+		return x.NewInfo
 	}
 	return nil
 }
@@ -3709,11 +3709,10 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\fcurrent_info\x18\x01 \x01(\v2\x1b.pb.clientrpc.v1.UpdateInfoR\vcurrentInfo\x12;\n" +
 	"\bnew_info\x18\x02 \x01(\v2\x1b.pb.clientrpc.v1.UpdateInfoH\x00R\anewInfo\x88\x01\x01B\v\n" +
 	"\t_new_info\"\x1a\n" +
-	"\x18CheckForNewUpdateRequest\"b\n" +
-	"\x19CheckForNewUpdateResponse\x129\n" +
-	"\anew_nfo\x18\x01 \x01(\v2\x1b.pb.clientrpc.v1.UpdateInfoH\x00R\x06newNfo\x88\x01\x01B\n" +
-	"\n" +
-	"\b_new_nfo*\x8d\x01\n" +
+	"\x18CheckForNewUpdateRequest\"e\n" +
+	"\x19CheckForNewUpdateResponse\x12;\n" +
+	"\bnew_info\x18\x01 \x01(\v2\x1b.pb.clientrpc.v1.UpdateInfoH\x00R\anewInfo\x88\x01\x01B\v\n" +
+	"\t_new_info*\x8d\x01\n" +
 	"\x0fServerConnState\x12!\n" +
 	"\x1dSERVER_CONN_STATE_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18SERVER_CONN_STATE_CLOSED\x10\x01\x12\x1d\n" +
@@ -3857,7 +3856,7 @@ var file_pb_clientrpc_v1_rpc_proto_depIdxs = []int32{
 	10, // 20: pb.clientrpc.v1.StreamSearchResponse.file:type_name -> pb.clientrpc.v1.FileMeta
 	6,  // 21: pb.clientrpc.v1.GetUpdateInfoResponse.current_info:type_name -> pb.clientrpc.v1.UpdateInfo
 	6,  // 22: pb.clientrpc.v1.GetUpdateInfoResponse.new_info:type_name -> pb.clientrpc.v1.UpdateInfo
-	6,  // 23: pb.clientrpc.v1.CheckForNewUpdateResponse.new_nfo:type_name -> pb.clientrpc.v1.UpdateInfo
+	6,  // 23: pb.clientrpc.v1.CheckForNewUpdateResponse.new_info:type_name -> pb.clientrpc.v1.UpdateInfo
 	0,  // 24: pb.clientrpc.v1.Event.ServerConnStateChange.state:type_name -> pb.clientrpc.v1.ServerConnState
 	9,  // 25: pb.clientrpc.v1.Event.ClientOnline.info:type_name -> pb.clientrpc.v1.OnlineUserInfo
 	6,  // 26: pb.clientrpc.v1.Event.NewUpdate.info:type_name -> pb.clientrpc.v1.UpdateInfo

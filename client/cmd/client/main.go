@@ -23,6 +23,7 @@ import (
 
 	"connectrpc.com/connect"
 	"friendnet.org/client"
+	"friendnet.org/client/appinfo"
 	"friendnet.org/client/cert"
 	"friendnet.org/client/clog"
 	"friendnet.org/client/direct"
@@ -32,6 +33,7 @@ import (
 	"friendnet.org/client/storage"
 	"friendnet.org/common"
 	"friendnet.org/common/machine"
+	"friendnet.org/common/updater"
 	"friendnet.org/mkcert"
 	v1 "friendnet.org/protocol/pb/clientrpc/v1"
 	"friendnet.org/protocol/pb/clientrpc/v1/clientrpcv1connect"
@@ -363,6 +365,14 @@ func main() {
 		rpcTls = httpsTlsCfg
 	}
 
+	updateChecker := updater.NewUpdateChecker(
+		logger,
+		appinfo.UpdateCheckerBaseUrl,
+		appinfo.CurrentUpdate,
+		appinfo.Ed25519Pubkey,
+		appinfo.UpdateCheckerInterval,
+	)
+
 	rpc, err := common.NewRpcServer(
 		logger,
 		common.RpcServerConfig{
@@ -375,6 +385,7 @@ func main() {
 			logHandler,
 			multi,
 			eventBus,
+			updateChecker,
 			fileAddr,
 			stop,
 		),
@@ -449,6 +460,9 @@ func main() {
 			_ = uiServer.Shutdown(ctx)
 			_ = fileServer.Shutdown(ctx)
 			_ = davServer.Shutdown(ctx)
+		})
+		doWithTimeout(1*time.Second, func(_ context.Context) {
+			_ = updateChecker.Close()
 		})
 		doWithTimeout(1*time.Second, func(_ context.Context) {
 			_ = rpc.Close()
