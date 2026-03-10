@@ -78,7 +78,9 @@ release-artifacts:
 	make client-linux-amd64 && mv client/friendnet-client /tmp/fn-release/friendnet-client-linux_amd64
 	make client-windows-amd64 && mv client/friendnet-client.exe /tmp/fn-release/friendnet-client-windows_amd64.exe
 	make client-darwin-arm64 && mv client/friendnet-client /tmp/fn-release/friendnet-client-macos_arm64
-	make server-linux-amd64
-	make rpcclient-linux-amd64
-	tar -czf /tmp/fn-release/friendnet-server-linux_amd64.tar.gz server/friendnet-server rpcclient/friendnet-rpcclient
+	make server-linux-amd64 && mv server/friendnet-server /tmp/fn-release
+	make rpcclient-linux-amd64 && mv rpcclient/friendnet-rpcclient /tmp/fn-release
+	chmod +x /tmp/fn-release/*
+	cd /tmp/fn-release && tar -czf friendnet-server-linux_amd64.tar.gz friendnet-server friendnet-rpcclient
+	rm /tmp/fn-release/friendnet-server && rm /tmp/fn-release/friendnet-rpcclient
 	echo "Artifacts in /tmp/fn-release"
