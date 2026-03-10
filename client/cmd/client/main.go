@@ -123,6 +123,7 @@ func main() {
 	var uninstallCa bool
 	var resetToken bool
 	var pprofFile string
+	var rmCertHost string
 
 	flag.StringVar(&dataDir, "datadir", "", "path to server config JSON")
 	flag.StringVar(&rpcAddr, "rpcaddr", "https://localhost:20040", "RPC server address")
@@ -135,6 +136,7 @@ func main() {
 	flag.BoolVar(&uninstallCa, "uninstallca", false, "if set, tries to uninstall the client's root CA")
 	flag.BoolVar(&resetToken, "resettoken", false, "if set, resets the bearer token for the RPC server")
 	flag.StringVar(&pprofFile, "pproffile", "", "write CPU profile data in the pprof format to this file, e.g. \"cpu.pprof\"")
+	flag.StringVar(&rmCertHost, "rmcerthost", "", "removes the specified host from the certificate store (like removing a host from SSH known_hosts)")
 
 	// Prevent headless mode on Windows.
 	// It just causes the process to go to the background and not stay in the terminal.
@@ -217,6 +219,22 @@ func main() {
 	store, err := storage.NewStorage(dbDir)
 	if err != nil {
 		panic(fmt.Errorf(`failed to create storage: %w`, err))
+	}
+
+	certStore := cert.NewSqliteStore(store)
+
+	if rmCertHost != "" {
+		has, rmErr := certStore.DeleteDer(context.Background(), rmCertHost)
+		if rmErr != nil {
+			panic(rmErr)
+		}
+
+		if has {
+			println("certificate removed for host")
+		} else {
+			println("no certificate found for host, nothing to remove")
+		}
+		return
 	}
 
 	// Create logger after storage is initialized, as it depends on migrations being run.
@@ -303,8 +321,6 @@ func main() {
 			os.Exit(1)
 		}
 	}
-
-	certStore := cert.NewSqliteStore(store)
 
 	directCfg, err := direct.ConfigFromSettings(context.Background(), store)
 	if err != nil {
