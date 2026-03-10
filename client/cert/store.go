@@ -52,3 +52,21 @@ func (s *SqliteStore) PutDer(ctx context.Context, hostname string, der []byte) e
 	_, err := s.store.Exec(ctx, "insert or replace into server_cert (hostname, cert_der) values (?, ?)", hostname, der)
 	return err
 }
+
+// DeleteDer deletes the certificate for the specified hostname.
+// It returns true if the hostname had a certificate and it was deleted.
+func (s *SqliteStore) DeleteDer(ctx context.Context, hostname string) (bool, error) {
+	hostname = common.NormalizeHostname(hostname)
+
+	res, err := s.store.Exec(ctx, "delete from server_cert where hostname = ?", hostname)
+	if err != nil {
+		return false, err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	return rowsAffected > 0, nil
+}
