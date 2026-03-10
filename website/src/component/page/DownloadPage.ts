@@ -24,7 +24,7 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({ curUpdate }) 
         const macosArm64Suffix = '-macos_arm64'
 
         dlUrls = {
-            'Windows': baseUrl + windowsAmd64Suffix,
+            'Windows (x64)': baseUrl + windowsAmd64Suffix,
             'Linux (x64)': baseUrl + linuxAmd64Suffix,
             'MacOS (Apple Silicon, M1, etc.)': baseUrl + macosArm64Suffix,
             'Release Page': url,
