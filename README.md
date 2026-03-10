@@ -32,8 +32,13 @@ See the [protocol](protocol) directory.
 
 # Building From Source
 
-See [this page](https://friendnet.org/docs/server/setup/compiling/) for compiling the server, and
-[this page](https://friendnet.org/docs/client/compiling) for compiling the client.
+## Client
+
+[Compilation guide](https://friendnet.org/docs/client/compiling/)
+
+## Server
+
+[Compilation guide](https://friendnet.org/docs/server/setup/compiling/)
 
 # Support
 
