@@ -8,6 +8,7 @@ import { BaseLayout } from '../BaseLayout.ts'
 export const ScreenshotsPage: Component<void, void> = () => {
 	return BaseLayout(
 		{
+			title: 'Screenshots',
 			stylesheets: ['/css/home.css'],
 		},
 		html`
