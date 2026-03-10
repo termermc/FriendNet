@@ -26,4 +26,4 @@ To confirm that you have added the share, click `📂 Browse` on yourself under 
 
 Congratulations! You have now shared your first folder.
 
-Next: [Profiles](profiles.md)
+Next: [Searching](searching.md)

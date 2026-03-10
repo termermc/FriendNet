@@ -1,5 +1,7 @@
 installation
 adding-a-server
+managing-shares
+searching
 profiles
 updating
 yggdrasil-support
