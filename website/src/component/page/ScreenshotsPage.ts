@@ -13,6 +13,7 @@ export const ScreenshotsPage: Component<void, void> = () => {
 		},
 		html`
 			<div class="home">
+                <h1>Screenshots</h1>
 				<div class="home-content screenshots">
 					<h1>Searching</h1>
 					<img src="/asset/screenshot/search.png" alt="search" />
