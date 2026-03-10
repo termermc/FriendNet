@@ -12,4 +12,6 @@ First, select the operating system you will be installing the server on:
 
 ## [Linux](linux.md)
 
+## [Docker](docker.md)
+
 ## [Anything Else (Compile Yourself)](compiling.md)
