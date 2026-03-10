@@ -13,10 +13,46 @@ export const HomePage: Component<void, void> = () => {
 			stylesheets: ['/css/home.css'],
 		},
 		html`
-			<h1>Welcome</h1>
-			<p>
-				Why not take a look at the <a href="/example/">example page</a>?
-			</p>
+			<div class="home">
+				<div class="home-header">
+					<h1>FriendNet</h1>
+					<img src="/logo-full.png" alt="Logo" />
+					<h2>is file sharing</h2>
+					<h1>for <span class="friends">friends</span></h1>
+				</div>
+				<div class="home-content">
+					<p>
+						FriendNet is <b>self-hostable</b>,
+						<b>open source</b> file sharing for friends, like a
+						mini-<a href="https://slsknet.org">Soulseek</a>.
+					</p>
+					<p>
+						You can host a private room for your friends or group to
+						<a href="/docs/client/managing-shares/"
+							>share folders</a
+						>
+						on their computers, create
+						<a href="/docs/client/profiles/">profiles</a>, and
+						<a href="/docs/client/searching">search files.</a>
+					</p>
+					<p>
+						For those familiar with BitTorrent, hosting your own
+						FriendNet server can be compared to owning a private
+						tracker.
+					</p>
+					<br />
+					<br />
+					<div class="center">
+						<a href="/download/" class="big-button"
+							>Download Now!</a
+						>
+						<a href="/screenshots/" class="big-button"
+							>Screenshots</a
+						>
+						<a href="/docs/" class="big-button">Documentation</a>
+					</div>
+				</div>
+			</div>
 		`,
 	)
 }

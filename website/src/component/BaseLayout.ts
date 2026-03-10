@@ -75,15 +75,18 @@ export const BaseLayout: Component<BaseLayoutProps, RenderFragments> = (
 				<header>
 					<a href="/" class="header-title">${config.title}</a>
 					<div class="header-nav">
-						<a href="/download/" class="header-nav-item"
-							>Download</a
-						>
-						<a href="/docs/" class="header-nav-item"
-							>Documentation</a
-						>
-						<a href="${config.githubUrl}" class="header-nav-item"
-							>GitHub</a
-						>
+						<a href="/download/" class="header-nav-item">
+							Download
+						</a>
+						<a href="/screenshots/" class="header-nav-item">
+							Screenshots
+						</a>
+						<a href="/docs/" class="header-nav-item">
+							Documentation
+						</a>
+						<a href="${config.githubUrl}" class="header-nav-item">
+							GitHub
+						</a>
 					</div>
 				</header>
 				<main>${children}</main>

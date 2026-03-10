@@ -6,7 +6,12 @@ If you want to show the status of your server and online room users on a webpage
 To include the widget code, add the following HTML to your page:
 
 ```html
-<script type="module" async defer src="https://cdn.jsdelivr.net/npm/friendnet-server-widget@latest/dist/friendnet-server-widget.js"></script>
+<script
+	type="module"
+	async
+	defer
+	src="https://cdn.jsdelivr.net/npm/friendnet-server-widget@latest/dist/friendnet-server-widget.js"
+></script>
 ```
 
 If you use NPM, you can install it with:

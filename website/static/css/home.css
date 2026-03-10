@@ -1,4 +1,31 @@
-/* This is an example page-specific CSS file. You don't have to keep it if you don't need it. */
-img {
-	border: 3px solid red;
+.home {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.home-header {
+	text-align: center;
+}
+.home-header img {
+	height: 15rem;
+}
+.friends {
+	text-decoration: underline;
+	text-decoration-color: red;
+}
+
+.home-content {
+	background-color: var(--panelColor);
+	padding: 1rem;
+	max-width: calc(100% - 4rem);
+}
+
+.big-button {
+	display: inline-block;
+	background-color: rgba(0, 0, 0, 0.25);
+	font-weight: bold;
+	font-size: 2rem;
+	padding: 0.5rem;
+	margin: 0.5rem;
 }
