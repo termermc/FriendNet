@@ -14,6 +14,8 @@ function sleep(ms: number) {
 type RpcClient = ReturnType<typeof createClient<typeof ServerRpcService>>
 
 class FriendNetServerWidget extends HTMLElement {
+	static tag = 'friendnet-server-widget'
+
 	readonly #loopInterval = 10_000
 	readonly #timeout = 10_000
 
@@ -22,13 +24,19 @@ class FriendNetServerWidget extends HTMLElement {
 	readonly #usersElem: HTMLDivElement = undefined as unknown as HTMLDivElement
 	readonly #errMsgElem: HTMLDivElement =
 		undefined as unknown as HTMLDivElement
+	readonly #roomInfoElem: HTMLDivElement =
+		undefined as unknown as HTMLDivElement
+	readonly #roomNameElem: HTMLSpanElement =
+		undefined as unknown as HTMLSpanElement
+	readonly #roomUserCountElem: HTMLSpanElement =
+		undefined as unknown as HTMLSpanElement
 
 	constructor() {
 		super()
 
 		const rpcUrl = this.getAttribute('rpc')
 		const roomName = this.getAttribute('room')
-		const label = this.getAttribute('label') || `FriendNet Status`
+		const label = this.getAttribute('label') || `FriendNet Server`
 		const token = this.getAttribute('token')
 
 		const shadow = this.attachShadow({ mode: 'open' })
@@ -81,14 +89,54 @@ class FriendNetServerWidget extends HTMLElement {
 		// creating the inner HTML of the editable list element
 		container.innerHTML = `
 <style>
+	:host, :host > div {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
 	.container {
 		width: 100%;
 		height: 100%;
+		background-color: #282c34;
+		font-family: sans-serif;
+		color: white;
+	}
+	.label {
+		font-weight: bold;
+		text-align: center;
+		background-color: rgba(0, 0, 0, 0.25);
+		padding: 0.25rem;
+	}
+	.room-info {
+		font-size: 0.9rem;
+		font-weight: bold;
+		padding: 0.25rem;
+		margin-bottom: 0.25rem;
+		border-bottom: 0.2rem solid rgba(0, 0, 0, 0.25);
+	}
+	.users-container {
+		overflow: auto;
+		max-height: calc(100% - 2.5rem);
+	}
+	.online-user {
+		background-color: rgba(0, 255, 0, 0.25);
+		font-weight: bold;
+		cursor: default;
+		margin-bottom: 0.25rem;
+	}
+	.online-user::before {
+		content: ' • ';
+		color: lime;
+		margin-left: 0.5rem;
 	}
 </style>
 <div class="container">
 	<div class="label"></div>
 	<div class="error-message"></div>
+	<div class="room-info">
+		Room: <span class="room-name"></span>
+		(<span class="room-user-count"></span>)
+	</div>
 	<div class="users-container"></div>
 </div>
 		`
@@ -104,6 +152,17 @@ class FriendNetServerWidget extends HTMLElement {
 		this.#errMsgElem = container.getElementsByClassName(
 			'error-message',
 		)[0] as HTMLDivElement
+		this.#roomInfoElem = container.getElementsByClassName(
+			'room-info',
+		)[0] as HTMLDivElement
+		this.#roomNameElem = container.getElementsByClassName(
+			'room-name',
+		)[0] as HTMLSpanElement
+		this.#roomUserCountElem = container.getElementsByClassName(
+			'room-user-count',
+		)[0] as HTMLSpanElement
+
+		this.#roomInfoElem.style.display = 'none'
 
 		shadow.appendChild(container)
 	}
@@ -134,6 +193,17 @@ class FriendNetServerWidget extends HTMLElement {
 
 	async #loadUsersAndRender() {
 		try {
+			const { room } = await this.#rpc.getRoomInfo({ name: this.#roomName })
+			if (!room) {
+				this.#errMsgElem.textContent = `Room "${this.#roomName}" not found`
+				this.#usersElem.innerHTML = ''
+				return
+			}
+
+			this.#roomInfoElem.style.display = 'block'
+			this.#roomNameElem.textContent = room.name
+			this.#roomUserCountElem.textContent = String(room.onlineUserCount)
+
 			const users: OnlineUserInfo[] = []
 
 			const stream = this.#rpc.getOnlineUsers({ room: this.#roomName })
@@ -175,5 +245,4 @@ class FriendNetServerWidget extends HTMLElement {
 	}
 }
 
-// let the browser know about the custom element
-customElements.define('friendnet-server-widget', FriendNetServerWidget)
+customElements.define(FriendNetServerWidget.tag, FriendNetServerWidget)
