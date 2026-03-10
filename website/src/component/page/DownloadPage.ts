@@ -41,7 +41,7 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({ curUpdate }) 
 		},
 		html`
 			<div class="home">
-                <h1>Download ${curUpdate.version}</h1>
+                <h1>Download FriendNet ${curUpdate.version}</h1>
 				<div class="home-content download">
                     ${curUpdate.description
                             ? html`
@@ -57,6 +57,11 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({ curUpdate }) 
                             <br/><br/>
                         `
                     ))}
+                    <hr/>
+                    <p>
+                        Looking for the server download? Check out the
+                        <a href="/docs/server/setup/">setup guide</a>.
+                    </p>
 				</div>
 			</div>
 		`,
