@@ -4,6 +4,9 @@ Setting up a FriendNet server with Docker is pretty straightforward.
 
 This guide assumes you already have Docker installed and running.
 
+You should still read the [linux guide](linux.md) to get a better understanding of setting up the server on Linux.
+In particular, the sysctl changes that need to be made for better performance.
+
 ## Structure
 
 The Docker image expects the following structure:
