@@ -1,7 +1,12 @@
 'use strict'
 
 import { createConnectTransport } from '@connectrpc/connect-web'
-import { Code, ConnectError, createClient, type Interceptor } from '@connectrpc/connect'
+import {
+	Code,
+	ConnectError,
+	createClient,
+	type Interceptor,
+} from '@connectrpc/connect'
 import {
 	type OnlineUserInfo,
 	ServerRpcService,
@@ -107,6 +112,12 @@ class FriendNetServerWidget extends HTMLElement {
 		background-color: rgba(0, 0, 0, 0.25);
 		padding: 0.25rem;
 	}
+	.error-message {
+		background-color: rgba(255, 0, 0, 0.25);
+		color: red;
+		padding: 0.5rem;
+		text-align: center;
+	}
 	.room-info {
 		font-size: 0.9rem;
 		font-weight: bold;
@@ -193,7 +204,9 @@ class FriendNetServerWidget extends HTMLElement {
 
 	async #loadUsersAndRender() {
 		try {
-			const { room } = await this.#rpc.getRoomInfo({ name: this.#roomName })
+			const { room } = await this.#rpc.getRoomInfo({
+				name: this.#roomName,
+			})
 			if (!room) {
 				this.#errMsgElem.textContent = `Room "${this.#roomName}" not found`
 				this.#usersElem.innerHTML = ''

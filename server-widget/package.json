@@ -1,6 +1,6 @@
 {
 	"name": "friendnet-server-widget",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "A widget to show information about a FriendNet server using its RPC interface.",
 	"keywords": [
 		"friendnet",
@@ -20,12 +20,17 @@
 	"license": "AGPL-3.0-only",
 	"author": "termer",
 	"type": "module",
-	"main": "index.js",
+	"main": "dist/friendnet-server-widget.js",
+	"module": "dist/friendnet-server-widget.js",
+	"files": [
+		"dist"
+	],
 	"scripts": {
 		"dev": "vite --port 5174",
 		"build": "tsc && vite build",
 		"preview": "vite preview",
-		"fmt": "prettier --write ."
+		"fmt": "prettier --write .",
+		"dopublish": "npm run build && npm publish"
 	},
 	"devDependencies": {
 		"@bufbuild/buf": "^1.66.0",

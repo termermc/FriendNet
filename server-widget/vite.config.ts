@@ -6,7 +6,7 @@ export default defineConfig({
 			entry: 'src/main.ts',
 			name: 'FriendNetServerWidget',
 			fileName: 'friendnet-server-widget',
-			formats: ['iife'],
+			formats: ['es'],
 		},
 
 		rollupOptions: {
