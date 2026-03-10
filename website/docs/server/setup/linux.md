@@ -29,6 +29,24 @@ sudo iptables -A OUTPUT -p udp -m udp --sport 20038 -j ACCEPT
 
 ---
 
+Before downloading and starting the server, we'll want to increase the system's UDP buffer sizes:
+
+```shell
+# Add sysctl entries.
+sudo tee /etc/sysctl.d/99-quic-udp-buffer-increase.conf >/dev/null <<'EOF'
+net.core.rmem_max=7500000
+net.core.wmem_max=7500000
+EOF
+
+# Apply the sysctl entries.
+sudo sysctl --system
+```
+
+This helps improve performance for the protocol, as it uses the UDP-based QUIC for its transport.
+More information can be found [here](https://github.com/quic-go/quic-go/wiki/UDP-Buffer-Sizes).
+
+---
+
 Now that we have allowed the server's port through our firewall, we can download the server.
 
 First, go to the FriendNet [releases](https://github.com/termermc/FriendNet/releases) page on GitHub and
@@ -43,8 +61,8 @@ tar -xf friendnet-server-linux_*
 You should now have two files:
 
 ```
-friendnet-server
-friendnet-rpcclient
+server
+rpcclient
 ```
 
 To create the server's config file, run it:
