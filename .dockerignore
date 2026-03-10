@@ -1,0 +1,9 @@
+node_modules
+dist
+.idea
+.github
+*.db
+*.exe
+friendnet-client
+friendnet-server
+*.pem
