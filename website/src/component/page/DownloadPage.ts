@@ -27,6 +27,7 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({ curUpdate }) 
             'Windows': baseUrl + windowsAmd64Suffix,
             'Linux (x64)': baseUrl + linuxAmd64Suffix,
             'MacOS (Apple Silicon, M1, etc.)': baseUrl + macosArm64Suffix,
+            'Release Page': url,
         }
     } else {
         dlUrls = {
