@@ -35,7 +35,7 @@ const msgHeaderSize = 8
 
 // CurrentProtocolVersion is the current protocol version used by the client and server modules in this codebase.
 var CurrentProtocolVersion = &pb.ProtoVersion{
-	Major: 0,
+	Major: 1,
 	Minor: 0,
 	Patch: 0,
 }
