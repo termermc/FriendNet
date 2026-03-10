@@ -1,0 +1,64 @@
+import { html } from 'wunphile'
+import type { Component } from 'wunphile'
+import { BaseLayout } from '../BaseLayout.ts'
+import type { UpdateInfo } from '../../../update.ts'
+
+type DownloadPageProps = {
+    curUpdate: UpdateInfo
+}
+
+const releasesUrlRegex = /^https:\/\/github\.com\/termermc\/FriendNet\/releases\/tag\/([v.\d]+)\/?$/
+
+/**
+ * The download page.
+ */
+export const DownloadPage: Component<DownloadPageProps, void> = ({ curUpdate }) => {
+    const url = curUpdate.url
+    const [, releaseTag] = url.match(releasesUrlRegex)
+
+    let dlUrls: Record<string, string>
+    if (releaseTag) {
+        const baseUrl = `https://github.com/termermc/FriendNet/releases/download/${releaseTag}/friendnet-client`
+        const windowsAmd64Suffix = '-windows_amd64.exe'
+        const linuxAmd64Suffix = '-linux_amd64'
+        const macosArm64Suffix = '-macos_arm64'
+
+        dlUrls = {
+            'Windows': baseUrl + windowsAmd64Suffix,
+            'Linux (x64)': baseUrl + linuxAmd64Suffix,
+            'MacOS (Apple Silicon, M1, etc.)': baseUrl + macosArm64Suffix,
+        }
+    } else {
+        dlUrls = {
+            'All Platforms': url,
+        }
+    }
+
+	return BaseLayout(
+		{
+			title: 'Download',
+			stylesheets: ['/css/home.css'],
+		},
+		html`
+			<div class="home">
+                <h1>Download ${curUpdate.version}</h1>
+				<div class="home-content download">
+                    ${curUpdate.description
+                            ? html`
+                                <h2>Release Note</h2>
+                                <pre>${curUpdate.description}</pre>
+                            `
+                            : ''
+                    }
+                    <br/>
+                    ${Object.entries(dlUrls).map(([platform, url]) => (
+                        html`
+                            <a href="${url}">${platform}</a>
+                            <br/><br/>
+                        `
+                    ))}
+				</div>
+			</div>
+		`,
+	)
+}

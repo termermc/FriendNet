@@ -1,17 +1,30 @@
 import { Wunphile } from 'wunphile'
 
+import { type DocSection, scanDirForDocHierarchy } from './src/util/docs.ts'
+import type { UpdateInfo } from './update.ts'
+
 import { NotFoundPage } from './src/component/page/NotFoundPage.ts'
 import { HomePage } from './src/component/page/HomePage.ts'
-import { type DocSection, scanDirForDocHierarchy } from './src/util/docs.ts'
 import { DocPage } from './src/component/page/DocPage.ts'
-import { basename } from 'node:path'
+import { basename, join } from 'node:path'
 import { ScreenshotsPage } from './src/component/page/ScreenshotsPage.ts'
+import { readFile } from "node:fs/promises";
+import {DownloadPage} from "./src/component/page/DownloadPage.ts";
 
 const ssg = new Wunphile(import.meta.url)
 
 // Basic pages.
 ssg.page('/index.html', HomePage)
 ssg.page('/screenshots/index.html', ScreenshotsPage)
+
+// Read current update info and mount download page.
+let curUpdate: UpdateInfo
+{
+    const json = await readFile(join(import.meta.dirname, 'updater', 'client', 'latest.json'), 'utf-8')
+    curUpdate = JSON.parse(json)
+}
+
+ssg.page('/download/index.html', () => DownloadPage({ curUpdate }))
 
 // Mount static files.
 ssg.staticDir('/', './static')
