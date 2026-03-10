@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"friendnet.org/common"
 	"friendnet.org/server/storage/migration"
@@ -92,10 +93,12 @@ func NewStorage(path string) (*Storage, error) {
 // CreateRoom creates a new room record.
 // If the room already exists, returns ErrRecordExists.
 func (s *Storage) CreateRoom(ctx context.Context, room common.NormalizedRoomName) error {
-	// TODO Return ErrRecordExists if applicable
-
 	_, err := s.Db.ExecContext(ctx, `insert into room (name) values (?)`, room.String())
 	if err != nil {
+		if strings.Contains(err.Error(), "constraint") {
+			return ErrRecordExists
+		}
+
 		return fmt.Errorf(`failed to create room %q: %w`, room.String(), err)
 	}
 	return nil
@@ -154,14 +157,20 @@ func (s *Storage) CreateAccount(
 	username common.NormalizedUsername,
 	passwordHash string,
 ) error {
-	// TODO Return ErrRecordExists if applicable
-
 	_, err := s.Db.ExecContext(ctx, `insert into account (room, username, password_hash) values (?, ?, ?)`,
 		room.String(),
 		username.String(),
 		passwordHash,
 	)
-	return err
+	if err != nil {
+		if strings.Contains(err.Error(), "constraint") {
+			return ErrRecordExists
+		}
+
+		return err
+	}
+
+	return nil
 }
 
 // GetAccountByRoomAndUsername returns the account record with the specified room and username, if any.
