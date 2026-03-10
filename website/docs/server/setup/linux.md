@@ -68,7 +68,7 @@ rpcclient
 To create the server's config file, run it:
 
 ```shell
-./friendnet-server
+./server
 ```
 
 And then close it by pressing `Ctrl+C`.
@@ -85,7 +85,7 @@ Description=FriendNet Server
 After=network.target
 
 [Service]
-ExecStart=/path/to/friendnet/friendnet-server
+ExecStart=/path/to/friendnet/server
 Restart=unless-stopped
 RestartSec=30
 User=friendnet
