@@ -14,6 +14,10 @@
 	text-decoration: underline;
 	text-decoration-color: red;
 }
+.home-footer {
+    margin: 1rem;
+    text-align: center;
+}
 
 .home-content {
 	background-color: var(--panelColor);

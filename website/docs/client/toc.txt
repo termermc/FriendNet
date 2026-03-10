@@ -5,3 +5,4 @@ searching
 profiles
 updating
 yggdrasil-support
+compiling

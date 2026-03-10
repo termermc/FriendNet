@@ -2,6 +2,7 @@ import { createInterface } from 'node:readline/promises'
 import { stdin, stdout } from 'node:process'
 import { readFile, stat, unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import type { UpdateInfo } from '../update.ts'
 
 const { subtle } = globalThis.crypto
 
@@ -12,13 +13,6 @@ async function isFile(path: string): Promise<boolean> {
 	} catch (_) {
 		return false
 	}
-}
-
-type UpdateInfo = {
-	created_ts: number
-	version: string
-	description: string
-	url: string
 }
 
 const goTempl = `package appinfo
