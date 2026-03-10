@@ -2,3 +2,4 @@ installation
 adding-a-server
 profiles
 updating
+yggdrasil-support
