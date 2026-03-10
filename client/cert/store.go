@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"friendnet.org/client/storage"
+	"friendnet.org/common"
 )
 
 // Store is a certificate store that associates hostnames with DER-encoded leaf certificates.
@@ -30,7 +31,7 @@ func NewSqliteStore(store *storage.Storage) *SqliteStore {
 }
 
 func (s *SqliteStore) GetDer(ctx context.Context, hostname string) ([]byte, error) {
-	hostname = NormalizeHostname(hostname)
+	hostname = common.NormalizeHostname(hostname)
 
 	row := s.store.QueryRow(ctx, "select * from server_cert where hostname = ?", hostname)
 
@@ -46,7 +47,7 @@ func (s *SqliteStore) GetDer(ctx context.Context, hostname string) ([]byte, erro
 }
 
 func (s *SqliteStore) PutDer(ctx context.Context, hostname string, der []byte) error {
-	hostname = NormalizeHostname(hostname)
+	hostname = common.NormalizeHostname(hostname)
 
 	_, err := s.store.Exec(ctx, "insert or replace into server_cert (hostname, cert_der) values (?, ?)", hostname, der)
 	return err
