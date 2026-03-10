@@ -5,11 +5,13 @@ import { HomePage } from './src/component/page/HomePage.ts'
 import { type DocSection, scanDirForDocHierarchy } from './src/util/docs.ts'
 import { DocPage } from './src/component/page/DocPage.ts'
 import { basename } from 'node:path'
+import { ScreenshotsPage } from './src/component/page/ScreenshotsPage.ts'
 
 const ssg = new Wunphile(import.meta.url)
 
 // Basic pages.
 ssg.page('/index.html', HomePage)
+ssg.page('/screenshots/index.html', ScreenshotsPage)
 
 // Mount static files.
 ssg.staticDir('/', './static')

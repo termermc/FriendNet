@@ -1,0 +1,4 @@
+linux
+compiling
+configuration
+management

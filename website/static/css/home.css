@@ -29,3 +29,12 @@
 	padding: 0.5rem;
 	margin: 0.5rem;
 }
+
+.screenshots {
+    text-align: center;
+}
+.screenshots img {
+    max-width: 75%;
+    margin-bottom: 0.5rem;
+    border: 0.3rem solid rgba(255, 0, 0, 0.25);
+}

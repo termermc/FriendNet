@@ -43,6 +43,13 @@ export const BaseLayout: Component<BaseLayoutProps, RenderFragments> = (
 		titleRes = config.title
 	}
 
+	let descRes: string
+	if (description) {
+		descRes = description
+	} else {
+		descRes = 'Self-hostable file sharing for friends, like a mini-Soulseek. No port forwarding needed!'
+	}
+
 	return html`
 		<!DOCTYPE html>
 		<html lang="en">
@@ -57,14 +64,15 @@ export const BaseLayout: Component<BaseLayoutProps, RenderFragments> = (
 				<title>${titleRes}</title>
 				<meta property="og:title" content="${titleRes}" />
 
-				${description
-					? html`
-							<meta
-								property="og:description"
-								content="${description}"
-							/>
-						`
-					: ''}
+                <meta
+                    property="og:description"
+                    content="${descRes}"
+                />
+				
+				<meta
+					property="og:image"
+					content="/logo-full.png"
+				/>
 
 				<link rel="stylesheet" href="/css/main.css" />
 				${(stylesheets ?? []).map(

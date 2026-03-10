@@ -8,8 +8,6 @@ import { BaseLayout } from '../BaseLayout.ts'
 export const HomePage: Component<void, void> = () => {
 	return BaseLayout(
 		{
-			description:
-				'Self-hostable file sharing for friends, like a mini-Soulseek. No port forwarding needed!',
 			stylesheets: ['/css/home.css'],
 		},
 		html`
@@ -25,6 +23,9 @@ export const HomePage: Component<void, void> = () => {
 						FriendNet is <b>self-hostable</b>,
 						<b>open source</b> file sharing for friends, like a
 						mini-<a href="https://slsknet.org">Soulseek</a>.
+						Unlike Soulseek and other
+						<a href="https://en.wikipedia.org/wiki/Peer-to-peer_file_sharing">P2P networks</a>, port
+						forwarding is optional!
 					</p>
 					<p>
 						You can host a private room for your friends or group to

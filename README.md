@@ -1,10 +1,9 @@
 # FriendNet
 File sharing for friends, like a mini-Soulseek. No port forwarding needed!
 
-[![logo](logo.png)
-**Official Website**](https://friendnet.org/)
+![logo](logo.png)
 
-Note: This is incomplete WIP software.
+[**Official Website**](https://friendnet.org/)
 
 # About
 
@@ -21,11 +20,11 @@ groups of people without the hassle that normally comes with such systems.
 
 # Download
 
-TODO
+Head over to the [download](https://friendnet.org/download/) page on the website to download the client.
 
-# Server Setup
+# Documentation
 
-TODO
+Documentation can be found on the [website](https://friendnet.org/docs/).
 
 # Protocol
 
@@ -33,5 +32,16 @@ See the [protocol](protocol) directory.
 
 # Building From Source
 
-TODO Manual steps
-TODO Docker for both Linux and cross-compiling for Windows and Mac.
+See [this page](https://friendnet.org/docs/server/setup/compiling/) for compiling the server, and
+[this page](https://friendnet.org/docs/client/compiling) for compiling the client.
+
+# Support
+
+I would appreciate it if you considered supporting the project with
+[GitHub Sponsors](https://github.com/sponsors/termermc), or Monero/XMR:
+`452fRbsyyTpPZDXUpu14ZCYCFyAxyiHeaiGPLKAjBaR7FJxztuTt7NjNFYwxKaCpQeWXKD9xNxtPYdaSqL375L599YVpa7w`
+
+# Contact
+
+If you have any questions or feedback, open an issue or email me at the email on my
+[GitHub profile](https://github.com/termermc).
