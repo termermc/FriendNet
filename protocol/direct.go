@@ -9,7 +9,7 @@ import (
 	"net"
 	"net/netip"
 
-	"friendnet.org/client/cert"
+	"friendnet.org/common"
 	pb "friendnet.org/protocol/pb/v1"
 	"github.com/quic-go/quic-go"
 )
@@ -118,7 +118,7 @@ func CreateDirectConnection(
 		// Currently, all known methods connect using IP:PORT.
 		// We can be sure that splitting works because we already checked the format.
 		hostname, _, _ := net.SplitHostPort(address)
-		hostname = cert.NormalizeHostname(hostname)
+		hostname = common.NormalizeHostname(hostname)
 
 		tlsCfg := &tls.Config{
 			MinVersion:         tls.VersionTLS13,

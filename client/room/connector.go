@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"friendnet.org/client/cert"
+	"friendnet.org/common"
 	"friendnet.org/protocol"
 	"github.com/quic-go/quic-go"
 )
@@ -25,7 +26,7 @@ func ConnectWithCertStore(ctx context.Context, certStore cert.Store, address str
 	if parseErr != nil {
 		return nil, fmt.Errorf(`failed to parse address %q in ConnectWithCertStore: %w`, address, parseErr)
 	}
-	hostname = cert.NormalizeHostname(hostname)
+	hostname = common.NormalizeHostname(hostname)
 
 	tlsCfg := &tls.Config{
 		MinVersion:         tls.VersionTLS13,
