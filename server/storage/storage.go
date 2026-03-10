@@ -49,6 +49,9 @@ func NewStorage(path string) (*Storage, error) {
 		}
 	}()
 
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
+
 	err = common.DoMigrations(db, []common.Migration{
 		&migration.M20260208InitialSchema{},
 	})
