@@ -19,9 +19,9 @@
 	rpcclient-linux-amd64 \
 	rpcclient-linux-arm64 \
 	run-rpcclient \
-	release-artifacts \
 	server-docker \
-	server-docker-publish
+	server-docker-publish \
+	release-artifacts
 
 help:
 	echo "Read the Makefile to see options"
@@ -81,6 +81,12 @@ rpcclient-linux-arm64:
 run-rpcclient:
 	make rpcclient && cd server && ../rpcclient/friendnet-rpcclient
 
+server-docker:
+	docker build -t git.termer.net/termer/friendnet-server:latest -f server.Dockerfile .
+
+server-docker-publish:
+	make server-docker && docker push git.termer.net/termer/friendnet-server:latest
+
 release-artifacts:
 	rm -rf /tmp/fn-release
 	mkdir /tmp/fn-release
@@ -104,10 +110,6 @@ release-artifacts:
 	cd /tmp/fn-release && tar -czf friendnet-server-linux_arm64.tar.gz server rpcclient
 	rm /tmp/fn-release/server && rm /tmp/fn-release/rpcclient
 
-	echo "Artifacts in /tmp/fn-release"
+	make server-docker-publish
 
-server-docker:
-	docker build -t git.termer.net/termer/friendnet-server:latest -f server.Dockerfile .
-
-server-docker-publish:
-	make server-docker && docker push git.termer.net/termer/friendnet-server:latest
+	echo "Artifacts in /tmp/fn-release, and new server Docker image pushed"
