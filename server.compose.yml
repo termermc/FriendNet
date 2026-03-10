@@ -1,0 +1,10 @@
+services:
+    friendnet-server:
+        image: git.termer.net/termer/friendnet-server:latest
+        ports:
+            - "127.0.0.1:8080:8080"
+            - "20038:20038/udp"
+
+        volumes:
+            - ./config:/etc/friendnet/
+            - ./data:/var/lib/friendnet/
