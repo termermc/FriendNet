@@ -20,6 +20,11 @@ import (
 
 // TODO Implement timeouts for all reads.
 
+// MaxPayloadSize is the maximum message payload size clients and servers should read.
+// Implementations may choose to have different sizes, but since payloads are buffered
+// to memory, they probably shouldn't ever be any bigger than this.
+const MaxPayloadSize = 512 * 1024
+
 // ProxyPeerUnreachableStreamErrorCode is the code inside a quic.StreamError returned to a proxy initiator when the destination peer is unreachable.
 const ProxyPeerUnreachableStreamErrorCode quic.StreamErrorCode = 101
 
@@ -278,7 +283,9 @@ func (r *ProtoStreamReader) ReadRaw() (*UntypedProtoMsg, error) {
 	typ := pb.MsgType(binary.LittleEndian.Uint32(header[:4]))
 	payloadLen := binary.LittleEndian.Uint32(header[4:])
 
-	// TODO Enforce max payload size.
+	if payloadLen > MaxPayloadSize {
+		return nil, fmt.Errorf(`got protocol message header with type %s and length %d, but payload size exceeds maximum allowed %d`, typ.String(), payloadLen, MaxPayloadSize)
+	}
 
 	// Read payload.
 	readSize := 0
