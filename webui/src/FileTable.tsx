@@ -77,8 +77,6 @@ export type FileTableProps<T> = {
  * FileTable displays a list of files in a table.
  */
 export const FileTable = (<T,>(props: FileTableProps<T>) => {
-	// TODO Make file browser table code generic enough to use for that page and search.
-
 	return (
 		<div class={styles.files}>
 			<table>
