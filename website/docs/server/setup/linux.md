@@ -73,6 +73,9 @@ RestartSec=30
 User=friendnet
 Group=friendnet
 WorkingDirectory=/path/to/friendnet
+
+[Install]
+WantedBy=multi-user.target
 ```
 
 ---
