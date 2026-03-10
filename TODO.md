@@ -12,3 +12,7 @@ It must validate that updates (both the downloads and the update notifications) 
 # Misc
 
 Put client RPC on same HTTP server as web UI.
+
+# Icon
+
+Add icon to Windows executable with rsrc https://github.com/akavel/rsrc
