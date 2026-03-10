@@ -212,29 +212,6 @@ func main() {
 		panic(fmt.Errorf(`WebDAV server address must start with "https://" scheme`))
 	}
 
-	if !noLock {
-		locker := &Locker{
-			lockDir: dataDir,
-		}
-		lockData := locker.CheckLock()
-		if lockData != nil {
-			println("Client is already running")
-
-			if !noBrowser {
-				// Try to open web UI in browser.
-				_ = browser.OpenURL(uiUrl.String())
-			}
-
-			return
-		}
-
-		err = locker.Lock(rpcAddr)
-		if err != nil {
-			panic(fmt.Errorf(`failed to lock client: %w`, err))
-		}
-		defer locker.Unlock()
-	}
-
 	dbDir := filepath.Join(dataDir, "client.db")
 
 	store, err := storage.NewStorage(dbDir)
@@ -288,6 +265,34 @@ func main() {
 			logger.Error(`failed to get or set RPC bearer token`, "err", err)
 			os.Exit(1)
 		}
+	}
+
+	uiUrlWithCreds := fmt.Sprintf("%s?rpc=%s&token=%s", uiAddr, rpcAddr, rpcBearerToken)
+
+	if !noLock {
+		locker := &Locker{
+			lockDir: dataDir,
+		}
+		lockData := locker.CheckLock()
+		if lockData != nil {
+			println("Client is already running")
+
+			if !noBrowser {
+				// Try to open web UI in browser.
+				_ = browser.OpenURL(uiUrlWithCreds)
+			}
+
+			_ = logHandler.Close()
+			_ = store.Close()
+
+			return
+		}
+
+		err = locker.Lock(rpcAddr)
+		if err != nil {
+			panic(fmt.Errorf(`failed to lock client: %w`, err))
+		}
+		defer locker.Unlock()
 	}
 
 	if !headless && !mc.CheckPlatform() {
@@ -548,16 +553,14 @@ func main() {
 	})
 	if !headless {
 		wg.Go(func() {
-			uiUrl := fmt.Sprintf("%s?rpc=%s&token=%s", uiAddr, rpcAddr, rpcBearerToken)
-
 			logger.Info(`Web UI server listening`,
 				"addr", uiAddr,
-				"url", uiUrl,
+				"url", uiUrlWithCreds,
 			)
 
 			if !noBrowser {
 				// Try to open URL in browser.
-				_ = browser.OpenURL(uiUrl)
+				_ = browser.OpenURL(uiUrlWithCreds)
 			}
 
 			listenErr := uiServer.ListenAndServeTLS("", "")
