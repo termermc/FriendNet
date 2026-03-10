@@ -257,7 +257,11 @@ const P2pSettings: Component = () => {
 
 									<tr>
 										<td>
-											<label for="setting-advertise-private">
+											<label
+												class={stylesCommon.help}
+												for="setting-advertise-private"
+												title="If checked, private IPs (like 192.168.x.x or 10.x.x.x) will be advertised for peers to connect to. This only makes sense to enable if you and other peers are on the same LAN or VPN."
+											>
 												Advertise private IPs?
 											</label>
 										</td>
