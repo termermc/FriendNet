@@ -38,3 +38,13 @@ Remember that publicly exposing other methods, especially action/update methods,
 You should now have a widget for your server!
 
 > ![screenshot](widget.png)
+
+## Serving the RPC Endpoint over HTTPS
+
+For the widget to work the best, you should put the server RPC endpoint behind a reverse proxy like
+[Nginx](https://nginx.org/) or [Caddy](https://caddyserver.com/) to provide HTTPS support.
+The server does not provide HTTPS capabilities for the RPC endpoint itself.
+
+Make sure to enable HTTP/2 support for the endpoint. Without it, updating the widget may be slow and unreliable.
+This is because the RPC endpoint depends on gRPC-Web, an extension to the HTTP/2-dependent protocol
+[gRPC](https://grpc.io/).
