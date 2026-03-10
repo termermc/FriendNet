@@ -24,12 +24,6 @@ import (
 	"golang.org/x/net/http2"
 )
 
-// TODO Protect with some kind of token?
-// Maybe the URL should include the token as the first segment or something.
-// I want to make sure that relative paths can load so that a profile page can be iframe'd.
-
-// TODO Zip folder downloads
-
 // FileServerHandler is an HTTP handler that serves files from remote peers.
 type FileServerHandler struct {
 	logger *slog.Logger
