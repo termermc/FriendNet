@@ -78,4 +78,18 @@
 .form table {
 	width: 30rem;
 	margin-bottom: 1rem;
+    border-collapse: collapse;
+}
+.form table tr {
+    border: 0.3rem solid rgba(0, 0, 0, 0.25);
+}
+.form table td {
+    padding: 0.5rem;
+}
+.form table td:nth-child(1) {
+    font-weight: bold;
+    text-align: left;
+}
+.form table td:nth-child(2) {
+    text-align: right;
 }

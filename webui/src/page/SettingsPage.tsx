@@ -172,6 +172,7 @@ const P2pSettings: Component = () => {
 
 											<input
 												type="text"
+												id="setting-addresses"
 												placeholder="ex: 0.0.0.0:20048, [::]:20048"
 												value={pendingAddr()}
 												onInput={(e) =>
@@ -282,11 +283,12 @@ const P2pSettings: Component = () => {
 
 									<tr>
 										<td>
-											<label for="setting-disable-public-ip-discovery">
-												Disable public IP discovery? If
-												checked, the client will not
-												query servers for the client's
-												public IP.
+											<label
+												class={stylesCommon.help}
+												title="If checked, the client will not query servers for the client's public IP."
+												for="setting-disable-public-ip-discovery"
+											>
+												Disable public IP discovery?
 											</label>
 										</td>
 										<td>
