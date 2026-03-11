@@ -48,7 +48,7 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({ curUpdate }) 
 				<div class="home-content download">
                     ${curUpdate.description
                             ? html`
-                                <h2>Release Note</h2>
+                                <h2>Release Notes</h2>
                                 <pre>${curUpdate.description}</pre>
                             `
                             : ''
