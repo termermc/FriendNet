@@ -8,8 +8,8 @@ import (
 	"friendnet.org/client/storage"
 )
 
-const dlDirIncompleteSetting = "download_dir_incomplete"
-const dlDirCompleteSetting = "download_dir_complete"
+const dmDirIncompleteSetting = "dm_dir_incomplete"
+const dmDirCompleteSetting = "dm_dir_complete"
 
 // DownloadManager manages downloads across multiple servers.
 // It can resume and retry downloads, even when the client is closed and reopened, or when a peer goes offline and
