@@ -20,4 +20,5 @@
 	background-color: rgba(0, 0, 0, 0.15);
 	width: 30rem;
 	padding: 1rem;
+    overflow: auto;
 }
