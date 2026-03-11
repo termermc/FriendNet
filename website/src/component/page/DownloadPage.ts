@@ -21,11 +21,13 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({ curUpdate }) 
         const baseUrl = `https://github.com/termermc/FriendNet/releases/download/${releaseTag}/friendnet-client`
         const windowsAmd64Suffix = '-windows_amd64.exe'
         const linuxAmd64Suffix = '-linux_amd64'
+        const linuxArm64Suffix = '-linux_arm64'
         const macosArm64Suffix = '-macos_arm64'
 
         dlUrls = {
             'Windows (x64)': baseUrl + windowsAmd64Suffix,
             'Linux (x64)': baseUrl + linuxAmd64Suffix,
+	        'Linux (ARM64)': baseUrl + linuxArm64Suffix,
             'MacOS (Apple Silicon, M1, etc.)': baseUrl + macosArm64Suffix,
             'Release Page': url,
         }
