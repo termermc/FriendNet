@@ -1,6 +1,7 @@
 services:
     friendnet-server:
         image: git.termer.net/termer/friendnet-server:latest
+        restart: unless-stopped
 
         network_mode: host
 
