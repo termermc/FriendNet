@@ -160,7 +160,8 @@ const (
 	// [S2C] A search result from a client in the room.
 	MsgType_MSG_TYPE_SEARCH_ROOM_RESULT MsgType = 41
 	// [C2C] Reports a status update for downloading a file.
-	// Expected: Message MSG_TYPE_ACKNOWLEDGED.
+	// Multiple messages of this type can be sent in the same bidi until the sender closes it.
+	// The receiver may close the bidi at any time.
 	MsgType_MSG_TYPE_DOWNLOAD_STATUS_UPDATE MsgType = 42
 )
 
@@ -2999,9 +3000,6 @@ func (x *MsgSearchRoomResult) GetResult() *MsgSearchResult {
 }
 
 // See MSG_TYPE_DOWNLOAD_STATUS_UPDATE.
-// TODO Should this message include multiple status updates?
-// If you queued a lot of files, it may make sense to send multiple status updates at once.
-// If so, it would need to be paginated to stay under the protocol message payload size limit.
 type MsgDownloadStatusUpdate struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The file's path.

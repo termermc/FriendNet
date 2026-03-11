@@ -39,6 +39,10 @@ type DownloadManager struct {
 	multi    *MultiClient
 	eventBus *event.Bus
 	storage  *storage.Storage
+
+	// TODO Queue of status updates.
+	// The queue will be drained to a pool of open status update bidis (or maybe just one).
+	// If the queue chan is full, status updates will be dropped.
 }
 
 func NewDownloadManager(

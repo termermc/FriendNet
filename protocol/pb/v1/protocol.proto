@@ -183,7 +183,8 @@ enum MsgType {
     MSG_TYPE_SEARCH_ROOM_RESULT = 41;
 
     // [C2C] Reports a status update for downloading a file.
-    // Expected: Message MSG_TYPE_ACKNOWLEDGED.
+    // Multiple messages of this type can be sent in the same bidi until the sender closes it.
+    // The receiver may close the bidi at any time.
     MSG_TYPE_DOWNLOAD_STATUS_UPDATE = 42;
 }
 
@@ -711,9 +712,6 @@ enum DownloadStatus {
 }
 
 // See MSG_TYPE_DOWNLOAD_STATUS_UPDATE.
-// TODO Should this message include multiple status updates?
-// If you queued a lot of files, it may make sense to send multiple status updates at once.
-// If so, it would need to be paginated to stay under the protocol message payload size limit.
 message MsgDownloadStatusUpdate {
     // The file's path.
     string path = 1;
