@@ -20,8 +20,9 @@ var (
 		os.Getenv("HOME") + "/.zen/*",
 		os.Getenv("HOME") + "/.librewolf/*",
 		os.Getenv("HOME") + "/snap/firefox/common/.mozilla/firefox/*",
-		os.Getenv("HOME") + "/.var/app/io.gitlab.librewolf-community/.librewolf/*",
 		os.Getenv("HOME") + "/.var/app/org.mozilla.firefox/.mozilla/firefox/*",
+		os.Getenv("HOME") + "/.var/app/org.mozilla.firefox/.zen/*",
+		os.Getenv("HOME") + "/.var/app/io.gitlab.librewolf-community/.librewolf/*",
 	}
 	NSSBrowsers = "Firefox and/or Chrome/Chromium"
 
