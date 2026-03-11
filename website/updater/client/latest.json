@@ -1,1 +1,1 @@
-{"created_ts":1773027199,"version":"1.0.0","description":"Initial release of FriendNet.","url":"https://github.com/termermc/FriendNet/releases/tag/v1.0.0"}
+{"created_ts":1773198933,"version":"1.0.1","description":" - Improved client UI\n - Fixed issue with opening new browser windows for already-running clients\n - Added -rmcerthost client flag to remove hostnames from the certificate store (needed if a server changes certificate)\n - Added Linux ARM64 build","url":"https://github.com/termermc/FriendNet/releases/tag/v1.0.1"}
