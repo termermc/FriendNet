@@ -140,7 +140,7 @@ Rules:
  - Paths must always be interpreted as absolute.
  - Paths must always use `/` as their separator.
  - Paths must not contain any `.` or `..` components.
- - Paths must never end with a `/`, regardless of whether they are pointing to a file or a directory.
+ - Paths must never end with a `/` (unless it is absolute root, `/`), regardless of whether they are pointing to a file or a directory.
 
    > This is to prevent implementations from guessing that a path is or isn't a directory purely based on the path.
    > The type or existence of a path cannot be inferred by the path itself, and encouraging those guesses can lead
