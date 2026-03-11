@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"log/slog"
 	"sync"
 
 	"friendnet.org/client/event"
@@ -10,6 +11,11 @@ import (
 
 const dmDirIncompleteSetting = "dm_dir_incomplete"
 const dmDirCompleteSetting = "dm_dir_complete"
+
+// DownloadState is the state of a download.
+type DownloadState struct {
+	dm *DownloadManager
+}
 
 // DownloadManager manages downloads across multiple servers.
 // It can resume and retry downloads, even when the client is closed and reopened, or when a peer goes offline and
@@ -28,7 +34,41 @@ type DownloadManager struct {
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 
+	logger *slog.Logger
+
 	multi    *MultiClient
 	eventBus *event.Bus
 	storage  *storage.Storage
+}
+
+func NewDownloadManager(
+	logger *slog.Logger,
+
+	multi *MultiClient,
+	eventBus *event.Bus,
+	storage *storage.Storage,
+) (*DownloadManager, error) {
+	ctx, ctxCancel := context.WithCancel(context.Background())
+
+	return &DownloadManager{
+		ctx:       ctx,
+		ctxCancel: ctxCancel,
+		logger:    logger,
+		multi:     multi,
+		eventBus:  eventBus,
+		storage:   storage,
+	}, nil
+}
+
+func (dm *DownloadManager) Close() error {
+	dm.mu.Lock()
+	if dm.isClosed {
+		dm.mu.Unlock()
+		return nil
+	}
+	dm.isClosed = true
+	dm.mu.Unlock()
+
+	dm.ctxCancel()
+	return nil
 }

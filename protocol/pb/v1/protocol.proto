@@ -694,21 +694,27 @@ enum DownloadStatus {
     // Do not use.
     DOWNLOAD_STATUS_UNSPECIFIED = 0;
 
+    // Queued.
+    DOWNLOAD_STATUS_QUEUED = 1;
+
     // Pending.
-    DOWNLOAD_STATUS_PENDING = 1;
+    DOWNLOAD_STATUS_PENDING = 2;
 
     // Canceled.
-    DOWNLOAD_STATUS_CANCELED = 2;
+    DOWNLOAD_STATUS_CANCELED = 3;
 
     // Done.
-    DOWNLOAD_STATUS_DONE = 3;
+    DOWNLOAD_STATUS_DONE = 4;
 
     // Failed to download due to an error.
-    DOWNLOAD_STATUS_ERROR = 4;
+    DOWNLOAD_STATUS_ERROR = 5;
 }
 
 // See MSG_TYPE_DOWNLOAD_STATUS_UPDATE.
-message MsgDownloadStatus {
+// TODO Should this message include multiple status updates?
+// If you queued a lot of files, it may make sense to send multiple status updates at once.
+// If so, it would need to be paginated to stay under the protocol message payload size limit.
+message MsgDownloadStatusUpdate {
     // The file's path.
     string path = 1;
 

@@ -686,31 +686,35 @@ type DownloadStatus int32
 const (
 	// Do not use.
 	DownloadStatus_DOWNLOAD_STATUS_UNSPECIFIED DownloadStatus = 0
+	// Queued.
+	DownloadStatus_DOWNLOAD_STATUS_QUEUED DownloadStatus = 1
 	// Pending.
-	DownloadStatus_DOWNLOAD_STATUS_PENDING DownloadStatus = 1
+	DownloadStatus_DOWNLOAD_STATUS_PENDING DownloadStatus = 2
 	// Canceled.
-	DownloadStatus_DOWNLOAD_STATUS_CANCELED DownloadStatus = 2
+	DownloadStatus_DOWNLOAD_STATUS_CANCELED DownloadStatus = 3
 	// Done.
-	DownloadStatus_DOWNLOAD_STATUS_DONE DownloadStatus = 3
+	DownloadStatus_DOWNLOAD_STATUS_DONE DownloadStatus = 4
 	// Failed to download due to an error.
-	DownloadStatus_DOWNLOAD_STATUS_ERROR DownloadStatus = 4
+	DownloadStatus_DOWNLOAD_STATUS_ERROR DownloadStatus = 5
 )
 
 // Enum value maps for DownloadStatus.
 var (
 	DownloadStatus_name = map[int32]string{
 		0: "DOWNLOAD_STATUS_UNSPECIFIED",
-		1: "DOWNLOAD_STATUS_PENDING",
-		2: "DOWNLOAD_STATUS_CANCELED",
-		3: "DOWNLOAD_STATUS_DONE",
-		4: "DOWNLOAD_STATUS_ERROR",
+		1: "DOWNLOAD_STATUS_QUEUED",
+		2: "DOWNLOAD_STATUS_PENDING",
+		3: "DOWNLOAD_STATUS_CANCELED",
+		4: "DOWNLOAD_STATUS_DONE",
+		5: "DOWNLOAD_STATUS_ERROR",
 	}
 	DownloadStatus_value = map[string]int32{
 		"DOWNLOAD_STATUS_UNSPECIFIED": 0,
-		"DOWNLOAD_STATUS_PENDING":     1,
-		"DOWNLOAD_STATUS_CANCELED":    2,
-		"DOWNLOAD_STATUS_DONE":        3,
-		"DOWNLOAD_STATUS_ERROR":       4,
+		"DOWNLOAD_STATUS_QUEUED":      1,
+		"DOWNLOAD_STATUS_PENDING":     2,
+		"DOWNLOAD_STATUS_CANCELED":    3,
+		"DOWNLOAD_STATUS_DONE":        4,
+		"DOWNLOAD_STATUS_ERROR":       5,
 	}
 )
 
@@ -2995,7 +2999,10 @@ func (x *MsgSearchRoomResult) GetResult() *MsgSearchResult {
 }
 
 // See MSG_TYPE_DOWNLOAD_STATUS_UPDATE.
-type MsgDownloadStatus struct {
+// TODO Should this message include multiple status updates?
+// If you queued a lot of files, it may make sense to send multiple status updates at once.
+// If so, it would need to be paginated to stay under the protocol message payload size limit.
+type MsgDownloadStatusUpdate struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The file's path.
 	Path string `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
@@ -3008,20 +3015,20 @@ type MsgDownloadStatus struct {
 	sizeCache       protoimpl.SizeCache
 }
 
-func (x *MsgDownloadStatus) Reset() {
-	*x = MsgDownloadStatus{}
+func (x *MsgDownloadStatusUpdate) Reset() {
+	*x = MsgDownloadStatusUpdate{}
 	mi := &file_pb_v1_protocol_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *MsgDownloadStatus) String() string {
+func (x *MsgDownloadStatusUpdate) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*MsgDownloadStatus) ProtoMessage() {}
+func (*MsgDownloadStatusUpdate) ProtoMessage() {}
 
-func (x *MsgDownloadStatus) ProtoReflect() protoreflect.Message {
+func (x *MsgDownloadStatusUpdate) ProtoReflect() protoreflect.Message {
 	mi := &file_pb_v1_protocol_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3033,26 +3040,26 @@ func (x *MsgDownloadStatus) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use MsgDownloadStatus.ProtoReflect.Descriptor instead.
-func (*MsgDownloadStatus) Descriptor() ([]byte, []int) {
+// Deprecated: Use MsgDownloadStatusUpdate.ProtoReflect.Descriptor instead.
+func (*MsgDownloadStatusUpdate) Descriptor() ([]byte, []int) {
 	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{44}
 }
 
-func (x *MsgDownloadStatus) GetPath() string {
+func (x *MsgDownloadStatusUpdate) GetPath() string {
 	if x != nil {
 		return x.Path
 	}
 	return ""
 }
 
-func (x *MsgDownloadStatus) GetStatus() DownloadStatus {
+func (x *MsgDownloadStatusUpdate) GetStatus() DownloadStatus {
 	if x != nil {
 		return x.Status
 	}
 	return DownloadStatus_DOWNLOAD_STATUS_UNSPECIFIED
 }
 
-func (x *MsgDownloadStatus) GetBytesDownloaded() uint64 {
+func (x *MsgDownloadStatusUpdate) GetBytesDownloaded() uint64 {
 	if x != nil {
 		return x.BytesDownloaded
 	}
@@ -3183,8 +3190,8 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\asnippet\x18\x03 \x01(\tR\asnippet\"a\n" +
 	"\x13MsgSearchRoomResult\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12.\n" +
-	"\x06result\x18\x02 \x01(\v2\x16.pb.v1.MsgSearchResultR\x06result\"\x81\x01\n" +
-	"\x11MsgDownloadStatus\x12\x12\n" +
+	"\x06result\x18\x02 \x01(\v2\x16.pb.v1.MsgSearchResultR\x06result\"\x87\x01\n" +
+	"\x17MsgDownloadStatusUpdate\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12-\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x15.pb.v1.DownloadStatusR\x06status\x12)\n" +
 	"\x10bytes_downloaded\x18\x03 \x01(\x04R\x0fbytesDownloaded*\xa9\n" +
@@ -3277,13 +3284,14 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x1fDIRECT_CONN_HANDSHAKE_RESULT_OK\x10\x01\x12.\n" +
 	"*DIRECT_CONN_HANDSHAKE_RESULT_TOKEN_INVALID\x10\x02\x12/\n" +
 	"+DIRECT_CONN_HANDSHAKE_RESULT_INTERNAL_ERROR\x10\x03\x12(\n" +
-	"$DIRECT_CONN_HANDSHAKE_RESULT_KTHXBYE\x10\x04*\xa1\x01\n" +
+	"$DIRECT_CONN_HANDSHAKE_RESULT_KTHXBYE\x10\x04*\xbd\x01\n" +
 	"\x0eDownloadStatus\x12\x1f\n" +
-	"\x1bDOWNLOAD_STATUS_UNSPECIFIED\x10\x00\x12\x1b\n" +
-	"\x17DOWNLOAD_STATUS_PENDING\x10\x01\x12\x1c\n" +
-	"\x18DOWNLOAD_STATUS_CANCELED\x10\x02\x12\x18\n" +
-	"\x14DOWNLOAD_STATUS_DONE\x10\x03\x12\x19\n" +
-	"\x15DOWNLOAD_STATUS_ERROR\x10\x04Br\n" +
+	"\x1bDOWNLOAD_STATUS_UNSPECIFIED\x10\x00\x12\x1a\n" +
+	"\x16DOWNLOAD_STATUS_QUEUED\x10\x01\x12\x1b\n" +
+	"\x17DOWNLOAD_STATUS_PENDING\x10\x02\x12\x1c\n" +
+	"\x18DOWNLOAD_STATUS_CANCELED\x10\x03\x12\x18\n" +
+	"\x14DOWNLOAD_STATUS_DONE\x10\x04\x12\x19\n" +
+	"\x15DOWNLOAD_STATUS_ERROR\x10\x05Br\n" +
 	"\tcom.pb.v1B\rProtocolProtoP\x01Z!friendnet.org/protocol/pb/v1;pbv1\xa2\x02\x03PXX\xaa\x02\x05Pb.V1\xca\x02\x05Pb\\V1\xe2\x02\x11Pb\\V1\\GPBMetadata\xea\x02\x06Pb::V1b\x06proto3"
 
 var (
@@ -3353,7 +3361,7 @@ var file_pb_v1_protocol_proto_goTypes = []any{
 	(*MsgSearch)(nil),                         // 49: pb.v1.MsgSearch
 	(*MsgSearchResult)(nil),                   // 50: pb.v1.MsgSearchResult
 	(*MsgSearchRoomResult)(nil),               // 51: pb.v1.MsgSearchRoomResult
-	(*MsgDownloadStatus)(nil),                 // 52: pb.v1.MsgDownloadStatus
+	(*MsgDownloadStatusUpdate)(nil),           // 52: pb.v1.MsgDownloadStatusUpdate
 }
 var file_pb_v1_protocol_proto_depIdxs = []int32{
 	1,  // 0: pb.v1.MsgError.type:type_name -> pb.v1.ErrType
@@ -3373,7 +3381,7 @@ var file_pb_v1_protocol_proto_depIdxs = []int32{
 	27, // 14: pb.v1.MsgClientOnline.info:type_name -> pb.v1.OnlineUserInfo
 	24, // 15: pb.v1.MsgSearchResult.file:type_name -> pb.v1.MsgFileMeta
 	50, // 16: pb.v1.MsgSearchRoomResult.result:type_name -> pb.v1.MsgSearchResult
-	7,  // 17: pb.v1.MsgDownloadStatus.status:type_name -> pb.v1.DownloadStatus
+	7,  // 17: pb.v1.MsgDownloadStatusUpdate.status:type_name -> pb.v1.DownloadStatus
 	18, // [18:18] is the sub-list for method output_type
 	18, // [18:18] is the sub-list for method input_type
 	18, // [18:18] is the sub-list for extension type_name
