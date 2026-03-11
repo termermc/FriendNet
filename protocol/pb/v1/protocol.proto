@@ -181,6 +181,10 @@ enum MsgType {
 
     // [S2C] A search result from a client in the room.
     MSG_TYPE_SEARCH_ROOM_RESULT = 41;
+
+    // [C2C] Reports a status update for downloading a file.
+    // Expected: Message MSG_TYPE_ACKNOWLEDGED.
+    MSG_TYPE_DOWNLOAD_STATUS_UPDATE = 42;
 }
 
 // Ping message.
@@ -683,4 +687,35 @@ message MsgSearchRoomResult {
 
     // The search result.
     MsgSearchResult result = 2;
+}
+
+// DownloadStatus is the status of a file download.
+enum DownloadStatus {
+    // Do not use.
+    DOWNLOAD_STATUS_UNSPECIFIED = 0;
+
+    // Pending.
+    DOWNLOAD_STATUS_PENDING = 1;
+
+    // Canceled.
+    DOWNLOAD_STATUS_CANCELED = 2;
+
+    // Done.
+    DOWNLOAD_STATUS_DONE = 3;
+
+    // Failed to download due to an error.
+    DOWNLOAD_STATUS_ERROR = 4;
+}
+
+// See MSG_TYPE_DOWNLOAD_STATUS_UPDATE.
+message MsgDownloadStatus {
+    // The file's path.
+    string path = 1;
+
+    // The file's download status.
+    DownloadStatus status = 2;
+
+    // The total number of bytes downloaded.
+    // The number does not imply that the download was fully sequential.
+    uint64 bytes_downloaded = 3;
 }

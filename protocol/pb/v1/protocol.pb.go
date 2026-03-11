@@ -159,6 +159,9 @@ const (
 	MsgType_MSG_TYPE_SEARCH_RESULT MsgType = 40
 	// [S2C] A search result from a client in the room.
 	MsgType_MSG_TYPE_SEARCH_ROOM_RESULT MsgType = 41
+	// [C2C] Reports a status update for downloading a file.
+	// Expected: Message MSG_TYPE_ACKNOWLEDGED.
+	MsgType_MSG_TYPE_DOWNLOAD_STATUS_UPDATE MsgType = 42
 )
 
 // Enum value maps for MsgType.
@@ -206,6 +209,7 @@ var (
 		39: "MSG_TYPE_SEARCH",
 		40: "MSG_TYPE_SEARCH_RESULT",
 		41: "MSG_TYPE_SEARCH_ROOM_RESULT",
+		42: "MSG_TYPE_DOWNLOAD_STATUS_UPDATE",
 	}
 	MsgType_value = map[string]int32{
 		"MSG_TYPE_UNSPECIFIED":                        0,
@@ -250,6 +254,7 @@ var (
 		"MSG_TYPE_SEARCH":                             39,
 		"MSG_TYPE_SEARCH_RESULT":                      40,
 		"MSG_TYPE_SEARCH_ROOM_RESULT":                 41,
+		"MSG_TYPE_DOWNLOAD_STATUS_UPDATE":             42,
 	}
 )
 
@@ -673,6 +678,67 @@ func (x DirectConnHandshakeResult) Number() protoreflect.EnumNumber {
 // Deprecated: Use DirectConnHandshakeResult.Descriptor instead.
 func (DirectConnHandshakeResult) EnumDescriptor() ([]byte, []int) {
 	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{6}
+}
+
+// DownloadStatus is the status of a file download.
+type DownloadStatus int32
+
+const (
+	// Do not use.
+	DownloadStatus_DOWNLOAD_STATUS_UNSPECIFIED DownloadStatus = 0
+	// Pending.
+	DownloadStatus_DOWNLOAD_STATUS_PENDING DownloadStatus = 1
+	// Canceled.
+	DownloadStatus_DOWNLOAD_STATUS_CANCELED DownloadStatus = 2
+	// Done.
+	DownloadStatus_DOWNLOAD_STATUS_DONE DownloadStatus = 3
+	// Failed to download due to an error.
+	DownloadStatus_DOWNLOAD_STATUS_ERROR DownloadStatus = 4
+)
+
+// Enum value maps for DownloadStatus.
+var (
+	DownloadStatus_name = map[int32]string{
+		0: "DOWNLOAD_STATUS_UNSPECIFIED",
+		1: "DOWNLOAD_STATUS_PENDING",
+		2: "DOWNLOAD_STATUS_CANCELED",
+		3: "DOWNLOAD_STATUS_DONE",
+		4: "DOWNLOAD_STATUS_ERROR",
+	}
+	DownloadStatus_value = map[string]int32{
+		"DOWNLOAD_STATUS_UNSPECIFIED": 0,
+		"DOWNLOAD_STATUS_PENDING":     1,
+		"DOWNLOAD_STATUS_CANCELED":    2,
+		"DOWNLOAD_STATUS_DONE":        3,
+		"DOWNLOAD_STATUS_ERROR":       4,
+	}
+)
+
+func (x DownloadStatus) Enum() *DownloadStatus {
+	p := new(DownloadStatus)
+	*p = x
+	return p
+}
+
+func (x DownloadStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (DownloadStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_pb_v1_protocol_proto_enumTypes[7].Descriptor()
+}
+
+func (DownloadStatus) Type() protoreflect.EnumType {
+	return &file_pb_v1_protocol_proto_enumTypes[7]
+}
+
+func (x DownloadStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use DownloadStatus.Descriptor instead.
+func (DownloadStatus) EnumDescriptor() ([]byte, []int) {
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{7}
 }
 
 // Ping message.
@@ -2928,6 +2994,71 @@ func (x *MsgSearchRoomResult) GetResult() *MsgSearchResult {
 	return nil
 }
 
+// See MSG_TYPE_DOWNLOAD_STATUS_UPDATE.
+type MsgDownloadStatus struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The file's path.
+	Path string `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	// The file's download status.
+	Status DownloadStatus `protobuf:"varint,2,opt,name=status,proto3,enum=pb.v1.DownloadStatus" json:"status,omitempty"`
+	// The total number of bytes downloaded.
+	// The number does not imply that the download was fully sequential.
+	BytesDownloaded uint64 `protobuf:"varint,3,opt,name=bytes_downloaded,json=bytesDownloaded,proto3" json:"bytes_downloaded,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *MsgDownloadStatus) Reset() {
+	*x = MsgDownloadStatus{}
+	mi := &file_pb_v1_protocol_proto_msgTypes[44]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MsgDownloadStatus) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgDownloadStatus) ProtoMessage() {}
+
+func (x *MsgDownloadStatus) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_v1_protocol_proto_msgTypes[44]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MsgDownloadStatus.ProtoReflect.Descriptor instead.
+func (*MsgDownloadStatus) Descriptor() ([]byte, []int) {
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{44}
+}
+
+func (x *MsgDownloadStatus) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *MsgDownloadStatus) GetStatus() DownloadStatus {
+	if x != nil {
+		return x.Status
+	}
+	return DownloadStatus_DOWNLOAD_STATUS_UNSPECIFIED
+}
+
+func (x *MsgDownloadStatus) GetBytesDownloaded() uint64 {
+	if x != nil {
+		return x.BytesDownloaded
+	}
+	return 0
+}
+
 var File_pb_v1_protocol_proto protoreflect.FileDescriptor
 
 const file_pb_v1_protocol_proto_rawDesc = "" +
@@ -3052,7 +3183,11 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\asnippet\x18\x03 \x01(\tR\asnippet\"a\n" +
 	"\x13MsgSearchRoomResult\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12.\n" +
-	"\x06result\x18\x02 \x01(\v2\x16.pb.v1.MsgSearchResultR\x06result*\x84\n" +
+	"\x06result\x18\x02 \x01(\v2\x16.pb.v1.MsgSearchResultR\x06result\"\x81\x01\n" +
+	"\x11MsgDownloadStatus\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12-\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x15.pb.v1.DownloadStatusR\x06status\x12)\n" +
+	"\x10bytes_downloaded\x18\x03 \x01(\x04R\x0fbytesDownloaded*\xa9\n" +
 	"\n" +
 	"\aMsgType\x12\x18\n" +
 	"\x14MSG_TYPE_UNSPECIFIED\x10\x00\x12\x11\n" +
@@ -3097,7 +3232,8 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x17MSG_TYPE_CLIENT_OFFLINE\x10&\x12\x13\n" +
 	"\x0fMSG_TYPE_SEARCH\x10'\x12\x1a\n" +
 	"\x16MSG_TYPE_SEARCH_RESULT\x10(\x12\x1f\n" +
-	"\x1bMSG_TYPE_SEARCH_ROOM_RESULT\x10)*\x8b\x03\n" +
+	"\x1bMSG_TYPE_SEARCH_ROOM_RESULT\x10)\x12#\n" +
+	"\x1fMSG_TYPE_DOWNLOAD_STATUS_UPDATE\x10**\x8b\x03\n" +
 	"\aErrType\x12\x18\n" +
 	"\x14ERR_TYPE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11ERR_TYPE_INTERNAL\x10\x01\x12\x1e\n" +
@@ -3141,7 +3277,13 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x1fDIRECT_CONN_HANDSHAKE_RESULT_OK\x10\x01\x12.\n" +
 	"*DIRECT_CONN_HANDSHAKE_RESULT_TOKEN_INVALID\x10\x02\x12/\n" +
 	"+DIRECT_CONN_HANDSHAKE_RESULT_INTERNAL_ERROR\x10\x03\x12(\n" +
-	"$DIRECT_CONN_HANDSHAKE_RESULT_KTHXBYE\x10\x04Br\n" +
+	"$DIRECT_CONN_HANDSHAKE_RESULT_KTHXBYE\x10\x04*\xa1\x01\n" +
+	"\x0eDownloadStatus\x12\x1f\n" +
+	"\x1bDOWNLOAD_STATUS_UNSPECIFIED\x10\x00\x12\x1b\n" +
+	"\x17DOWNLOAD_STATUS_PENDING\x10\x01\x12\x1c\n" +
+	"\x18DOWNLOAD_STATUS_CANCELED\x10\x02\x12\x18\n" +
+	"\x14DOWNLOAD_STATUS_DONE\x10\x03\x12\x19\n" +
+	"\x15DOWNLOAD_STATUS_ERROR\x10\x04Br\n" +
 	"\tcom.pb.v1B\rProtocolProtoP\x01Z!friendnet.org/protocol/pb/v1;pbv1\xa2\x02\x03PXX\xaa\x02\x05Pb.V1\xca\x02\x05Pb\\V1\xe2\x02\x11Pb\\V1\\GPBMetadata\xea\x02\x06Pb::V1b\x06proto3"
 
 var (
@@ -3156,8 +3298,8 @@ func file_pb_v1_protocol_proto_rawDescGZIP() []byte {
 	return file_pb_v1_protocol_proto_rawDescData
 }
 
-var file_pb_v1_protocol_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
-var file_pb_v1_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 44)
+var file_pb_v1_protocol_proto_enumTypes = make([]protoimpl.EnumInfo, 8)
+var file_pb_v1_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 45)
 var file_pb_v1_protocol_proto_goTypes = []any{
 	(MsgType)(0),                              // 0: pb.v1.MsgType
 	(ErrType)(0),                              // 1: pb.v1.ErrType
@@ -3166,74 +3308,77 @@ var file_pb_v1_protocol_proto_goTypes = []any{
 	(ConnMethodType)(0),                       // 4: pb.v1.ConnMethodType
 	(ConnResult)(0),                           // 5: pb.v1.ConnResult
 	(DirectConnHandshakeResult)(0),            // 6: pb.v1.DirectConnHandshakeResult
-	(*MsgPing)(nil),                           // 7: pb.v1.MsgPing
-	(*MsgPong)(nil),                           // 8: pb.v1.MsgPong
-	(*MsgAcknowledged)(nil),                   // 9: pb.v1.MsgAcknowledged
-	(*MsgError)(nil),                          // 10: pb.v1.MsgError
-	(*ProtoVersion)(nil),                      // 11: pb.v1.ProtoVersion
-	(*MsgVersion)(nil),                        // 12: pb.v1.MsgVersion
-	(*MsgVersionAccepted)(nil),                // 13: pb.v1.MsgVersionAccepted
-	(*MsgVersionRejected)(nil),                // 14: pb.v1.MsgVersionRejected
-	(*MsgAuthenticate)(nil),                   // 15: pb.v1.MsgAuthenticate
-	(*MsgAuthAccepted)(nil),                   // 16: pb.v1.MsgAuthAccepted
-	(*MsgAuthRejected)(nil),                   // 17: pb.v1.MsgAuthRejected
-	(*MsgOpenOutboundProxy)(nil),              // 18: pb.v1.MsgOpenOutboundProxy
-	(*MsgInboundProxy)(nil),                   // 19: pb.v1.MsgInboundProxy
-	(*MsgGetDirFiles)(nil),                    // 20: pb.v1.MsgGetDirFiles
-	(*MsgDirFiles)(nil),                       // 21: pb.v1.MsgDirFiles
-	(*MsgGetFileMeta)(nil),                    // 22: pb.v1.MsgGetFileMeta
-	(*MsgFileMeta)(nil),                       // 23: pb.v1.MsgFileMeta
-	(*MsgGetFile)(nil),                        // 24: pb.v1.MsgGetFile
-	(*MsgGetOnlineUsers)(nil),                 // 25: pb.v1.MsgGetOnlineUsers
-	(*OnlineUserInfo)(nil),                    // 26: pb.v1.OnlineUserInfo
-	(*MsgOnlineUsers)(nil),                    // 27: pb.v1.MsgOnlineUsers
-	(*MsgBye)(nil),                            // 28: pb.v1.MsgBye
-	(*MsgAdvertiseConnMethod)(nil),            // 29: pb.v1.MsgAdvertiseConnMethod
-	(*MsgAdvertiseConnMethodResult)(nil),      // 30: pb.v1.MsgAdvertiseConnMethodResult
-	(*MsgRemoveConnMethod)(nil),               // 31: pb.v1.MsgRemoveConnMethod
-	(*MsgConnectToMe)(nil),                    // 32: pb.v1.MsgConnectToMe
-	(*MsgDirectConnResult)(nil),               // 33: pb.v1.MsgDirectConnResult
-	(*MsgGetPublicIp)(nil),                    // 34: pb.v1.MsgGetPublicIp
-	(*MsgPublicIp)(nil),                       // 35: pb.v1.MsgPublicIp
-	(*MsgGetClientConnMethods)(nil),           // 36: pb.v1.MsgGetClientConnMethods
-	(*ConnMethod)(nil),                        // 37: pb.v1.ConnMethod
-	(*MsgClientConnMethods)(nil),              // 38: pb.v1.MsgClientConnMethods
-	(*MsgGetDirectConnHandshakeToken)(nil),    // 39: pb.v1.MsgGetDirectConnHandshakeToken
-	(*MsgDirectConnHandshakeToken)(nil),       // 40: pb.v1.MsgDirectConnHandshakeToken
-	(*MsgRedeemConnHandshakeToken)(nil),       // 41: pb.v1.MsgRedeemConnHandshakeToken
-	(*MsgRedeemConnHandshakeTokenResult)(nil), // 42: pb.v1.MsgRedeemConnHandshakeTokenResult
-	(*MsgDirectConnHandshake)(nil),            // 43: pb.v1.MsgDirectConnHandshake
-	(*MsgDirectConnHandshakeResult)(nil),      // 44: pb.v1.MsgDirectConnHandshakeResult
-	(*MsgChangeAccountPassword)(nil),          // 45: pb.v1.MsgChangeAccountPassword
-	(*MsgClientOnline)(nil),                   // 46: pb.v1.MsgClientOnline
-	(*MsgClientOffline)(nil),                  // 47: pb.v1.MsgClientOffline
-	(*MsgSearch)(nil),                         // 48: pb.v1.MsgSearch
-	(*MsgSearchResult)(nil),                   // 49: pb.v1.MsgSearchResult
-	(*MsgSearchRoomResult)(nil),               // 50: pb.v1.MsgSearchRoomResult
+	(DownloadStatus)(0),                       // 7: pb.v1.DownloadStatus
+	(*MsgPing)(nil),                           // 8: pb.v1.MsgPing
+	(*MsgPong)(nil),                           // 9: pb.v1.MsgPong
+	(*MsgAcknowledged)(nil),                   // 10: pb.v1.MsgAcknowledged
+	(*MsgError)(nil),                          // 11: pb.v1.MsgError
+	(*ProtoVersion)(nil),                      // 12: pb.v1.ProtoVersion
+	(*MsgVersion)(nil),                        // 13: pb.v1.MsgVersion
+	(*MsgVersionAccepted)(nil),                // 14: pb.v1.MsgVersionAccepted
+	(*MsgVersionRejected)(nil),                // 15: pb.v1.MsgVersionRejected
+	(*MsgAuthenticate)(nil),                   // 16: pb.v1.MsgAuthenticate
+	(*MsgAuthAccepted)(nil),                   // 17: pb.v1.MsgAuthAccepted
+	(*MsgAuthRejected)(nil),                   // 18: pb.v1.MsgAuthRejected
+	(*MsgOpenOutboundProxy)(nil),              // 19: pb.v1.MsgOpenOutboundProxy
+	(*MsgInboundProxy)(nil),                   // 20: pb.v1.MsgInboundProxy
+	(*MsgGetDirFiles)(nil),                    // 21: pb.v1.MsgGetDirFiles
+	(*MsgDirFiles)(nil),                       // 22: pb.v1.MsgDirFiles
+	(*MsgGetFileMeta)(nil),                    // 23: pb.v1.MsgGetFileMeta
+	(*MsgFileMeta)(nil),                       // 24: pb.v1.MsgFileMeta
+	(*MsgGetFile)(nil),                        // 25: pb.v1.MsgGetFile
+	(*MsgGetOnlineUsers)(nil),                 // 26: pb.v1.MsgGetOnlineUsers
+	(*OnlineUserInfo)(nil),                    // 27: pb.v1.OnlineUserInfo
+	(*MsgOnlineUsers)(nil),                    // 28: pb.v1.MsgOnlineUsers
+	(*MsgBye)(nil),                            // 29: pb.v1.MsgBye
+	(*MsgAdvertiseConnMethod)(nil),            // 30: pb.v1.MsgAdvertiseConnMethod
+	(*MsgAdvertiseConnMethodResult)(nil),      // 31: pb.v1.MsgAdvertiseConnMethodResult
+	(*MsgRemoveConnMethod)(nil),               // 32: pb.v1.MsgRemoveConnMethod
+	(*MsgConnectToMe)(nil),                    // 33: pb.v1.MsgConnectToMe
+	(*MsgDirectConnResult)(nil),               // 34: pb.v1.MsgDirectConnResult
+	(*MsgGetPublicIp)(nil),                    // 35: pb.v1.MsgGetPublicIp
+	(*MsgPublicIp)(nil),                       // 36: pb.v1.MsgPublicIp
+	(*MsgGetClientConnMethods)(nil),           // 37: pb.v1.MsgGetClientConnMethods
+	(*ConnMethod)(nil),                        // 38: pb.v1.ConnMethod
+	(*MsgClientConnMethods)(nil),              // 39: pb.v1.MsgClientConnMethods
+	(*MsgGetDirectConnHandshakeToken)(nil),    // 40: pb.v1.MsgGetDirectConnHandshakeToken
+	(*MsgDirectConnHandshakeToken)(nil),       // 41: pb.v1.MsgDirectConnHandshakeToken
+	(*MsgRedeemConnHandshakeToken)(nil),       // 42: pb.v1.MsgRedeemConnHandshakeToken
+	(*MsgRedeemConnHandshakeTokenResult)(nil), // 43: pb.v1.MsgRedeemConnHandshakeTokenResult
+	(*MsgDirectConnHandshake)(nil),            // 44: pb.v1.MsgDirectConnHandshake
+	(*MsgDirectConnHandshakeResult)(nil),      // 45: pb.v1.MsgDirectConnHandshakeResult
+	(*MsgChangeAccountPassword)(nil),          // 46: pb.v1.MsgChangeAccountPassword
+	(*MsgClientOnline)(nil),                   // 47: pb.v1.MsgClientOnline
+	(*MsgClientOffline)(nil),                  // 48: pb.v1.MsgClientOffline
+	(*MsgSearch)(nil),                         // 49: pb.v1.MsgSearch
+	(*MsgSearchResult)(nil),                   // 50: pb.v1.MsgSearchResult
+	(*MsgSearchRoomResult)(nil),               // 51: pb.v1.MsgSearchRoomResult
+	(*MsgDownloadStatus)(nil),                 // 52: pb.v1.MsgDownloadStatus
 }
 var file_pb_v1_protocol_proto_depIdxs = []int32{
 	1,  // 0: pb.v1.MsgError.type:type_name -> pb.v1.ErrType
-	11, // 1: pb.v1.MsgVersion.version:type_name -> pb.v1.ProtoVersion
-	11, // 2: pb.v1.MsgVersionAccepted.version:type_name -> pb.v1.ProtoVersion
-	11, // 3: pb.v1.MsgVersionRejected.version:type_name -> pb.v1.ProtoVersion
+	12, // 1: pb.v1.MsgVersion.version:type_name -> pb.v1.ProtoVersion
+	12, // 2: pb.v1.MsgVersionAccepted.version:type_name -> pb.v1.ProtoVersion
+	12, // 3: pb.v1.MsgVersionRejected.version:type_name -> pb.v1.ProtoVersion
 	2,  // 4: pb.v1.MsgVersionRejected.reason:type_name -> pb.v1.VersionRejectionReason
 	3,  // 5: pb.v1.MsgAuthRejected.reason:type_name -> pb.v1.AuthRejectionReason
-	23, // 6: pb.v1.MsgDirFiles.files:type_name -> pb.v1.MsgFileMeta
-	26, // 7: pb.v1.MsgOnlineUsers.users:type_name -> pb.v1.OnlineUserInfo
+	24, // 6: pb.v1.MsgDirFiles.files:type_name -> pb.v1.MsgFileMeta
+	27, // 7: pb.v1.MsgOnlineUsers.users:type_name -> pb.v1.OnlineUserInfo
 	4,  // 8: pb.v1.MsgAdvertiseConnMethod.type:type_name -> pb.v1.ConnMethodType
 	5,  // 9: pb.v1.MsgAdvertiseConnMethodResult.test_result:type_name -> pb.v1.ConnResult
 	5,  // 10: pb.v1.MsgDirectConnResult.result:type_name -> pb.v1.ConnResult
 	4,  // 11: pb.v1.ConnMethod.type:type_name -> pb.v1.ConnMethodType
-	37, // 12: pb.v1.MsgClientConnMethods.methods:type_name -> pb.v1.ConnMethod
+	38, // 12: pb.v1.MsgClientConnMethods.methods:type_name -> pb.v1.ConnMethod
 	6,  // 13: pb.v1.MsgDirectConnHandshakeResult.result:type_name -> pb.v1.DirectConnHandshakeResult
-	26, // 14: pb.v1.MsgClientOnline.info:type_name -> pb.v1.OnlineUserInfo
-	23, // 15: pb.v1.MsgSearchResult.file:type_name -> pb.v1.MsgFileMeta
-	49, // 16: pb.v1.MsgSearchRoomResult.result:type_name -> pb.v1.MsgSearchResult
-	17, // [17:17] is the sub-list for method output_type
-	17, // [17:17] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	27, // 14: pb.v1.MsgClientOnline.info:type_name -> pb.v1.OnlineUserInfo
+	24, // 15: pb.v1.MsgSearchResult.file:type_name -> pb.v1.MsgFileMeta
+	50, // 16: pb.v1.MsgSearchRoomResult.result:type_name -> pb.v1.MsgSearchResult
+	7,  // 17: pb.v1.MsgDownloadStatus.status:type_name -> pb.v1.DownloadStatus
+	18, // [18:18] is the sub-list for method output_type
+	18, // [18:18] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_pb_v1_protocol_proto_init() }
@@ -3249,8 +3394,8 @@ func file_pb_v1_protocol_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pb_v1_protocol_proto_rawDesc), len(file_pb_v1_protocol_proto_rawDesc)),
-			NumEnums:      7,
-			NumMessages:   44,
+			NumEnums:      8,
+			NumMessages:   45,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
