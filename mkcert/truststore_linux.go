@@ -17,8 +17,10 @@ import (
 var (
 	FirefoxProfiles = []string{
 		os.Getenv("HOME") + "/.mozilla/firefox/*",
+		os.Getenv("HOME") + "/.config/mozilla/firefox/*",
 		os.Getenv("HOME") + "/.zen/*",
 		os.Getenv("HOME") + "/.librewolf/*",
+		os.Getenv("HOME") + "/.config/librewolf/librewolf/*",
 		os.Getenv("HOME") + "/snap/firefox/common/.mozilla/firefox/*",
 		os.Getenv("HOME") + "/.var/app/org.mozilla.firefox/.mozilla/firefox/*",
 		os.Getenv("HOME") + "/.var/app/org.mozilla.firefox/.zen/*",
