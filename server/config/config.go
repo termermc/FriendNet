@@ -49,13 +49,12 @@ var Default = &ServerConfig{
 				AllowedMethods: []string{"*"},
 			},
 			{
-				Address: "http://0.0.0.0:8080",
+				Address: "http://127.0.0.1:8080",
 				AllowedMethods: []string{
 					"GetRooms",
 					"GetRoomInfo",
 					"GetOnlineUsers",
 					"GetOnlineUserInfo",
-					"GetAccounts",
 				},
 				CorsAllowAllOrigins: true,
 			},
