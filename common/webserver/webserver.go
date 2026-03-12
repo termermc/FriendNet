@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/netip"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -40,6 +41,16 @@ type serverAndRouter struct {
 	*http.ServeMux
 }
 
+// Option is a WebServer option function.
+type Option func(ws *WebServer)
+
+// WithHttpsSupport enables HTTPS support using the specified certificate.
+func WithHttpsSupport(cert tls.Certificate) Option {
+	return func(ws *WebServer) {
+		ws.httpsCertOrNil = &cert
+	}
+}
+
 // WebServer is an abstraction over HTTP servers.
 // It allows mounting a handler on an address, like "https://127.0.0.1:20040/rpc".
 // Multiple mounts with the same protocol and address will be mounted on the same underlying HTTP server.
@@ -59,19 +70,23 @@ type WebServer struct {
 }
 
 // NewWebServer creates a new WebServer.
-// If the HTTPS cert is nil, the server will not be HTTPS.
 func NewWebServer(
 	logger *slog.Logger,
-
-	httpsCertOrNil *tls.Certificate,
+	opts ...Option,
 ) *WebServer {
-	return &WebServer{
+	ws := &WebServer{
 		logger: logger,
 
-		httpsCertOrNil: httpsCertOrNil,
+		httpsCertOrNil: nil,
 
 		servers: make(map[string]*serverAndRouter),
 	}
+
+	for _, opt := range opts {
+		opt(ws)
+	}
+
+	return ws
 }
 
 func (ws *WebServer) Close() error {
@@ -98,6 +113,13 @@ func (ws *WebServer) Close() error {
 	return nil
 }
 
+type mountOptions struct {
+	unixFilePerm os.FileMode
+}
+
+// MountOption is a WebServer.Mount option function.
+type MountOption func(opts *mountOptions)
+
 // Mount mounts a handler on an address and path.
 // If there is no HTTP server running on the address, one will be created.
 //
@@ -112,6 +134,8 @@ func (ws *WebServer) Close() error {
 //   - https://[::1]:20040/rpc
 //   - unix:///tmp/friendnet.sock
 //   - unix://friendnet.sock
+//
+//goland:noinspection GoRedundantElseInIf
 func (ws *WebServer) Mount(address string, path string, handler http.Handler) error {
 	// Parse URL into protocol and address.
 	var proto string
@@ -192,9 +216,56 @@ func (ws *WebServer) Mount(address string, path string, handler http.Handler) er
 				return fmt.Errorf(`failed to listen on TCP address %q: %w`, addr, err)
 			}
 		case "unix":
+			// If set, validate specified file permission.
+			const permOctal = os.FileMode(0600)
+
+			// Check if the containing directory exists.
+			unixDir := filepath.Dir(addr)
+			{
+				info, statErr := os.Stat(unixDir)
+				if statErr != nil {
+					if os.IsNotExist(statErr) {
+						return fmt.Errorf(`containing directory %q for UNIX path %q does not exist (server will not create it manually)`, unixDir, addr)
+					}
+
+					return fmt.Errorf(`failed to stat containing directory %q for UNIX path %q: %w`, unixDir, addr, statErr)
+				}
+
+				if !info.IsDir() {
+					return fmt.Errorf(`containing directory %q for UNIX path %q exists, but is not a directory`, unixDir, addr)
+				}
+			}
+
+			// Stat path to figure out what's there, if anything.
+			{
+				info, statErr := os.Lstat(addr)
+				if statErr != nil {
+					if !os.IsNotExist(statErr) {
+						return fmt.Errorf(`failed to stat UNIX socket path %q: %w`, addr, statErr)
+					}
+				} else if info.Mode().IsDir() {
+					return fmt.Errorf(`UNIX socket path %q points to a directory`, addr)
+				} else if info.Mode()&os.ModeSocket == 0 {
+					return fmt.Errorf(`there is already a file at UNIX socket path %q, but it is not a UNIX socket`, addr)
+				} else {
+					// Socket already exists at path; delete it.
+					delErr := os.Remove(addr)
+					if delErr != nil {
+						return fmt.Errorf(`failed to delete existing UNIX socket at path %q: %w`, addr, delErr)
+					}
+				}
+			}
+
+			// Socket path is validated and any old socket there was removed.
+
 			listener, err = net.Listen("unix", addr)
 			if err != nil {
 				return fmt.Errorf(`failed to listen on UNIX socket path %q: %w`, addr, err)
+			}
+			err = os.Chmod(addr, permOctal)
+			if err != nil {
+				_ = listener.Close()
+				return fmt.Errorf(`failed to set file permission %q for UNIX socket path %q: %w`, permOctal, addr, err)
 			}
 		default:
 			panic(fmt.Errorf("BUG: unsupported protocol %q not caught early", proto))
