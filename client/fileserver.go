@@ -10,6 +10,7 @@ import (
 	"mime"
 	"net"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -28,15 +29,18 @@ import (
 type FileServerHandler struct {
 	logger *slog.Logger
 	multi  *MultiClient
+	token  string
 }
 
 func NewFileServer(
 	logger *slog.Logger,
 	multi *MultiClient,
+	token string,
 ) *FileServerHandler {
 	return &FileServerHandler{
 		logger: logger,
 		multi:  multi,
+		token:  token,
 	}
 }
 
@@ -64,7 +68,7 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		text(w, r, http.StatusInternalServerError, fmt.Sprintf("internal error:\n\n%v\n", err))
 	}
 
-	const schemeMsg = "Files are served based on the path scheme: /content/:SERVER/:USERNAME/:PATH..."
+	const schemeMsg = "Files are served based on the path scheme: /content/:TOKEN/:SERVER/:USERNAME/:PATH..."
 	const indexMsg = "Hi, you've reached the peer proxy HTTP server.\n\n" + schemeMsg + "\n\nPossible query parameter options:\n - ?download=1 signals for the browser to download the file\n - ?allowCache=1 sets caching headers to allow browser to cache the file\n - ?zip=1 on a directory downloads a zip of the directory's contents\n\nHave fun!\n"
 
 	switch r.Method {
@@ -75,8 +79,8 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	reqUrl := r.URL
 	isHead := r.Method == http.MethodHead
-	url := r.URL
 
 	// Allow fetching files from it.
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -86,7 +90,7 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("Referrer-Policy", "no-referrer")
 
-	if url.Query().Has("allowCache") {
+	if reqUrl.Query().Has("allowCache") {
 		w.Header().Set("Cache-Control", "private, max-age=600, must-revalidate")
 		w.Header().Set("Expires", time.Now().Add(10*time.Minute).Format(http.TimeFormat))
 	} else {
@@ -98,26 +102,39 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Advertise range support.
 	w.Header().Set("Accept-Ranges", "bytes")
 
-	if url.Path == "/" {
+	if reqUrl.Path == "/content/" {
 		text(w, r, http.StatusOK, indexMsg)
 		return
 	}
 
-	if !strings.HasPrefix(url.Path, "/content/") {
+	if !strings.HasPrefix(reqUrl.Path, "/content/") {
 		http.NotFound(w, r)
 		return
 	}
 
-	pathParts := strings.Split(strings.TrimSuffix(url.Path[1:], "/"), "/")
+	pathParts := strings.Split(strings.TrimSuffix(reqUrl.Path[1:], "/"), "/")
 
 	if len(pathParts) < 3 {
 		text(w, r, http.StatusBadRequest, schemeMsg+"\n")
 		return
 	}
 
-	serverUuid := pathParts[1]
-	usernameRaw := pathParts[2]
-	pathRaw := "/" + strings.Join(pathParts[3:], "/")
+	token := pathParts[1]
+	serverUuid := pathParts[2]
+	usernameRaw := pathParts[3]
+	pathRaw := "/" + strings.Join(pathParts[4:], "/")
+	var err error
+	pathRaw, err = url.QueryUnescape(pathRaw)
+	if err != nil {
+		internalError(w, r, err)
+		return
+	}
+
+	if token != s.token {
+		text(w, r, http.StatusForbidden, "invalid token\n")
+		return
+	}
+
 	path, err := common.ValidatePath(pathRaw)
 	if err != nil {
 		text(w, r, http.StatusBadRequest, fmt.Sprintf("invalid path %q: %v\n", pathRaw, err))
@@ -160,7 +177,7 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if meta.IsDir {
-			doZip := url.Query().Has("zip")
+			doZip := reqUrl.Query().Has("zip")
 			if !doZip {
 				text(w, r, http.StatusNotImplemented, "Path points to a directory.\n\nTo download the directory's content as a zip, specify ?zip=1.\n")
 				return nil
@@ -321,7 +338,7 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Content-Type", mimeType)
 
-		if url.Query().Has("download") {
+		if reqUrl.Query().Has("download") {
 			w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, meta.Name))
 		}
 

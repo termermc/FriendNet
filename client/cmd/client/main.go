@@ -432,7 +432,7 @@ func main() {
 		panic(fmt.Errorf(`failed to create RPC server: %w`, err))
 	}
 
-	err = webServer.Mount(webAddr, "/content/", client.NewFileServer(logger, multi))
+	err = webServer.Mount(webAddr, "/content/", client.NewFileServer(logger, multi, rpcBearerToken))
 	if err != nil {
 		panic(fmt.Errorf(`failed to mount file proxy: %w`, err))
 	}
@@ -490,6 +490,8 @@ func main() {
 			_ = rpc.Close()
 		})
 		doWithTimeout(5*time.Second, func(_ context.Context) {
+			// TODO REMOVE THIS
+			println("CLOSING MULTI!")
 			_ = multi.Close()
 		})
 		doWithTimeout(5*time.Second, func(_ context.Context) {
@@ -522,6 +524,11 @@ func main() {
 	stop()
 
 	shutdownWg.Wait()
+	// TODO REMOVE THIS
+	time.Sleep(1 * time.Second)
+
+	// TODO REMOVE THIS
+	println("FUCK YOU")
 
 	if profilerFile != nil {
 		pprof.StopCPUProfile()

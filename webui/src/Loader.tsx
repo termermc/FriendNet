@@ -156,10 +156,16 @@ export const Loader: Component = () => {
 		await state.refreshUpdateInfo()
 		await state.refreshServers()
 
+		let fileServerUrl = rpcUrl
+		if (!fileServerUrl.endsWith('/')) {
+			fileServerUrl += '/'
+		}
+		fileServerUrl += 'content/' + bearerToken
+
 		return {
 			clientInfo,
 			state,
-			fileServerUrl: rpcUrl + '/content',
+			fileServerUrl,
 		}
 	})
 
