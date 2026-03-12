@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"net"
@@ -59,6 +60,9 @@ func main() {
 		transport = &http.Transport{
 			DialContext: func(ctx context.Context, network string, _ string) (net.Conn, error) {
 				return dailer.DialContext(ctx, "unix", addr)
+			},
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
 			},
 		}
 	default:
