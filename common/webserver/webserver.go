@@ -204,7 +204,6 @@ func (ws *WebServer) Mount(address string, path string, handler http.Handler) er
 		var protos http.Protocols
 		protos.SetHTTP2(true)
 		protos.SetHTTP1(true)
-		protos.SetUnencryptedHTTP2(true)
 
 		var listener net.Listener
 		var err error
@@ -212,7 +211,7 @@ func (ws *WebServer) Mount(address string, path string, handler http.Handler) er
 		case "https":
 			listener, err = tls.Listen("tcp", addr, &tls.Config{
 				Certificates: []tls.Certificate{*ws.httpsCertOrNil},
-				NextProtos:   []string{"h2", "http/1.1"},
+				NextProtos:   []string{"h2"},
 			})
 			if err != nil {
 				return fmt.Errorf(`failed to listen on TLS address %q: %w`, addr, err)
