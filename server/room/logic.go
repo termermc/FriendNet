@@ -398,7 +398,7 @@ func (l LogicImpl) OnSearch(ctx context.Context, client *Client, bidi protocol.P
 						"service", "room.LogicImpl",
 						"room", c.Room.Name.String(),
 						"client", c.Username.String(),
-						"error", err,
+						"err", err,
 					)
 					return
 				}

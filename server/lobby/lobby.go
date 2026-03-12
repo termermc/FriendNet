@@ -111,7 +111,7 @@ func (l *Lobby) Onboard(conn protocol.ProtoConn) {
 				"service", "main.Lobby",
 				"room", authRoom.String(),
 				"username", authUsername.String(),
-				"error", err,
+				"err", err,
 			)
 
 			_ = authBidi.WriteInternalError(err)
