@@ -50,6 +50,7 @@ export const BaseLayout: Component<BaseLayoutProps, RenderFragments> = (
 		descRes = 'Self-hostable file sharing for friends, like a mini-Soulseek. No port forwarding needed!'
 	}
 
+	// noinspection JSUnresolvedLibraryURL
 	return html`
 		<!DOCTYPE html>
 		<html lang="en">
@@ -104,7 +105,9 @@ export const BaseLayout: Component<BaseLayoutProps, RenderFragments> = (
 				${(scripts ?? []).map(
 					(uri) => html`<script src="${uri}"></script>`,
 				)}
-			</body>
+                <script defer data-domain="friendnet.org" src="https://curiosity.termer.net/js/script.file-downloads.outbound-links.js"></script>
+                <script>window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }</script>
+            </body>
 		</html>
 	`
 }
