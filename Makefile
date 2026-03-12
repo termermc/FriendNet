@@ -53,10 +53,10 @@ webui:
 	cd webui && go generate
 
 client:
-	make webui && CGO_ENABLED=0 go build -o client/friendnet-client friendnet.org/client/cmd/client
+	make webui && cd client && CGO_ENABLED=0 go build -o friendnet-client friendnet.org/client/cmd/client
 
 client-noui:
-	cd client && CGO_ENABLED=0 go build -o client/friendnet-client friendnet.org/client/cmd/client
+	cd client && CGO_ENABLED=0 go build -o friendnet-client friendnet.org/client/cmd/client
 
 client-windows-amd64-noui:
 	cd client && CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-H windowsgui" -o friendnet-client.exe friendnet.org/client/cmd/client
