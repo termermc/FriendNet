@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"runtime/pprof"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -263,7 +264,7 @@ func main() {
 		}
 	}
 
-	webUrlWithCreds := fmt.Sprintf("%s?token=%s", webUrl.String(), rpcBearerToken)
+	webUrlWithCreds := strings.ReplaceAll(fmt.Sprintf("%s?token=%s", webUrl.String(), rpcBearerToken), "127.0.0.1", "localhost")
 
 	if !noLock {
 		locker := &Locker{
