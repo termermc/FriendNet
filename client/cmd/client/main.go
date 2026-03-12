@@ -490,8 +490,6 @@ func main() {
 			_ = rpc.Close()
 		})
 		doWithTimeout(5*time.Second, func(_ context.Context) {
-			// TODO REMOVE THIS
-			println("CLOSING MULTI!")
 			_ = multi.Close()
 		})
 		doWithTimeout(5*time.Second, func(_ context.Context) {
@@ -513,22 +511,21 @@ func main() {
 		"token", rpcBearerToken,
 	)
 
-	serveErr := webServer.Serve()
-	if serveErr != nil {
-		if errors.Is(serveErr, http.ErrServerClosed) {
-			return
+	go func() {
+		serveErr := webServer.Serve()
+		if serveErr != nil {
+			if errors.Is(serveErr, http.ErrServerClosed) {
+				return
+			}
+			logger.Error(`web server failed to serve`,
+				"err", serveErr,
+			)
 		}
-		panic(fmt.Errorf(`webserver ended with error: %w`, serveErr))
-	}
 
-	stop()
+		stop()
+	}()
 
 	shutdownWg.Wait()
-	// TODO REMOVE THIS
-	time.Sleep(1 * time.Second)
-
-	// TODO REMOVE THIS
-	println("FUCK YOU")
 
 	if profilerFile != nil {
 		pprof.StopCPUProfile()
