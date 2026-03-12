@@ -25,8 +25,6 @@ var ErrUsernameAlreadyConnected = errors.New("client with same username already 
 var ErrAccountExists = errors.New("account with same username already exists")
 var ErrNoSuchAccount = errors.New("no such account")
 
-// TODO Protocol message for server-driven close and reason.
-
 // Room is a server room that manages connected clients.
 type Room struct {
 	logger *slog.Logger
