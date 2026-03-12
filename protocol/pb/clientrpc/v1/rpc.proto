@@ -275,8 +275,7 @@ message GetClientInfoRequest {
 
 }
 message GetClientInfoResponse {
-    // The base URL to the HTTP file server.
-    string file_server_url = 1;
+    
 }
 
 message GetServersRequest {

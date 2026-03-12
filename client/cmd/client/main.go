@@ -34,6 +34,7 @@ import (
 	"friendnet.org/common"
 	"friendnet.org/common/machine"
 	"friendnet.org/common/updater"
+	"friendnet.org/common/webserver"
 	"friendnet.org/mkcert"
 	v1 "friendnet.org/protocol/pb/clientrpc/v1"
 	"friendnet.org/protocol/pb/clientrpc/v1/clientrpcv1connect"
@@ -112,9 +113,7 @@ func main() {
 	runId := time.Now().UnixMilli()
 
 	var dataDir string
-	var rpcAddr string
-	var fileAddr string
-	var uiAddr string
+	var webAddr string
 	var davAddr string
 	var headless bool
 	var noBrowser bool
@@ -125,11 +124,9 @@ func main() {
 	var pprofFile string
 	var rmCertHost string
 
-	flag.StringVar(&dataDir, "datadir", "", "path to server config JSON")
-	flag.StringVar(&rpcAddr, "rpcaddr", "https://localhost:20040", "RPC server address")
-	flag.StringVar(&fileAddr, "fileaddr", "https://localhost:20041", "File server address")
-	flag.StringVar(&uiAddr, "uiaddr", "https://localhost:20042", "Web UI server address")
-	flag.StringVar(&davAddr, "davaddr", "https://localhost:20043", "WebDAV server address")
+	flag.StringVar(&dataDir, "datadir", "", "path to the client's data directory")
+	flag.StringVar(&webAddr, "webaddr", "https://127.0.0.1:20042", "web UI and RPC address")
+	flag.StringVar(&davAddr, "davaddr", "https://127.0.0.1:20043", "WebDAV server address")
 	flag.BoolVar(&noBrowser, "nobrowser", false, "do not open web UI in browser")
 	flag.BoolVar(&noLock, "nolock", false, "do not use a lock to prevent multiple instances of the client from running")
 	flag.BoolVar(&installCa, "installca", false, "if set, tries to install the client's root CA for HTTPS on the web UI")
@@ -185,33 +182,14 @@ func main() {
 		panic(fmt.Errorf(`failed to create data directory: %w`, err))
 	}
 
-	rpcUrl, err := url.Parse(rpcAddr)
+	webUrl, err := url.Parse(webAddr)
 	if err != nil {
-		panic(fmt.Errorf(`failed to parse RPC server address %q: %w`, rpcAddr, err))
+		panic(fmt.Errorf(`failed to parse web UI server address %q: %w`, webAddr, err))
 	}
 
-	fileUrl, err := url.Parse(fileAddr)
-	if err != nil {
-		panic(fmt.Errorf(`failed to parse file server address %q: %w`, fileAddr, err))
-	}
-	if fileUrl.Scheme != "https" {
-		panic(fmt.Errorf(`file server address must start with "https://" scheme`))
-	}
-
-	uiUrl, err := url.Parse(uiAddr)
-	if err != nil {
-		panic(fmt.Errorf(`failed to parse web UI server address %q: %w`, uiAddr, err))
-	}
-	if uiUrl.Scheme != "https" {
-		panic(fmt.Errorf(`web UI server address must start with "https://" scheme`))
-	}
-
-	davUrl, err := url.Parse(davAddr)
+	_, err = url.Parse(davAddr)
 	if err != nil {
 		panic(fmt.Errorf(`failed to parse WebDAV server address %q: %w`, davAddr, err))
-	}
-	if davUrl.Scheme != "https" {
-		panic(fmt.Errorf(`WebDAV server address must start with "https://" scheme`))
 	}
 
 	dbDir := filepath.Join(dataDir, "client.db")
@@ -285,7 +263,7 @@ func main() {
 		}
 	}
 
-	uiUrlWithCreds := fmt.Sprintf("%s?rpc=%s&token=%s", uiAddr, rpcAddr, rpcBearerToken)
+	webUrlWithCreds := fmt.Sprintf("%s?token=%s", webUrl.String(), rpcBearerToken)
 
 	if !noLock {
 		locker := &Locker{
@@ -297,7 +275,7 @@ func main() {
 
 			if !noBrowser {
 				// Try to open web UI in browser.
-				_ = browser.OpenURL(uiUrlWithCreds)
+				_ = browser.OpenURL(webUrlWithCreds)
 			}
 
 			_ = logHandler.Close()
@@ -306,7 +284,7 @@ func main() {
 			return
 		}
 
-		err = locker.Lock(rpcAddr)
+		err = locker.Lock(webAddr)
 		if err != nil {
 			panic(fmt.Errorf(`failed to lock client: %w`, err))
 		}
@@ -360,7 +338,7 @@ func main() {
 	httpsCertPem, httpsKeyPem, err := store.GetClientHttpsCert(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			httpsCertPem, httpsKeyPem, err = mc.GenCert([]string{uiUrl.Hostname(), fileUrl.Hostname()})
+			httpsCertPem, httpsKeyPem, err = mc.GenCert([]string{webUrl.Hostname(), "localhost", "127.0.0.1"})
 			if err != nil {
 				panic(fmt.Errorf(`failed to generate HTTPS certificate: %w`, err))
 			}
@@ -371,19 +349,6 @@ func main() {
 		} else {
 			panic(fmt.Errorf(`failed to retrieve HTTPS certificate: %w`, err))
 		}
-	}
-
-	httpsKeyPair, err := tls.X509KeyPair(httpsCertPem, httpsKeyPem)
-	if err != nil {
-		panic(fmt.Errorf(`failed to parse HTTPS certificate key pair: %w`, err))
-	}
-	httpsTlsCfg := &tls.Config{
-		Certificates: []tls.Certificate{httpsKeyPair},
-	}
-
-	var rpcTls *tls.Config
-	if rpcUrl.Scheme == "https" {
-		rpcTls = httpsTlsCfg
 	}
 
 	updateChecker := updater.NewUpdateChecker(
@@ -432,10 +397,21 @@ func main() {
 		}
 	}()
 
+	httpsKeyPair, err := tls.X509KeyPair(httpsCertPem, httpsKeyPem)
+	if err != nil {
+		panic(fmt.Errorf(`failed to parse HTTPS certificate key pair: %w`, err))
+	}
+
+	webServer := webserver.NewWebServer(
+		logger,
+		webserver.WithHttpsSupport(httpsKeyPair),
+	)
+
 	rpc, err := common.NewRpcServer(
 		logger,
+		webServer,
 		common.RpcServerConfig{
-			Address:             rpcAddr,
+			Address:             webAddr,
 			AllowedMethods:      []string{"*"},
 			BearerToken:         rpcBearerToken,
 			CorsAllowAllOrigins: true,
@@ -445,34 +421,25 @@ func main() {
 			multi,
 			eventBus,
 			updateChecker,
-			fileAddr,
 			stop,
 		),
-
 		func(impl *client.RpcServer, options ...connect.HandlerOption) (string, http.Handler) {
 			return clientrpcv1connect.NewClientRpcServiceHandler(impl, options...)
 		},
-		rpcTls,
 	)
 	if err != nil {
 		_ = multi.Close()
 		panic(fmt.Errorf(`failed to create RPC server: %w`, err))
 	}
 
-	httpProto := &http.Protocols{}
-	httpProto.SetHTTP2(true)
-	httpProto.SetHTTP1(true)
-	fileServer := http.Server{
-		Addr:      fileUrl.Host,
-		Handler:   client.NewFileServer(logger, multi),
-		TLSConfig: httpsTlsCfg,
-		Protocols: httpProto,
+	err = webServer.Mount(webAddr, "/content/", client.NewFileServer(logger, multi))
+	if err != nil {
+		panic(fmt.Errorf(`failed to mount file proxy: %w`, err))
 	}
-	uiServer := http.Server{
-		Addr:      uiUrl.Host,
-		Handler:   webui.Handler{},
-		TLSConfig: httpsTlsCfg,
-		Protocols: httpProto,
+
+	err = webServer.Mount(webAddr, "/", webui.Handler{})
+	if err != nil {
+		panic(fmt.Errorf(`failed to mount web UI: %w`, err))
 	}
 
 	metaCache := fsys.NewMetaCache(30*time.Second, 5*time.Minute)
@@ -483,11 +450,9 @@ func main() {
 		FileSystem: multifs.NewWebDavWrapper(multiFs),
 		LockSystem: webdav.NewMemLS(),
 	}
-	davServer := http.Server{
-		Addr:      davUrl.Host,
-		Handler:   webdavHandler,
-		TLSConfig: httpsTlsCfg,
-		Protocols: httpProto,
+	err = webServer.Mount(davAddr, "/", webdavHandler)
+	if err != nil {
+		panic(fmt.Errorf(`failed to mount WebDAV handler: %w`, err))
 	}
 
 	// Close client on SIGTERM.
@@ -516,9 +481,7 @@ func main() {
 		}
 
 		doWithTimeout(1*time.Second, func(ctx context.Context) {
-			_ = uiServer.Shutdown(ctx)
-			_ = fileServer.Shutdown(ctx)
-			_ = davServer.Shutdown(ctx)
+			_ = webServer.Close()
 		})
 		doWithTimeout(1*time.Second, func(_ context.Context) {
 			_ = updateChecker.Close()
@@ -537,59 +500,24 @@ func main() {
 		})
 	})
 
-	var wg sync.WaitGroup
-	wg.Go(func() {
-		logger.Info(`RPC server listening`,
-			"addr", rpcAddr,
-			"bearer_token", rpcBearerToken,
-		)
-		if listenErr := rpc.Serve(); listenErr != nil {
-			panic(fmt.Errorf(`RPC server ended with error: %w`, listenErr))
-		}
-	})
-	wg.Go(func() {
-		logger.Info(`File server listening`, "addr", fileAddr)
-		listenErr := fileServer.ListenAndServeTLS("", "")
-		if listenErr != nil {
-			if errors.Is(listenErr, http.ErrServerClosed) {
-				return
-			}
-			panic(fmt.Errorf(`file server ended with error: %w`, listenErr))
-		}
-	})
-	wg.Go(func() {
-		logger.Info(`WebDAV server listening`, "addr", davAddr)
-		listenErr := davServer.ListenAndServeTLS("", "")
-		if listenErr != nil {
-			if errors.Is(listenErr, http.ErrServerClosed) {
-				return
-			}
-			panic(fmt.Errorf(`webDAV server ended with error: %w`, listenErr))
-		}
-	})
-	if !headless {
-		wg.Go(func() {
-			logger.Info(`Web UI server listening`,
-				"addr", uiAddr,
-				"url", uiUrlWithCreds,
-			)
-
-			if !noBrowser {
-				// Try to open URL in browser.
-				_ = browser.OpenURL(uiUrlWithCreds)
-			}
-
-			listenErr := uiServer.ListenAndServeTLS("", "")
-			if listenErr != nil {
-				if errors.Is(listenErr, http.ErrServerClosed) {
-					return
-				}
-				panic(fmt.Errorf(`web UI server ended with error: %w`, listenErr))
-			}
-		})
+	if !noBrowser {
+		// Try to open URL in browser.
+		_ = browser.OpenURL(webUrlWithCreds)
 	}
 
-	wg.Wait()
+	logger.Info(`web UI server listening`,
+		"addr", webAddr,
+		"url", webUrlWithCreds,
+		"token", rpcBearerToken,
+	)
+
+	serveErr := webServer.Serve()
+	if serveErr != nil {
+		if errors.Is(serveErr, http.ErrServerClosed) {
+			return
+		}
+		panic(fmt.Errorf(`webserver ended with error: %w`, serveErr))
+	}
 
 	stop()
 

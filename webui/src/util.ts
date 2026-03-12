@@ -40,7 +40,7 @@ export function makeFileUrl(
 		query.set('zip', '1')
 	}
 
-	return `${base}/content/${serverUuid}/${username}/${escapePathSegments(path)}?${query}`
+	return `${base}/${serverUuid}/${username}/${escapePathSegments(path)}?${query}`
 }
 
 /**

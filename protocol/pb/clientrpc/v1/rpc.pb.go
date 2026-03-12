@@ -1215,9 +1215,7 @@ func (*GetClientInfoRequest) Descriptor() ([]byte, []int) {
 }
 
 type GetClientInfoResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// The base URL to the HTTP file server.
-	FileServerUrl string `protobuf:"bytes,1,opt,name=file_server_url,json=fileServerUrl,proto3" json:"file_server_url,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1250,13 +1248,6 @@ func (x *GetClientInfoResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetClientInfoResponse.ProtoReflect.Descriptor instead.
 func (*GetClientInfoResponse) Descriptor() ([]byte, []int) {
 	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{17}
-}
-
-func (x *GetClientInfoResponse) GetFileServerUrl() string {
-	if x != nil {
-		return x.FileServerUrl
-	}
-	return ""
 }
 
 type GetServersRequest struct {
@@ -3595,9 +3586,8 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\x04logs\x18\x01 \x03(\v2\x1b.pb.clientrpc.v1.LogMessageR\x04logs\"\r\n" +
 	"\vStopRequest\"\x0e\n" +
 	"\fStopResponse\"\x16\n" +
-	"\x14GetClientInfoRequest\"?\n" +
-	"\x15GetClientInfoResponse\x12&\n" +
-	"\x0ffile_server_url\x18\x01 \x01(\tR\rfileServerUrl\"\x13\n" +
+	"\x14GetClientInfoRequest\"\x17\n" +
+	"\x15GetClientInfoResponse\"\x13\n" +
 	"\x11GetServersRequest\"K\n" +
 	"\x12GetServersResponse\x125\n" +
 	"\aservers\x18\x01 \x03(\v2\x1b.pb.clientrpc.v1.ServerInfoR\aservers\"\x8f\x01\n" +

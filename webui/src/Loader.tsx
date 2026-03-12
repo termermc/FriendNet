@@ -20,21 +20,13 @@ import { RpcTimeoutMs } from './constant'
 const NoRpc: Component = () => {
 	return (
 		<div>
-			<h1>Missing or Invalid RPC URL</h1>
-			<p>
-				The URL you opened should have contained an RPC URL in it,
-				ending in something like <code>?rpc=</code>.
-			</p>
-			<p>
-				You can also find it by searching "bearer_token" in the log
-				output of your client process.
-			</p>
+			<h1>Invalid RPC URL</h1>
 			<p>You can manually enter the URL below:</p>
 			<form method="get" action="">
 				<input
 					type="text"
 					name="rpc"
-					placeholder="https://localhost:20040"
+					placeholder="https://127.0.0.1:20042"
 				/>
 				<input type="submit" />
 			</form>
@@ -67,7 +59,7 @@ export const Loader: Component = () => {
 	} else {
 		rpcUrl = localStorage.getItem(rpcUrlKey)
 		if (!rpcUrl) {
-			return <NoRpc />
+			rpcUrl = window.location.origin
 		}
 	}
 
@@ -153,6 +145,7 @@ export const Loader: Component = () => {
 	type Everything = {
 		clientInfo: GetClientInfoResponse
 		state: State
+		fileServerUrl: string
 	}
 
 	const everything = createAsync(async (): Promise<Everything> => {
@@ -163,7 +156,11 @@ export const Loader: Component = () => {
 		await state.refreshUpdateInfo()
 		await state.refreshServers()
 
-		return { clientInfo, state }
+		return {
+			clientInfo,
+			state,
+			fileServerUrl: rpcUrl + '/content',
+		}
 	})
 
 	return (
@@ -186,7 +183,7 @@ export const Loader: Component = () => {
 			>
 				<Show when={everything()}>
 					<FileServerUrlCtx.Provider
-						value={everything()!.clientInfo.fileServerUrl}
+						value={everything()!.fileServerUrl}
 					>
 						<RpcClientCtx.Provider value={client}>
 							<GlobalStateCtx.Provider

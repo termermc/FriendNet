@@ -43,7 +43,6 @@ type RpcServer struct {
 	client        *MultiClient
 	eventBus      *event.Bus
 	updateChecker *updater.UpdateChecker
-	fileServerUrl string
 	stopper       func()
 }
 
@@ -52,7 +51,6 @@ func NewRpcServer(
 	client *MultiClient,
 	eventBus *event.Bus,
 	updateChecker *updater.UpdateChecker,
-	fileServerUrl string,
 	stopper func(),
 ) *RpcServer {
 	return &RpcServer{
@@ -60,7 +58,6 @@ func NewRpcServer(
 		client:        client,
 		eventBus:      eventBus,
 		updateChecker: updateChecker,
-		fileServerUrl: fileServerUrl,
 		stopper:       stopper,
 	}
 }
@@ -205,9 +202,7 @@ func (s *RpcServer) Stop(_ context.Context, _ *v1.StopRequest) (*v1.StopResponse
 }
 
 func (s *RpcServer) GetClientInfo(_ context.Context, _ *v1.GetClientInfoRequest) (*v1.GetClientInfoResponse, error) {
-	return &v1.GetClientInfoResponse{
-		FileServerUrl: s.fileServerUrl,
-	}, nil
+	return &v1.GetClientInfoResponse{}, nil
 }
 
 func (s *RpcServer) GetServers(_ context.Context, _ *v1.GetServersRequest) (*v1.GetServersResponse, error) {

@@ -5,6 +5,7 @@
 	server \
 	server-linux-amd64 \
 	server-linux-arm64 \
+	webui \
 	client \
 	client-noui \
 	client-windows-amd64 \
@@ -48,11 +49,11 @@ server-linux-amd64:
 server-linux-arm64:
 	cd server && GOOS=linux GOARCH=arm64 go build -o friendnet-server friendnet.org/server/cmd/server
 
-build-webui:
+webui:
 	cd webui && go generate
 
 client:
-	make build-webui && go build -o friendnet-client friendnet.org/client/cmd/client
+	make webui && go build -o friendnet-client friendnet.org/client/cmd/client
 
 client-noui:
 	cd client && go build -o friendnet-client friendnet.org/client/cmd/client
@@ -91,7 +92,7 @@ release-artifacts:
 	rm -rf /tmp/fn-release
 	mkdir /tmp/fn-release
 
-	make build-webui
+	make webui
 
 	make client-linux-amd64-noui && mv client/friendnet-client /tmp/fn-release/friendnet-client-linux_amd64
 	make client-linux-arm64-noui && mv client/friendnet-client /tmp/fn-release/friendnet-client-linux_arm64
