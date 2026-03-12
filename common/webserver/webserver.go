@@ -15,6 +15,9 @@ import (
 	"sync"
 )
 
+// ErrWebServerClosed is returned when calling methods on a closed WebServer.
+var ErrWebServerClosed = errors.New("WebServer closed closed")
+
 type recoverWrapper struct {
 	ws      *WebServer
 	handler http.Handler
@@ -36,9 +39,11 @@ func (rw recoverWrapper) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rw.handler.ServeHTTP(w, r)
 }
 
-type serverAndRouter struct {
-	*http.Server
-	*http.ServeMux
+type serverInst struct {
+	Addr     string
+	Server   *http.Server
+	ServeMux *http.ServeMux
+	Listener net.Listener
 }
 
 // Option is a WebServer option function.
@@ -66,7 +71,7 @@ type WebServer struct {
 	// Key: protocol + address (no path)
 	// Example: https://127.0.0.1:20040
 	// Example: unix:///tmp/friendnet.sock (UNIX must be absolute)
-	servers map[string]*serverAndRouter
+	servers map[string]*serverInst
 }
 
 // NewWebServer creates a new WebServer.
@@ -79,7 +84,7 @@ func NewWebServer(
 
 		httpsCertOrNil: nil,
 
-		servers: make(map[string]*serverAndRouter),
+		servers: make(map[string]*serverInst),
 	}
 
 	for _, opt := range opts {
@@ -96,7 +101,7 @@ func (ws *WebServer) Close() error {
 		return nil
 	}
 	ws.isClosed = true
-	servers := make([]*serverAndRouter, 0, len(ws.servers))
+	servers := make([]*serverInst, 0, len(ws.servers))
 	for _, server := range ws.servers {
 		servers = append(servers, server)
 	}
@@ -106,7 +111,7 @@ func (ws *WebServer) Close() error {
 	var wg sync.WaitGroup
 	for _, server := range servers {
 		wg.Go(func() {
-			_ = server.Close()
+			_ = server.Server.Close()
 		})
 	}
 	wg.Wait()
@@ -183,12 +188,12 @@ func (ws *WebServer) Mount(address string, path string, handler http.Handler) er
 		normalAddr = proto + "://" + addr
 	}
 
-	var server *serverAndRouter
+	var server *serverInst
 
 	ws.mu.Lock()
 	if ws.isClosed {
 		ws.mu.Unlock()
-		return nil
+		return ErrWebServerClosed
 	}
 	server, _ = ws.servers[normalAddr]
 	ws.mu.Unlock()
@@ -201,15 +206,17 @@ func (ws *WebServer) Mount(address string, path string, handler http.Handler) er
 		protos.SetHTTP1(true)
 		protos.SetUnencryptedHTTP2(true)
 
-		var tlsCfg *tls.Config
 		var listener net.Listener
 		var err error
 		switch proto {
 		case "https":
-			tlsCfg = &tls.Config{
+			listener, err = tls.Listen("tcp", addr, &tls.Config{
 				Certificates: []tls.Certificate{*ws.httpsCertOrNil},
+				NextProtos:   []string{"h2", "http/1.1"},
+			})
+			if err != nil {
+				return fmt.Errorf(`failed to listen on TLS address %q: %w`, addr, err)
 			}
-			fallthrough
 		case "http":
 			listener, err = net.Listen("tcp", addr)
 			if err != nil {
@@ -275,34 +282,57 @@ func (ws *WebServer) Mount(address string, path string, handler http.Handler) er
 
 		httpServer := &http.Server{
 			Protocols: &protos,
-			TLSConfig: tlsCfg,
 			Handler: recoverWrapper{
 				ws:      ws,
 				handler: mux,
 			},
 		}
 
-		server = &serverAndRouter{
+		server = &serverInst{
+			Addr:     normalAddr,
 			Server:   httpServer,
 			ServeMux: mux,
+			Listener: listener,
 		}
+		ws.mu.Lock()
+		ws.servers[normalAddr] = server
+		ws.mu.Unlock()
+	}
 
+	server.ServeMux.Handle(path, handler)
+
+	return nil
+}
+
+// Serve starts all HTTP servers.
+// It returns when any of the servers returned an error, returning that same error.
+// It never returns a non-nil error.
+// If the servers were closed, returns http.ErrServerClosed.
+// The WebServer instance is closed when this method returns.
+func (ws *WebServer) Serve() error {
+	ws.mu.Lock()
+	if ws.isClosed {
+		ws.mu.Unlock()
+		return ErrWebServerClosed
+	}
+	servers := make([]*serverInst, 0, len(ws.servers))
+	for _, server := range ws.servers {
+		servers = append(servers, server)
+	}
+	ws.mu.Unlock()
+
+	errChan := make(chan error, 1)
+
+	for _, server := range servers {
 		go func() {
-			if serveErr := server.Server.Serve(listener); serveErr != nil {
-				if errors.Is(serveErr, http.ErrServerClosed) {
-					return
-				}
-
-				ws.logger.Error("HTTP server ended with error",
-					"service", "webserver.WebServer",
-					"addr", addr,
-					"err", serveErr,
-				)
+			if serveErr := server.Server.Serve(server.Listener); serveErr != nil {
+				errChan <- serveErr
 			}
 		}()
 	}
 
-	server.Handle(path, handler)
-
-	return nil
+	defer func() {
+		_ = ws.Close()
+	}()
+	return <-errChan
 }

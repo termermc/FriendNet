@@ -2,7 +2,6 @@ package common
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
@@ -10,14 +9,12 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
-	"os"
-	"path/filepath"
 	"runtime/debug"
 	"strings"
 	"sync"
-	"time"
 
 	"connectrpc.com/connect"
+	"friendnet.org/common/webserver"
 )
 
 // RpcServerConfig is the configuration for a single RPC server instance.
@@ -28,6 +25,7 @@ type RpcServerConfig struct {
 	//
 	// Supported protocols:
 	//  - http
+	//  - https
 	//  - unix
 	//
 	// Examples:
@@ -54,11 +52,6 @@ type RpcServerConfig struct {
 	// Has no effect if the address protocol is unix.
 	AllowedIps []string `json:"allowed_ips,omitempty"`
 
-	// The file mode to use for the unix socket file.
-	// Must be in format "0600", starting with a zero followed by three octal digits.
-	// Has no effect if the address protocol is not unix.
-	FilePermission string `json:"file_permission,omitempty"`
-
 	// If not null or empty, the following HTTP bearer token will be required to access the RPC interface.
 	// For example, if set to "abc123", the following HTTP header must be set: "Authorization: Bearer abc123".
 	BearerToken string `json:"bearer_token,omitempty"`
@@ -71,9 +64,6 @@ type RpcServerConfig struct {
 // RpcHandlerConstructor is a constructor for creating an RPC handler.
 // It returns the path to mount it on and the handler itself.
 type RpcHandlerConstructor[T any] = func(impl T, options ...connect.HandlerOption) (string, http.Handler)
-
-// ErrRpcServerClosed is returned by methods of RpcServer if the server is closed.
-var ErrRpcServerClosed = errors.New("RPC server is closed")
 
 var errMissingBearerToken = connect.NewError(connect.CodeUnauthenticated, errors.New("missing bearer token"))
 var errInvalidBearerToken = connect.NewError(connect.CodePermissionDenied, errors.New("invalid bearer token"))
@@ -89,24 +79,20 @@ type InvalidRpcProtocolError struct {
 func (e *InvalidRpcProtocolError) Error() string { return "invalid RPC protocol: " + e.Protocol }
 
 // RpcServer implements an RPC server for a FriendNet server.
-// It is a single instance that runs on a single interface.
+// It does not listen itself; the underlying listener is managed by the webserver.WebServer.
 type RpcServer[T io.Closer] struct {
 	logger *slog.Logger
 
 	mu       sync.RWMutex
 	isClosed bool
 
-	ctx       context.Context
-	ctxCancel context.CancelFunc
+	webServer *webserver.WebServer
 
 	// The RPC server's address.
 	// Do not update.
 	Addr string
 
 	impl T
-
-	httpServer   http.Server
-	httpListener net.Listener
 
 	corsAllowAllOrigins bool
 }
@@ -215,13 +201,11 @@ func (i rpcServerInterceptor) WrapStreamingHandler(fn connect.StreamingHandlerFu
 
 func NewRpcServer[T io.Closer](
 	logger *slog.Logger,
+	webServer *webserver.WebServer,
 	cfg RpcServerConfig,
 	impl T,
 	constructor RpcHandlerConstructor[T],
-	tlsCfg *tls.Config,
 ) (*RpcServer[T], error) {
-	ctx, cancel := context.WithCancel(context.Background())
-
 	var isAllAllowed bool
 	var allowedMethods map[string]struct{}
 	if len(cfg.AllowedMethods) == 1 && cfg.AllowedMethods[0] == "*" {
@@ -244,7 +228,6 @@ func NewRpcServer[T io.Closer](
 		for _, ipStr := range cfg.AllowedIps {
 			ip, err := netip.ParseAddr(ipStr)
 			if err != nil {
-				cancel()
 				return nil, fmt.Errorf(`invalid IP address %q in server RPC allowed IPs list: %w`, ipStr, err)
 			}
 
@@ -258,112 +241,13 @@ func NewRpcServer[T io.Closer](
 	s := &RpcServer[T]{
 		logger: logger,
 
-		ctx:       ctx,
-		ctxCancel: cancel,
+		webServer: webServer,
 
 		Addr: cfg.Address,
 
 		impl: impl,
 
 		corsAllowAllOrigins: cfg.CorsAllowAllOrigins,
-	}
-
-	// Figure out listener protocol.
-	var listener net.Listener
-	protoIdx := strings.Index(cfg.Address, "://")
-	if protoIdx == -1 {
-		return nil, fmt.Errorf(`RPC server address %q is missing a protocol (should be something like "http://127.0.0.1:8080" or "unix:///tmp/server.sock")`, cfg.Address)
-	}
-	proto := strings.ToLower(cfg.Address[:protoIdx])
-	if proto == "https" {
-		if tlsCfg == nil {
-			return nil, fmt.Errorf(`RPC server address %q is using HTTPS but no TLS configuration provided`, cfg.Address)
-		}
-	} else {
-		tlsCfg = nil
-	}
-	protoAddr := cfg.Address[protoIdx+3:]
-	switch proto {
-	case "https":
-		fallthrough
-	case "http":
-		// Create basic HTTP listener.
-		var err error
-		listener, err = net.Listen("tcp", protoAddr)
-		if err != nil {
-			return nil, fmt.Errorf(`failed to listen on TCP address %q: %w`, protoAddr, err)
-		}
-	case "unix":
-		// First, resolve absolute path.
-		unixPath, err := filepath.Abs(protoAddr)
-		if err != nil {
-			return nil, fmt.Errorf(`failed to resolve absolute path for UNIX socket path %q: %w`, protoAddr, err)
-		}
-
-		// If set, validate specified file permission.
-		var permOctal os.FileMode
-		if cfg.FilePermission == "" {
-			permOctal = 0600
-		} else {
-			octal, permErr := ParseGoOctalLiteral(cfg.FilePermission)
-			if permErr != nil {
-				return nil, fmt.Errorf(`invalid file permission %q for UNIX socket path %q: %w`, cfg.FilePermission, unixPath, permErr)
-			}
-
-			permOctal = os.FileMode(octal)
-		}
-
-		// Check if the containing directory exists.
-		unixDir := filepath.Dir(unixPath)
-		{
-			info, statErr := os.Stat(unixDir)
-			if statErr != nil {
-				if os.IsNotExist(statErr) {
-					return nil, fmt.Errorf(`containing directory %q for UNIX path %q does not exist (server will not create it manually)`, unixDir, unixPath)
-				}
-
-				return nil, fmt.Errorf(`failed to stat containing directory %q for UNIX path %q: %w`, unixDir, unixPath, statErr)
-			}
-
-			if !info.IsDir() {
-				return nil, fmt.Errorf(`containing directory %q for UNIX path %q exists, but is not a directory`, unixDir, unixPath)
-			}
-		}
-
-		// Stat path to figure out what's there, if anything.
-		{
-			info, statErr := os.Lstat(unixPath)
-			if statErr != nil {
-				if !os.IsNotExist(statErr) {
-					return nil, fmt.Errorf(`failed to stat UNIX socket path %q: %w`, unixPath, statErr)
-				}
-			} else if info.Mode().IsDir() {
-				return nil, fmt.Errorf(`UNIX socket path %q points to a directory`, unixPath)
-			} else if info.Mode()&os.ModeSocket == 0 {
-				return nil, fmt.Errorf(`there is already a file at UNIX socket path %q, but it is not a UNIX socket`, unixPath)
-			} else {
-				// Socket already exists at path; delete it.
-				delErr := os.Remove(unixPath)
-				if delErr != nil {
-					return nil, fmt.Errorf(`failed to delete existing UNIX socket at path %q: %w`, unixPath, delErr)
-				}
-			}
-		}
-
-		// Socket path is validated and any old socket there was removed.
-
-		listener, err = net.Listen("unix", unixPath)
-		if err != nil {
-			return nil, fmt.Errorf(`failed to listen on UNIX socket path %q: %w`, unixPath, err)
-		}
-		err = os.Chmod(unixPath, permOctal)
-		if err != nil {
-			_ = listener.Close()
-			return nil, fmt.Errorf(`failed to set file permission %q for UNIX socket path %q: %w`, cfg.FilePermission, unixPath, err)
-		}
-
-	default:
-		return nil, fmt.Errorf(`unsupported protocol %q in server RPC address %q`, proto, cfg.Address)
 	}
 
 	handlerPath, handler := constructor(impl,
@@ -377,86 +261,45 @@ func NewRpcServer[T io.Closer](
 			allowedMethods:      allowedMethods,
 		}),
 	)
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.WriteHeader(200)
-		_, _ = w.Write([]byte("Hi, you've reached the RPC interface.\nYou can communicate with it using gRPC, gRPC-Web, and ConnectRPC.\nHave fun!\n"))
-	})
-	mux.HandleFunc(handlerPath, func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
-			if rec := recover(); rec != nil {
-				logger.Error("panic in RCP handler",
-					"service", "common.RpcServer",
-					"err", rec,
-					"stack", string(debug.Stack()),
-				)
+
+	err := webServer.Mount(
+		cfg.Address,
+		handlerPath,
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer func() {
+				if rec := recover(); rec != nil {
+					logger.Error("panic in RCP handler",
+						"service", "common.RpcServer",
+						"err", rec,
+						"stack", string(debug.Stack()),
+					)
+				}
+			}()
+
+			if s.corsAllowAllOrigins {
+				origin := r.Header.Get("Origin")
+				if origin == "" {
+					origin = "*"
+				}
+				w.Header().Set("Access-Control-Allow-Origin", origin)
 			}
-		}()
 
-		if s.corsAllowAllOrigins {
-			origin := r.Header.Get("Origin")
-			if origin == "" {
-				origin = "*"
+			if r.Method == http.MethodOptions {
+				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+				w.Header().Add("Access-Control-Allow-Headers", "*")
+				w.Header().Add("Access-Control-Allow-Headers", "Authorization, Content-Type, connect-protocol-version")
+				w.WriteHeader(http.StatusNoContent)
+				return
 			}
-			w.Header().Set("Access-Control-Allow-Origin", origin)
-		}
 
-		if r.Method == http.MethodOptions {
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-			w.Header().Add("Access-Control-Allow-Headers", "*")
-			w.Header().Add("Access-Control-Allow-Headers", "Authorization, Content-Type, connect-protocol-version")
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-
-		handler.ServeHTTP(w, r)
-	})
-
-	httpProtos := &http.Protocols{}
-	httpProtos.SetHTTP1(true)
-	httpProtos.SetHTTP2(true)
-
-	if proto != "https" {
-		httpProtos.SetUnencryptedHTTP2(true)
+			handler.ServeHTTP(w, r)
+		}),
+	)
+	if err != nil {
+		return nil, fmt.Errorf(`failed to mount RPC handler on %q path %q: %w`, cfg.Address, handlerPath, err)
 	}
-
-	s.httpServer = http.Server{
-		Handler:   mux,
-		Protocols: httpProtos,
-		TLSConfig: tlsCfg,
-	}
-	s.httpListener = listener
 
 	return s, nil
-}
-
-// Serve starts the RPC server and runs until Close is called or an error occurs.
-// The server closes after this returns, regardless of the return value.
-// Returns ErrRpcServerClosed if the server is already closed.
-func (s *RpcServer[T]) Serve() error {
-	s.mu.RLock()
-	if s.isClosed {
-		s.mu.RUnlock()
-		return ErrRpcServerClosed
-	}
-	s.mu.RUnlock()
-
-	defer func() {
-		_ = s.Close()
-	}()
-
-	var err error
-	if s.httpServer.TLSConfig == nil {
-		err = s.httpServer.Serve(s.httpListener)
-	} else {
-		err = s.httpServer.ServeTLS(s.httpListener, "", "")
-	}
-	if errors.Is(err, http.ErrServerClosed) {
-		return nil
-	}
-
-	return err
 }
 
 // Close closes the RPC server and disconnects any currently connected clients of it.
@@ -469,12 +312,6 @@ func (s *RpcServer[T]) Close() error {
 	}
 	s.isClosed = true
 	s.mu.Unlock()
-
-	shutdownCtx, shutdownCancel := context.WithTimeout(s.ctx, 5*time.Second)
-	defer shutdownCancel()
-
-	_ = s.httpServer.Shutdown(shutdownCtx)
-	_ = s.httpListener.Close()
 
 	_ = s.impl.Close()
 

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"flag"
 	"log/slog"
 	"net/http"
@@ -16,6 +17,7 @@ import (
 	"friendnet.org/common"
 	"friendnet.org/common/machine"
 	"friendnet.org/common/password"
+	"friendnet.org/common/webserver"
 	"friendnet.org/protocol"
 	"friendnet.org/protocol/pb/serverrpc/v1/serverrpcv1connect"
 	"friendnet.org/server"
@@ -98,17 +100,33 @@ func main() {
 		<-timeoutCtx.Done()
 	}()
 
+	// Create web server use for serving RPC interfaces.
+	var rpcCert tls.Certificate
+	if cfg.Rpc.HttpsFullChainCertPath != "" {
+		rpcCert, err = cert.ReadFullChainPem(cfg.Rpc.HttpsFullChainCertPath)
+		if err != nil {
+			logger.Error("failed to read HTTPS certificate for RPC interfaces",
+				"path", cfg.Rpc.HttpsFullChainCertPath,
+				"err", err,
+			)
+			os.Exit(1)
+		}
+	} else {
+		rpcCert = keyPair
+	}
+	webServer := webserver.NewWebServer(logger, webserver.WithHttpsSupport(rpcCert))
+
 	// Create RPC servers.
 	rpcs := make([]*common.RpcServer[*server.RpcServer], 0, len(cfg.Rpc.Interfaces))
 	for _, iface := range cfg.Rpc.Interfaces {
 		rpcSrv, err := common.NewRpcServer(
 			logger,
+			webServer,
 			iface,
 			server.NewRpcServer(srv),
 			func(impl *server.RpcServer, options ...connect.HandlerOption) (string, http.Handler) {
 				return serverrpcv1connect.NewServerRpcServiceHandler(impl, options...)
 			},
-			nil,
 		)
 		if err != nil {
 			logger.Error(
@@ -127,6 +145,8 @@ func main() {
 	go func() {
 		<-ctx.Done()
 		logger.Info("shutdown signal received, closing server")
+
+		_ = webServer.Close()
 
 		var wg sync.WaitGroup
 		for _, rpc := range rpcs {
@@ -157,22 +177,25 @@ func main() {
 	}
 
 	for _, rpc := range rpcs {
-		go func() {
-			listenErr := rpc.Serve()
-			if listenErr != nil {
-				logger.Error("RPC server ended with error",
-					"addr", rpc.Addr,
-					"err", listenErr,
-				)
-			}
-			listenErrChan <- listenErr
-		}()
 		logger.Info("RPC listening",
 			"addr", rpc.Addr,
 		)
 	}
 
+	go func() {
+		serveErr := webServer.Serve()
+		if serveErr != nil {
+			if errors.Is(serveErr, http.ErrServerClosed) {
+				listenErrChan <- nil
+				return
+			}
+
+			listenErrChan <- serveErr
+		}
+	}()
+
 	endErr := <-listenErrChan
+
 	if endErr == nil {
 		logger.Info("server closed")
 	} else {

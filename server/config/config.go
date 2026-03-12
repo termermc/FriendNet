@@ -12,6 +12,10 @@ import (
 type ServerRpcConfig struct {
 	// Interfaces is a list of RPC server interfaces and their settings.
 	Interfaces []common.RpcServerConfig `json:"interfaces"`
+
+	// HttpsFullChainCertPath is the path to the full chain certificate to use for serving RPC endpoints over HTTPS.
+	// If omitted, HTTPS can be used, but it will use the self-signed certificate used for serving the main protocol.
+	HttpsFullChainCertPath string `json:"https_full_chain_cert_path,omitempty"`
 }
 
 // ServerConfig is the server configuration.
