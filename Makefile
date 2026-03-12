@@ -41,43 +41,43 @@ pb:
 	cd server-widget && npx buf generate
 
 server:
-	cd server && go build -o friendnet-server friendnet.org/server/cmd/server
+	cd server && CGO_ENABLED=0 go build -o friendnet-server friendnet.org/server/cmd/server
 
 server-linux-amd64:
-	cd server && GOOS=linux GOARCH=amd64 go build -o friendnet-server friendnet.org/server/cmd/server
+	cd server && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o friendnet-server friendnet.org/server/cmd/server
 
 server-linux-arm64:
-	cd server && GOOS=linux GOARCH=arm64 go build -o friendnet-server friendnet.org/server/cmd/server
+	cd server && CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o friendnet-server friendnet.org/server/cmd/server
 
 webui:
 	cd webui && go generate
 
 client:
-	make webui && go build -o client/friendnet-client friendnet.org/client/cmd/client
+	make webui && CGO_ENABLED=0 go build -o client/friendnet-client friendnet.org/client/cmd/client
 
 client-noui:
-	cd client && go build -o client/friendnet-client friendnet.org/client/cmd/client
+	cd client && CGO_ENABLED=0 go build -o client/friendnet-client friendnet.org/client/cmd/client
 
 client-windows-amd64-noui:
-	cd client && GOOS=windows GOARCH=amd64 go build -ldflags="-H windowsgui" -o friendnet-client.exe friendnet.org/client/cmd/client
+	cd client && CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-H windowsgui" -o friendnet-client.exe friendnet.org/client/cmd/client
 
 client-linux-amd64-noui:
-	cd client && GOOS=linux GOARCH=amd64 go build -o friendnet-client friendnet.org/client/cmd/client
+	cd client && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o friendnet-client friendnet.org/client/cmd/client
 
 client-linux-arm64-noui:
-	cd client && GOOS=linux GOARCH=arm64 go build -o friendnet-client friendnet.org/client/cmd/client
+	cd client && CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o friendnet-client friendnet.org/client/cmd/client
 
 client-darwin-arm64-noui:
-	cd client && GOOS=darwin GOARCH=arm64 go build -o friendnet-client friendnet.org/client/cmd/client
+	cd client && CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o friendnet-client friendnet.org/client/cmd/client
 
 rpcclient:
-	cd rpcclient && go build -o friendnet-rpcclient friendnet.org/rpcclient/cmd/cli
+	cd rpcclient && CGO_ENABLED=0 go build -o friendnet-rpcclient friendnet.org/rpcclient/cmd/cli
 
 rpcclient-linux-amd64:
-	cd rpcclient && GOOS=linux GOARCH=amd64 go build -o friendnet-rpcclient friendnet.org/rpcclient/cmd/cli
+	cd rpcclient && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o friendnet-rpcclient friendnet.org/rpcclient/cmd/cli
 
 rpcclient-linux-arm64:
-	cd rpcclient && GOOS=linux GOARCH=arm64 go build -o friendnet-rpcclient friendnet.org/rpcclient/cmd/cli
+	cd rpcclient && CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o friendnet-rpcclient friendnet.org/rpcclient/cmd/cli
 
 run-rpcclient:
 	make rpcclient && cd server && ../rpcclient/friendnet-rpcclient
