@@ -25,6 +25,9 @@ message Event {
 
         // A new update is available or the update checked was invalid.
         TYPE_NEW_UPDATE = 5;
+
+        // Download progress for files.
+        TYPE_DOWNLOAD_PROGRESS = 6;
     }
 
     message ServerConnStateChange {
@@ -42,6 +45,10 @@ message Event {
     message NewUpdate {
         // The new update's info.
         UpdateInfo info = 1;
+    }
+    message DownloadProgress {
+        // The download progress info for files.
+        repeated DownloadProgress files = 1;
     }
 
     // The event type.
@@ -86,6 +93,19 @@ message LogMessage {
 
     // The message's attributes.
     repeated LogMessageAttr attrs = 4;
+}
+
+// DownloadProgress is progress in downloading a file.
+// It does not include a description of the file, only its UUID and progress.
+message DownloadProgress {
+    // The file download's UUID.
+    string uuid = 1;
+
+    // The number of bytes downloaded.
+    uint64 downloaded = 2;
+
+    // The current download speed, in bytes per second.
+    uint64 speed = 3;
 }
 
 // Information about an update.
