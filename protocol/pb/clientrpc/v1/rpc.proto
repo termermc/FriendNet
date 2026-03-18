@@ -26,8 +26,8 @@ message Event {
         // A new update is available or the update checked was invalid.
         TYPE_NEW_UPDATE = 5;
 
-        // Download progress for files.
-        TYPE_DOWNLOAD_PROGRESS = 6;
+        // Download status updates for files.
+        TYPE_DOWNLOAD_STATUS_UPDATES = 6;
     }
 
     message ServerConnStateChange {
@@ -46,9 +46,9 @@ message Event {
         // The new update's info.
         UpdateInfo info = 1;
     }
-    message DownloadProgress {
+    message DownloadStatusUpdates {
         // The download progress info for files.
-        repeated DownloadProgress files = 1;
+        repeated DownloadStatusUpdate files = 1;
     }
 
     // The event type.
@@ -95,17 +95,46 @@ message LogMessage {
     repeated LogMessageAttr attrs = 4;
 }
 
-// DownloadProgress is progress in downloading a file.
-// It does not include a description of the file, only its UUID and progress.
-message DownloadProgress {
+// DownloadStatus is the status of a file download.
+enum DownloadStatus {
+    // Do not use.
+    DOWNLOAD_STATUS_UNSPECIFIED = 0;
+
+    // Queued.
+    DOWNLOAD_STATUS_QUEUED = 1;
+
+    // Pending.
+    DOWNLOAD_STATUS_PENDING = 2;
+
+    // Canceled.
+    DOWNLOAD_STATUS_CANCELED = 3;
+
+    // Done.
+    DOWNLOAD_STATUS_DONE = 4;
+
+    // Failed to download due to an error.
+    DOWNLOAD_STATUS_ERROR = 5;
+}
+
+// DownloadStatusUpdate is a file download status update.
+message DownloadStatusUpdate {
     // The file download's UUID.
     string uuid = 1;
 
+    // The download status.
+    DownloadStatus status = 2;
+
     // The number of bytes downloaded.
-    uint64 downloaded = 2;
+    uint64 downloaded = 3;
+
+    // The file's size in bytes.
+    uint64 file_size = 4;
 
     // The current download speed, in bytes per second.
-    uint64 speed = 3;
+    uint64 speed = 5;
+
+    // The error message, if applicable.
+    optional string error_message = 6;
 }
 
 // Information about an update.

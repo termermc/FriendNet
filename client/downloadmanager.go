@@ -1,3 +1,25 @@
+// The download manager is responsible for queuing downloads, downloading them, and propagating status updates to the
+// client RPC and the peers that are being downloaded from.
+// It is intended to be a global component that can manage downloads over multiple servers using a MultiClient instance.
+//
+// All downloads, regardless of their status, are stored in a global slice. Downloaders periodically scan the slice for
+// downloads in the QUEUED status and start working on them, changing their status to PENDING. The slice is not a queue;
+// it is a global list with long-lived state structs that have statuses.
+//
+// The decision not to use a queue came from the need to snapshot all downloads, regardless of status, and send them to
+// the client RPC is requested. If a queue was used, we would have to query all workers for downloads they own as well
+// as snapshotting the global queue. That makes a real queue infeasible. The global slice scanning design is slow, but
+// it reduces complexity and should be suitable for <1,000 pending downloads, which I expect to be the case in the real
+// world.
+//
+// When a downloader takes ownership of a download, it reports its progress by putting it into a global status update
+// channel. The channel is consumed by a goroutine that processes the update and sends out the necessary messages. The
+// channel is buffered, so if the channel is full, updates are discarded until it is drained enough to accept new
+// updates.
+//
+// The update processor goroutine, in addition to sending out status update messages to peers and the client RPC, also
+// updates the client database. This allows download state to be restored when the client is restarted.
+
 package client
 
 import (
@@ -25,11 +47,27 @@ const dmDirIncompleteSetting = "dm_dir_incomplete"
 const dmDirCompleteSetting = "dm_dir_complete"
 const dmDlConcurrencySetting = "dm_dl_concurrency"
 
+type dmUpdate struct {
+	rpc *v1.DownloadStatusUpdate
+	ds  *DownloadState
+}
+
+func (u *dmUpdate) ToProto() *pb.MsgDownloadStatusUpdate {
+	return &pb.MsgDownloadStatusUpdate{
+		Path: u.ds.filePath.String(),
+
+		// Enum is duplicate and can be casted directly.
+		Status: pb.DownloadStatus(u.rpc.Status),
+
+		BytesDownloaded: u.rpc.Downloaded,
+	}
+}
+
 // DownloadState is the state of a download.
 type DownloadState struct {
 	dm *DownloadManager
 
-	status pb.DownloadStatus
+	status atomic.Pointer[pb.DownloadStatus]
 
 	// The file download's UUID.
 	uuid string
@@ -80,7 +118,7 @@ type DownloadManager struct {
 
 	// A queue of pending download progress events to send to the event bus.
 	// It is buffered, but sends should be discarded if the buffer is full instead of blocking.
-	pendingEvents chan *v1.DownloadProgress
+	pendingUpdates chan dmUpdate
 }
 
 func NewDownloadManager(
@@ -156,6 +194,13 @@ func (dm *DownloadManager) mkPath(serverUuid string, peerUsername common.Normali
 	return filepath.Join(dm.dirComplete, peerUsername.String()+"-"+serverUuid, path.String())
 }
 
+func (dm *DownloadManager) trySendUpdate(update dmUpdate) {
+	select {
+	case dm.pendingUpdates <- update:
+	default:
+	}
+}
+
 func (dm *DownloadManager) startDownload(state *DownloadState) error {
 	// Create path.
 	pendingPath := dm.mkPath(state.server.Uuid, state.peer, state.filePath)
@@ -166,14 +211,14 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 	}
 
 	// Use TryDo because we want to fail fast if there is not an open connection.
-	return state.server.TryDo(func(conn *room.Conn) error {
+	finalErr := state.server.TryDo(func(conn *room.Conn) error {
 		peer := conn.GetVirtualC2cConn(state.peer, false)
 
 		initialDownloaded := state.fileDownloadedBytes.Load()
 
 		meta, reader, err := peer.GetFile(&pb.MsgGetFile{
 			Path:   state.filePath.String(),
-			Offset: uint64(initialDownloaded),
+			Offset: initialDownloaded,
 		})
 		if err != nil {
 			if protoErr, ok := errors.AsType[protocol.ProtoMsgError](err); ok {
@@ -228,17 +273,17 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 					newBytes := state.fileDownloadedBytes.Load()
 					speed := newBytes - lastBytes
 
-					dlEvent := &v1.DownloadProgress{
-						Uuid:       state.uuid,
-						Downloaded: newBytes,
-						Speed:      speed,
-					}
-
-					// Try to send to pendingEvents channel, discard if buffer full.
-					select {
-					case dm.pendingEvents <- dlEvent:
-					default:
-					}
+					dm.trySendUpdate(dmUpdate{
+						rpc: &v1.DownloadStatusUpdate{
+							Uuid:         state.uuid,
+							Status:       v1.DownloadStatus_DOWNLOAD_STATUS_PENDING,
+							Downloaded:   newBytes,
+							FileSize:     meta.Size,
+							Speed:        speed,
+							ErrorMessage: nil,
+						},
+						ds: state,
+					})
 				}
 			}
 		}()
@@ -260,8 +305,26 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 			}
 		}
 
-		// TODO If file was read in its entirety, move it to its destination folder and send event.
-
 		return nil
 	})
+	if finalErr != nil {
+		if errors.Is(finalErr, ErrConnNotOpen) {
+			// TODO Conn not open.
+			// TODO Queue again
+		}
+		if errors.Is(finalErr, protocol.ErrPeerUnreachable) {
+			// TODO Peer unreachable.
+			// TODO Queue again
+		}
+
+		// TODO Save error state in DB.
+		// TODO Send event for error.
+		return finalErr
+	}
+
+	// TODO Move file to final destination.
+	// TODO Save completion state in DB.
+	// TODO Send event for completion
+
+	return nil
 }

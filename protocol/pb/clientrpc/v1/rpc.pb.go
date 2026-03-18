@@ -21,6 +21,71 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// DownloadStatus is the status of a file download.
+type DownloadStatus int32
+
+const (
+	// Do not use.
+	DownloadStatus_DOWNLOAD_STATUS_UNSPECIFIED DownloadStatus = 0
+	// Queued.
+	DownloadStatus_DOWNLOAD_STATUS_QUEUED DownloadStatus = 1
+	// Pending.
+	DownloadStatus_DOWNLOAD_STATUS_PENDING DownloadStatus = 2
+	// Canceled.
+	DownloadStatus_DOWNLOAD_STATUS_CANCELED DownloadStatus = 3
+	// Done.
+	DownloadStatus_DOWNLOAD_STATUS_DONE DownloadStatus = 4
+	// Failed to download due to an error.
+	DownloadStatus_DOWNLOAD_STATUS_ERROR DownloadStatus = 5
+)
+
+// Enum value maps for DownloadStatus.
+var (
+	DownloadStatus_name = map[int32]string{
+		0: "DOWNLOAD_STATUS_UNSPECIFIED",
+		1: "DOWNLOAD_STATUS_QUEUED",
+		2: "DOWNLOAD_STATUS_PENDING",
+		3: "DOWNLOAD_STATUS_CANCELED",
+		4: "DOWNLOAD_STATUS_DONE",
+		5: "DOWNLOAD_STATUS_ERROR",
+	}
+	DownloadStatus_value = map[string]int32{
+		"DOWNLOAD_STATUS_UNSPECIFIED": 0,
+		"DOWNLOAD_STATUS_QUEUED":      1,
+		"DOWNLOAD_STATUS_PENDING":     2,
+		"DOWNLOAD_STATUS_CANCELED":    3,
+		"DOWNLOAD_STATUS_DONE":        4,
+		"DOWNLOAD_STATUS_ERROR":       5,
+	}
+)
+
+func (x DownloadStatus) Enum() *DownloadStatus {
+	p := new(DownloadStatus)
+	*p = x
+	return p
+}
+
+func (x DownloadStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (DownloadStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_pb_clientrpc_v1_rpc_proto_enumTypes[0].Descriptor()
+}
+
+func (DownloadStatus) Type() protoreflect.EnumType {
+	return &file_pb_clientrpc_v1_rpc_proto_enumTypes[0]
+}
+
+func (x DownloadStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use DownloadStatus.Descriptor instead.
+func (DownloadStatus) EnumDescriptor() ([]byte, []int) {
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{0}
+}
+
 // ServerConnState is possible connection states for a server.
 type ServerConnState int32
 
@@ -62,11 +127,11 @@ func (x ServerConnState) String() string {
 }
 
 func (ServerConnState) Descriptor() protoreflect.EnumDescriptor {
-	return file_pb_clientrpc_v1_rpc_proto_enumTypes[0].Descriptor()
+	return file_pb_clientrpc_v1_rpc_proto_enumTypes[1].Descriptor()
 }
 
 func (ServerConnState) Type() protoreflect.EnumType {
-	return &file_pb_clientrpc_v1_rpc_proto_enumTypes[0]
+	return &file_pb_clientrpc_v1_rpc_proto_enumTypes[1]
 }
 
 func (x ServerConnState) Number() protoreflect.EnumNumber {
@@ -75,7 +140,7 @@ func (x ServerConnState) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ServerConnState.Descriptor instead.
 func (ServerConnState) EnumDescriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{0}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{1}
 }
 
 type Event_Type int32
@@ -93,8 +158,8 @@ const (
 	Event_TYPE_CLIENT_OFFLINE Event_Type = 4
 	// A new update is available or the update checked was invalid.
 	Event_TYPE_NEW_UPDATE Event_Type = 5
-	// Download progress for files.
-	Event_TYPE_DOWNLOAD_PROGRESS Event_Type = 6
+	// Download status updates for files.
+	Event_TYPE_DOWNLOAD_STATUS_UPDATES Event_Type = 6
 )
 
 // Enum value maps for Event_Type.
@@ -106,7 +171,7 @@ var (
 		3: "TYPE_CLIENT_ONLINE",
 		4: "TYPE_CLIENT_OFFLINE",
 		5: "TYPE_NEW_UPDATE",
-		6: "TYPE_DOWNLOAD_PROGRESS",
+		6: "TYPE_DOWNLOAD_STATUS_UPDATES",
 	}
 	Event_Type_value = map[string]int32{
 		"TYPE_UNSPECIFIED":              0,
@@ -115,7 +180,7 @@ var (
 		"TYPE_CLIENT_ONLINE":            3,
 		"TYPE_CLIENT_OFFLINE":           4,
 		"TYPE_NEW_UPDATE":               5,
-		"TYPE_DOWNLOAD_PROGRESS":        6,
+		"TYPE_DOWNLOAD_STATUS_UPDATES":  6,
 	}
 )
 
@@ -130,11 +195,11 @@ func (x Event_Type) String() string {
 }
 
 func (Event_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_pb_clientrpc_v1_rpc_proto_enumTypes[1].Descriptor()
+	return file_pb_clientrpc_v1_rpc_proto_enumTypes[2].Descriptor()
 }
 
 func (Event_Type) Type() protoreflect.EnumType {
-	return &file_pb_clientrpc_v1_rpc_proto_enumTypes[1]
+	return &file_pb_clientrpc_v1_rpc_proto_enumTypes[2]
 }
 
 func (x Event_Type) Number() protoreflect.EnumNumber {
@@ -410,34 +475,39 @@ func (x *LogMessage) GetAttrs() []*LogMessageAttr {
 	return nil
 }
 
-// DownloadProgress is progress in downloading a file.
-// It does not include a description of the file, only its UUID and progress.
-type DownloadProgress struct {
+// DownloadStatusUpdate is a file download status update.
+type DownloadStatusUpdate struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The file download's UUID.
 	Uuid string `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	// The download status.
+	Status DownloadStatus `protobuf:"varint,2,opt,name=status,proto3,enum=pb.clientrpc.v1.DownloadStatus" json:"status,omitempty"`
 	// The number of bytes downloaded.
-	Downloaded uint64 `protobuf:"varint,2,opt,name=downloaded,proto3" json:"downloaded,omitempty"`
+	Downloaded uint64 `protobuf:"varint,3,opt,name=downloaded,proto3" json:"downloaded,omitempty"`
+	// The file's size in bytes.
+	FileSize uint64 `protobuf:"varint,4,opt,name=file_size,json=fileSize,proto3" json:"file_size,omitempty"`
 	// The current download speed, in bytes per second.
-	Speed         uint64 `protobuf:"varint,3,opt,name=speed,proto3" json:"speed,omitempty"`
+	Speed uint64 `protobuf:"varint,5,opt,name=speed,proto3" json:"speed,omitempty"`
+	// The error message, if applicable.
+	ErrorMessage  *string `protobuf:"bytes,6,opt,name=error_message,json=errorMessage,proto3,oneof" json:"error_message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DownloadProgress) Reset() {
-	*x = DownloadProgress{}
+func (x *DownloadStatusUpdate) Reset() {
+	*x = DownloadStatusUpdate{}
 	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DownloadProgress) String() string {
+func (x *DownloadStatusUpdate) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DownloadProgress) ProtoMessage() {}
+func (*DownloadStatusUpdate) ProtoMessage() {}
 
-func (x *DownloadProgress) ProtoReflect() protoreflect.Message {
+func (x *DownloadStatusUpdate) ProtoReflect() protoreflect.Message {
 	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -449,30 +519,51 @@ func (x *DownloadProgress) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DownloadProgress.ProtoReflect.Descriptor instead.
-func (*DownloadProgress) Descriptor() ([]byte, []int) {
+// Deprecated: Use DownloadStatusUpdate.ProtoReflect.Descriptor instead.
+func (*DownloadStatusUpdate) Descriptor() ([]byte, []int) {
 	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *DownloadProgress) GetUuid() string {
+func (x *DownloadStatusUpdate) GetUuid() string {
 	if x != nil {
 		return x.Uuid
 	}
 	return ""
 }
 
-func (x *DownloadProgress) GetDownloaded() uint64 {
+func (x *DownloadStatusUpdate) GetStatus() DownloadStatus {
+	if x != nil {
+		return x.Status
+	}
+	return DownloadStatus_DOWNLOAD_STATUS_UNSPECIFIED
+}
+
+func (x *DownloadStatusUpdate) GetDownloaded() uint64 {
 	if x != nil {
 		return x.Downloaded
 	}
 	return 0
 }
 
-func (x *DownloadProgress) GetSpeed() uint64 {
+func (x *DownloadStatusUpdate) GetFileSize() uint64 {
+	if x != nil {
+		return x.FileSize
+	}
+	return 0
+}
+
+func (x *DownloadStatusUpdate) GetSpeed() uint64 {
 	if x != nil {
 		return x.Speed
 	}
 	return 0
+}
+
+func (x *DownloadStatusUpdate) GetErrorMessage() string {
+	if x != nil && x.ErrorMessage != nil {
+		return *x.ErrorMessage
+	}
+	return ""
 }
 
 // Information about an update.
@@ -3508,28 +3599,28 @@ func (x *Event_NewUpdate) GetInfo() *UpdateInfo {
 	return nil
 }
 
-type Event_DownloadProgress struct {
+type Event_DownloadStatusUpdates struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The download progress info for files.
-	Files         []*Event_DownloadProgress `protobuf:"bytes,1,rep,name=files,proto3" json:"files,omitempty"`
+	Files         []*DownloadStatusUpdate `protobuf:"bytes,1,rep,name=files,proto3" json:"files,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Event_DownloadProgress) Reset() {
-	*x = Event_DownloadProgress{}
+func (x *Event_DownloadStatusUpdates) Reset() {
+	*x = Event_DownloadStatusUpdates{}
 	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Event_DownloadProgress) String() string {
+func (x *Event_DownloadStatusUpdates) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Event_DownloadProgress) ProtoMessage() {}
+func (*Event_DownloadStatusUpdates) ProtoMessage() {}
 
-func (x *Event_DownloadProgress) ProtoReflect() protoreflect.Message {
+func (x *Event_DownloadStatusUpdates) ProtoReflect() protoreflect.Message {
 	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3541,12 +3632,12 @@ func (x *Event_DownloadProgress) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Event_DownloadProgress.ProtoReflect.Descriptor instead.
-func (*Event_DownloadProgress) Descriptor() ([]byte, []int) {
+// Deprecated: Use Event_DownloadStatusUpdates.ProtoReflect.Descriptor instead.
+func (*Event_DownloadStatusUpdates) Descriptor() ([]byte, []int) {
 	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{0, 4}
 }
 
-func (x *Event_DownloadProgress) GetFiles() []*Event_DownloadProgress {
+func (x *Event_DownloadStatusUpdates) GetFiles() []*DownloadStatusUpdate {
 	if x != nil {
 		return x.Files
 	}
@@ -3602,7 +3693,7 @@ var File_pb_clientrpc_v1_rpc_proto protoreflect.FileDescriptor
 
 const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\n" +
-	"\x19pb/clientrpc/v1/rpc.proto\x12\x0fpb.clientrpc.v1\"\xbe\a\n" +
+	"\x19pb/clientrpc/v1/rpc.proto\x12\x0fpb.clientrpc.v1\"\xc7\a\n" +
 	"\x05Event\x12/\n" +
 	"\x04type\x18\x01 \x01(\x0e2\x1b.pb.clientrpc.v1.Event.TypeR\x04type\x12R\n" +
 	"\vserver_conn\x18\x02 \x01(\v2,.pb.clientrpc.v1.Event.ServerConnStateChangeH\x00R\n" +
@@ -3618,17 +3709,17 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\rClientOffline\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x1a<\n" +
 	"\tNewUpdate\x12/\n" +
-	"\x04info\x18\x01 \x01(\v2\x1b.pb.clientrpc.v1.UpdateInfoR\x04info\x1aQ\n" +
-	"\x10DownloadProgress\x12=\n" +
-	"\x05files\x18\x01 \x03(\v2'.pb.clientrpc.v1.Event.DownloadProgressR\x05files\"\xb0\x01\n" +
+	"\x04info\x18\x01 \x01(\v2\x1b.pb.clientrpc.v1.UpdateInfoR\x04info\x1aT\n" +
+	"\x15DownloadStatusUpdates\x12;\n" +
+	"\x05files\x18\x01 \x03(\v2%.pb.clientrpc.v1.DownloadStatusUpdateR\x05files\"\xb6\x01\n" +
 	"\x04Type\x12\x14\n" +
 	"\x10TYPE_UNSPECIFIED\x10\x00\x12\r\n" +
 	"\tTYPE_STOP\x10\x01\x12!\n" +
 	"\x1dTYPE_SERVER_CONN_STATE_CHANGE\x10\x02\x12\x16\n" +
 	"\x12TYPE_CLIENT_ONLINE\x10\x03\x12\x17\n" +
 	"\x13TYPE_CLIENT_OFFLINE\x10\x04\x12\x13\n" +
-	"\x0fTYPE_NEW_UPDATE\x10\x05\x12\x1a\n" +
-	"\x16TYPE_DOWNLOAD_PROGRESS\x10\x06B\x0e\n" +
+	"\x0fTYPE_NEW_UPDATE\x10\x05\x12 \n" +
+	"\x1cTYPE_DOWNLOAD_STATUS_UPDATES\x10\x06B\x0e\n" +
 	"\f_server_connB\x10\n" +
 	"\x0e_client_onlineB\x11\n" +
 	"\x0f_client_offlineB\r\n" +
@@ -3646,13 +3737,17 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\n" +
 	"created_ts\x18\x02 \x01(\x03R\tcreatedTs\x12\x18\n" +
 	"\amessage\x18\x03 \x01(\tR\amessage\x125\n" +
-	"\x05attrs\x18\x04 \x03(\v2\x1f.pb.clientrpc.v1.LogMessageAttrR\x05attrs\"\\\n" +
-	"\x10DownloadProgress\x12\x12\n" +
-	"\x04uuid\x18\x01 \x01(\tR\x04uuid\x12\x1e\n" +
+	"\x05attrs\x18\x04 \x03(\v2\x1f.pb.clientrpc.v1.LogMessageAttrR\x05attrs\"\xf2\x01\n" +
+	"\x14DownloadStatusUpdate\x12\x12\n" +
+	"\x04uuid\x18\x01 \x01(\tR\x04uuid\x127\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x1f.pb.clientrpc.v1.DownloadStatusR\x06status\x12\x1e\n" +
 	"\n" +
-	"downloaded\x18\x02 \x01(\x04R\n" +
-	"downloaded\x12\x14\n" +
-	"\x05speed\x18\x03 \x01(\x04R\x05speed\"\x94\x01\n" +
+	"downloaded\x18\x03 \x01(\x04R\n" +
+	"downloaded\x12\x1b\n" +
+	"\tfile_size\x18\x04 \x01(\x04R\bfileSize\x12\x14\n" +
+	"\x05speed\x18\x05 \x01(\x04R\x05speed\x12(\n" +
+	"\rerror_message\x18\x06 \x01(\tH\x00R\ferrorMessage\x88\x01\x01B\x10\n" +
+	"\x0e_error_message\"\x94\x01\n" +
 	"\n" +
 	"UpdateInfo\x12\x19\n" +
 	"\bis_valid\x18\x01 \x01(\bR\aisValid\x12\x1d\n" +
@@ -3825,7 +3920,14 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\x18CheckForNewUpdateRequest\"e\n" +
 	"\x19CheckForNewUpdateResponse\x12;\n" +
 	"\bnew_info\x18\x01 \x01(\v2\x1b.pb.clientrpc.v1.UpdateInfoH\x00R\anewInfo\x88\x01\x01B\v\n" +
-	"\t_new_info*\x8d\x01\n" +
+	"\t_new_info*\xbd\x01\n" +
+	"\x0eDownloadStatus\x12\x1f\n" +
+	"\x1bDOWNLOAD_STATUS_UNSPECIFIED\x10\x00\x12\x1a\n" +
+	"\x16DOWNLOAD_STATUS_QUEUED\x10\x01\x12\x1b\n" +
+	"\x17DOWNLOAD_STATUS_PENDING\x10\x02\x12\x1c\n" +
+	"\x18DOWNLOAD_STATUS_CANCELED\x10\x03\x12\x18\n" +
+	"\x14DOWNLOAD_STATUS_DONE\x10\x04\x12\x19\n" +
+	"\x15DOWNLOAD_STATUS_ERROR\x10\x05*\x8d\x01\n" +
 	"\x0fServerConnState\x12!\n" +
 	"\x1dSERVER_CONN_STATE_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18SERVER_CONN_STATE_CLOSED\x10\x01\x12\x1d\n" +
@@ -3874,164 +3976,166 @@ func file_pb_clientrpc_v1_rpc_proto_rawDescGZIP() []byte {
 	return file_pb_clientrpc_v1_rpc_proto_rawDescData
 }
 
-var file_pb_clientrpc_v1_rpc_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_pb_clientrpc_v1_rpc_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
 var file_pb_clientrpc_v1_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 67)
 var file_pb_clientrpc_v1_rpc_proto_goTypes = []any{
-	(ServerConnState)(0),                  // 0: pb.clientrpc.v1.ServerConnState
-	(Event_Type)(0),                       // 1: pb.clientrpc.v1.Event.Type
-	(*Event)(nil),                         // 2: pb.clientrpc.v1.Event
-	(*EventContext)(nil),                  // 3: pb.clientrpc.v1.EventContext
-	(*LogMessageAttr)(nil),                // 4: pb.clientrpc.v1.LogMessageAttr
-	(*LogMessage)(nil),                    // 5: pb.clientrpc.v1.LogMessage
-	(*DownloadProgress)(nil),              // 6: pb.clientrpc.v1.DownloadProgress
-	(*UpdateInfo)(nil),                    // 7: pb.clientrpc.v1.UpdateInfo
-	(*ServerInfo)(nil),                    // 8: pb.clientrpc.v1.ServerInfo
-	(*ShareInfo)(nil),                     // 9: pb.clientrpc.v1.ShareInfo
-	(*OnlineUserInfo)(nil),                // 10: pb.clientrpc.v1.OnlineUserInfo
-	(*FileMeta)(nil),                      // 11: pb.clientrpc.v1.FileMeta
-	(*DirectSettings)(nil),                // 12: pb.clientrpc.v1.DirectSettings
-	(*StreamEventsRequest)(nil),           // 13: pb.clientrpc.v1.StreamEventsRequest
-	(*StreamEventsResponse)(nil),          // 14: pb.clientrpc.v1.StreamEventsResponse
-	(*StreamLogsRequest)(nil),             // 15: pb.clientrpc.v1.StreamLogsRequest
-	(*StreamLogsResponse)(nil),            // 16: pb.clientrpc.v1.StreamLogsResponse
-	(*StopRequest)(nil),                   // 17: pb.clientrpc.v1.StopRequest
-	(*StopResponse)(nil),                  // 18: pb.clientrpc.v1.StopResponse
-	(*GetClientInfoRequest)(nil),          // 19: pb.clientrpc.v1.GetClientInfoRequest
-	(*GetClientInfoResponse)(nil),         // 20: pb.clientrpc.v1.GetClientInfoResponse
-	(*GetServersRequest)(nil),             // 21: pb.clientrpc.v1.GetServersRequest
-	(*GetServersResponse)(nil),            // 22: pb.clientrpc.v1.GetServersResponse
-	(*CreateServerRequest)(nil),           // 23: pb.clientrpc.v1.CreateServerRequest
-	(*CreateServerResponse)(nil),          // 24: pb.clientrpc.v1.CreateServerResponse
-	(*DeleteServerRequest)(nil),           // 25: pb.clientrpc.v1.DeleteServerRequest
-	(*DeleteServerResponse)(nil),          // 26: pb.clientrpc.v1.DeleteServerResponse
-	(*ConnectServerRequest)(nil),          // 27: pb.clientrpc.v1.ConnectServerRequest
-	(*ConnectServerResponse)(nil),         // 28: pb.clientrpc.v1.ConnectServerResponse
-	(*DisconnectServerRequest)(nil),       // 29: pb.clientrpc.v1.DisconnectServerRequest
-	(*DisconnectServerResponse)(nil),      // 30: pb.clientrpc.v1.DisconnectServerResponse
-	(*UpdateServerRequest)(nil),           // 31: pb.clientrpc.v1.UpdateServerRequest
-	(*UpdateServerResponse)(nil),          // 32: pb.clientrpc.v1.UpdateServerResponse
-	(*GetSharesRequest)(nil),              // 33: pb.clientrpc.v1.GetSharesRequest
-	(*GetSharesResponse)(nil),             // 34: pb.clientrpc.v1.GetSharesResponse
-	(*CreateShareRequest)(nil),            // 35: pb.clientrpc.v1.CreateShareRequest
-	(*CreateShareResponse)(nil),           // 36: pb.clientrpc.v1.CreateShareResponse
-	(*DeleteShareRequest)(nil),            // 37: pb.clientrpc.v1.DeleteShareRequest
-	(*DeleteShareResponse)(nil),           // 38: pb.clientrpc.v1.DeleteShareResponse
-	(*GetDirFilesRequest)(nil),            // 39: pb.clientrpc.v1.GetDirFilesRequest
-	(*GetDirFilesResponse)(nil),           // 40: pb.clientrpc.v1.GetDirFilesResponse
-	(*GetFileMetaRequest)(nil),            // 41: pb.clientrpc.v1.GetFileMetaRequest
-	(*GetFileMetaResponse)(nil),           // 42: pb.clientrpc.v1.GetFileMetaResponse
-	(*GetOnlineUsersRequest)(nil),         // 43: pb.clientrpc.v1.GetOnlineUsersRequest
-	(*GetOnlineUsersResponse)(nil),        // 44: pb.clientrpc.v1.GetOnlineUsersResponse
-	(*ChangeAccountPasswordRequest)(nil),  // 45: pb.clientrpc.v1.ChangeAccountPasswordRequest
-	(*ChangeAccountPasswordResponse)(nil), // 46: pb.clientrpc.v1.ChangeAccountPasswordResponse
-	(*ServerConnectRequest)(nil),          // 47: pb.clientrpc.v1.ServerConnectRequest
-	(*ServerConnectResponse)(nil),         // 48: pb.clientrpc.v1.ServerConnectResponse
-	(*ServerDisconnectRequest)(nil),       // 49: pb.clientrpc.v1.ServerDisconnectRequest
-	(*ServerDisconnectResponse)(nil),      // 50: pb.clientrpc.v1.ServerDisconnectResponse
-	(*GetDirectSettingsRequest)(nil),      // 51: pb.clientrpc.v1.GetDirectSettingsRequest
-	(*GetDirectSettingsResponse)(nil),     // 52: pb.clientrpc.v1.GetDirectSettingsResponse
-	(*UpdateDirectSettingsRequest)(nil),   // 53: pb.clientrpc.v1.UpdateDirectSettingsRequest
-	(*UpdateDirectSettingsResponse)(nil),  // 54: pb.clientrpc.v1.UpdateDirectSettingsResponse
-	(*IndexShareRequest)(nil),             // 55: pb.clientrpc.v1.IndexShareRequest
-	(*IndexShareResponse)(nil),            // 56: pb.clientrpc.v1.IndexShareResponse
-	(*StreamSearchRequest)(nil),           // 57: pb.clientrpc.v1.StreamSearchRequest
-	(*StreamSearchResponse)(nil),          // 58: pb.clientrpc.v1.StreamSearchResponse
-	(*GetUpdateInfoRequest)(nil),          // 59: pb.clientrpc.v1.GetUpdateInfoRequest
-	(*GetUpdateInfoResponse)(nil),         // 60: pb.clientrpc.v1.GetUpdateInfoResponse
-	(*CheckForNewUpdateRequest)(nil),      // 61: pb.clientrpc.v1.CheckForNewUpdateRequest
-	(*CheckForNewUpdateResponse)(nil),     // 62: pb.clientrpc.v1.CheckForNewUpdateResponse
-	(*Event_ServerConnStateChange)(nil),   // 63: pb.clientrpc.v1.Event.ServerConnStateChange
-	(*Event_ClientOnline)(nil),            // 64: pb.clientrpc.v1.Event.ClientOnline
-	(*Event_ClientOffline)(nil),           // 65: pb.clientrpc.v1.Event.ClientOffline
-	(*Event_NewUpdate)(nil),               // 66: pb.clientrpc.v1.Event.NewUpdate
-	(*Event_DownloadProgress)(nil),        // 67: pb.clientrpc.v1.Event.DownloadProgress
-	(*ServerInfo_State)(nil),              // 68: pb.clientrpc.v1.ServerInfo.State
+	(DownloadStatus)(0),                   // 0: pb.clientrpc.v1.DownloadStatus
+	(ServerConnState)(0),                  // 1: pb.clientrpc.v1.ServerConnState
+	(Event_Type)(0),                       // 2: pb.clientrpc.v1.Event.Type
+	(*Event)(nil),                         // 3: pb.clientrpc.v1.Event
+	(*EventContext)(nil),                  // 4: pb.clientrpc.v1.EventContext
+	(*LogMessageAttr)(nil),                // 5: pb.clientrpc.v1.LogMessageAttr
+	(*LogMessage)(nil),                    // 6: pb.clientrpc.v1.LogMessage
+	(*DownloadStatusUpdate)(nil),          // 7: pb.clientrpc.v1.DownloadStatusUpdate
+	(*UpdateInfo)(nil),                    // 8: pb.clientrpc.v1.UpdateInfo
+	(*ServerInfo)(nil),                    // 9: pb.clientrpc.v1.ServerInfo
+	(*ShareInfo)(nil),                     // 10: pb.clientrpc.v1.ShareInfo
+	(*OnlineUserInfo)(nil),                // 11: pb.clientrpc.v1.OnlineUserInfo
+	(*FileMeta)(nil),                      // 12: pb.clientrpc.v1.FileMeta
+	(*DirectSettings)(nil),                // 13: pb.clientrpc.v1.DirectSettings
+	(*StreamEventsRequest)(nil),           // 14: pb.clientrpc.v1.StreamEventsRequest
+	(*StreamEventsResponse)(nil),          // 15: pb.clientrpc.v1.StreamEventsResponse
+	(*StreamLogsRequest)(nil),             // 16: pb.clientrpc.v1.StreamLogsRequest
+	(*StreamLogsResponse)(nil),            // 17: pb.clientrpc.v1.StreamLogsResponse
+	(*StopRequest)(nil),                   // 18: pb.clientrpc.v1.StopRequest
+	(*StopResponse)(nil),                  // 19: pb.clientrpc.v1.StopResponse
+	(*GetClientInfoRequest)(nil),          // 20: pb.clientrpc.v1.GetClientInfoRequest
+	(*GetClientInfoResponse)(nil),         // 21: pb.clientrpc.v1.GetClientInfoResponse
+	(*GetServersRequest)(nil),             // 22: pb.clientrpc.v1.GetServersRequest
+	(*GetServersResponse)(nil),            // 23: pb.clientrpc.v1.GetServersResponse
+	(*CreateServerRequest)(nil),           // 24: pb.clientrpc.v1.CreateServerRequest
+	(*CreateServerResponse)(nil),          // 25: pb.clientrpc.v1.CreateServerResponse
+	(*DeleteServerRequest)(nil),           // 26: pb.clientrpc.v1.DeleteServerRequest
+	(*DeleteServerResponse)(nil),          // 27: pb.clientrpc.v1.DeleteServerResponse
+	(*ConnectServerRequest)(nil),          // 28: pb.clientrpc.v1.ConnectServerRequest
+	(*ConnectServerResponse)(nil),         // 29: pb.clientrpc.v1.ConnectServerResponse
+	(*DisconnectServerRequest)(nil),       // 30: pb.clientrpc.v1.DisconnectServerRequest
+	(*DisconnectServerResponse)(nil),      // 31: pb.clientrpc.v1.DisconnectServerResponse
+	(*UpdateServerRequest)(nil),           // 32: pb.clientrpc.v1.UpdateServerRequest
+	(*UpdateServerResponse)(nil),          // 33: pb.clientrpc.v1.UpdateServerResponse
+	(*GetSharesRequest)(nil),              // 34: pb.clientrpc.v1.GetSharesRequest
+	(*GetSharesResponse)(nil),             // 35: pb.clientrpc.v1.GetSharesResponse
+	(*CreateShareRequest)(nil),            // 36: pb.clientrpc.v1.CreateShareRequest
+	(*CreateShareResponse)(nil),           // 37: pb.clientrpc.v1.CreateShareResponse
+	(*DeleteShareRequest)(nil),            // 38: pb.clientrpc.v1.DeleteShareRequest
+	(*DeleteShareResponse)(nil),           // 39: pb.clientrpc.v1.DeleteShareResponse
+	(*GetDirFilesRequest)(nil),            // 40: pb.clientrpc.v1.GetDirFilesRequest
+	(*GetDirFilesResponse)(nil),           // 41: pb.clientrpc.v1.GetDirFilesResponse
+	(*GetFileMetaRequest)(nil),            // 42: pb.clientrpc.v1.GetFileMetaRequest
+	(*GetFileMetaResponse)(nil),           // 43: pb.clientrpc.v1.GetFileMetaResponse
+	(*GetOnlineUsersRequest)(nil),         // 44: pb.clientrpc.v1.GetOnlineUsersRequest
+	(*GetOnlineUsersResponse)(nil),        // 45: pb.clientrpc.v1.GetOnlineUsersResponse
+	(*ChangeAccountPasswordRequest)(nil),  // 46: pb.clientrpc.v1.ChangeAccountPasswordRequest
+	(*ChangeAccountPasswordResponse)(nil), // 47: pb.clientrpc.v1.ChangeAccountPasswordResponse
+	(*ServerConnectRequest)(nil),          // 48: pb.clientrpc.v1.ServerConnectRequest
+	(*ServerConnectResponse)(nil),         // 49: pb.clientrpc.v1.ServerConnectResponse
+	(*ServerDisconnectRequest)(nil),       // 50: pb.clientrpc.v1.ServerDisconnectRequest
+	(*ServerDisconnectResponse)(nil),      // 51: pb.clientrpc.v1.ServerDisconnectResponse
+	(*GetDirectSettingsRequest)(nil),      // 52: pb.clientrpc.v1.GetDirectSettingsRequest
+	(*GetDirectSettingsResponse)(nil),     // 53: pb.clientrpc.v1.GetDirectSettingsResponse
+	(*UpdateDirectSettingsRequest)(nil),   // 54: pb.clientrpc.v1.UpdateDirectSettingsRequest
+	(*UpdateDirectSettingsResponse)(nil),  // 55: pb.clientrpc.v1.UpdateDirectSettingsResponse
+	(*IndexShareRequest)(nil),             // 56: pb.clientrpc.v1.IndexShareRequest
+	(*IndexShareResponse)(nil),            // 57: pb.clientrpc.v1.IndexShareResponse
+	(*StreamSearchRequest)(nil),           // 58: pb.clientrpc.v1.StreamSearchRequest
+	(*StreamSearchResponse)(nil),          // 59: pb.clientrpc.v1.StreamSearchResponse
+	(*GetUpdateInfoRequest)(nil),          // 60: pb.clientrpc.v1.GetUpdateInfoRequest
+	(*GetUpdateInfoResponse)(nil),         // 61: pb.clientrpc.v1.GetUpdateInfoResponse
+	(*CheckForNewUpdateRequest)(nil),      // 62: pb.clientrpc.v1.CheckForNewUpdateRequest
+	(*CheckForNewUpdateResponse)(nil),     // 63: pb.clientrpc.v1.CheckForNewUpdateResponse
+	(*Event_ServerConnStateChange)(nil),   // 64: pb.clientrpc.v1.Event.ServerConnStateChange
+	(*Event_ClientOnline)(nil),            // 65: pb.clientrpc.v1.Event.ClientOnline
+	(*Event_ClientOffline)(nil),           // 66: pb.clientrpc.v1.Event.ClientOffline
+	(*Event_NewUpdate)(nil),               // 67: pb.clientrpc.v1.Event.NewUpdate
+	(*Event_DownloadStatusUpdates)(nil),   // 68: pb.clientrpc.v1.Event.DownloadStatusUpdates
+	(*ServerInfo_State)(nil),              // 69: pb.clientrpc.v1.ServerInfo.State
 }
 var file_pb_clientrpc_v1_rpc_proto_depIdxs = []int32{
-	1,  // 0: pb.clientrpc.v1.Event.type:type_name -> pb.clientrpc.v1.Event.Type
-	63, // 1: pb.clientrpc.v1.Event.server_conn:type_name -> pb.clientrpc.v1.Event.ServerConnStateChange
-	64, // 2: pb.clientrpc.v1.Event.client_online:type_name -> pb.clientrpc.v1.Event.ClientOnline
-	65, // 3: pb.clientrpc.v1.Event.client_offline:type_name -> pb.clientrpc.v1.Event.ClientOffline
-	66, // 4: pb.clientrpc.v1.Event.new_update:type_name -> pb.clientrpc.v1.Event.NewUpdate
-	4,  // 5: pb.clientrpc.v1.LogMessage.attrs:type_name -> pb.clientrpc.v1.LogMessageAttr
-	68, // 6: pb.clientrpc.v1.ServerInfo.state:type_name -> pb.clientrpc.v1.ServerInfo.State
-	2,  // 7: pb.clientrpc.v1.StreamEventsResponse.event:type_name -> pb.clientrpc.v1.Event
-	3,  // 8: pb.clientrpc.v1.StreamEventsResponse.context:type_name -> pb.clientrpc.v1.EventContext
-	5,  // 9: pb.clientrpc.v1.StreamLogsResponse.logs:type_name -> pb.clientrpc.v1.LogMessage
-	8,  // 10: pb.clientrpc.v1.GetServersResponse.servers:type_name -> pb.clientrpc.v1.ServerInfo
-	8,  // 11: pb.clientrpc.v1.CreateServerResponse.server:type_name -> pb.clientrpc.v1.ServerInfo
-	8,  // 12: pb.clientrpc.v1.UpdateServerResponse.server:type_name -> pb.clientrpc.v1.ServerInfo
-	9,  // 13: pb.clientrpc.v1.GetSharesResponse.shares:type_name -> pb.clientrpc.v1.ShareInfo
-	9,  // 14: pb.clientrpc.v1.CreateShareResponse.share:type_name -> pb.clientrpc.v1.ShareInfo
-	11, // 15: pb.clientrpc.v1.GetDirFilesResponse.content:type_name -> pb.clientrpc.v1.FileMeta
-	11, // 16: pb.clientrpc.v1.GetFileMetaResponse.meta:type_name -> pb.clientrpc.v1.FileMeta
-	10, // 17: pb.clientrpc.v1.GetOnlineUsersResponse.users:type_name -> pb.clientrpc.v1.OnlineUserInfo
-	12, // 18: pb.clientrpc.v1.GetDirectSettingsResponse.settings:type_name -> pb.clientrpc.v1.DirectSettings
-	12, // 19: pb.clientrpc.v1.UpdateDirectSettingsRequest.settings:type_name -> pb.clientrpc.v1.DirectSettings
-	11, // 20: pb.clientrpc.v1.StreamSearchResponse.file:type_name -> pb.clientrpc.v1.FileMeta
-	7,  // 21: pb.clientrpc.v1.GetUpdateInfoResponse.current_info:type_name -> pb.clientrpc.v1.UpdateInfo
-	7,  // 22: pb.clientrpc.v1.GetUpdateInfoResponse.new_info:type_name -> pb.clientrpc.v1.UpdateInfo
-	7,  // 23: pb.clientrpc.v1.CheckForNewUpdateResponse.new_info:type_name -> pb.clientrpc.v1.UpdateInfo
-	0,  // 24: pb.clientrpc.v1.Event.ServerConnStateChange.state:type_name -> pb.clientrpc.v1.ServerConnState
-	10, // 25: pb.clientrpc.v1.Event.ClientOnline.info:type_name -> pb.clientrpc.v1.OnlineUserInfo
-	7,  // 26: pb.clientrpc.v1.Event.NewUpdate.info:type_name -> pb.clientrpc.v1.UpdateInfo
-	67, // 27: pb.clientrpc.v1.Event.DownloadProgress.files:type_name -> pb.clientrpc.v1.Event.DownloadProgress
-	0,  // 28: pb.clientrpc.v1.ServerInfo.State.conn_state:type_name -> pb.clientrpc.v1.ServerConnState
-	15, // 29: pb.clientrpc.v1.ClientRpcService.StreamLogs:input_type -> pb.clientrpc.v1.StreamLogsRequest
-	13, // 30: pb.clientrpc.v1.ClientRpcService.StreamEvents:input_type -> pb.clientrpc.v1.StreamEventsRequest
-	17, // 31: pb.clientrpc.v1.ClientRpcService.Stop:input_type -> pb.clientrpc.v1.StopRequest
-	19, // 32: pb.clientrpc.v1.ClientRpcService.GetClientInfo:input_type -> pb.clientrpc.v1.GetClientInfoRequest
-	21, // 33: pb.clientrpc.v1.ClientRpcService.GetServers:input_type -> pb.clientrpc.v1.GetServersRequest
-	23, // 34: pb.clientrpc.v1.ClientRpcService.CreateServer:input_type -> pb.clientrpc.v1.CreateServerRequest
-	25, // 35: pb.clientrpc.v1.ClientRpcService.DeleteServer:input_type -> pb.clientrpc.v1.DeleteServerRequest
-	27, // 36: pb.clientrpc.v1.ClientRpcService.ConnectServer:input_type -> pb.clientrpc.v1.ConnectServerRequest
-	29, // 37: pb.clientrpc.v1.ClientRpcService.DisconnectServer:input_type -> pb.clientrpc.v1.DisconnectServerRequest
-	31, // 38: pb.clientrpc.v1.ClientRpcService.UpdateServer:input_type -> pb.clientrpc.v1.UpdateServerRequest
-	33, // 39: pb.clientrpc.v1.ClientRpcService.GetShares:input_type -> pb.clientrpc.v1.GetSharesRequest
-	35, // 40: pb.clientrpc.v1.ClientRpcService.CreateShare:input_type -> pb.clientrpc.v1.CreateShareRequest
-	37, // 41: pb.clientrpc.v1.ClientRpcService.DeleteShare:input_type -> pb.clientrpc.v1.DeleteShareRequest
-	39, // 42: pb.clientrpc.v1.ClientRpcService.GetDirFiles:input_type -> pb.clientrpc.v1.GetDirFilesRequest
-	41, // 43: pb.clientrpc.v1.ClientRpcService.GetFileMeta:input_type -> pb.clientrpc.v1.GetFileMetaRequest
-	43, // 44: pb.clientrpc.v1.ClientRpcService.GetOnlineUsers:input_type -> pb.clientrpc.v1.GetOnlineUsersRequest
-	45, // 45: pb.clientrpc.v1.ClientRpcService.ChangeAccountPassword:input_type -> pb.clientrpc.v1.ChangeAccountPasswordRequest
-	47, // 46: pb.clientrpc.v1.ClientRpcService.ServerConnect:input_type -> pb.clientrpc.v1.ServerConnectRequest
-	49, // 47: pb.clientrpc.v1.ClientRpcService.ServerDisconnect:input_type -> pb.clientrpc.v1.ServerDisconnectRequest
-	51, // 48: pb.clientrpc.v1.ClientRpcService.GetDirectSettings:input_type -> pb.clientrpc.v1.GetDirectSettingsRequest
-	53, // 49: pb.clientrpc.v1.ClientRpcService.UpdateDirectSettings:input_type -> pb.clientrpc.v1.UpdateDirectSettingsRequest
-	55, // 50: pb.clientrpc.v1.ClientRpcService.IndexShare:input_type -> pb.clientrpc.v1.IndexShareRequest
-	57, // 51: pb.clientrpc.v1.ClientRpcService.StreamSearch:input_type -> pb.clientrpc.v1.StreamSearchRequest
-	59, // 52: pb.clientrpc.v1.ClientRpcService.GetUpdateInfo:input_type -> pb.clientrpc.v1.GetUpdateInfoRequest
-	61, // 53: pb.clientrpc.v1.ClientRpcService.CheckForNewUpdate:input_type -> pb.clientrpc.v1.CheckForNewUpdateRequest
-	16, // 54: pb.clientrpc.v1.ClientRpcService.StreamLogs:output_type -> pb.clientrpc.v1.StreamLogsResponse
-	14, // 55: pb.clientrpc.v1.ClientRpcService.StreamEvents:output_type -> pb.clientrpc.v1.StreamEventsResponse
-	18, // 56: pb.clientrpc.v1.ClientRpcService.Stop:output_type -> pb.clientrpc.v1.StopResponse
-	20, // 57: pb.clientrpc.v1.ClientRpcService.GetClientInfo:output_type -> pb.clientrpc.v1.GetClientInfoResponse
-	22, // 58: pb.clientrpc.v1.ClientRpcService.GetServers:output_type -> pb.clientrpc.v1.GetServersResponse
-	24, // 59: pb.clientrpc.v1.ClientRpcService.CreateServer:output_type -> pb.clientrpc.v1.CreateServerResponse
-	26, // 60: pb.clientrpc.v1.ClientRpcService.DeleteServer:output_type -> pb.clientrpc.v1.DeleteServerResponse
-	28, // 61: pb.clientrpc.v1.ClientRpcService.ConnectServer:output_type -> pb.clientrpc.v1.ConnectServerResponse
-	30, // 62: pb.clientrpc.v1.ClientRpcService.DisconnectServer:output_type -> pb.clientrpc.v1.DisconnectServerResponse
-	32, // 63: pb.clientrpc.v1.ClientRpcService.UpdateServer:output_type -> pb.clientrpc.v1.UpdateServerResponse
-	34, // 64: pb.clientrpc.v1.ClientRpcService.GetShares:output_type -> pb.clientrpc.v1.GetSharesResponse
-	36, // 65: pb.clientrpc.v1.ClientRpcService.CreateShare:output_type -> pb.clientrpc.v1.CreateShareResponse
-	38, // 66: pb.clientrpc.v1.ClientRpcService.DeleteShare:output_type -> pb.clientrpc.v1.DeleteShareResponse
-	40, // 67: pb.clientrpc.v1.ClientRpcService.GetDirFiles:output_type -> pb.clientrpc.v1.GetDirFilesResponse
-	42, // 68: pb.clientrpc.v1.ClientRpcService.GetFileMeta:output_type -> pb.clientrpc.v1.GetFileMetaResponse
-	44, // 69: pb.clientrpc.v1.ClientRpcService.GetOnlineUsers:output_type -> pb.clientrpc.v1.GetOnlineUsersResponse
-	46, // 70: pb.clientrpc.v1.ClientRpcService.ChangeAccountPassword:output_type -> pb.clientrpc.v1.ChangeAccountPasswordResponse
-	48, // 71: pb.clientrpc.v1.ClientRpcService.ServerConnect:output_type -> pb.clientrpc.v1.ServerConnectResponse
-	50, // 72: pb.clientrpc.v1.ClientRpcService.ServerDisconnect:output_type -> pb.clientrpc.v1.ServerDisconnectResponse
-	52, // 73: pb.clientrpc.v1.ClientRpcService.GetDirectSettings:output_type -> pb.clientrpc.v1.GetDirectSettingsResponse
-	54, // 74: pb.clientrpc.v1.ClientRpcService.UpdateDirectSettings:output_type -> pb.clientrpc.v1.UpdateDirectSettingsResponse
-	56, // 75: pb.clientrpc.v1.ClientRpcService.IndexShare:output_type -> pb.clientrpc.v1.IndexShareResponse
-	58, // 76: pb.clientrpc.v1.ClientRpcService.StreamSearch:output_type -> pb.clientrpc.v1.StreamSearchResponse
-	60, // 77: pb.clientrpc.v1.ClientRpcService.GetUpdateInfo:output_type -> pb.clientrpc.v1.GetUpdateInfoResponse
-	62, // 78: pb.clientrpc.v1.ClientRpcService.CheckForNewUpdate:output_type -> pb.clientrpc.v1.CheckForNewUpdateResponse
-	54, // [54:79] is the sub-list for method output_type
-	29, // [29:54] is the sub-list for method input_type
-	29, // [29:29] is the sub-list for extension type_name
-	29, // [29:29] is the sub-list for extension extendee
-	0,  // [0:29] is the sub-list for field type_name
+	2,  // 0: pb.clientrpc.v1.Event.type:type_name -> pb.clientrpc.v1.Event.Type
+	64, // 1: pb.clientrpc.v1.Event.server_conn:type_name -> pb.clientrpc.v1.Event.ServerConnStateChange
+	65, // 2: pb.clientrpc.v1.Event.client_online:type_name -> pb.clientrpc.v1.Event.ClientOnline
+	66, // 3: pb.clientrpc.v1.Event.client_offline:type_name -> pb.clientrpc.v1.Event.ClientOffline
+	67, // 4: pb.clientrpc.v1.Event.new_update:type_name -> pb.clientrpc.v1.Event.NewUpdate
+	5,  // 5: pb.clientrpc.v1.LogMessage.attrs:type_name -> pb.clientrpc.v1.LogMessageAttr
+	0,  // 6: pb.clientrpc.v1.DownloadStatusUpdate.status:type_name -> pb.clientrpc.v1.DownloadStatus
+	69, // 7: pb.clientrpc.v1.ServerInfo.state:type_name -> pb.clientrpc.v1.ServerInfo.State
+	3,  // 8: pb.clientrpc.v1.StreamEventsResponse.event:type_name -> pb.clientrpc.v1.Event
+	4,  // 9: pb.clientrpc.v1.StreamEventsResponse.context:type_name -> pb.clientrpc.v1.EventContext
+	6,  // 10: pb.clientrpc.v1.StreamLogsResponse.logs:type_name -> pb.clientrpc.v1.LogMessage
+	9,  // 11: pb.clientrpc.v1.GetServersResponse.servers:type_name -> pb.clientrpc.v1.ServerInfo
+	9,  // 12: pb.clientrpc.v1.CreateServerResponse.server:type_name -> pb.clientrpc.v1.ServerInfo
+	9,  // 13: pb.clientrpc.v1.UpdateServerResponse.server:type_name -> pb.clientrpc.v1.ServerInfo
+	10, // 14: pb.clientrpc.v1.GetSharesResponse.shares:type_name -> pb.clientrpc.v1.ShareInfo
+	10, // 15: pb.clientrpc.v1.CreateShareResponse.share:type_name -> pb.clientrpc.v1.ShareInfo
+	12, // 16: pb.clientrpc.v1.GetDirFilesResponse.content:type_name -> pb.clientrpc.v1.FileMeta
+	12, // 17: pb.clientrpc.v1.GetFileMetaResponse.meta:type_name -> pb.clientrpc.v1.FileMeta
+	11, // 18: pb.clientrpc.v1.GetOnlineUsersResponse.users:type_name -> pb.clientrpc.v1.OnlineUserInfo
+	13, // 19: pb.clientrpc.v1.GetDirectSettingsResponse.settings:type_name -> pb.clientrpc.v1.DirectSettings
+	13, // 20: pb.clientrpc.v1.UpdateDirectSettingsRequest.settings:type_name -> pb.clientrpc.v1.DirectSettings
+	12, // 21: pb.clientrpc.v1.StreamSearchResponse.file:type_name -> pb.clientrpc.v1.FileMeta
+	8,  // 22: pb.clientrpc.v1.GetUpdateInfoResponse.current_info:type_name -> pb.clientrpc.v1.UpdateInfo
+	8,  // 23: pb.clientrpc.v1.GetUpdateInfoResponse.new_info:type_name -> pb.clientrpc.v1.UpdateInfo
+	8,  // 24: pb.clientrpc.v1.CheckForNewUpdateResponse.new_info:type_name -> pb.clientrpc.v1.UpdateInfo
+	1,  // 25: pb.clientrpc.v1.Event.ServerConnStateChange.state:type_name -> pb.clientrpc.v1.ServerConnState
+	11, // 26: pb.clientrpc.v1.Event.ClientOnline.info:type_name -> pb.clientrpc.v1.OnlineUserInfo
+	8,  // 27: pb.clientrpc.v1.Event.NewUpdate.info:type_name -> pb.clientrpc.v1.UpdateInfo
+	7,  // 28: pb.clientrpc.v1.Event.DownloadStatusUpdates.files:type_name -> pb.clientrpc.v1.DownloadStatusUpdate
+	1,  // 29: pb.clientrpc.v1.ServerInfo.State.conn_state:type_name -> pb.clientrpc.v1.ServerConnState
+	16, // 30: pb.clientrpc.v1.ClientRpcService.StreamLogs:input_type -> pb.clientrpc.v1.StreamLogsRequest
+	14, // 31: pb.clientrpc.v1.ClientRpcService.StreamEvents:input_type -> pb.clientrpc.v1.StreamEventsRequest
+	18, // 32: pb.clientrpc.v1.ClientRpcService.Stop:input_type -> pb.clientrpc.v1.StopRequest
+	20, // 33: pb.clientrpc.v1.ClientRpcService.GetClientInfo:input_type -> pb.clientrpc.v1.GetClientInfoRequest
+	22, // 34: pb.clientrpc.v1.ClientRpcService.GetServers:input_type -> pb.clientrpc.v1.GetServersRequest
+	24, // 35: pb.clientrpc.v1.ClientRpcService.CreateServer:input_type -> pb.clientrpc.v1.CreateServerRequest
+	26, // 36: pb.clientrpc.v1.ClientRpcService.DeleteServer:input_type -> pb.clientrpc.v1.DeleteServerRequest
+	28, // 37: pb.clientrpc.v1.ClientRpcService.ConnectServer:input_type -> pb.clientrpc.v1.ConnectServerRequest
+	30, // 38: pb.clientrpc.v1.ClientRpcService.DisconnectServer:input_type -> pb.clientrpc.v1.DisconnectServerRequest
+	32, // 39: pb.clientrpc.v1.ClientRpcService.UpdateServer:input_type -> pb.clientrpc.v1.UpdateServerRequest
+	34, // 40: pb.clientrpc.v1.ClientRpcService.GetShares:input_type -> pb.clientrpc.v1.GetSharesRequest
+	36, // 41: pb.clientrpc.v1.ClientRpcService.CreateShare:input_type -> pb.clientrpc.v1.CreateShareRequest
+	38, // 42: pb.clientrpc.v1.ClientRpcService.DeleteShare:input_type -> pb.clientrpc.v1.DeleteShareRequest
+	40, // 43: pb.clientrpc.v1.ClientRpcService.GetDirFiles:input_type -> pb.clientrpc.v1.GetDirFilesRequest
+	42, // 44: pb.clientrpc.v1.ClientRpcService.GetFileMeta:input_type -> pb.clientrpc.v1.GetFileMetaRequest
+	44, // 45: pb.clientrpc.v1.ClientRpcService.GetOnlineUsers:input_type -> pb.clientrpc.v1.GetOnlineUsersRequest
+	46, // 46: pb.clientrpc.v1.ClientRpcService.ChangeAccountPassword:input_type -> pb.clientrpc.v1.ChangeAccountPasswordRequest
+	48, // 47: pb.clientrpc.v1.ClientRpcService.ServerConnect:input_type -> pb.clientrpc.v1.ServerConnectRequest
+	50, // 48: pb.clientrpc.v1.ClientRpcService.ServerDisconnect:input_type -> pb.clientrpc.v1.ServerDisconnectRequest
+	52, // 49: pb.clientrpc.v1.ClientRpcService.GetDirectSettings:input_type -> pb.clientrpc.v1.GetDirectSettingsRequest
+	54, // 50: pb.clientrpc.v1.ClientRpcService.UpdateDirectSettings:input_type -> pb.clientrpc.v1.UpdateDirectSettingsRequest
+	56, // 51: pb.clientrpc.v1.ClientRpcService.IndexShare:input_type -> pb.clientrpc.v1.IndexShareRequest
+	58, // 52: pb.clientrpc.v1.ClientRpcService.StreamSearch:input_type -> pb.clientrpc.v1.StreamSearchRequest
+	60, // 53: pb.clientrpc.v1.ClientRpcService.GetUpdateInfo:input_type -> pb.clientrpc.v1.GetUpdateInfoRequest
+	62, // 54: pb.clientrpc.v1.ClientRpcService.CheckForNewUpdate:input_type -> pb.clientrpc.v1.CheckForNewUpdateRequest
+	17, // 55: pb.clientrpc.v1.ClientRpcService.StreamLogs:output_type -> pb.clientrpc.v1.StreamLogsResponse
+	15, // 56: pb.clientrpc.v1.ClientRpcService.StreamEvents:output_type -> pb.clientrpc.v1.StreamEventsResponse
+	19, // 57: pb.clientrpc.v1.ClientRpcService.Stop:output_type -> pb.clientrpc.v1.StopResponse
+	21, // 58: pb.clientrpc.v1.ClientRpcService.GetClientInfo:output_type -> pb.clientrpc.v1.GetClientInfoResponse
+	23, // 59: pb.clientrpc.v1.ClientRpcService.GetServers:output_type -> pb.clientrpc.v1.GetServersResponse
+	25, // 60: pb.clientrpc.v1.ClientRpcService.CreateServer:output_type -> pb.clientrpc.v1.CreateServerResponse
+	27, // 61: pb.clientrpc.v1.ClientRpcService.DeleteServer:output_type -> pb.clientrpc.v1.DeleteServerResponse
+	29, // 62: pb.clientrpc.v1.ClientRpcService.ConnectServer:output_type -> pb.clientrpc.v1.ConnectServerResponse
+	31, // 63: pb.clientrpc.v1.ClientRpcService.DisconnectServer:output_type -> pb.clientrpc.v1.DisconnectServerResponse
+	33, // 64: pb.clientrpc.v1.ClientRpcService.UpdateServer:output_type -> pb.clientrpc.v1.UpdateServerResponse
+	35, // 65: pb.clientrpc.v1.ClientRpcService.GetShares:output_type -> pb.clientrpc.v1.GetSharesResponse
+	37, // 66: pb.clientrpc.v1.ClientRpcService.CreateShare:output_type -> pb.clientrpc.v1.CreateShareResponse
+	39, // 67: pb.clientrpc.v1.ClientRpcService.DeleteShare:output_type -> pb.clientrpc.v1.DeleteShareResponse
+	41, // 68: pb.clientrpc.v1.ClientRpcService.GetDirFiles:output_type -> pb.clientrpc.v1.GetDirFilesResponse
+	43, // 69: pb.clientrpc.v1.ClientRpcService.GetFileMeta:output_type -> pb.clientrpc.v1.GetFileMetaResponse
+	45, // 70: pb.clientrpc.v1.ClientRpcService.GetOnlineUsers:output_type -> pb.clientrpc.v1.GetOnlineUsersResponse
+	47, // 71: pb.clientrpc.v1.ClientRpcService.ChangeAccountPassword:output_type -> pb.clientrpc.v1.ChangeAccountPasswordResponse
+	49, // 72: pb.clientrpc.v1.ClientRpcService.ServerConnect:output_type -> pb.clientrpc.v1.ServerConnectResponse
+	51, // 73: pb.clientrpc.v1.ClientRpcService.ServerDisconnect:output_type -> pb.clientrpc.v1.ServerDisconnectResponse
+	53, // 74: pb.clientrpc.v1.ClientRpcService.GetDirectSettings:output_type -> pb.clientrpc.v1.GetDirectSettingsResponse
+	55, // 75: pb.clientrpc.v1.ClientRpcService.UpdateDirectSettings:output_type -> pb.clientrpc.v1.UpdateDirectSettingsResponse
+	57, // 76: pb.clientrpc.v1.ClientRpcService.IndexShare:output_type -> pb.clientrpc.v1.IndexShareResponse
+	59, // 77: pb.clientrpc.v1.ClientRpcService.StreamSearch:output_type -> pb.clientrpc.v1.StreamSearchResponse
+	61, // 78: pb.clientrpc.v1.ClientRpcService.GetUpdateInfo:output_type -> pb.clientrpc.v1.GetUpdateInfoResponse
+	63, // 79: pb.clientrpc.v1.ClientRpcService.CheckForNewUpdate:output_type -> pb.clientrpc.v1.CheckForNewUpdateResponse
+	55, // [55:80] is the sub-list for method output_type
+	30, // [30:55] is the sub-list for method input_type
+	30, // [30:30] is the sub-list for extension type_name
+	30, // [30:30] is the sub-list for extension extendee
+	0,  // [0:30] is the sub-list for field type_name
 }
 
 func init() { file_pb_clientrpc_v1_rpc_proto_init() }
@@ -4040,6 +4144,7 @@ func file_pb_clientrpc_v1_rpc_proto_init() {
 		return
 	}
 	file_pb_clientrpc_v1_rpc_proto_msgTypes[0].OneofWrappers = []any{}
+	file_pb_clientrpc_v1_rpc_proto_msgTypes[4].OneofWrappers = []any{}
 	file_pb_clientrpc_v1_rpc_proto_msgTypes[13].OneofWrappers = []any{}
 	file_pb_clientrpc_v1_rpc_proto_msgTypes[29].OneofWrappers = []any{}
 	file_pb_clientrpc_v1_rpc_proto_msgTypes[55].OneofWrappers = []any{}
@@ -4050,7 +4155,7 @@ func file_pb_clientrpc_v1_rpc_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pb_clientrpc_v1_rpc_proto_rawDesc), len(file_pb_clientrpc_v1_rpc_proto_rawDesc)),
-			NumEnums:      2,
+			NumEnums:      3,
 			NumMessages:   67,
 			NumExtensions: 0,
 			NumServices:   1,
