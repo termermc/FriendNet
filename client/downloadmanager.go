@@ -116,6 +116,8 @@ type DownloadManager struct {
 	dirComplete   string
 	dlConcurrency int
 
+	states []*DownloadState
+
 	// A queue of pending download progress events to send to the event bus.
 	// It is buffered, but sends should be discarded if the buffer is full instead of blocking.
 	pendingUpdates chan dmUpdate
@@ -259,7 +261,6 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 		defer cancel()
 
 		// Dump statistics in event channel every second.
-		// TODO Do we want to be bundling extra data in the events to send out notifications to the peer we're downloading from?
 		go func() {
 			ticker := time.NewTicker(1 * time.Second)
 
@@ -307,24 +308,62 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 
 		return nil
 	})
+
+	finalBytes := state.fileDownloadedBytes.Load()
+	if finalErr == nil && finalBytes != uint64(state.fileTotalSize) {
+		// Final downloaded size did not match the total size.
+		// Before setting the error, delete the pending file.
+
+		_ = os.Remove(pendingPath)
+
+		finalErr = fmt.Errorf(`finished downloading file %q from peer %q on server %q but its final size was %d/%d bytes`,
+			state.filePath.String(),
+			state.peer.String(),
+			state.server.Uuid,
+			finalBytes,
+			state.fileTotalSize,
+		)
+	}
+
 	if finalErr != nil {
 		if errors.Is(finalErr, ErrConnNotOpen) {
-			// TODO Conn not open.
-			// TODO Queue again
+			// Conn not open; queue again.
+			state.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED))
+			return nil
 		}
 		if errors.Is(finalErr, protocol.ErrPeerUnreachable) {
-			// TODO Peer unreachable.
-			// TODO Queue again
+			// Peer unreachable; queue again.
+			state.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED))
+			return nil
 		}
 
-		// TODO Save error state in DB.
-		// TODO Send event for error.
+		dm.trySendUpdate(dmUpdate{
+			rpc: &v1.DownloadStatusUpdate{
+				Uuid:         state.uuid,
+				Status:       v1.DownloadStatus_DOWNLOAD_STATUS_ERROR,
+				Downloaded:   state.fileDownloadedBytes.Load(),
+				FileSize:     uint64(state.fileTotalSize),
+				Speed:        0,
+				ErrorMessage: new(finalErr.Error()),
+			},
+			ds: state,
+		})
 		return finalErr
 	}
 
 	// TODO Move file to final destination.
-	// TODO Save completion state in DB.
-	// TODO Send event for completion
+
+	dm.trySendUpdate(dmUpdate{
+		rpc: &v1.DownloadStatusUpdate{
+			Uuid:         state.uuid,
+			Status:       v1.DownloadStatus_DOWNLOAD_STATUS_DONE,
+			Downloaded:   state.fileDownloadedBytes.Load(),
+			FileSize:     uint64(state.fileTotalSize),
+			Speed:        0,
+			ErrorMessage: nil,
+		},
+		ds: state,
+	})
 
 	return nil
 }
