@@ -35,6 +35,7 @@ import (
 	"time"
 
 	"friendnet.org/client/event"
+	"friendnet.org/client/fsys"
 	"friendnet.org/client/room"
 	"friendnet.org/client/storage"
 	"friendnet.org/common"
@@ -106,6 +107,9 @@ type DownloadManager struct {
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 
+	incompleteFnReplacer fsys.FilenameReplacer
+	completeFnReplacer   fsys.FilenameReplacer
+
 	logger *slog.Logger
 
 	multi    *MultiClient
@@ -159,9 +163,24 @@ func NewDownloadManager(
 		return nil, err
 	}
 
+	// Get filename replacers for paths.
+	incompleteFnReplacer, err := fsys.GetFilenameReplacerForPath(dirIncomplete)
+	if err != nil {
+		ctxCancel()
+		return nil, fmt.Errorf(`failed to get filename replacer for incomplete downloads directory %q: %w`, dirIncomplete, err)
+	}
+	completeFnReplacer, err := fsys.GetFilenameReplacerForPath(dirComplete)
+	if err != nil {
+		ctxCancel()
+		return nil, fmt.Errorf(`failed to get filename replacer for complete downloads directory %q: %w`, dirComplete, err)
+	}
+
 	return &DownloadManager{
 		ctx:       ctx,
 		ctxCancel: ctxCancel,
+
+		incompleteFnReplacer: incompleteFnReplacer,
+		completeFnReplacer:   completeFnReplacer,
 
 		logger: logger,
 
@@ -192,8 +211,11 @@ func (dm *DownloadManager) Close() error {
 	return nil
 }
 
-func (dm *DownloadManager) mkPath(serverUuid string, peerUsername common.NormalizedUsername, path common.ProtoPath) string {
-	return filepath.Join(dm.dirComplete, peerUsername.String()+"-"+serverUuid, path.String())
+func (dm *DownloadManager) mkIncompletePath(serverUuid string, peerUsername common.NormalizedUsername, path common.ProtoPath) string {
+	return dm.incompleteFnReplacer.ReplacePath(filepath.Join(dm.dirIncomplete, peerUsername.String()+"-"+serverUuid, path.String()))
+}
+func (dm *DownloadManager) mkCompletePath(serverUuid string, peerUsername common.NormalizedUsername, path common.ProtoPath) string {
+	return dm.completeFnReplacer.ReplacePath(filepath.Join(dm.dirComplete, peerUsername.String()+"-"+serverUuid, path.String()))
 }
 
 func (dm *DownloadManager) trySendUpdate(update dmUpdate) {
@@ -204,12 +226,18 @@ func (dm *DownloadManager) trySendUpdate(update dmUpdate) {
 }
 
 func (dm *DownloadManager) startDownload(state *DownloadState) error {
-	// Create path.
-	pendingPath := dm.mkPath(state.server.Uuid, state.peer, state.filePath)
-	dir := filepath.Dir(pendingPath)
+	// Create paths.
+	incompletePath := dm.mkIncompletePath(state.server.Uuid, state.peer, state.filePath)
+	completePath := dm.mkCompletePath(state.server.Uuid, state.peer, state.filePath)
+	dir := filepath.Dir(incompletePath)
 	mkErr := os.MkdirAll(dir, 0755)
 	if mkErr != nil {
-		return fmt.Errorf(`failed to create directory %q for pending download: %w`, dir, mkErr)
+		return fmt.Errorf(`failed to create directory %q for incomplete download: %w`, dir, mkErr)
+	}
+	dir = filepath.Dir(completePath)
+	mkErr = os.MkdirAll(dir, 0755)
+	if mkErr != nil {
+		return fmt.Errorf(`failed to create directory %q for complete download: %w`, dir, mkErr)
 	}
 
 	// Use TryDo because we want to fail fast if there is not an open connection.
@@ -241,9 +269,9 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 
 		// We have a working stream.
 		// Open file.
-		file, err := os.OpenFile(pendingPath, os.O_WRONLY|os.O_CREATE, 0644)
+		file, err := os.OpenFile(incompletePath, os.O_WRONLY|os.O_CREATE, 0644)
 		if err != nil {
-			return fmt.Errorf(`failed to open file %q for pending download: %w`, pendingPath, err)
+			return fmt.Errorf(`failed to open file %q for pending download: %w`, incompletePath, err)
 		}
 		defer func() {
 			_ = file.Close()
@@ -253,7 +281,7 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 		if initialDownloaded > 0 {
 			_, err = file.Seek(int64(initialDownloaded), io.SeekStart)
 			if err != nil {
-				return fmt.Errorf(`failed to seek in file %q to byte %d to resume pending download: %w`, pendingPath, initialDownloaded, err)
+				return fmt.Errorf(`failed to seek in file %q to byte %d to resume pending download: %w`, incompletePath, initialDownloaded, err)
 			}
 		}
 
@@ -296,10 +324,10 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 			state.fileDownloadedBytes.Store(state.fileDownloadedBytes.Load() + uint64(n))
 			isEof := errors.Is(err, io.EOF)
 			if err != nil && !isEof {
-				return fmt.Errorf(`failed to read from peer %q to file %q: %w`, state.peer.String(), pendingPath, err)
+				return fmt.Errorf(`failed to read from peer %q to file %q: %w`, state.peer.String(), incompletePath, err)
 			}
 			if _, err = file.Write(buf[:n]); err != nil {
-				return fmt.Errorf(`failed to write to file %q: %w`, pendingPath, err)
+				return fmt.Errorf(`failed to write to file %q: %w`, incompletePath, err)
 			}
 			if isEof {
 				break
@@ -309,12 +337,13 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 		return nil
 	})
 
+	// If no error, set error if final size is not expected.
 	finalBytes := state.fileDownloadedBytes.Load()
 	if finalErr == nil && finalBytes != uint64(state.fileTotalSize) {
 		// Final downloaded size did not match the total size.
 		// Before setting the error, delete the pending file.
 
-		_ = os.Remove(pendingPath)
+		_ = os.Remove(incompletePath)
 
 		finalErr = fmt.Errorf(`finished downloading file %q from peer %q on server %q but its final size was %d/%d bytes`,
 			state.filePath.String(),
@@ -325,6 +354,12 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 		)
 	}
 
+	// If no error, move file to final destination and set error if failed.
+	if finalErr == nil {
+		finalErr = os.Rename(incompletePath, completePath)
+	}
+
+	// Check error.
 	if finalErr != nil {
 		if errors.Is(finalErr, ErrConnNotOpen) {
 			// Conn not open; queue again.
@@ -351,8 +386,7 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 		return finalErr
 	}
 
-	// TODO Move file to final destination.
-
+	// If we got this far, the download completed successfully.
 	dm.trySendUpdate(dmUpdate{
 		rpc: &v1.DownloadStatusUpdate{
 			Uuid:         state.uuid,
