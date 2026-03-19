@@ -2,7 +2,7 @@
 
 If your server is not yet running, start it.
 
-Once it is started, enter the directory the server and RPC client binary are in, and run `friendnet-rpcclient`.
+Once it is started, enter the directory the server and RPC client binary are in, and run `rpcclient`.
 
 > If you cannot enter the directory, or you configured your RPC interface to listen on another socket, you can use the
 > `-addr` flag to specify the address of the RPC interface (`unix:///path/to/socket`, `http://127.0.0.1:8080`, etc.).
