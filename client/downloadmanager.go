@@ -253,8 +253,6 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 		if err != nil {
 			if protoErr, ok := errors.AsType[protocol.ProtoMsgError](err); ok {
 				if protoErr.Msg.Type == pb.ErrType_ERR_TYPE_FILE_NOT_EXIST {
-					// TODO Specific error when file does not exist anymore.
-					// TODO Possibly same error that is returned when the size is different.
 					return err
 				}
 			}
@@ -263,7 +261,6 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 		}
 
 		if meta.Size != uint64(state.fileTotalSize) {
-			// TODO Figure out a good way to signal that the file has changed.
 			return errors.New("file size different; file has changed")
 		}
 
@@ -387,6 +384,7 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 	}
 
 	// If we got this far, the download completed successfully.
+	state.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_DONE))
 	dm.trySendUpdate(dmUpdate{
 		rpc: &v1.DownloadStatusUpdate{
 			Uuid:         state.uuid,
