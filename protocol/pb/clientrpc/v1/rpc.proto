@@ -640,7 +640,7 @@ message GetDownloadManagerItemsRequest {
 }
 message GetDownloadManagerItemsResponse {
     // The download manager items.
-    optional DownloadManagerItem items = 1;
+    repeated DownloadManagerItem items = 1;
 }
 
 // ClientRpcService provides an RPC interface to a running FriendNet client.

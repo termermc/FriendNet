@@ -3617,7 +3617,7 @@ func (*GetDownloadManagerItemsRequest) Descriptor() ([]byte, []int) {
 type GetDownloadManagerItemsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The download manager items.
-	Items         *DownloadManagerItem `protobuf:"bytes,1,opt,name=items,proto3,oneof" json:"items,omitempty"`
+	Items         []*DownloadManagerItem `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3652,7 +3652,7 @@ func (*GetDownloadManagerItemsResponse) Descriptor() ([]byte, []int) {
 	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{63}
 }
 
-func (x *GetDownloadManagerItemsResponse) GetItems() *DownloadManagerItem {
+func (x *GetDownloadManagerItemsResponse) GetItems() []*DownloadManagerItem {
 	if x != nil {
 		return x.Items
 	}
@@ -4306,10 +4306,9 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\x19CheckForNewUpdateResponse\x12;\n" +
 	"\bnew_info\x18\x01 \x01(\v2\x1b.pb.clientrpc.v1.UpdateInfoH\x00R\anewInfo\x88\x01\x01B\v\n" +
 	"\t_new_info\" \n" +
-	"\x1eGetDownloadManagerItemsRequest\"l\n" +
-	"\x1fGetDownloadManagerItemsResponse\x12?\n" +
-	"\x05items\x18\x01 \x01(\v2$.pb.clientrpc.v1.DownloadManagerItemH\x00R\x05items\x88\x01\x01B\b\n" +
-	"\x06_items*\xbd\x01\n" +
+	"\x1eGetDownloadManagerItemsRequest\"]\n" +
+	"\x1fGetDownloadManagerItemsResponse\x12:\n" +
+	"\x05items\x18\x01 \x03(\v2$.pb.clientrpc.v1.DownloadManagerItemR\x05items*\xbd\x01\n" +
 	"\x0eDownloadStatus\x12\x1f\n" +
 	"\x1bDOWNLOAD_STATUS_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16DOWNLOAD_STATUS_QUEUED\x10\x01\x12\x1b\n" +
@@ -4556,7 +4555,6 @@ func file_pb_clientrpc_v1_rpc_proto_init() {
 	file_pb_clientrpc_v1_rpc_proto_msgTypes[56].OneofWrappers = []any{}
 	file_pb_clientrpc_v1_rpc_proto_msgTypes[59].OneofWrappers = []any{}
 	file_pb_clientrpc_v1_rpc_proto_msgTypes[61].OneofWrappers = []any{}
-	file_pb_clientrpc_v1_rpc_proto_msgTypes[63].OneofWrappers = []any{}
 	file_pb_clientrpc_v1_rpc_proto_msgTypes[70].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

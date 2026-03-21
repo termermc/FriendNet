@@ -39,11 +39,12 @@ var errEmptySearchQuery = connect.NewError(connect.CodeInvalidArgument, errors.N
 var errInvalidShareName = connect.NewError(connect.CodeInvalidArgument, share.ErrInvalidShareName)
 
 type RpcServer struct {
-	clogHandler   clog.Handler
-	client        *MultiClient
-	eventBus      *event.Bus
-	updateChecker *updater.UpdateChecker
-	stopper       func()
+	clogHandler     clog.Handler
+	client          *MultiClient
+	eventBus        *event.Bus
+	updateChecker   *updater.UpdateChecker
+	downloadManager *DownloadManager
+	stopper         func()
 }
 
 func NewRpcServer(
@@ -51,14 +52,16 @@ func NewRpcServer(
 	client *MultiClient,
 	eventBus *event.Bus,
 	updateChecker *updater.UpdateChecker,
+	downloadManager *DownloadManager,
 	stopper func(),
 ) *RpcServer {
 	return &RpcServer{
-		clogHandler:   clogHandler,
-		client:        client,
-		eventBus:      eventBus,
-		updateChecker: updateChecker,
-		stopper:       stopper,
+		clogHandler:     clogHandler,
+		client:          client,
+		eventBus:        eventBus,
+		updateChecker:   updateChecker,
+		downloadManager: downloadManager,
+		stopper:         stopper,
 	}
 }
 
@@ -832,7 +835,8 @@ func (s *RpcServer) CheckForNewUpdate(_ context.Context, _ *v1.CheckForNewUpdate
 	}, nil
 }
 
-func (s *RpcServer) GetDownloadManagerItems(ctx context.Context, request *v1.GetDownloadManagerItemsRequest) (*v1.GetDownloadManagerItemsResponse, error) {
-	//TODO implement me
-	panic("implement me")
+func (s *RpcServer) GetDownloadManagerItems(_ context.Context, _ *v1.GetDownloadManagerItemsRequest) (*v1.GetDownloadManagerItemsResponse, error) {
+	return &v1.GetDownloadManagerItemsResponse{
+		Items: s.downloadManager.SnapshotStates(),
+	}, nil
 }

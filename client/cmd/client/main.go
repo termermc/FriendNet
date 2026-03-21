@@ -398,6 +398,16 @@ func main() {
 		}
 	}()
 
+	downloadManager, err := client.NewDownloadManager(
+		logger,
+		multi,
+		eventBus,
+		store,
+	)
+	if err != nil {
+		panic(fmt.Errorf(`failed to create download manager: %w`, err))
+	}
+
 	httpsKeyPair, err := tls.X509KeyPair(httpsCertPem, httpsKeyPem)
 	if err != nil {
 		panic(fmt.Errorf(`failed to parse HTTPS certificate key pair: %w`, err))
@@ -422,6 +432,7 @@ func main() {
 			multi,
 			eventBus,
 			updateChecker,
+			downloadManager,
 			stop,
 		),
 		func(impl *client.RpcServer, options ...connect.HandlerOption) (string, http.Handler) {
