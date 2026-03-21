@@ -28,6 +28,9 @@ message Event {
 
         // Download status updates for files.
         TYPE_DOWNLOAD_STATUS_UPDATES = 6;
+
+        // A new download manager item was added.
+        TYPE_NEW_DM_ITEM = 7;
     }
 
     message ServerConnStateChange {
@@ -50,6 +53,10 @@ message Event {
         // The download progress info for files.
         repeated DownloadStatusUpdate files = 1;
     }
+    message NewDmItem {
+        // The download manager item.
+        DownloadManagerItem item = 1;
+    }
 
     // The event type.
     // The appropriate field will be filled based on the type.
@@ -60,6 +67,7 @@ message Event {
     optional ClientOffline client_offline = 4;
     optional NewUpdate new_update = 5;
     optional DownloadStatusUpdates download_status_updates = 6;
+    optional NewDmItem new_dm_item = 7;
 }
 
 // EventContext is the context about where an event was generated.
@@ -128,14 +136,57 @@ message DownloadStatusUpdate {
     // The number of bytes downloaded.
     uint64 downloaded = 3;
 
-    // The file's size in bytes.
-    uint64 file_size = 4;
+    // The file's size in bytes, if -1 if not yet known.
+    int64 file_size = 4;
 
     // The current download speed, in bytes per second.
     uint64 speed = 5;
 
     // The error message, if applicable.
     optional string error_message = 6;
+}
+
+// DownloadManagerItem is an item in the download manager.
+message DownloadManagerItem {
+    enum Type {
+        // Do not use.
+        TYPE_UNSPECIFIED = 0;
+
+        // A download.
+        TYPE_DOWNLOAD = 1;
+    }
+
+    message Download {
+        // The download status.
+        DownloadStatus status = 1;
+
+        // The number of bytes downloaded.
+        uint64 downloaded = 2;
+
+        // The file's size in bytes, or -1 if not yet known.
+        int64 file_size = 3;
+
+        // The error message, if applicable.
+        optional string error_message = 6;
+    }
+
+    // The item's type.
+    Type type = 1;
+
+    // The item's UUID.
+    string uuid = 2;
+
+    // The associated server's UUID.
+    string server_uuid = 3;
+
+    // The associated peer's username.
+    string peer_username = 4;
+
+    // The file's path.
+    string file_path = 5;
+
+    // A download item.
+    optional Download download = 6;
 }
 
 // Information about an update.
@@ -584,6 +635,14 @@ message CheckForNewUpdateResponse {
     optional UpdateInfo new_info = 1;
 }
 
+message GetDownloadManagerItemsRequest {
+
+}
+message GetDownloadManagerItemsResponse {
+    // The download manager items.
+    optional DownloadManagerItem items = 1;
+}
+
 // ClientRpcService provides an RPC interface to a running FriendNet client.
 // It can query state and perform actions.
 //
@@ -730,4 +789,7 @@ service ClientRpcService {
     // confirmed that there is no new update.
     // The cache is updated after calling this method.
     rpc CheckForNewUpdate(CheckForNewUpdateRequest) returns (CheckForNewUpdateResponse) {}
+
+    // GetDownloadManagerItems returns all download manager items.
+    rpc GetDownloadManagerItems(GetDownloadManagerItemsRequest) returns (GetDownloadManagerItemsResponse) {}
 }

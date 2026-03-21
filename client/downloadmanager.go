@@ -90,6 +90,9 @@ type DownloadState struct {
 
 	// The file's current download progress.
 	fileDownloadedBytes atomic.Uint64
+
+	// The download error message, if any.
+	errorMessage atomic.Pointer[string]
 }
 
 // DownloadManager manages downloads across multiple servers.
@@ -283,6 +286,8 @@ func (dm *DownloadManager) updateDrainer() {
 						return nil
 					})
 				}
+
+				// TODO Write to DB.
 			}
 		}
 	}()
@@ -310,6 +315,30 @@ func (dm *DownloadManager) Close() error {
 
 	dm.ctxCancel()
 	return nil
+}
+
+func (dm *DownloadManager) SnapshotStates() []*v1.DownloadManagerItem {
+	dm.mu.RLock()
+	defer dm.mu.RUnlock()
+
+	items := make([]*v1.DownloadManagerItem, len(dm.states))
+	for i, state := range dm.states {
+		items[i] = &v1.DownloadManagerItem{
+			Type:         v1.DownloadManagerItem_TYPE_DOWNLOAD,
+			Uuid:         state.uuid,
+			ServerUuid:   state.server.Uuid,
+			PeerUsername: state.peer.String(),
+			FilePath:     state.filePath.String(),
+			Download: &v1.DownloadManagerItem_Download{
+				Status:       v1.DownloadStatus(*state.status.Load()),
+				Downloaded:   state.fileDownloadedBytes.Load(),
+				FileSize:     state.fileTotalSize.Load(),
+				ErrorMessage: state.errorMessage.Load(),
+			},
+		}
+	}
+
+	return items
 }
 
 // Queue queues a new file download.
@@ -468,7 +497,7 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 							Uuid:         state.uuid,
 							Status:       v1.DownloadStatus_DOWNLOAD_STATUS_PENDING,
 							Downloaded:   newBytes,
-							FileSize:     meta.Size,
+							FileSize:     int64(meta.Size),
 							Speed:        speed,
 							ErrorMessage: nil,
 						},
@@ -535,14 +564,16 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 			return nil
 		}
 
+		errMsg := finalErr.Error()
+		state.errorMessage.Store(&errMsg)
 		dm.trySendUpdate(dmUpdate{
 			rpc: &v1.DownloadStatusUpdate{
 				Uuid:         state.uuid,
 				Status:       v1.DownloadStatus_DOWNLOAD_STATUS_ERROR,
 				Downloaded:   finalBytes,
-				FileSize:     uint64(fileTotalSize),
+				FileSize:     fileTotalSize,
 				Speed:        0,
-				ErrorMessage: new(finalErr.Error()),
+				ErrorMessage: &errMsg,
 			},
 			ds: state,
 		})
@@ -556,7 +587,7 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 			Uuid:         state.uuid,
 			Status:       v1.DownloadStatus_DOWNLOAD_STATUS_DONE,
 			Downloaded:   finalBytes,
-			FileSize:     uint64(fileTotalSize),
+			FileSize:     fileTotalSize,
 			Speed:        0,
 			ErrorMessage: nil,
 		},

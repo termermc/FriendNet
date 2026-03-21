@@ -107,6 +107,9 @@ const (
 	// ClientRpcServiceCheckForNewUpdateProcedure is the fully-qualified name of the ClientRpcService's
 	// CheckForNewUpdate RPC.
 	ClientRpcServiceCheckForNewUpdateProcedure = "/pb.clientrpc.v1.ClientRpcService/CheckForNewUpdate"
+	// ClientRpcServiceGetDownloadManagerItemsProcedure is the fully-qualified name of the
+	// ClientRpcService's GetDownloadManagerItems RPC.
+	ClientRpcServiceGetDownloadManagerItemsProcedure = "/pb.clientrpc.v1.ClientRpcService/GetDownloadManagerItems"
 )
 
 // ClientRpcServiceClient is a client for the pb.clientrpc.v1.ClientRpcService service.
@@ -227,6 +230,8 @@ type ClientRpcServiceClient interface {
 	// confirmed that there is no new update.
 	// The cache is updated after calling this method.
 	CheckForNewUpdate(context.Context, *v1.CheckForNewUpdateRequest) (*v1.CheckForNewUpdateResponse, error)
+	// GetDownloadManagerItems returns all download manager items.
+	GetDownloadManagerItems(context.Context, *v1.GetDownloadManagerItemsRequest) (*v1.GetDownloadManagerItemsResponse, error)
 }
 
 // NewClientRpcServiceClient constructs a client for the pb.clientrpc.v1.ClientRpcService service.
@@ -390,36 +395,43 @@ func NewClientRpcServiceClient(httpClient connect.HTTPClient, baseURL string, op
 			connect.WithSchema(clientRpcServiceMethods.ByName("CheckForNewUpdate")),
 			connect.WithClientOptions(opts...),
 		),
+		getDownloadManagerItems: connect.NewClient[v1.GetDownloadManagerItemsRequest, v1.GetDownloadManagerItemsResponse](
+			httpClient,
+			baseURL+ClientRpcServiceGetDownloadManagerItemsProcedure,
+			connect.WithSchema(clientRpcServiceMethods.ByName("GetDownloadManagerItems")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // clientRpcServiceClient implements ClientRpcServiceClient.
 type clientRpcServiceClient struct {
-	streamLogs            *connect.Client[v1.StreamLogsRequest, v1.StreamLogsResponse]
-	streamEvents          *connect.Client[v1.StreamEventsRequest, v1.StreamEventsResponse]
-	stop                  *connect.Client[v1.StopRequest, v1.StopResponse]
-	getClientInfo         *connect.Client[v1.GetClientInfoRequest, v1.GetClientInfoResponse]
-	getServers            *connect.Client[v1.GetServersRequest, v1.GetServersResponse]
-	createServer          *connect.Client[v1.CreateServerRequest, v1.CreateServerResponse]
-	deleteServer          *connect.Client[v1.DeleteServerRequest, v1.DeleteServerResponse]
-	connectServer         *connect.Client[v1.ConnectServerRequest, v1.ConnectServerResponse]
-	disconnectServer      *connect.Client[v1.DisconnectServerRequest, v1.DisconnectServerResponse]
-	updateServer          *connect.Client[v1.UpdateServerRequest, v1.UpdateServerResponse]
-	getShares             *connect.Client[v1.GetSharesRequest, v1.GetSharesResponse]
-	createShare           *connect.Client[v1.CreateShareRequest, v1.CreateShareResponse]
-	deleteShare           *connect.Client[v1.DeleteShareRequest, v1.DeleteShareResponse]
-	getDirFiles           *connect.Client[v1.GetDirFilesRequest, v1.GetDirFilesResponse]
-	getFileMeta           *connect.Client[v1.GetFileMetaRequest, v1.GetFileMetaResponse]
-	getOnlineUsers        *connect.Client[v1.GetOnlineUsersRequest, v1.GetOnlineUsersResponse]
-	changeAccountPassword *connect.Client[v1.ChangeAccountPasswordRequest, v1.ChangeAccountPasswordResponse]
-	serverConnect         *connect.Client[v1.ServerConnectRequest, v1.ServerConnectResponse]
-	serverDisconnect      *connect.Client[v1.ServerDisconnectRequest, v1.ServerDisconnectResponse]
-	getDirectSettings     *connect.Client[v1.GetDirectSettingsRequest, v1.GetDirectSettingsResponse]
-	updateDirectSettings  *connect.Client[v1.UpdateDirectSettingsRequest, v1.UpdateDirectSettingsResponse]
-	indexShare            *connect.Client[v1.IndexShareRequest, v1.IndexShareResponse]
-	streamSearch          *connect.Client[v1.StreamSearchRequest, v1.StreamSearchResponse]
-	getUpdateInfo         *connect.Client[v1.GetUpdateInfoRequest, v1.GetUpdateInfoResponse]
-	checkForNewUpdate     *connect.Client[v1.CheckForNewUpdateRequest, v1.CheckForNewUpdateResponse]
+	streamLogs              *connect.Client[v1.StreamLogsRequest, v1.StreamLogsResponse]
+	streamEvents            *connect.Client[v1.StreamEventsRequest, v1.StreamEventsResponse]
+	stop                    *connect.Client[v1.StopRequest, v1.StopResponse]
+	getClientInfo           *connect.Client[v1.GetClientInfoRequest, v1.GetClientInfoResponse]
+	getServers              *connect.Client[v1.GetServersRequest, v1.GetServersResponse]
+	createServer            *connect.Client[v1.CreateServerRequest, v1.CreateServerResponse]
+	deleteServer            *connect.Client[v1.DeleteServerRequest, v1.DeleteServerResponse]
+	connectServer           *connect.Client[v1.ConnectServerRequest, v1.ConnectServerResponse]
+	disconnectServer        *connect.Client[v1.DisconnectServerRequest, v1.DisconnectServerResponse]
+	updateServer            *connect.Client[v1.UpdateServerRequest, v1.UpdateServerResponse]
+	getShares               *connect.Client[v1.GetSharesRequest, v1.GetSharesResponse]
+	createShare             *connect.Client[v1.CreateShareRequest, v1.CreateShareResponse]
+	deleteShare             *connect.Client[v1.DeleteShareRequest, v1.DeleteShareResponse]
+	getDirFiles             *connect.Client[v1.GetDirFilesRequest, v1.GetDirFilesResponse]
+	getFileMeta             *connect.Client[v1.GetFileMetaRequest, v1.GetFileMetaResponse]
+	getOnlineUsers          *connect.Client[v1.GetOnlineUsersRequest, v1.GetOnlineUsersResponse]
+	changeAccountPassword   *connect.Client[v1.ChangeAccountPasswordRequest, v1.ChangeAccountPasswordResponse]
+	serverConnect           *connect.Client[v1.ServerConnectRequest, v1.ServerConnectResponse]
+	serverDisconnect        *connect.Client[v1.ServerDisconnectRequest, v1.ServerDisconnectResponse]
+	getDirectSettings       *connect.Client[v1.GetDirectSettingsRequest, v1.GetDirectSettingsResponse]
+	updateDirectSettings    *connect.Client[v1.UpdateDirectSettingsRequest, v1.UpdateDirectSettingsResponse]
+	indexShare              *connect.Client[v1.IndexShareRequest, v1.IndexShareResponse]
+	streamSearch            *connect.Client[v1.StreamSearchRequest, v1.StreamSearchResponse]
+	getUpdateInfo           *connect.Client[v1.GetUpdateInfoRequest, v1.GetUpdateInfoResponse]
+	checkForNewUpdate       *connect.Client[v1.CheckForNewUpdateRequest, v1.CheckForNewUpdateResponse]
+	getDownloadManagerItems *connect.Client[v1.GetDownloadManagerItemsRequest, v1.GetDownloadManagerItemsResponse]
 }
 
 // StreamLogs calls pb.clientrpc.v1.ClientRpcService.StreamLogs.
@@ -627,6 +639,15 @@ func (c *clientRpcServiceClient) CheckForNewUpdate(ctx context.Context, req *v1.
 	return nil, err
 }
 
+// GetDownloadManagerItems calls pb.clientrpc.v1.ClientRpcService.GetDownloadManagerItems.
+func (c *clientRpcServiceClient) GetDownloadManagerItems(ctx context.Context, req *v1.GetDownloadManagerItemsRequest) (*v1.GetDownloadManagerItemsResponse, error) {
+	response, err := c.getDownloadManagerItems.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // ClientRpcServiceHandler is an implementation of the pb.clientrpc.v1.ClientRpcService service.
 type ClientRpcServiceHandler interface {
 	// StreamLogs returns an ongoing stream of log messages from the client.
@@ -745,6 +766,8 @@ type ClientRpcServiceHandler interface {
 	// confirmed that there is no new update.
 	// The cache is updated after calling this method.
 	CheckForNewUpdate(context.Context, *v1.CheckForNewUpdateRequest) (*v1.CheckForNewUpdateResponse, error)
+	// GetDownloadManagerItems returns all download manager items.
+	GetDownloadManagerItems(context.Context, *v1.GetDownloadManagerItemsRequest) (*v1.GetDownloadManagerItemsResponse, error)
 }
 
 // NewClientRpcServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -904,6 +927,12 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 		connect.WithSchema(clientRpcServiceMethods.ByName("CheckForNewUpdate")),
 		connect.WithHandlerOptions(opts...),
 	)
+	clientRpcServiceGetDownloadManagerItemsHandler := connect.NewUnaryHandlerSimple(
+		ClientRpcServiceGetDownloadManagerItemsProcedure,
+		svc.GetDownloadManagerItems,
+		connect.WithSchema(clientRpcServiceMethods.ByName("GetDownloadManagerItems")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/pb.clientrpc.v1.ClientRpcService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ClientRpcServiceStreamLogsProcedure:
@@ -956,6 +985,8 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 			clientRpcServiceGetUpdateInfoHandler.ServeHTTP(w, r)
 		case ClientRpcServiceCheckForNewUpdateProcedure:
 			clientRpcServiceCheckForNewUpdateHandler.ServeHTTP(w, r)
+		case ClientRpcServiceGetDownloadManagerItemsProcedure:
+			clientRpcServiceGetDownloadManagerItemsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -1063,4 +1094,8 @@ func (UnimplementedClientRpcServiceHandler) GetUpdateInfo(context.Context, *v1.G
 
 func (UnimplementedClientRpcServiceHandler) CheckForNewUpdate(context.Context, *v1.CheckForNewUpdateRequest) (*v1.CheckForNewUpdateResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.CheckForNewUpdate is not implemented"))
+}
+
+func (UnimplementedClientRpcServiceHandler) GetDownloadManagerItems(context.Context, *v1.GetDownloadManagerItemsRequest) (*v1.GetDownloadManagerItemsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.GetDownloadManagerItems is not implemented"))
 }

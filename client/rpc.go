@@ -831,3 +831,8 @@ func (s *RpcServer) CheckForNewUpdate(_ context.Context, _ *v1.CheckForNewUpdate
 		NewInfo: s.updateToInfo(s.updateChecker.CheckNow()),
 	}, nil
 }
+
+func (s *RpcServer) GetDownloadManagerItems(ctx context.Context, request *v1.GetDownloadManagerItemsRequest) (*v1.GetDownloadManagerItemsResponse, error) {
+	//TODO implement me
+	panic("implement me")
+}
