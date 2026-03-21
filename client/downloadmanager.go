@@ -42,6 +42,7 @@ import (
 	"friendnet.org/protocol"
 	v1 "friendnet.org/protocol/pb/clientrpc/v1"
 	pb "friendnet.org/protocol/pb/v1"
+	"github.com/google/uuid"
 )
 
 const dmDirIncompleteSetting = "dm_dir_incomplete"
@@ -84,7 +85,8 @@ type DownloadState struct {
 
 	// The file's total size, in bytes.
 	// If the file's size changes from this when resuming, the file changed.
-	fileTotalSize int64
+	// If the size is -1, it needs to be fetched.
+	fileTotalSize atomic.Int64
 
 	// The file's current download progress.
 	fileDownloadedBytes atomic.Uint64
@@ -310,6 +312,61 @@ func (dm *DownloadManager) Close() error {
 	return nil
 }
 
+// Queue queues a new file download.
+// If there is a pending or queued entry for the same file already, this function is no-op.
+func (dm *DownloadManager) Queue(
+	server *Server,
+	peer common.NormalizedUsername,
+	filePath common.ProtoPath,
+) {
+	dm.mu.Lock()
+	defer dm.mu.Unlock()
+
+	replaceSlot := -1
+
+	// Search for a duplicate entry.
+	for i, state := range dm.states {
+		if state.server == server && state.peer == peer && state.filePath == filePath {
+			// Is it done, canceled or failed?
+			switch *state.status.Load() {
+			case pb.DownloadStatus_DOWNLOAD_STATUS_DONE:
+				fallthrough
+			case pb.DownloadStatus_DOWNLOAD_STATUS_CANCELED:
+				fallthrough
+			case pb.DownloadStatus_DOWNLOAD_STATUS_ERROR:
+				// Replace state.
+				replaceSlot = i
+			default:
+				// Already exists and not a candidate for replacement.
+				return
+			}
+		}
+	}
+
+	uid, err := uuid.NewV7()
+	if err != nil {
+		panic(err)
+	}
+
+	// Create new state.
+	state := &DownloadState{
+		dm:       dm,
+		uuid:     uid.String(),
+		server:   server,
+		peer:     peer,
+		filePath: filePath,
+	}
+
+	state.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED))
+	state.fileTotalSize.Store(-1)
+
+	if replaceSlot == -1 {
+		dm.states = append(dm.states, state)
+	} else {
+		dm.states[replaceSlot] = state
+	}
+}
+
 func (dm *DownloadManager) mkIncompletePath(serverUuid string, peerUsername common.NormalizedUsername, path common.ProtoPath) string {
 	return dm.incompleteFnReplacer.ReplacePath(filepath.Join(dm.dirIncomplete, peerUsername.String()+"-"+serverUuid, path.String()))
 }
@@ -359,7 +416,15 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 			return err
 		}
 
-		if meta.Size != uint64(state.fileTotalSize) {
+		var fileTotalSize uint64
+		if loaded := state.fileTotalSize.Load(); loaded > -1 {
+			fileTotalSize = uint64(loaded)
+		} else {
+			state.fileTotalSize.Store(int64(meta.Size))
+			fileTotalSize = meta.Size
+		}
+
+		if meta.Size != fileTotalSize {
 			return errors.New("file size different; file has changed")
 		}
 
@@ -433,9 +498,11 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 		return nil
 	})
 
-	// If no error, set error if final size is not expected.
+	fileTotalSize := state.fileTotalSize.Load()
 	finalBytes := state.fileDownloadedBytes.Load()
-	if finalErr == nil && finalBytes != uint64(state.fileTotalSize) {
+
+	// If no error, set error if final size is not expected.
+	if finalErr == nil && finalBytes != uint64(fileTotalSize) {
 		// Final downloaded size did not match the total size.
 		// Before setting the error, delete the pending file.
 
@@ -446,7 +513,7 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 			state.peer.String(),
 			state.server.Uuid,
 			finalBytes,
-			state.fileTotalSize,
+			fileTotalSize,
 		)
 	}
 
@@ -472,8 +539,8 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 			rpc: &v1.DownloadStatusUpdate{
 				Uuid:         state.uuid,
 				Status:       v1.DownloadStatus_DOWNLOAD_STATUS_ERROR,
-				Downloaded:   state.fileDownloadedBytes.Load(),
-				FileSize:     uint64(state.fileTotalSize),
+				Downloaded:   finalBytes,
+				FileSize:     uint64(fileTotalSize),
 				Speed:        0,
 				ErrorMessage: new(finalErr.Error()),
 			},
@@ -488,8 +555,8 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 		rpc: &v1.DownloadStatusUpdate{
 			Uuid:         state.uuid,
 			Status:       v1.DownloadStatus_DOWNLOAD_STATUS_DONE,
-			Downloaded:   state.fileDownloadedBytes.Load(),
-			FileSize:     uint64(state.fileTotalSize),
+			Downloaded:   finalBytes,
+			FileSize:     uint64(fileTotalSize),
 			Speed:        0,
 			ErrorMessage: nil,
 		},
