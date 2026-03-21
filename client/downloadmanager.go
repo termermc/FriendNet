@@ -214,6 +214,11 @@ func (dm *DownloadManager) updateDrainer() {
 			case <-ticker.C:
 				var updates []dmUpdate
 				mu.Lock()
+				if len(buf) == 0 {
+					mu.Unlock()
+					continue
+				}
+				updates = make([]dmUpdate, len(buf))
 				copy(updates, buf)
 				buf = buf[:0]
 				mu.Unlock()
