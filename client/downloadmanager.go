@@ -175,7 +175,7 @@ func NewDownloadManager(
 		return nil, fmt.Errorf(`failed to get filename replacer for complete downloads directory %q: %w`, dirComplete, err)
 	}
 
-	return &DownloadManager{
+	dm := &DownloadManager{
 		ctx:       ctx,
 		ctxCancel: ctxCancel,
 
@@ -191,11 +191,105 @@ func NewDownloadManager(
 		dirIncomplete: dirIncomplete,
 		dirComplete:   dirComplete,
 		dlConcurrency: int(dlConcurrency),
-	}, nil
+	}
+
+	go dm.updateDrainer()
+
+	return dm, nil
 }
 
-func (dm *DownloadManager) eventDrainer() {
+func (dm *DownloadManager) updateDrainer() {
+	var mu sync.Mutex
+	buf := make([]dmUpdate, 0)
 
+	go func() {
+		// Goroutine that batches updates.
+
+		ticker := time.NewTicker(1 * time.Second)
+
+		for {
+			select {
+			case <-dm.ctx.Done():
+				return
+			case <-ticker.C:
+				var updates []dmUpdate
+				mu.Lock()
+				copy(updates, buf)
+				buf = buf[:0]
+				mu.Unlock()
+
+				// Sort updates by server UUID.
+				byServer := make(map[string][]dmUpdate)
+				for _, upd := range updates {
+					byServer[upd.ds.server.Uuid] = append(byServer[upd.ds.server.Uuid], upd)
+				}
+
+				// Send batched client RPC messages.
+				for server, upds := range byServer {
+					pub := dm.eventBus.CreatePublisher(&v1.EventContext{
+						ServerUuid: server,
+					})
+
+					files := make([]*v1.DownloadStatusUpdate, len(upds))
+					for i, upd := range upds {
+						files[i] = upd.rpc
+					}
+
+					pub.Publish(&v1.Event{
+						Type: v1.Event_TYPE_DOWNLOAD_STATUS_UPDATES,
+						DownloadStatusUpdates: &v1.Event_DownloadStatusUpdates{
+							Files: files,
+						},
+					})
+				}
+
+				// Send batched peer notifications.
+				for _, serverUpds := range byServer {
+					server := serverUpds[0].ds.server
+
+					_ = server.TryDo(func(conn *room.Conn) error {
+						// Sort by peer.
+						byPeer := make(map[common.NormalizedUsername][]dmUpdate)
+						for _, upd := range serverUpds {
+							byPeer[upd.ds.peer] = append(byPeer[upd.ds.peer], upd)
+						}
+
+						// Send updates to peers.
+						for username, upds := range byPeer {
+							peer := conn.GetVirtualC2cConn(username, false)
+
+							go func() {
+								bidi, err := peer.OpenBidiWithMsg(pb.MsgType_MSG_TYPE_DOWNLOAD_STATUS_UPDATE, upds[0].ToProto())
+								if err != nil {
+									return
+								}
+								defer func() {
+									_ = bidi.Close()
+								}()
+
+								for _, upd := range upds[1:] {
+									_ = bidi.Write(pb.MsgType_MSG_TYPE_DOWNLOAD_STATUS_UPDATE, upd.ToProto())
+								}
+							}()
+						}
+
+						return nil
+					})
+				}
+			}
+		}
+	}()
+
+	for {
+		select {
+		case <-dm.ctx.Done():
+			return
+		case upd := <-dm.pendingUpdates:
+			mu.Lock()
+			buf = append(buf, upd)
+			mu.Unlock()
+		}
+	}
 }
 
 func (dm *DownloadManager) Close() error {

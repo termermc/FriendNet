@@ -59,6 +59,7 @@ message Event {
     optional ClientOnline client_online = 3;
     optional ClientOffline client_offline = 4;
     optional NewUpdate new_update = 5;
+    optional DownloadStatusUpdates download_status_updates = 6;
 }
 
 // EventContext is the context about where an event was generated.
