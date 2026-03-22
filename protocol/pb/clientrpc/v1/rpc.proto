@@ -643,6 +643,20 @@ message GetDownloadManagerItemsResponse {
     repeated DownloadManagerItem items = 1;
 }
 
+message QueueFileDownloadRequest {
+    // The UUID of the server the peer exists on.
+    string server_uuid = 1;
+
+    // The peer's username.
+    string peer_username = 2;
+
+    // The path of the file within the peer.
+    string file_path = 3;
+}
+message QueueFileDownloadResponse {
+
+}
+
 // ClientRpcService provides an RPC interface to a running FriendNet client.
 // It can query state and perform actions.
 //
@@ -792,4 +806,9 @@ service ClientRpcService {
 
     // GetDownloadManagerItems returns all download manager items.
     rpc GetDownloadManagerItems(GetDownloadManagerItemsRequest) returns (GetDownloadManagerItemsResponse) {}
+
+    // QueueFileDownload queues a file download.
+    //
+    // Returns NOT_FOUND if no such server exists.
+    rpc QueueFileDownload(QueueFileDownloadRequest) returns (QueueFileDownloadResponse) {}
 }

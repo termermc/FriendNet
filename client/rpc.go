@@ -840,3 +840,26 @@ func (s *RpcServer) GetDownloadManagerItems(_ context.Context, _ *v1.GetDownload
 		Items: s.downloadManager.SnapshotStates(),
 	}, nil
 }
+
+func (s *RpcServer) QueueFileDownload(_ context.Context, request *v1.QueueFileDownloadRequest) (*v1.QueueFileDownloadResponse, error) {
+	srv, has := s.client.GetByUuid(request.ServerUuid)
+	if !has {
+		return nil, errServerNotFound
+	}
+	username, usernameOk := common.NormalizeUsername(request.PeerUsername)
+	if !usernameOk {
+		return nil, errInvalidUsername
+	}
+	path, pathErr := common.ValidatePath(request.FilePath)
+	if pathErr != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, pathErr)
+	}
+
+	s.downloadManager.Queue(
+		srv,
+		username,
+		path,
+	)
+
+	return &v1.QueueFileDownloadResponse{}, nil
+}

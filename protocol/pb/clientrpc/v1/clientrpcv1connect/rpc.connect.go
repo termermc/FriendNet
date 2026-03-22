@@ -110,6 +110,9 @@ const (
 	// ClientRpcServiceGetDownloadManagerItemsProcedure is the fully-qualified name of the
 	// ClientRpcService's GetDownloadManagerItems RPC.
 	ClientRpcServiceGetDownloadManagerItemsProcedure = "/pb.clientrpc.v1.ClientRpcService/GetDownloadManagerItems"
+	// ClientRpcServiceQueueFileDownloadProcedure is the fully-qualified name of the ClientRpcService's
+	// QueueFileDownload RPC.
+	ClientRpcServiceQueueFileDownloadProcedure = "/pb.clientrpc.v1.ClientRpcService/QueueFileDownload"
 )
 
 // ClientRpcServiceClient is a client for the pb.clientrpc.v1.ClientRpcService service.
@@ -232,6 +235,10 @@ type ClientRpcServiceClient interface {
 	CheckForNewUpdate(context.Context, *v1.CheckForNewUpdateRequest) (*v1.CheckForNewUpdateResponse, error)
 	// GetDownloadManagerItems returns all download manager items.
 	GetDownloadManagerItems(context.Context, *v1.GetDownloadManagerItemsRequest) (*v1.GetDownloadManagerItemsResponse, error)
+	// QueueFileDownload queues a file download.
+	//
+	// Returns NOT_FOUND if no such server exists.
+	QueueFileDownload(context.Context, *v1.QueueFileDownloadRequest) (*v1.QueueFileDownloadResponse, error)
 }
 
 // NewClientRpcServiceClient constructs a client for the pb.clientrpc.v1.ClientRpcService service.
@@ -401,6 +408,12 @@ func NewClientRpcServiceClient(httpClient connect.HTTPClient, baseURL string, op
 			connect.WithSchema(clientRpcServiceMethods.ByName("GetDownloadManagerItems")),
 			connect.WithClientOptions(opts...),
 		),
+		queueFileDownload: connect.NewClient[v1.QueueFileDownloadRequest, v1.QueueFileDownloadResponse](
+			httpClient,
+			baseURL+ClientRpcServiceQueueFileDownloadProcedure,
+			connect.WithSchema(clientRpcServiceMethods.ByName("QueueFileDownload")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -432,6 +445,7 @@ type clientRpcServiceClient struct {
 	getUpdateInfo           *connect.Client[v1.GetUpdateInfoRequest, v1.GetUpdateInfoResponse]
 	checkForNewUpdate       *connect.Client[v1.CheckForNewUpdateRequest, v1.CheckForNewUpdateResponse]
 	getDownloadManagerItems *connect.Client[v1.GetDownloadManagerItemsRequest, v1.GetDownloadManagerItemsResponse]
+	queueFileDownload       *connect.Client[v1.QueueFileDownloadRequest, v1.QueueFileDownloadResponse]
 }
 
 // StreamLogs calls pb.clientrpc.v1.ClientRpcService.StreamLogs.
@@ -648,6 +662,15 @@ func (c *clientRpcServiceClient) GetDownloadManagerItems(ctx context.Context, re
 	return nil, err
 }
 
+// QueueFileDownload calls pb.clientrpc.v1.ClientRpcService.QueueFileDownload.
+func (c *clientRpcServiceClient) QueueFileDownload(ctx context.Context, req *v1.QueueFileDownloadRequest) (*v1.QueueFileDownloadResponse, error) {
+	response, err := c.queueFileDownload.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // ClientRpcServiceHandler is an implementation of the pb.clientrpc.v1.ClientRpcService service.
 type ClientRpcServiceHandler interface {
 	// StreamLogs returns an ongoing stream of log messages from the client.
@@ -768,6 +791,10 @@ type ClientRpcServiceHandler interface {
 	CheckForNewUpdate(context.Context, *v1.CheckForNewUpdateRequest) (*v1.CheckForNewUpdateResponse, error)
 	// GetDownloadManagerItems returns all download manager items.
 	GetDownloadManagerItems(context.Context, *v1.GetDownloadManagerItemsRequest) (*v1.GetDownloadManagerItemsResponse, error)
+	// QueueFileDownload queues a file download.
+	//
+	// Returns NOT_FOUND if no such server exists.
+	QueueFileDownload(context.Context, *v1.QueueFileDownloadRequest) (*v1.QueueFileDownloadResponse, error)
 }
 
 // NewClientRpcServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -933,6 +960,12 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 		connect.WithSchema(clientRpcServiceMethods.ByName("GetDownloadManagerItems")),
 		connect.WithHandlerOptions(opts...),
 	)
+	clientRpcServiceQueueFileDownloadHandler := connect.NewUnaryHandlerSimple(
+		ClientRpcServiceQueueFileDownloadProcedure,
+		svc.QueueFileDownload,
+		connect.WithSchema(clientRpcServiceMethods.ByName("QueueFileDownload")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/pb.clientrpc.v1.ClientRpcService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ClientRpcServiceStreamLogsProcedure:
@@ -987,6 +1020,8 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 			clientRpcServiceCheckForNewUpdateHandler.ServeHTTP(w, r)
 		case ClientRpcServiceGetDownloadManagerItemsProcedure:
 			clientRpcServiceGetDownloadManagerItemsHandler.ServeHTTP(w, r)
+		case ClientRpcServiceQueueFileDownloadProcedure:
+			clientRpcServiceQueueFileDownloadHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -1098,4 +1133,8 @@ func (UnimplementedClientRpcServiceHandler) CheckForNewUpdate(context.Context, *
 
 func (UnimplementedClientRpcServiceHandler) GetDownloadManagerItems(context.Context, *v1.GetDownloadManagerItemsRequest) (*v1.GetDownloadManagerItemsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.GetDownloadManagerItems is not implemented"))
+}
+
+func (UnimplementedClientRpcServiceHandler) QueueFileDownload(context.Context, *v1.QueueFileDownloadRequest) (*v1.QueueFileDownloadResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.QueueFileDownload is not implemented"))
 }
