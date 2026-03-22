@@ -399,6 +399,7 @@ func (dm *DownloadManager) Queue(
 	dm.mu.Lock()
 	defer dm.mu.Unlock()
 
+	var uid string
 	replaceSlot := -1
 
 	// Search for a duplicate entry.
@@ -413,6 +414,8 @@ func (dm *DownloadManager) Queue(
 			case pb.DownloadStatus_DOWNLOAD_STATUS_ERROR:
 				// Replace state.
 				replaceSlot = i
+				uid = state.uuid
+				break
 			default:
 				// Already exists and not a candidate for replacement.
 				return
@@ -420,15 +423,18 @@ func (dm *DownloadManager) Queue(
 		}
 	}
 
-	uid, err := uuid.NewV7()
-	if err != nil {
-		panic(err)
+	if uid == "" {
+		uidRaw, err := uuid.NewV7()
+		if err != nil {
+			panic(err)
+		}
+		uid = uidRaw.String()
 	}
 
 	// Create new state.
 	state := &DownloadState{
 		dm:       dm,
-		uuid:     uid.String(),
+		uuid:     uid,
 		server:   server,
 		peer:     peer,
 		filePath: filePath,
@@ -436,6 +442,9 @@ func (dm *DownloadManager) Queue(
 
 	state.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED))
 	state.fileTotalSize.Store(-1)
+	state.errorMessage.Store(nil)
+
+	// TODO Update state in database.
 
 	if replaceSlot == -1 {
 		dm.states = append(dm.states, state)

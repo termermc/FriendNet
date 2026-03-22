@@ -11,6 +11,7 @@ import (
 
 	"friendnet.org/client/storage/migration"
 	"friendnet.org/common"
+	pb "friendnet.org/protocol/pb/v1"
 	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
 )
@@ -20,11 +21,13 @@ type Storage struct {
 	// The underlying SQLite database connection.
 	Db *sql.DB
 
-	insertShareIndexStmt *sql.Stmt
+	insertShareIndexStmt     *sql.Stmt
+	updateDownloadStatusStmt *sql.Stmt
 }
 
 func (s *Storage) Close() error {
 	_ = s.insertShareIndexStmt.Close()
+	_ = s.updateDownloadStatusStmt.Close()
 	return s.Db.Close()
 }
 
@@ -62,9 +65,7 @@ func NewStorage(path string) (*Storage, error) {
 		&migration.M20260223AddClientCerts{},
 		&migration.M20260225AddSettingKv{},
 		&migration.M20260301AddSearchIndexes{},
-
-		// TODO Finish the download manager.
-		//&migration.M20260311AddDownloadStates{},
+		&migration.M20260311AddDownloadStates{},
 	})
 	if err != nil {
 		return nil, fmt.Errorf(`failed to apply client database migrations: %w`, err)
@@ -103,9 +104,15 @@ func NewStorage(path string) (*Storage, error) {
 		return nil, fmt.Errorf("failed to prepare insert into share_index_fts: %w", err)
 	}
 
+	updateDownloadStateStmt, err := db.Prepare(`update download_state set status = ?, file_total_size = ?, file_downloaded_bytes = ?, error = ? where uuid = ?`)
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare update download_state: %w", err)
+	}
+
 	return &Storage{
-		Db:                   db,
-		insertShareIndexStmt: insertShareIndexStmt,
+		Db:                       db,
+		insertShareIndexStmt:     insertShareIndexStmt,
+		updateDownloadStatusStmt: updateDownloadStateStmt,
 	}, nil
 }
 
@@ -542,4 +549,48 @@ func (s *Storage) GetCertForServer(ctx context.Context, serverUuid string) (cert
 	row := s.QueryRow(ctx, `select cert_pem, key_pem from client_cert where server = ?`, serverUuid)
 	err = row.Scan(&certPem, &keyPem)
 	return certPem, keyPem, err
+}
+
+// CreateDownloadState creates a new download state record.
+// If a record with the same UUID already exists, its fields will be updated.
+func (s *Storage) CreateDownloadState(
+	ctx context.Context,
+	uuid string,
+	serverUuid string,
+	peerUsername common.NormalizedUsername,
+	status pb.DownloadStatus,
+	filePath common.ProtoPath,
+) error {
+	_, err := s.Exec(ctx, `insert or replace into download_state (uuid, server, peer_username, status, file_path, error) values (?, ?, ?, ?, ?, null)`,
+		uuid,
+		serverUuid,
+		peerUsername.String(),
+		status,
+		filePath.String(),
+	)
+	return err
+}
+
+// GetDownloadStates returns all download states from the database.
+func (s *Storage) GetDownloadStates(ctx context.Context) ([]DownloadStateRecord, error) {
+	rows, err := s.Query(ctx, `select * from download_state`)
+	if err != nil {
+		return nil, fmt.Errorf(`failed to query download states: %w`, err)
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	records := make([]DownloadStateRecord, 0)
+	for rows.Next() {
+		var record DownloadStateRecord
+		record, _, err = ScanDownloadStateRecord(rows)
+		if err != nil {
+			return nil, err
+		}
+
+		records = append(records, record)
+	}
+
+	return records, nil
 }

@@ -31,8 +31,9 @@ create table download_state
 	peer_username text not null,
 	status integer not null,
 	file_path text not null,
-	file_total_size integer not null,
-	file_downloaded_bytes integer not null
+	file_total_size integer not null default -1,
+	file_downloaded_bytes integer not null default 0,
+	error text null
 );
 
 create index download_state_created_ts_index

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"friendnet.org/common"
+	pb "friendnet.org/protocol/pb/v1"
 )
 
 type ServerCertRecord struct {
@@ -190,5 +191,51 @@ func ScanClientCertRecord(row common.Scannable) (record ClientCertRecord, has bo
 	record.Server = server
 	record.CreatedTs = time.Unix(createdTs, 0)
 
+	return record, true, nil
+}
+
+type DownloadStateRecord struct {
+	Uuid                string
+	CreatedTs           time.Time
+	UpdatedTs           time.Time
+	Server              string
+	PeerUsername        common.NormalizedUsername
+	Status              pb.DownloadStatus
+	FilePath            common.ProtoPath
+	FileTotalSize       int64
+	FileDownloadedBytes int64
+	Error               *string
+}
+
+func ScanDownloadStateRecord(row common.Scannable) (record DownloadStateRecord, has bool, err error) {
+	var uuid string
+	var createdTs int64
+	var updatedTs int64
+	var server string
+	var peerUsername string
+	var status int64
+	var filePath string
+	var fileTotalSize int64
+	var fileDownloadedBytes int64
+	var errorStr *string
+
+	err = row.Scan(&uuid, &createdTs, &updatedTs, &server, &peerUsername, &status, &filePath, &fileTotalSize, &fileDownloadedBytes, &errorStr)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return record, false, nil
+		}
+		return record, false, err
+	}
+
+	record.Uuid = uuid
+	record.CreatedTs = time.Unix(createdTs, 0)
+	record.UpdatedTs = time.Unix(updatedTs, 0)
+	record.Server = server
+	record.PeerUsername = common.UncheckedCreateNormalizedUsername(peerUsername)
+	record.Status = pb.DownloadStatus(status)
+	record.FilePath = common.UncheckedCreateProtoPath(filePath)
+	record.FileTotalSize = fileTotalSize
+	record.FileDownloadedBytes = fileDownloadedBytes
+	record.Error = errorStr
 	return record, true, nil
 }
