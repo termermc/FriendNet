@@ -123,7 +123,6 @@ type DownloadManager struct {
 
 	dirIncomplete string
 	dirComplete   string
-	dlConcurrency int
 
 	states []*DownloadState
 
@@ -162,11 +161,6 @@ func NewDownloadManager(
 		ctxCancel()
 		return nil, err
 	}
-	dlConcurrency, err := storage.GetSettingIntOrPut(ctx, dmDlConcurrencySetting, 4)
-	if err != nil {
-		ctxCancel()
-		return nil, err
-	}
 
 	// Get filename replacers for paths.
 	incompleteFnReplacer, err := fsys.GetFilenameReplacerForPath(dirIncomplete)
@@ -195,12 +189,66 @@ func NewDownloadManager(
 
 		dirIncomplete: dirIncomplete,
 		dirComplete:   dirComplete,
-		dlConcurrency: int(dlConcurrency),
 	}
 
+	go dm.downloader()
 	go dm.updateDrainer()
 
 	return dm, nil
+}
+
+func (dm *DownloadManager) downloader() {
+	ticker := time.NewTicker(1 * time.Second)
+
+	for {
+		select {
+		case <-dm.ctx.Done():
+			return
+		case <-ticker.C:
+			// Fetch the current download concurrency setting.
+			// We fetch this on-demand because this should be able to be changed at runtime.
+			dlConcurrency, settingErr := dm.storage.GetSettingIntOrPut(dm.ctx, dmDlConcurrencySetting, 4)
+			if settingErr != nil {
+				dm.logger.Error("failed to get download concurrency setting",
+					"service", "client.DownloadManager",
+					"err", settingErr,
+				)
+			}
+			if dlConcurrency < 1 {
+				dlConcurrency = 1
+			}
+
+			dm.mu.RLock()
+
+			var wg sync.WaitGroup
+			var launched int64
+			for _, state := range dm.states {
+				if launched >= dlConcurrency {
+					break
+				}
+
+				if *state.status.Load() == pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED {
+					wg.Go(func() {
+						dlErr := dm.startDownload(state)
+						if dlErr != nil {
+							dm.logger.Error("failed to download queued file",
+								"service", "client.DownloadManager",
+								"server_uuid", state.server.Uuid,
+								"peer_username", state.peer.String(),
+								"file_path", state.filePath.String(),
+								"err", dlErr,
+							)
+						}
+					})
+					launched++
+				}
+			}
+
+			dm.mu.RUnlock()
+
+			wg.Wait()
+		}
+	}
 }
 
 func (dm *DownloadManager) updateDrainer() {
@@ -411,6 +459,11 @@ func (dm *DownloadManager) trySendUpdate(update dmUpdate) {
 }
 
 func (dm *DownloadManager) startDownload(state *DownloadState) error {
+	// Return immediately if the file is not in the queued state.
+	if *state.status.Load() != pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED {
+		return nil
+	}
+
 	// Create paths.
 	incompletePath := dm.mkIncompletePath(state.server.Uuid, state.peer, state.filePath)
 	completePath := dm.mkCompletePath(state.server.Uuid, state.peer, state.filePath)
