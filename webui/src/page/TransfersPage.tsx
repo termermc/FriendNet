@@ -1,6 +1,6 @@
-import styles from './TransfersPage.module.css.module.css'
+import styles from './TransfersPage.module.css'
 
-import { Component, createSignal, Show } from 'solid-js'
+import { Component, For, onMount, Show } from 'solid-js'
 import { useGlobalState } from '../ctx'
 
 /**
@@ -8,67 +8,26 @@ import { useGlobalState } from '../ctx'
  */
 export const TransfersPage: Component = () => {
 	const state = useGlobalState()
+	const trans = state.transfer
 
-	const [isChecking, setChecking] = createSignal(false)
-	const doCheck = async () => {
-		setChecking(true)
-		try {
-			await state.checkForNewUpdate()
-		} catch (err) {
-			alert('Internal error, check console')
-			console.error('failed to check for updates:', err)
-		} finally {
-			setChecking(false)
-		}
-	}
+	onMount(() => {
+		// Refresh items on page open, in case they're out of date for some reason.
+		trans
+			.refreshItems()
+			.catch((err) => console.error('failed to refresh transfers:', err))
+	})
 
 	return (
 		<div class={styles.container}>
-			<h1>Running FriendNet Client v{state.currentUpdate().version}</h1>
+			<h1>Downloads</h1>
 
 			<Show
-				when={state.latestUpdate()}
-				keyed={true}
-				fallback={<h2>You are up-to-date.</h2>}
+				when={trans.downloads().length > 0}
+				fallback={<i>No downloads yet.</i>}
 			>
-				<Show
-					when={state.latestUpdate()!.isValid}
-					fallback={
-						<div class={styles.invalid}>
-							<h2>Invalid update signature!</h2>
-							<p>
-								The client checked for an update and found one,
-								but its signature was invalid.
-							</p>
-							<p>
-								This is indicative of either a misconfiguration
-								of the FriendNet update system, or a malicious
-								attempt to get you to download a potentially
-								harmful update.
-							</p>
-							<p>Do not download this update.</p>
-						</div>
-					}
-				>
-					<div class={styles.new}>
-						<h2>New update: v{state.latestUpdate()!.version}</h2>
-						<pre class={styles.description}>
-							{state.latestUpdate()!.description}
-						</pre>
-						<a href={state.latestUpdate()!.url} target="_blank">
-							[Download]
-						</a>
-					</div>
-				</Show>
-			</Show>
-
-			<br />
-
-			<Show
-				when={isChecking()}
-				fallback={<button onClick={doCheck}>Check for Update</button>}
-			>
-				<button disabled={true}>Checking...</button>
+				<For each={trans.downloads()}>
+					{(item) => <div>{item.filePath}</div>}
+				</For>
 			</Show>
 		</div>
 	)

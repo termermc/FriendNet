@@ -18,6 +18,7 @@ import { RpcClient } from './protobuf'
 import { Code, ConnectError } from '@connectrpc/connect'
 import { sleep } from './util'
 import { isDev } from 'solid-js/web'
+import { TransferManager } from './transfer'
 
 class Refresher {
 	onlineUsers = new Set<string>()
@@ -688,6 +689,11 @@ export class State {
 	 */
 	readonly refresher: Refresher
 
+	/**
+	 * The global {@link TransferManager} instance.
+	 */
+	readonly transfer: TransferManager
+
 	readonly previewInfo: Accessor<PreviewInfo | undefined>
 	readonly #setPreviewInfo: Setter<PreviewInfo | undefined>
 
@@ -706,6 +712,7 @@ export class State {
 		this.log = new LogManager(client)
 		this.event = new EventManager(this, client)
 		this.refresher = new Refresher(this, client, 500)
+		this.transfer = new TransferManager(this, client)
 		;[this.servers, this.#setServers] = createSignal<Server[]>([])
 		;[this.previewInfo, this.#setPreviewInfo] = createSignal<
 			PreviewInfo | undefined
@@ -779,6 +786,8 @@ export class State {
 		for (const server of this.servers()) {
 			server.refreshOnlineUsers()
 		}
+
+		await this.transfer.refreshItems()
 	}
 
 	/**
