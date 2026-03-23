@@ -114,7 +114,7 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	pathParts := strings.Split(strings.TrimSuffix(reqUrl.Path[1:], "/"), "/")
 
-	if len(pathParts) < 3 {
+	if len(pathParts) < 4 {
 		text(w, r, http.StatusBadRequest, schemeMsg+"\n")
 		return
 	}
