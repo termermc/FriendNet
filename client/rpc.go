@@ -855,11 +855,14 @@ func (s *RpcServer) QueueFileDownload(_ context.Context, request *v1.QueueFileDo
 		return nil, connect.NewError(connect.CodeInvalidArgument, pathErr)
 	}
 
-	s.downloadManager.Queue(
+	err := s.downloadManager.Queue(
 		srv,
 		username,
 		path,
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	return &v1.QueueFileDownloadResponse{}, nil
 }
