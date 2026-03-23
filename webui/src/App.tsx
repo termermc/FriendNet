@@ -14,6 +14,7 @@ import { SettingsPage } from './page/SettingsPage'
 import { ServerSearchPage } from './page/ServerSearchPage'
 import { ServerProfilePage } from './page/ServerProfilePage'
 import { UpdatePage } from './page/UpdatePage'
+import { TransfersPage } from './page/TransfersPage'
 
 const App: Component = () => {
 	const routes: RouteDefinition[] = [
@@ -33,6 +34,10 @@ const App: Component = () => {
 		{
 			path: '/update',
 			component: UpdatePage,
+		},
+		{
+			path: '/transfers',
+			component: TransfersPage,
 		},
 
 		{
