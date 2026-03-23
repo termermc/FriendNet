@@ -568,7 +568,10 @@ func (s *Storage) CreateDownloadState(
 		status,
 		filePath.String(),
 	)
-	return err
+	if err != nil {
+		return fmt.Errorf(`failed to create download state for UUID %s: %w`, uuid, err)
+	}
+	return nil
 }
 
 // GetDownloadStates returns all download states from the database.
@@ -593,4 +596,18 @@ func (s *Storage) GetDownloadStates(ctx context.Context) ([]DownloadStateRecord,
 	}
 
 	return records, nil
+}
+
+func (s *Storage) UpdateDownloadState(
+	uuid string,
+	status pb.DownloadStatus,
+	fileTotalSize int64,
+	fileDownloadedBytes int64,
+	errorStr *string,
+) error {
+	_, err := s.updateDownloadStatusStmt.ExecContext(context.Background(), status, fileTotalSize, fileDownloadedBytes, errorStr, uuid)
+	if err != nil {
+		return fmt.Errorf(`failed to update download state for UUID %s: %w`, uuid, err)
+	}
+	return nil
 }

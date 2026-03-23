@@ -189,7 +189,45 @@ func NewDownloadManager(
 
 		dirIncomplete: dirIncomplete,
 		dirComplete:   dirComplete,
+
+		states: nil,
+
+		pendingUpdates: make(chan dmUpdate, 100),
 	}
+
+	// Load states.
+	records, err := storage.GetDownloadStates(ctx)
+	if err != nil {
+		ctxCancel()
+		return nil, fmt.Errorf("failed to load download states: %w", err)
+	}
+	states := make([]*DownloadState, 0, len(records))
+	for _, rec := range records {
+		srv, has := multi.GetByUuid(rec.Server)
+		if !has {
+			logger.Warn("download state record refers to nonexistent server",
+				"service", "client.DownloadManager",
+				"server_uuid", rec.Server,
+			)
+			continue
+		}
+
+		state := DownloadState{
+			dm:       dm,
+			uuid:     rec.Uuid,
+			server:   srv,
+			peer:     rec.PeerUsername,
+			filePath: rec.FilePath,
+		}
+		state.status.Store(&rec.Status)
+		state.fileTotalSize.Store(rec.FileTotalSize)
+		state.fileDownloadedBytes.Store(uint64(rec.FileDownloadedBytes))
+		state.errorMessage.Store(rec.Error)
+
+		states = append(states, &state)
+	}
+
+	dm.states = states
 
 	go dm.downloader()
 	go dm.updateDrainer()
@@ -335,7 +373,26 @@ func (dm *DownloadManager) updateDrainer() {
 					})
 				}
 
-				// TODO Write to DB.
+				// Write to DB.
+				for _, upd := range buf {
+					err := dm.storage.UpdateDownloadState(
+						upd.ds.uuid,
+						*upd.ds.status.Load(),
+						upd.ds.fileTotalSize.Load(),
+						int64(upd.ds.fileDownloadedBytes.Load()),
+						upd.ds.errorMessage.Load(),
+					)
+					if err != nil {
+						dm.logger.Error("failed to update download state in database",
+							"service", "client.DownloadManager",
+							"uuid", upd.ds.uuid,
+							"status", upd.ds.status.Load().String(),
+							"fileTotalSize", upd.ds.fileTotalSize.Load(),
+							"fileDownloadedBytes", upd.ds.fileDownloadedBytes.Load(),
+							"errorStr", upd.ds.errorMessage.Load(),
+						)
+					}
+				}
 			}
 		}
 	}()
@@ -395,7 +452,7 @@ func (dm *DownloadManager) Queue(
 	server *Server,
 	peer common.NormalizedUsername,
 	filePath common.ProtoPath,
-) {
+) error {
 	dm.mu.Lock()
 	defer dm.mu.Unlock()
 
@@ -418,7 +475,7 @@ func (dm *DownloadManager) Queue(
 				break
 			default:
 				// Already exists and not a candidate for replacement.
-				return
+				return nil
 			}
 		}
 	}
@@ -444,13 +501,25 @@ func (dm *DownloadManager) Queue(
 	state.fileTotalSize.Store(-1)
 	state.errorMessage.Store(nil)
 
-	// TODO Update state in database.
+	err := dm.storage.CreateDownloadState(
+		dm.ctx,
+		uid,
+		server.Uuid,
+		peer,
+		pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED,
+		filePath,
+	)
+	if err != nil {
+		return fmt.Errorf(`failed to create download state for UUID %s: %w`, uid, err)
+	}
 
 	if replaceSlot == -1 {
 		dm.states = append(dm.states, state)
 	} else {
 		dm.states[replaceSlot] = state
 	}
+
+	return nil
 }
 
 func (dm *DownloadManager) mkIncompletePath(serverUuid string, peerUsername common.NormalizedUsername, path common.ProtoPath) string {
