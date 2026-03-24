@@ -33,7 +33,7 @@ const DefaultTokenExpiredGcInterval = 10 * time.Second
 // free in terms of memory usage, and expired token IDs are only stored for the
 // maximum time a token could be valid, so they do not stay in memory forever.
 type TokenManager struct {
-	mu       sync.RWMutex
+	mu       sync.Mutex
 	isClosed bool
 
 	ctx context.Context
@@ -230,15 +230,22 @@ func (m *TokenManager) Redeem(redeemer common.NormalizedUsername, token string) 
 	}
 	offset += serExpSize
 
-	// Check if redeemed.
 	id := binary.LittleEndian.Uint64(buf[offset : offset+serIdSize])
-	m.mu.RLock()
+
+	// Check if redeemed.
+	m.mu.Lock()
+
 	_, isRedeemed := m.expiredTokens[id]
-	m.mu.RUnlock()
 	if isRedeemed {
 		// Already redeemed.
+		m.mu.Unlock()
 		return res
 	}
+
+	m.expiredTokens[id] = time.Now().Add(m.validDuration)
+
+	m.mu.Unlock()
+
 	offset += serIdSize
 
 	if buf[offset] == 1 {

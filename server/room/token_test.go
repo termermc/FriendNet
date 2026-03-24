@@ -237,9 +237,9 @@ func TestGarbageCollection(t *testing.T) {
 		t.Fatal("expected valid token")
 	}
 
-	tm.mu.RLock()
+	tm.mu.Lock()
 	initialSize := len(tm.expiredTokens)
-	tm.mu.RUnlock()
+	tm.mu.Unlock()
 
 	if initialSize == 0 {
 		t.Fatal("expected expired token to be in map")
@@ -248,9 +248,9 @@ func TestGarbageCollection(t *testing.T) {
 	// Wait for token to truly expire and GC to run
 	time.Sleep(gcInterval + validDuration + time.Second)
 
-	tm.mu.RLock()
+	tm.mu.Lock()
 	finalSize := len(tm.expiredTokens)
-	tm.mu.RUnlock()
+	tm.mu.Unlock()
 
 	if finalSize != 0 {
 		t.Fatal("expected expired tokens to be garbage collected")
