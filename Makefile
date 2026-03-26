@@ -8,13 +8,9 @@
 	webui \
 	client \
 	client-noui \
-	client-windows-amd64 \
 	client-windows-amd64-noui \
-	client-linux-amd64 \
 	client-linux-amd64-noui \
-	client-linux-arm64 \
     client-linux-arm64-noui \
-	client-darwin-arm64 \
 	client-darwin-arm64-noui \
 	rpcclient \
 	rpcclient-linux-amd64 \
