@@ -32,7 +32,9 @@ export const TransfersPage: Component = () => {
 						<div class={styles.progress}>
 							<progress value={item.downloadedBytes() / item.fileSizeBytes()} max="1" />
 							<div>
-								{formatSize(item.downloadedBytes(), 2)} / {formatSize(item.fileSizeBytes(), 2)}
+								{formatSize(item.downloadedBytes(), 2)}
+								{' / '}
+								{item.fileSizeBytes() === -1 ? '???' : formatSize(item.fileSizeBytes(), 2)}
 								{' | '}
 								{formatSpeed(item.lastSpeedBytesPerSecond())}
 							</div>
