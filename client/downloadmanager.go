@@ -146,7 +146,7 @@ func NewDownloadManager(
 		return nil, fmt.Errorf(`failed to determine user home directory: %w`, err)
 	}
 
-	defDlBaseDir := filepath.Join(homeDir, "FriendNet Downloads")
+	defDlBaseDir := filepath.Join(homeDir, "Downloads", "FriendNet Downloads")
 	defDlIncomplete := filepath.Join(defDlBaseDir, "Incomplete")
 	defDlComplete := filepath.Join(defDlBaseDir, "Complete")
 
