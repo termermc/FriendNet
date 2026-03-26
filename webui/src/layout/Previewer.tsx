@@ -5,6 +5,7 @@ import { Component, createSignal, Match, onMount, Show, Switch } from 'solid-js'
 import { PreviewInfo } from '../state'
 import { guessFileCategory, makeFileUrl } from '../util'
 import { useFileServerUrl, useGlobalState } from '../ctx'
+import { QueueButton } from '../QueueButton'
 
 type PreviewerProps = {
 	info: PreviewInfo
@@ -21,14 +22,11 @@ type CatProps = {
 const CatOther: Component<CatProps> = (props) => {
 	const fsUrl = useFileServerUrl()
 
-	const dlUrl = makeFileUrl(
+	const fileUrl = makeFileUrl(
 		fsUrl,
 		props.info.serverUuid,
 		props.info.username,
 		props.info.path,
-		{
-			download: true,
-		},
 	)
 
 	const [viewAsText, setViewAsText] = createSignal(false)
@@ -41,7 +39,20 @@ const CatOther: Component<CatProps> = (props) => {
 					<span>No Preview Available.</span>
 					<br />
 					<br />
-					<a href={dlUrl}>💾 Download</a>
+					<QueueButton
+						serverUuid={props.info.serverUuid}
+						peerUsername={props.info.username}
+						filePath={props.info.path}
+					>
+						Download
+					</QueueButton>
+					<br />
+					<a
+						href={fileUrl}
+						target="_blank"
+					>
+						🔗 Open in Browser
+					</a>
 					<br />
 					<a
 						href=""

@@ -13,6 +13,7 @@ import {
 	trimStrEllipsis,
 } from '../util'
 import { FileTable } from '../FileTable'
+import { QueueButton } from '../QueueButton'
 
 const Page: Component = () => {
 	const {
@@ -34,10 +35,6 @@ const Page: Component = () => {
 	const { path, segments: pathSegments } = normalizePath(
 		decodeURIComponent(pathRaw),
 	)
-
-	const dirDlUrl = makeFileUrl(fsUrl, uuid, username, path, {
-		zip: true,
-	})
 
 	const [files, setFiles] = createSignal<FileMeta[]>([])
 	const [isLoading, setLoading] = createSignal(false)
@@ -84,13 +81,16 @@ const Page: Component = () => {
 		<div class={styles.container}>
 			<Show when={!error()}>
 				<div class={styles.actions}>
-					<a
+					<QueueButton
+						serverUuid={server.uuid}
+						peerUsername={username}
+						filePath={path}
+
 						title="Download Directory as Zip File"
-						href={dirDlUrl}
 						class={styles.action}
 					>
-						💾 Download Folder
-					</a>
+						Download Folder
+					</QueueButton>
 				</div>
 			</Show>
 
@@ -147,15 +147,6 @@ const Page: Component = () => {
 							href: makeBrowsePath(uuid, username, filePath),
 						}
 					} else {
-						const dlUrl = makeFileUrl(
-							fsUrl,
-							uuid,
-							username,
-							filePath,
-							{
-								download: true,
-							},
-						)
 						const nonDlUrl = makeFileUrl(
 							fsUrl,
 							uuid,
@@ -173,9 +164,12 @@ const Page: Component = () => {
 									>
 										🔗
 									</a>
-									<a title="Download File" href={dlUrl}>
-										💾
-									</a>
+									<QueueButton
+										serverUuid={uuid}
+										peerUsername={username}
+										filePath={filePath}
+										title="Download File"
+									/>
 								</>
 							),
 							onClick: () => {

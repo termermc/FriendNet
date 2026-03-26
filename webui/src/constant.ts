@@ -17,3 +17,8 @@ export const DefaultServerPort = 20038
  * The timeout to use for RPC requests.
  */
 export const RpcTimeoutMs = 60_000
+
+/**
+ * The HTML ID for the transfers option.
+ */
+export const TransfersOptionId = 'transfers-option'

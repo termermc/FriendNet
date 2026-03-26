@@ -374,7 +374,7 @@ func (dm *DownloadManager) updateDrainer() {
 				}
 
 				// Write to DB.
-				for _, upd := range buf {
+				for _, upd := range updates {
 					err := dm.storage.UpdateDownloadState(
 						upd.ds.uuid,
 						*upd.ds.status.Load(),
@@ -576,6 +576,8 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 			return err
 		}
 
+		// TODO If the file is a directory, delete the file on disk and error out.
+
 		var fileTotalSize uint64
 		if loaded := state.fileTotalSize.Load(); loaded > -1 {
 			fileTotalSize = uint64(loaded)
@@ -634,6 +636,8 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 						},
 						ds: state,
 					})
+
+					lastBytes = newBytes
 				}
 			}
 		}()
@@ -691,6 +695,11 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 		}
 		if errors.Is(finalErr, protocol.ErrPeerUnreachable) {
 			// Peer unreachable; queue again.
+			state.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED))
+			return nil
+		}
+		if protocol.IsErrorConnCloseOrCancel(finalErr) || errors.Is(finalErr, ErrConnNannyClosed) {
+			// Server connection closed, or application is closed; queue again.
 			state.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED))
 			return nil
 		}

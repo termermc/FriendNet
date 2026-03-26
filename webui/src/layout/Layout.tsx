@@ -5,7 +5,7 @@ import styles from './Layout.module.css'
 import stopImg from '../asset/img/stop.svg'
 
 import { useGlobalState, useRpcClient } from '../ctx'
-import { AppName } from '../constant'
+import { AppName, TransfersOptionId } from '../constant'
 import { ServerBrowser } from './ServerBrowser'
 import { Previewer } from './Previewer'
 import { A } from '@solidjs/router'
@@ -47,7 +47,11 @@ export const Layout: Component<LayoutProps> = (props) => {
 				<span class={styles.headerTitle}>{AppName}</span>
 
 				<div class={styles.options}>
-					<A href="/transfers" class={styles.option}>
+					<A
+						href="/transfers"
+						class={styles.option}
+						id={TransfersOptionId}
+					>
 						⏳ Transfers
 					</A>{' '}
 					<A href="/settings" class={styles.option}>

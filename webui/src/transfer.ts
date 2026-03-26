@@ -140,4 +140,18 @@ export class TransferManager {
 
 		this.#setDownloads(newDownloads)
 	}
+
+	/**
+	 * Queues a file download.
+	 * @param serverUuid The UUID of the server the peer is on.
+	 * @param peerUsername The peer's username.
+	 * @param filePath The file path within the peer.
+	 */
+	async queue(serverUuid: string, peerUsername: string, filePath: string): Promise<void> {
+		await this.#client.queueFileDownload({
+			serverUuid,
+			peerUsername,
+			filePath,
+		})
+	}
 }

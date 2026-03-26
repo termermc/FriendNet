@@ -15,6 +15,7 @@ import { FileTable, FileTableItem } from '../FileTable'
 import { StreamSearchResponse } from '../../pb/clientrpc/v1/rpc_pb'
 import Fuse from 'fuse.js'
 import { makeBrowsePath, makeFileUrl } from '../util'
+import { QueueButton } from '../QueueButton'
 
 const Page: Component = () => {
 	const { uuid } = useParams<{ uuid: string }>()
@@ -205,15 +206,6 @@ const Page: Component = () => {
 							href: makeBrowsePath(uuid, username, filePath),
 						}
 					} else {
-						const dlUrl = makeFileUrl(
-							fsUrl,
-							uuid,
-							username,
-							filePath,
-							{
-								download: true,
-							},
-						)
 						const nonDlUrl = makeFileUrl(
 							fsUrl,
 							uuid,
@@ -244,9 +236,13 @@ const Page: Component = () => {
 									>
 										🔗
 									</a>
-									<a title="Download File" href={dlUrl}>
-										💾
-									</a>
+									<QueueButton
+										serverUuid={uuid}
+										peerUsername={username}
+										filePath={filePath}
+
+										title="Download File"
+									/>
 								</>
 							),
 							onClick: () => {
