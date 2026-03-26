@@ -523,10 +523,16 @@ func (dm *DownloadManager) Queue(
 }
 
 func (dm *DownloadManager) mkIncompletePath(serverUuid string, peerUsername common.NormalizedUsername, path common.ProtoPath) string {
-	return dm.incompleteFnReplacer.ReplacePath(filepath.Join(dm.dirIncomplete, peerUsername.String()+"-"+serverUuid, path.String()))
+	return filepath.Join(
+		dm.dirIncomplete,
+		dm.incompleteFnReplacer.ReplacePath(filepath.Join(peerUsername.String()+"-"+serverUuid, path.String())),
+	)
 }
 func (dm *DownloadManager) mkCompletePath(serverUuid string, peerUsername common.NormalizedUsername, path common.ProtoPath) string {
-	return dm.completeFnReplacer.ReplacePath(filepath.Join(dm.dirComplete, peerUsername.String()+"-"+serverUuid, path.String()))
+	return filepath.Join(
+		dm.dirComplete,
+		dm.completeFnReplacer.ReplacePath(filepath.Join(peerUsername.String()+"-"+serverUuid, path.String())),
+	)
 }
 
 func (dm *DownloadManager) trySendUpdate(update dmUpdate) {
