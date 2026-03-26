@@ -292,6 +292,6 @@ export function formatSize(bytes: number, decimals: number | 0): string {
  * @returns The formatted speed.
  */
 export function formatSpeed(bps: number): string {
-	const decimals = bps < 1024 * 1024 ? 2 : 0
+	const decimals = bps >= 1024 * 1024 ? 2 : 0
 	return formatSize(bps, decimals) + '/s'
 }
