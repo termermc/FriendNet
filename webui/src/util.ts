@@ -267,3 +267,31 @@ export function collect<T>(
 
 	return res
 }
+
+/**
+ * Formats a size in bytes into a human-readable string (such as 1MiB).
+ * @param bytes The number of bytes.
+ * @param decimals The number of decimals to include (0 for no decimals).
+ * @returns The formatted size.
+ */
+export function formatSize(bytes: number, decimals: number | 0): string {
+	if (bytes > 1024 * 1024 * 1024) {
+		return (bytes / (1024 * 1024 * 1024)).toFixed(decimals) + ' GiB'
+	} else if (bytes > 1024 * 1024) {
+		return (bytes / (1024 * 1024)).toFixed(decimals) + ' MiB'
+	} else if (bytes > 1024) {
+		return (bytes / 1024).toFixed(decimals) + ' KiB'
+	} else {
+		return bytes + ' B'
+	}
+}
+
+/**
+ * Formats a speed in bytes per second into a human-readable string (such as 1MiB/s).
+ * @param bps The number of bytes per second.
+ * @returns The formatted speed.
+ */
+export function formatSpeed(bps: number): string {
+	const decimals = bps < 1024 * 1024 ? 2 : 0
+	return formatSize(bps, decimals) + '/s'
+}
