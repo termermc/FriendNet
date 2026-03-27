@@ -51,7 +51,7 @@ const dmDlConcurrencySetting = "dm_dl_concurrency"
 
 type dmUpdate struct {
 	rpc *v1.DownloadStatusUpdate
-	ds  *DownloadState
+	ds  *DownloadHandle
 }
 
 func (u *dmUpdate) ToProto() *pb.MsgDownloadStatusUpdate {
@@ -65,11 +65,18 @@ func (u *dmUpdate) ToProto() *pb.MsgDownloadStatusUpdate {
 	}
 }
 
-// DownloadState is the state of a download.
-type DownloadState struct {
+var errHandleStopped = errors.New("handle stopped")
+
+// DownloadHandle is a handle for a download.
+type DownloadHandle struct {
 	dm *DownloadManager
 
 	status atomic.Pointer[pb.DownloadStatus]
+
+	// stopFnOrNil is a function that can be called to stop a pending download and set it to a
+	// specific status.
+	// It may be nil.
+	stopFnOrNil atomic.Pointer[func(pb.DownloadStatus)]
 
 	// The file download's UUID.
 	uuid string
@@ -124,7 +131,7 @@ type DownloadManager struct {
 	dirIncomplete string
 	dirComplete   string
 
-	states []*DownloadState
+	handles []*DownloadHandle
 
 	// A queue of pending download progress events to send to the event bus.
 	// It is buffered, but sends should be discarded if the buffer is full instead of blocking.
@@ -190,18 +197,18 @@ func NewDownloadManager(
 		dirIncomplete: dirIncomplete,
 		dirComplete:   dirComplete,
 
-		states: nil,
+		handles: nil,
 
 		pendingUpdates: make(chan dmUpdate, 100),
 	}
 
-	// Load states.
+	// Load handles.
 	records, err := storage.GetDownloadStates(ctx)
 	if err != nil {
 		ctxCancel()
-		return nil, fmt.Errorf("failed to load download states: %w", err)
+		return nil, fmt.Errorf("failed to load download handles: %w", err)
 	}
-	states := make([]*DownloadState, 0, len(records))
+	states := make([]*DownloadHandle, 0, len(records))
 	for _, rec := range records {
 		srv, has := multi.GetByUuid(rec.Server)
 		if !has {
@@ -212,7 +219,7 @@ func NewDownloadManager(
 			continue
 		}
 
-		state := DownloadState{
+		state := DownloadHandle{
 			dm:       dm,
 			uuid:     rec.Uuid,
 			server:   srv,
@@ -227,7 +234,7 @@ func NewDownloadManager(
 		states = append(states, &state)
 	}
 
-	dm.states = states
+	dm.handles = states
 
 	go dm.downloader()
 	go dm.updateDrainer()
@@ -260,7 +267,7 @@ func (dm *DownloadManager) downloader() {
 
 			var wg sync.WaitGroup
 			var launched int64
-			for _, state := range dm.states {
+			for _, state := range dm.handles {
 				if launched >= dlConcurrency {
 					break
 				}
@@ -426,8 +433,8 @@ func (dm *DownloadManager) SnapshotStates() []*v1.DownloadManagerItem {
 	dm.mu.RLock()
 	defer dm.mu.RUnlock()
 
-	items := make([]*v1.DownloadManagerItem, len(dm.states))
-	for i, state := range dm.states {
+	items := make([]*v1.DownloadManagerItem, len(dm.handles))
+	for i, state := range dm.handles {
 		items[i] = &v1.DownloadManagerItem{
 			Type:         v1.DownloadManagerItem_TYPE_DOWNLOAD,
 			Uuid:         state.uuid,
@@ -460,7 +467,7 @@ func (dm *DownloadManager) Queue(
 	replaceSlot := -1
 
 	// Search for a duplicate entry.
-	for i, state := range dm.states {
+	for i, state := range dm.handles {
 		if state.server == server && state.peer == peer && state.filePath == filePath {
 			// Is it canceled or failed?
 			switch *state.status.Load() {
@@ -487,7 +494,7 @@ func (dm *DownloadManager) Queue(
 	}
 
 	// Create new state.
-	state := &DownloadState{
+	state := &DownloadHandle{
 		dm:       dm,
 		uuid:     uid,
 		server:   server,
@@ -512,9 +519,9 @@ func (dm *DownloadManager) Queue(
 	}
 
 	if replaceSlot == -1 {
-		dm.states = append(dm.states, state)
+		dm.handles = append(dm.handles, state)
 	} else {
-		dm.states[replaceSlot] = state
+		dm.handles[replaceSlot] = state
 	}
 
 	return nil
@@ -540,15 +547,15 @@ func (dm *DownloadManager) trySendUpdate(update dmUpdate) {
 	}
 }
 
-func (dm *DownloadManager) startDownload(state *DownloadState) error {
-	// Return immediately if the file is not in the queued state.
-	if *state.status.Load() != pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED {
+func (dm *DownloadManager) startDownload(handle *DownloadHandle) error {
+	// Return immediately if the file is not in the queued status.
+	if *handle.status.Load() != pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED {
 		return nil
 	}
 
 	// Create paths.
-	incompletePath := dm.mkIncompletePath(state.server.Uuid, state.peer, state.filePath)
-	completePath := dm.mkCompletePath(state.server.Uuid, state.peer, state.filePath)
+	incompletePath := dm.mkIncompletePath(handle.server.Uuid, handle.peer, handle.filePath)
+	completePath := dm.mkCompletePath(handle.server.Uuid, handle.peer, handle.filePath)
 	dir := filepath.Dir(incompletePath)
 	mkErr := os.MkdirAll(dir, 0755)
 	if mkErr != nil {
@@ -561,13 +568,13 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 	}
 
 	// Use TryDo because we want to fail fast if there is not an open connection.
-	finalErr := state.server.TryDo(func(conn *room.Conn) error {
-		peer := conn.GetVirtualC2cConn(state.peer, false)
+	finalErr := handle.server.TryDo(func(conn *room.Conn) error {
+		peer := conn.GetVirtualC2cConn(handle.peer, false)
 
-		initialDownloaded := state.fileDownloadedBytes.Load()
+		initialDownloaded := handle.fileDownloadedBytes.Load()
 
 		meta, reader, err := peer.GetFile(&pb.MsgGetFile{
-			Path:   state.filePath.String(),
+			Path:   handle.filePath.String(),
 			Offset: initialDownloaded,
 		})
 		if err != nil {
@@ -583,10 +590,10 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 		// TODO If file is a directory, remove, crawl and queue.
 
 		var fileTotalSize uint64
-		if loaded := state.fileTotalSize.Load(); loaded > -1 {
+		if loaded := handle.fileTotalSize.Load(); loaded > -1 {
 			fileTotalSize = uint64(loaded)
 		} else {
-			state.fileTotalSize.Store(int64(meta.Size))
+			handle.fileTotalSize.Store(int64(meta.Size))
 			fileTotalSize = meta.Size
 		}
 
@@ -626,19 +633,19 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 				case <-ctx.Done():
 					return
 				case <-ticker.C:
-					newBytes := state.fileDownloadedBytes.Load()
+					newBytes := handle.fileDownloadedBytes.Load()
 					speed := newBytes - lastBytes
 
 					dm.trySendUpdate(dmUpdate{
 						rpc: &v1.DownloadStatusUpdate{
-							Uuid:         state.uuid,
+							Uuid:         handle.uuid,
 							Status:       v1.DownloadStatus_DOWNLOAD_STATUS_PENDING,
 							Downloaded:   newBytes,
 							FileSize:     int64(meta.Size),
 							Speed:        speed,
 							ErrorMessage: nil,
 						},
-						ds: state,
+						ds: handle,
 					})
 
 					lastBytes = newBytes
@@ -646,28 +653,47 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 			}
 		}()
 
-		buf := make([]byte, 512*1024)
-		for {
-			var n int
-			n, err = reader.Read(buf)
-			state.fileDownloadedBytes.Store(state.fileDownloadedBytes.Load() + uint64(n))
-			isEof := errors.Is(err, io.EOF)
-			if err != nil && !isEof {
-				return fmt.Errorf(`failed to read from peer %q to file %q: %w`, state.peer.String(), incompletePath, err)
-			}
-			if _, err = file.Write(buf[:n]); err != nil {
-				return fmt.Errorf(`failed to write to file %q: %w`, incompletePath, err)
-			}
-			if isEof {
-				break
-			}
-		}
+		endChan := make(chan error, 2)
+		shouldDl := true
 
-		return nil
+		// Set stopper function.
+		handle.stopFnOrNil.Store(new(func(status pb.DownloadStatus) {
+			if !shouldDl {
+				return
+			}
+			endChan <- errHandleStopped
+			shouldDl = false
+			handle.stopFnOrNil.Store(nil)
+			handle.status.Store(&status)
+		}))
+
+		go func() {
+			endChan <- func() error {
+				buf := make([]byte, 512*1024)
+				for shouldDl {
+					var n int
+					n, err = reader.Read(buf)
+					handle.fileDownloadedBytes.Store(handle.fileDownloadedBytes.Load() + uint64(n))
+					isEof := errors.Is(err, io.EOF)
+					if err != nil && !isEof {
+						return fmt.Errorf(`failed to read from peer %q to file %q: %w`, handle.peer.String(), incompletePath, err)
+					}
+					if _, err = file.Write(buf[:n]); err != nil {
+						return fmt.Errorf(`failed to write to file %q: %w`, incompletePath, err)
+					}
+					if isEof {
+						break
+					}
+				}
+				return nil
+			}()
+		}()
+
+		return <-endChan
 	})
 
-	fileTotalSize := state.fileTotalSize.Load()
-	finalBytes := state.fileDownloadedBytes.Load()
+	fileTotalSize := handle.fileTotalSize.Load()
+	finalBytes := handle.fileDownloadedBytes.Load()
 
 	// If no error, set error if final size is not expected.
 	if finalErr == nil && finalBytes != uint64(fileTotalSize) {
@@ -677,9 +703,9 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 		_ = os.Remove(incompletePath)
 
 		finalErr = fmt.Errorf(`finished downloading file %q from peer %q on server %q but its final size was %d/%d bytes`,
-			state.filePath.String(),
-			state.peer.String(),
-			state.server.Uuid,
+			handle.filePath.String(),
+			handle.peer.String(),
+			handle.server.Uuid,
 			finalBytes,
 			fileTotalSize,
 		)
@@ -692,50 +718,55 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 
 	// Check error.
 	if finalErr != nil {
+		if errors.Is(finalErr, errHandleStopped) {
+			// DownloadHandle stop function was called.
+			// It already set the status, so we do not need to set it.
+			return nil
+		}
 		if errors.Is(finalErr, ErrConnNotOpen) {
 			// Conn not open; queue again.
-			state.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED))
+			handle.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED))
 			return nil
 		}
 		if errors.Is(finalErr, protocol.ErrPeerUnreachable) {
 			// Peer unreachable; queue again.
-			state.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED))
+			handle.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED))
 			return nil
 		}
 		if protocol.IsErrorConnCloseOrCancel(finalErr) || errors.Is(finalErr, ErrConnNannyClosed) {
 			// Server connection closed, or application is closed; queue again.
-			state.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED))
+			handle.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED))
 			return nil
 		}
 
 		errMsg := finalErr.Error()
-		state.errorMessage.Store(&errMsg)
+		handle.errorMessage.Store(&errMsg)
 		dm.trySendUpdate(dmUpdate{
 			rpc: &v1.DownloadStatusUpdate{
-				Uuid:         state.uuid,
+				Uuid:         handle.uuid,
 				Status:       v1.DownloadStatus_DOWNLOAD_STATUS_ERROR,
 				Downloaded:   finalBytes,
 				FileSize:     fileTotalSize,
 				Speed:        0,
 				ErrorMessage: &errMsg,
 			},
-			ds: state,
+			ds: handle,
 		})
 		return finalErr
 	}
 
 	// If we got this far, the download completed successfully.
-	state.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_DONE))
+	handle.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_DONE))
 	dm.trySendUpdate(dmUpdate{
 		rpc: &v1.DownloadStatusUpdate{
-			Uuid:         state.uuid,
+			Uuid:         handle.uuid,
 			Status:       v1.DownloadStatus_DOWNLOAD_STATUS_DONE,
 			Downloaded:   finalBytes,
 			FileSize:     fileTotalSize,
 			Speed:        0,
 			ErrorMessage: nil,
 		},
-		ds: state,
+		ds: handle,
 	})
 
 	return nil
