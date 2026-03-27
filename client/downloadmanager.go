@@ -67,6 +67,7 @@ func (u *dmUpdate) ToProto() *pb.MsgDownloadStatusUpdate {
 }
 
 var errHandleStopped = errors.New("handle stopped")
+var errIsDir = errors.New("is a directory")
 
 // DownloadHandle is a handle for a download.
 type DownloadHandle struct {
@@ -613,17 +614,6 @@ func (dm *DownloadManager) startDownload(handle *DownloadHandle) error {
 		}
 
 		if meta.IsDir {
-			// Remove handle, since we can't download directories themselves.
-			dm.mu.Lock()
-			for i, hdl := range dm.handles {
-				if hdl.uuid == handle.uuid {
-					dm.handles = slices.Concat(dm.handles[:i], dm.handles[i+1:])
-					break
-				}
-			}
-			// TODO Create a method to remove a handle and send out an event bus message for the removal.
-			dm.mu.Unlock()
-
 			// Crawl and queue directory contents in background.
 			go func() {
 				walkErr := WalkPeerPath(peer, handle.filePath, func(path common.ProtoPath, meta *pb.MsgFileMeta) bool {
@@ -657,7 +647,7 @@ func (dm *DownloadManager) startDownload(handle *DownloadHandle) error {
 				}
 			}()
 
-			return nil
+			return errIsDir
 		}
 
 		var fileTotalSize uint64
@@ -804,6 +794,20 @@ func (dm *DownloadManager) startDownload(handle *DownloadHandle) error {
 
 	// Check error.
 	if finalErr != nil {
+		if errors.Is(finalErr, errIsDir) {
+			// The handle was already removed.
+			// TODO Call method that removes handle and sends out an event bus message for the removal.
+			// Remove handle, since we can't download directories themselves.
+			dm.mu.Lock()
+			for i, hdl := range dm.handles {
+				if hdl.uuid == handle.uuid {
+					dm.handles = slices.Concat(dm.handles[:i], dm.handles[i+1:])
+					break
+				}
+			}
+			dm.mu.Unlock()
+			return nil
+		}
 		if errors.Is(finalErr, errHandleStopped) {
 			// DownloadHandle stop function was called.
 			// It already set the status, so we do not need to set it.

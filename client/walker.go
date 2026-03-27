@@ -54,7 +54,7 @@ func WalkPeerPath(conn room.VirtualC2cConn, path common.ProtoPath, fn func(path 
 					if file.IsDir {
 						toCrawl = append(toCrawl, filePath)
 					}
-					doNext := fn(dirPath, file)
+					doNext := fn(filePath, file)
 					if !doNext {
 						return io.EOF
 					}
