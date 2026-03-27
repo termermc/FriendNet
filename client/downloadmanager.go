@@ -462,10 +462,8 @@ func (dm *DownloadManager) Queue(
 	// Search for a duplicate entry.
 	for i, state := range dm.states {
 		if state.server == server && state.peer == peer && state.filePath == filePath {
-			// Is it done, canceled or failed?
+			// Is it canceled or failed?
 			switch *state.status.Load() {
-			case pb.DownloadStatus_DOWNLOAD_STATUS_DONE:
-				fallthrough
 			case pb.DownloadStatus_DOWNLOAD_STATUS_CANCELED:
 				fallthrough
 			case pb.DownloadStatus_DOWNLOAD_STATUS_ERROR:
