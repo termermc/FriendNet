@@ -1,25 +1,76 @@
 import styles from './TransfersPage.module.css'
 
-import { Component, createMemo, JSX, onMount, Show } from 'solid-js'
+import { Component, createMemo, JSX, Match, onMount, Show, Switch } from 'solid-js'
 import { useGlobalState } from '../ctx'
 import { formatSize, formatSpeed, makeBrowsePath } from '../util'
 import { Download } from '../transfer'
 import { A } from '@solidjs/router'
+import { DownloadStatus } from '../../pb/clientrpc/v1/rpc_pb'
 
 const DownloadItem: Component<{ item: Download }> = (props) => {
 	const filename = props.item.filePath.substring(props.item.filePath.lastIndexOf('/') + 1)
 
 	return (
-		<div class={styles.transfer}>
+		<div classList={{
+			[styles.transfer]: true,
+			[styles.canceled]: props.item.status() === DownloadStatus.CANCELED,
+			[styles.done]: props.item.status() === DownloadStatus.DONE,
+			[styles.pending]: props.item.status() === DownloadStatus.PENDING,
+			[styles.queued]: props.item.status() === DownloadStatus.QUEUED,
+			[styles.error]: props.item.status() === DownloadStatus.ERROR,
+		}}>
 			<div class={styles.info}>{filename}</div>
 			<div class={styles.progress}>
 				<progress value={props.item.downloadedBytes() / props.item.fileSizeBytes()} max="1"/>
-				<div>
+				<div class={styles.options}>
+					<button
+						title="Remove (does not remove files on disk)"
+					>
+						🗑️
+					</button>
+					{' '}
+
+					<Switch>
+						<Match when={props.item.status() === DownloadStatus.CANCELED}>
+							<button
+								title="Retry"
+							>
+								🔄
+							</button>
+						</Match>
+						<Match when={props.item.status() === DownloadStatus.DONE}>
+							Done
+						</Match>
+						<Match when={props.item.status() === DownloadStatus.PENDING}>
+							<button
+								title="Cancel"
+							>
+								⛔
+							</button>
+						</Match>
+						<Match when={props.item.status() === DownloadStatus.QUEUED}>
+							<button
+								title="Download Now"
+							>
+								➡️
+							</button>
+						</Match>
+						<Match when={props.item.status() === DownloadStatus.ERROR}>
+							<span class={styles.errorMessage}>
+								Error: {props.item.errorMessage()}
+							</span>
+						</Match>
+					</Switch>
+				</div>
+				{' | '}
+				<div class={styles.stats}>
 					{formatSize(props.item.downloadedBytes(), 2)}
 					{' / '}
 					{props.item.fileSizeBytes() === -1 ? '???' : formatSize(props.item.fileSizeBytes(), 2)}
-					{' | '}
-					{formatSpeed(props.item.lastSpeedBytesPerSecond())}
+					<Show when={props.item.status() !== DownloadStatus.DONE}>
+						{' | '}
+						{formatSpeed(props.item.lastSpeedBytesPerSecond())}
+					</Show>
 				</div>
 			</div>
 		</div>

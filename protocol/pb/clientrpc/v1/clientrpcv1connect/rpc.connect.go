@@ -113,6 +113,9 @@ const (
 	// ClientRpcServiceQueueFileDownloadProcedure is the fully-qualified name of the ClientRpcService's
 	// QueueFileDownload RPC.
 	ClientRpcServiceQueueFileDownloadProcedure = "/pb.clientrpc.v1.ClientRpcService/QueueFileDownload"
+	// ClientRpcServiceCancelFileDownloadProcedure is the fully-qualified name of the ClientRpcService's
+	// CancelFileDownload RPC.
+	ClientRpcServiceCancelFileDownloadProcedure = "/pb.clientrpc.v1.ClientRpcService/CancelFileDownload"
 )
 
 // ClientRpcServiceClient is a client for the pb.clientrpc.v1.ClientRpcService service.
@@ -239,6 +242,10 @@ type ClientRpcServiceClient interface {
 	//
 	// Returns NOT_FOUND if no such server exists.
 	QueueFileDownload(context.Context, *v1.QueueFileDownloadRequest) (*v1.QueueFileDownloadResponse, error)
+	// CancelFileDownload cancels a file download.
+	//
+	// Returns NOT_FOUND if no such download exists.
+	CancelFileDownload(context.Context, *v1.CancelFileDownloadRequest) (*v1.CancelFileDownloadResponse, error)
 }
 
 // NewClientRpcServiceClient constructs a client for the pb.clientrpc.v1.ClientRpcService service.
@@ -414,6 +421,12 @@ func NewClientRpcServiceClient(httpClient connect.HTTPClient, baseURL string, op
 			connect.WithSchema(clientRpcServiceMethods.ByName("QueueFileDownload")),
 			connect.WithClientOptions(opts...),
 		),
+		cancelFileDownload: connect.NewClient[v1.CancelFileDownloadRequest, v1.CancelFileDownloadResponse](
+			httpClient,
+			baseURL+ClientRpcServiceCancelFileDownloadProcedure,
+			connect.WithSchema(clientRpcServiceMethods.ByName("CancelFileDownload")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -446,6 +459,7 @@ type clientRpcServiceClient struct {
 	checkForNewUpdate       *connect.Client[v1.CheckForNewUpdateRequest, v1.CheckForNewUpdateResponse]
 	getDownloadManagerItems *connect.Client[v1.GetDownloadManagerItemsRequest, v1.GetDownloadManagerItemsResponse]
 	queueFileDownload       *connect.Client[v1.QueueFileDownloadRequest, v1.QueueFileDownloadResponse]
+	cancelFileDownload      *connect.Client[v1.CancelFileDownloadRequest, v1.CancelFileDownloadResponse]
 }
 
 // StreamLogs calls pb.clientrpc.v1.ClientRpcService.StreamLogs.
@@ -671,6 +685,15 @@ func (c *clientRpcServiceClient) QueueFileDownload(ctx context.Context, req *v1.
 	return nil, err
 }
 
+// CancelFileDownload calls pb.clientrpc.v1.ClientRpcService.CancelFileDownload.
+func (c *clientRpcServiceClient) CancelFileDownload(ctx context.Context, req *v1.CancelFileDownloadRequest) (*v1.CancelFileDownloadResponse, error) {
+	response, err := c.cancelFileDownload.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // ClientRpcServiceHandler is an implementation of the pb.clientrpc.v1.ClientRpcService service.
 type ClientRpcServiceHandler interface {
 	// StreamLogs returns an ongoing stream of log messages from the client.
@@ -795,6 +818,10 @@ type ClientRpcServiceHandler interface {
 	//
 	// Returns NOT_FOUND if no such server exists.
 	QueueFileDownload(context.Context, *v1.QueueFileDownloadRequest) (*v1.QueueFileDownloadResponse, error)
+	// CancelFileDownload cancels a file download.
+	//
+	// Returns NOT_FOUND if no such download exists.
+	CancelFileDownload(context.Context, *v1.CancelFileDownloadRequest) (*v1.CancelFileDownloadResponse, error)
 }
 
 // NewClientRpcServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -966,6 +993,12 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 		connect.WithSchema(clientRpcServiceMethods.ByName("QueueFileDownload")),
 		connect.WithHandlerOptions(opts...),
 	)
+	clientRpcServiceCancelFileDownloadHandler := connect.NewUnaryHandlerSimple(
+		ClientRpcServiceCancelFileDownloadProcedure,
+		svc.CancelFileDownload,
+		connect.WithSchema(clientRpcServiceMethods.ByName("CancelFileDownload")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/pb.clientrpc.v1.ClientRpcService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ClientRpcServiceStreamLogsProcedure:
@@ -1022,6 +1055,8 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 			clientRpcServiceGetDownloadManagerItemsHandler.ServeHTTP(w, r)
 		case ClientRpcServiceQueueFileDownloadProcedure:
 			clientRpcServiceQueueFileDownloadHandler.ServeHTTP(w, r)
+		case ClientRpcServiceCancelFileDownloadProcedure:
+			clientRpcServiceCancelFileDownloadHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -1137,4 +1172,8 @@ func (UnimplementedClientRpcServiceHandler) GetDownloadManagerItems(context.Cont
 
 func (UnimplementedClientRpcServiceHandler) QueueFileDownload(context.Context, *v1.QueueFileDownloadRequest) (*v1.QueueFileDownloadResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.QueueFileDownload is not implemented"))
+}
+
+func (UnimplementedClientRpcServiceHandler) CancelFileDownload(context.Context, *v1.CancelFileDownloadRequest) (*v1.CancelFileDownloadResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.CancelFileDownload is not implemented"))
 }

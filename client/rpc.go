@@ -866,3 +866,8 @@ func (s *RpcServer) QueueFileDownload(_ context.Context, request *v1.QueueFileDo
 
 	return &v1.QueueFileDownloadResponse{}, nil
 }
+
+func (s *RpcServer) CancelFileDownload(ctx context.Context, request *v1.CancelFileDownloadRequest) (*v1.CancelFileDownloadResponse, error) {
+	//TODO implement me
+	panic("implement me")
+}

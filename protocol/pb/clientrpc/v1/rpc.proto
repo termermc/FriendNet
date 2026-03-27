@@ -657,6 +657,14 @@ message QueueFileDownloadResponse {
 
 }
 
+message CancelFileDownloadRequest {
+    // The file download's UUID.
+    string uuid = 1;
+}
+message CancelFileDownloadResponse {
+    
+}
+
 // ClientRpcService provides an RPC interface to a running FriendNet client.
 // It can query state and perform actions.
 //
@@ -811,4 +819,9 @@ service ClientRpcService {
     //
     // Returns NOT_FOUND if no such server exists.
     rpc QueueFileDownload(QueueFileDownloadRequest) returns (QueueFileDownloadResponse) {}
+
+    // CancelFileDownload cancels a file download.
+    //
+    // Returns NOT_FOUND if no such download exists.
+    rpc CancelFileDownload(CancelFileDownloadRequest) returns (CancelFileDownloadResponse) {}
 }

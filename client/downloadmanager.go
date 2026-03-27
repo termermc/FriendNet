@@ -582,7 +582,7 @@ func (dm *DownloadManager) startDownload(state *DownloadState) error {
 			return err
 		}
 
-		// TODO If the file is a directory, delete the file on disk and error out.
+		// TODO If file is a directory, remove, crawl and queue.
 
 		var fileTotalSize uint64
 		if loaded := state.fileTotalSize.Load(); loaded > -1 {

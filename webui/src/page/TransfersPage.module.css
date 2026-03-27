@@ -9,15 +9,39 @@
     padding-bottom: 0.5rem;
     margin-top: 0.5rem;
     margin-bottom: 0.5rem;
+    padding-left: 0.5rem;
 }
-.info {
+.transfer.canceled {
+    border-left: 0.5rem solid rgb(255, 119, 0);
+}
+.transfer.done {
+    border-left: 0.5rem solid rgb(0, 128, 0);
+}
+.transfer.pending {
+    border-left: 0.5rem solid rgb(255, 225, 0);
+}
+.transfer.queued {
+    border-left: 0.5rem solid rgb(0, 0, 255);
+}
+.transfer.error {
+    border-left: 0.5rem solid rgb(255, 0, 0);
+}
 
+.errorMessage {
+    color: red;
 }
-.progress {
-    font-size: 0.75rem;
+
+.info {
+    font-weight: bold;
+}
+.progress .options, .progress .stats {
+    display: inline-block;
 }
 .progress progress {
     width: 100%;
+}
+.progress {
+    font-size: 0.75rem;
 }
 
 .itemContainer {
