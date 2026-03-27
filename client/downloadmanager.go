@@ -527,6 +527,30 @@ func (dm *DownloadManager) Queue(
 	return nil
 }
 
+// StopWithStatus stops the handle with the specified UUID and sets its status.
+// Returns true if the handle was found, returns false otherwise.
+func (dm *DownloadManager) StopWithStatus(uuid string, status pb.DownloadStatus) bool {
+	dm.mu.Lock()
+
+	// Find handle by UUID.
+	for _, handle := range dm.handles {
+		if handle.uuid == uuid {
+			fnPtr := handle.stopFnOrNil.Load()
+
+			dm.mu.Unlock()
+
+			if fnPtr != nil {
+				(*fnPtr)(status)
+			}
+
+			return true
+		}
+	}
+
+	dm.mu.Unlock()
+	return false
+}
+
 func (dm *DownloadManager) mkIncompletePath(serverUuid string, peerUsername common.NormalizedUsername, path common.ProtoPath) string {
 	return filepath.Join(
 		dm.dirIncomplete,
@@ -587,7 +611,7 @@ func (dm *DownloadManager) startDownload(handle *DownloadHandle) error {
 			return err
 		}
 
-		// TODO If file is a directory, remove, crawl and queue.
+		// TODO If file is a directory: remove handle, then crawl and queue files as they are found.
 
 		var fileTotalSize uint64
 		if loaded := handle.fileTotalSize.Load(); loaded > -1 {
@@ -665,6 +689,7 @@ func (dm *DownloadManager) startDownload(handle *DownloadHandle) error {
 			shouldDl = false
 			handle.stopFnOrNil.Store(nil)
 			handle.status.Store(&status)
+
 		}))
 
 		go func() {
@@ -695,6 +720,20 @@ func (dm *DownloadManager) startDownload(handle *DownloadHandle) error {
 	fileTotalSize := handle.fileTotalSize.Load()
 	finalBytes := handle.fileDownloadedBytes.Load()
 
+	trySendUpdate := func(status v1.DownloadStatus, errMsg *string) {
+		dm.trySendUpdate(dmUpdate{
+			rpc: &v1.DownloadStatusUpdate{
+				Uuid:         handle.uuid,
+				Status:       status,
+				Downloaded:   finalBytes,
+				FileSize:     fileTotalSize,
+				Speed:        0,
+				ErrorMessage: errMsg,
+			},
+			ds: handle,
+		})
+	}
+
 	// If no error, set error if final size is not expected.
 	if finalErr == nil && finalBytes != uint64(fileTotalSize) {
 		// Final downloaded size did not match the total size.
@@ -721,53 +760,37 @@ func (dm *DownloadManager) startDownload(handle *DownloadHandle) error {
 		if errors.Is(finalErr, errHandleStopped) {
 			// DownloadHandle stop function was called.
 			// It already set the status, so we do not need to set it.
+			trySendUpdate(v1.DownloadStatus(*handle.status.Load()), nil)
 			return nil
 		}
 		if errors.Is(finalErr, ErrConnNotOpen) {
 			// Conn not open; queue again.
 			handle.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED))
+			trySendUpdate(v1.DownloadStatus_DOWNLOAD_STATUS_QUEUED, nil)
 			return nil
 		}
 		if errors.Is(finalErr, protocol.ErrPeerUnreachable) {
 			// Peer unreachable; queue again.
 			handle.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED))
+			trySendUpdate(v1.DownloadStatus_DOWNLOAD_STATUS_QUEUED, nil)
 			return nil
 		}
 		if protocol.IsErrorConnCloseOrCancel(finalErr) || errors.Is(finalErr, ErrConnNannyClosed) {
 			// Server connection closed, or application is closed; queue again.
 			handle.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED))
+			trySendUpdate(v1.DownloadStatus_DOWNLOAD_STATUS_QUEUED, nil)
 			return nil
 		}
 
 		errMsg := finalErr.Error()
 		handle.errorMessage.Store(&errMsg)
-		dm.trySendUpdate(dmUpdate{
-			rpc: &v1.DownloadStatusUpdate{
-				Uuid:         handle.uuid,
-				Status:       v1.DownloadStatus_DOWNLOAD_STATUS_ERROR,
-				Downloaded:   finalBytes,
-				FileSize:     fileTotalSize,
-				Speed:        0,
-				ErrorMessage: &errMsg,
-			},
-			ds: handle,
-		})
+		trySendUpdate(v1.DownloadStatus_DOWNLOAD_STATUS_ERROR, &errMsg)
 		return finalErr
 	}
 
 	// If we got this far, the download completed successfully.
 	handle.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_DONE))
-	dm.trySendUpdate(dmUpdate{
-		rpc: &v1.DownloadStatusUpdate{
-			Uuid:         handle.uuid,
-			Status:       v1.DownloadStatus_DOWNLOAD_STATUS_DONE,
-			Downloaded:   finalBytes,
-			FileSize:     fileTotalSize,
-			Speed:        0,
-			ErrorMessage: nil,
-		},
-		ds: handle,
-	})
+	trySendUpdate(v1.DownloadStatus_DOWNLOAD_STATUS_DONE, nil)
 
 	return nil
 }
