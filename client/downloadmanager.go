@@ -267,6 +267,8 @@ func (dm *DownloadManager) downloader() {
 
 			dm.mu.RLock()
 
+			// TODO This launches N workers, but it waits for all of them to complete before launching more.
+			// TODO Rewrite this.
 			var wg sync.WaitGroup
 			var launched int64
 			for _, state := range dm.handles {
