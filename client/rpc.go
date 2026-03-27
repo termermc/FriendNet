@@ -37,6 +37,7 @@ var errInvalidUpnpTimeout = connect.NewError(connect.CodeInvalidArgument, errors
 var errIndexingDisabled = connect.NewError(connect.CodeFailedPrecondition, errors.New("share has indexing disabled"))
 var errEmptySearchQuery = connect.NewError(connect.CodeInvalidArgument, errors.New("search query cannot be empty"))
 var errInvalidShareName = connect.NewError(connect.CodeInvalidArgument, share.ErrInvalidShareName)
+var errDownloadHandleNotFound = connect.NewError(connect.CodeNotFound, errors.New("download handle not found"))
 
 type RpcServer struct {
 	clogHandler     clog.Handler
@@ -867,7 +868,11 @@ func (s *RpcServer) QueueFileDownload(_ context.Context, request *v1.QueueFileDo
 	return &v1.QueueFileDownloadResponse{}, nil
 }
 
-func (s *RpcServer) CancelFileDownload(ctx context.Context, request *v1.CancelFileDownloadRequest) (*v1.CancelFileDownloadResponse, error) {
-	//TODO implement me
-	panic("implement me")
+func (s *RpcServer) CancelFileDownload(_ context.Context, request *v1.CancelFileDownloadRequest) (*v1.CancelFileDownloadResponse, error) {
+	has := s.downloadManager.StopWithStatus(request.Uuid, pb.DownloadStatus_DOWNLOAD_STATUS_CANCELED)
+	if !has {
+		return nil, errDownloadHandleNotFound
+	}
+
+	return &v1.CancelFileDownloadResponse{}, nil
 }
