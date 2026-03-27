@@ -241,3 +241,24 @@ func NormalizePath(path string) (ProtoPath, error) {
 
 	return ValidatePath("/" + strings.Join(segments, "/"))
 }
+
+// JoinPaths joins multiple paths together.
+// If no paths are provided, returns the root path "/".
+func JoinPaths(paths ...ProtoPath) ProtoPath {
+	if len(paths) == 0 {
+		return RootProtoPath
+	}
+
+	var sb strings.Builder
+	for _, path := range paths {
+		sb.Grow(len(path.String()))
+	}
+	for _, path := range paths {
+		if path.IsRoot() {
+			continue
+		}
+
+		sb.WriteString(path.String())
+	}
+	return UncheckedCreateProtoPath(sb.String())
+}

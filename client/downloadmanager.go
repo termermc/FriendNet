@@ -30,6 +30,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -611,7 +612,53 @@ func (dm *DownloadManager) startDownload(handle *DownloadHandle) error {
 			return err
 		}
 
-		// TODO If file is a directory: remove handle, then crawl and queue files as they are found.
+		if meta.IsDir {
+			// Remove handle, since we can't download directories themselves.
+			dm.mu.Lock()
+			for i, hdl := range dm.handles {
+				if hdl.uuid == handle.uuid {
+					dm.handles = slices.Concat(dm.handles[:i], dm.handles[i+1:])
+					break
+				}
+			}
+			// TODO Create a method to remove a handle and send out an event bus message for the removal.
+			dm.mu.Unlock()
+
+			// Crawl and queue directory contents in background.
+			go func() {
+				walkErr := WalkPeerPath(peer, handle.filePath, func(path common.ProtoPath, meta *pb.MsgFileMeta) bool {
+					if meta.IsDir {
+						return false
+					}
+
+					queueErr := dm.Queue(handle.server, handle.peer, path)
+					if queueErr != nil {
+						dm.logger.Error("failed to queue file while walking directory",
+							"service", "client.DownloadManager",
+							"server_uuid", handle.server.Uuid,
+							"peer_username", handle.peer.String(),
+							"dir_path", handle.filePath.String(),
+							"file_path", path.String(),
+							"error", queueErr,
+						)
+						return false
+					}
+
+					return true
+				})
+				if walkErr != nil {
+					dm.logger.Error("failed to walk directory contents",
+						"service", "client.DownloadManager",
+						"server_uuid", handle.server.Uuid,
+						"peer_username", handle.peer.String(),
+						"path", handle.filePath.String(),
+						"error", walkErr,
+					)
+				}
+			}()
+
+			return nil
+		}
 
 		var fileTotalSize uint64
 		if loaded := handle.fileTotalSize.Load(); loaded > -1 {

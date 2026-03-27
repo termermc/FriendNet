@@ -201,57 +201,20 @@ func (s *FileServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			entries := make(chan zipEntry, 1_000)
 
 			go func() {
-				toCrawl := []common.ProtoPath{path}
-
-				for len(toCrawl) > 0 {
-					crawlPath := toCrawl[0]
-					toCrawl = toCrawl[1:]
-
-					fileStream, streamErr := peer.GetDirFiles(crawlPath)
-					if streamErr != nil {
-						if errors.Is(streamErr, protocol.ErrPeerUnreachable) {
-							cancel(protocol.ErrPeerUnreachable)
-							return
-						}
-
-						cancel(fmt.Errorf(`failed to read contents in directory %q: %w`, crawlPath.String(), streamErr))
+				walkErr := WalkPeerPath(peer, path, func(path common.ProtoPath, meta *pb.MsgFileMeta) bool {
+					entries <- zipEntry{
+						path: path,
+						meta: meta,
+					}
+					return true
+				})
+				if walkErr != nil {
+					if errors.Is(walkErr, protocol.ErrPeerUnreachable) {
+						cancel(protocol.ErrPeerUnreachable)
+						return
 					}
 
-					for {
-						next, nextErr := fileStream.ReadNext()
-						if nextErr != nil {
-							if errors.Is(nextErr, io.EOF) {
-								break
-							}
-
-							if protoErr, ok := errors.AsType[protocol.ProtoMsgError](nextErr); ok {
-								// File might change while we are crawling it.
-								// Just skip errors that might happen if the directory is changing.
-								if protoErr.Msg.Type == pb.ErrType_ERR_TYPE_FILE_NOT_EXIST ||
-									protoErr.Msg.Type == pb.ErrType_ERR_TYPE_PATH_NOT_DIRECTORY {
-									break
-								}
-							}
-
-							_ = fileStream.Close()
-							cancel(fmt.Errorf(`failed to read next file in directory %q: %w`, crawlPath.String(), nextErr))
-							return
-						}
-
-						for _, file := range next.Files {
-							filePath := common.UncheckedCreateProtoPath(crawlPath.String() + "/" + file.Name)
-
-							entries <- zipEntry{
-								path: filePath,
-								meta: file,
-							}
-
-							if file.IsDir {
-								toCrawl = append(toCrawl, filePath)
-							}
-						}
-					}
-					_ = fileStream.Close()
+					cancel(walkErr)
 				}
 
 				close(entries)
