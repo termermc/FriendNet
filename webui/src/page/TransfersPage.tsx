@@ -39,7 +39,7 @@ const DownloadItem: Component<{ item: Download }> = (props) => {
 							</button>
 						</Match>
 						<Match when={props.item.status() === DownloadStatus.DONE}>
-							Done
+							<b>Done</b>
 						</Match>
 						<Match when={props.item.status() === DownloadStatus.PENDING}>
 							<button
