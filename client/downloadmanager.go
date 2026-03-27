@@ -618,7 +618,7 @@ func (dm *DownloadManager) startDownload(handle *DownloadHandle) error {
 			go func() {
 				walkErr := WalkPeerPath(peer, handle.filePath, func(path common.ProtoPath, meta *pb.MsgFileMeta) bool {
 					if meta.IsDir {
-						return false
+						return true
 					}
 
 					queueErr := dm.Queue(handle.server, handle.peer, path)
