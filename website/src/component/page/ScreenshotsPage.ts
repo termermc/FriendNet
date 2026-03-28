@@ -25,11 +25,14 @@ export const ScreenshotsPage: Component<void, void> = () => {
 					<br/>
 					<img src="/asset/screenshot/browse-shares.png" alt="browse shares" />
 					
-					<h1>Managing Shares</h1>
-					<img src="/asset/screenshot/manage-shares.png" alt="manage shares" />
-					
 					<h1>Custom Profiles</h1>
 					<img src="/asset/screenshot/custom-profile.png" alt="custom profile" />
+					
+					<h1>Download Manager</h1>
+					<img src="/asset/screenshot/transfers.png" alt="download manager" />
+					
+					<h1>Managing Shares</h1>
+					<img src="/asset/screenshot/manage-shares.png" alt="manage shares" />
 				</div>
 			</div>
 		`,
