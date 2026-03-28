@@ -151,9 +151,9 @@ const DownloadItem: Component<{ item: Download }> = (props) => {
 						<Match when={item.status() === DownloadStatus.PENDING}>
 							<button
 								onClick={() => doCancel(client, item.uuid)}
-								title="Cancel"
+								title="Pause"
 							>
-								⛔
+								⏸️
 							</button>
 						</Match>
 						<Match when={item.status() === DownloadStatus.QUEUED}>
