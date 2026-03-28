@@ -240,7 +240,6 @@ const Page: Component = () => {
 										serverUuid={uuid}
 										peerUsername={username}
 										filePath={filePath}
-
 										title="Download File"
 									/>
 								</>

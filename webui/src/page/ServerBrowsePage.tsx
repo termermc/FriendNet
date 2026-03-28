@@ -85,7 +85,6 @@ const Page: Component = () => {
 						serverUuid={server.uuid}
 						peerUsername={username}
 						filePath={path}
-
 						title="Download Directory as Zip File"
 						class={styles.action}
 					>

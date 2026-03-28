@@ -18,17 +18,13 @@ export const QueueButton: Component<QueueButtonProps> = (props) => {
 	const state = useGlobalState()
 
 	const doQueue = (e: MouseEvent) => {
-		state.transfer.queue(
-			props.serverUuid,
-			props.peerUsername,
-			props.filePath,
-		).catch(err => {
-			console.error('failed to queue file:', err)
-			alert('Failed to queue file, check console for details')
-		})
-
-		; // noinspection ES6MissingAwait
-		(async () => {
+		state.transfer
+			.queue(props.serverUuid, props.peerUsername, props.filePath)
+			.catch((err) => {
+				console.error('failed to queue file:', err)
+				alert('Failed to queue file, check console for details')
+			}) // noinspection ES6MissingAwait
+		;(async () => {
 			const xferElem = document.getElementById(TransfersOptionId)!
 			const rect = xferElem.getBoundingClientRect()
 
@@ -41,14 +37,15 @@ export const QueueButton: Component<QueueButtonProps> = (props) => {
 			elem.style.position = 'fixed'
 			elem.style.left = e.clientX + 'px'
 			elem.style.top = e.clientY + 'px'
-			elem.style.transition = 'top 0.5s ease-in-out, left 0.5s ease-in-out, transform 0.25s ease-in-out, opacity 0.5s ease-in-out'
+			elem.style.transition =
+				'top 0.5s ease-in-out, left 0.5s ease-in-out, transform 0.25s ease-in-out, opacity 0.5s ease-in-out'
 			elem.style.transform = 'scale(0.5)'
 			elem.style.transformOrigin = 'center center'
 
 			document.body.appendChild(elem)
 
 			await sleep(16)
-			elem.style.left = (rect.left + (rect.width / 2)) + 'px'
+			elem.style.left = rect.left + rect.width / 2 + 'px'
 			elem.style.top = rect.top + 'px'
 
 			elem.style.transform = 'scale(1)'
@@ -64,11 +61,7 @@ export const QueueButton: Component<QueueButtonProps> = (props) => {
 	}
 
 	return (
-		<span
-			style="cursor:pointer"
-			{...props}
-			onClick={doQueue}
-		>
+		<span style="cursor:pointer" {...props} onClick={doQueue}>
 			💾
 			{props.children ? ' ' + props.children : undefined}
 		</span>

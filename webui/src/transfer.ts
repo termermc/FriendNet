@@ -113,10 +113,15 @@ export class TransferManager {
 				new Download(this.#state, item),
 			])
 		})
-		this.#state.event.addEventListener(Event_Type.DM_ITEM_REMOVED, (event) => {
-			const uuid = event.dmItemRemoved!.uuid
-			this.#setDownloads(this.downloads().filter((x) => x.uuid !== uuid))
-		})
+		this.#state.event.addEventListener(
+			Event_Type.DM_ITEM_REMOVED,
+			(event) => {
+				const uuid = event.dmItemRemoved!.uuid
+				this.#setDownloads(
+					this.downloads().filter((x) => x.uuid !== uuid),
+				)
+			},
+		)
 	}
 
 	/**
@@ -151,7 +156,11 @@ export class TransferManager {
 	 * @param peerUsername The peer's username.
 	 * @param filePath The file path within the peer.
 	 */
-	async queue(serverUuid: string, peerUsername: string, filePath: string): Promise<void> {
+	async queue(
+		serverUuid: string,
+		peerUsername: string,
+		filePath: string,
+	): Promise<void> {
 		await this.#client.queueFileDownload({
 			serverUuid,
 			peerUsername,

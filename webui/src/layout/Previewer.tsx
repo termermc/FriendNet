@@ -47,10 +47,7 @@ const CatOther: Component<CatProps> = (props) => {
 						Download
 					</QueueButton>
 					<br />
-					<a
-						href={fileUrl}
-						target="_blank"
-					>
+					<a href={fileUrl} target="_blank">
 						🔗 Open in Browser
 					</a>
 					<br />

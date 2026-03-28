@@ -4,56 +4,58 @@
 }
 
 .transfer {
-    border-bottom: 0.1rem solid rgba(0, 0, 0, 0.25);
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
-    padding-left: 0.5rem;
+	border-bottom: 0.1rem solid rgba(0, 0, 0, 0.25);
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
+	padding-left: 0.5rem;
 }
 .transfer.canceled {
-    border-left: 0.5rem solid rgb(255, 119, 0);
+	border-left: 0.5rem solid rgb(255, 119, 0);
 }
 .transfer.done {
-    border-left: 0.5rem solid rgb(0, 128, 0);
+	border-left: 0.5rem solid rgb(0, 128, 0);
 }
 .transfer.pending {
-    border-left: 0.5rem solid rgb(255, 225, 0);
+	border-left: 0.5rem solid rgb(255, 225, 0);
 }
 .transfer.queued {
-    border-left: 0.5rem solid rgb(0, 0, 255);
+	border-left: 0.5rem solid rgb(0, 0, 255);
 }
 .transfer.error {
-    border-left: 0.5rem solid rgb(255, 0, 0);
+	border-left: 0.5rem solid rgb(255, 0, 0);
 }
 
 .errorMessage {
-    color: red;
+	color: red;
 }
 
 .info {
-    font-weight: bold;
+	font-weight: bold;
 }
-.progress .options, .progress .stats {
-    display: inline-block;
+.progress .options,
+.progress .stats {
+	display: inline-block;
 }
 .progress progress {
-    width: 100%;
+	width: 100%;
 }
 .progress {
-    font-size: 0.75rem;
+	font-size: 0.75rem;
 }
 
 .itemContainer {
-    margin-bottom: 1rem;
+	margin-bottom: 1rem;
 }
-.itemContainer .peer, .itemContainer .path {
-    background-color: rgba(0, 0, 0, 0.25);
-    padding: 0.25rem;
-    margin-right: 0.5rem;
-    text-decoration: none;
-    font-weight: bold;
+.itemContainer .peer,
+.itemContainer .path {
+	background-color: rgba(0, 0, 0, 0.25);
+	padding: 0.25rem;
+	margin-right: 0.5rem;
+	text-decoration: none;
+	font-weight: bold;
 }
 .itemContainer .items {
-    padding-left: 1rem;
+	padding-left: 1rem;
 }
