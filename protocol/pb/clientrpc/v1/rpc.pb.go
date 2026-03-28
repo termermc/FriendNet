@@ -162,6 +162,8 @@ const (
 	Event_TYPE_DOWNLOAD_STATUS_UPDATES Event_Type = 6
 	// A new download manager item was added.
 	Event_TYPE_NEW_DM_ITEM Event_Type = 7
+	// A download manager item was removed.
+	Event_TYPE_DM_ITEM_REMOVED Event_Type = 8
 )
 
 // Enum value maps for Event_Type.
@@ -175,6 +177,7 @@ var (
 		5: "TYPE_NEW_UPDATE",
 		6: "TYPE_DOWNLOAD_STATUS_UPDATES",
 		7: "TYPE_NEW_DM_ITEM",
+		8: "TYPE_DM_ITEM_REMOVED",
 	}
 	Event_Type_value = map[string]int32{
 		"TYPE_UNSPECIFIED":              0,
@@ -185,6 +188,7 @@ var (
 		"TYPE_NEW_UPDATE":               5,
 		"TYPE_DOWNLOAD_STATUS_UPDATES":  6,
 		"TYPE_NEW_DM_ITEM":              7,
+		"TYPE_DM_ITEM_REMOVED":          8,
 	}
 )
 
@@ -276,6 +280,7 @@ type Event struct {
 	NewUpdate             *Event_NewUpdate             `protobuf:"bytes,5,opt,name=new_update,json=newUpdate,proto3,oneof" json:"new_update,omitempty"`
 	DownloadStatusUpdates *Event_DownloadStatusUpdates `protobuf:"bytes,6,opt,name=download_status_updates,json=downloadStatusUpdates,proto3,oneof" json:"download_status_updates,omitempty"`
 	NewDmItem             *Event_NewDmItem             `protobuf:"bytes,7,opt,name=new_dm_item,json=newDmItem,proto3,oneof" json:"new_dm_item,omitempty"`
+	DmItemRemoved         *Event_DmItemRemoved         `protobuf:"bytes,8,opt,name=dm_item_removed,json=dmItemRemoved,proto3,oneof" json:"dm_item_removed,omitempty"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -355,6 +360,13 @@ func (x *Event) GetDownloadStatusUpdates() *Event_DownloadStatusUpdates {
 func (x *Event) GetNewDmItem() *Event_NewDmItem {
 	if x != nil {
 		return x.NewDmItem
+	}
+	return nil
+}
+
+func (x *Event) GetDmItemRemoved() *Event_DmItemRemoved {
+	if x != nil {
+		return x.DmItemRemoved
 	}
 	return nil
 }
@@ -4109,6 +4121,51 @@ func (x *Event_NewDmItem) GetItem() *DownloadManagerItem {
 	return nil
 }
 
+type Event_DmItemRemoved struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The item's UUID.
+	Uuid          string `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Event_DmItemRemoved) Reset() {
+	*x = Event_DmItemRemoved{}
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[74]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Event_DmItemRemoved) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Event_DmItemRemoved) ProtoMessage() {}
+
+func (x *Event_DmItemRemoved) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[74]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Event_DmItemRemoved.ProtoReflect.Descriptor instead.
+func (*Event_DmItemRemoved) Descriptor() ([]byte, []int) {
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{0, 6}
+}
+
+func (x *Event_DmItemRemoved) GetUuid() string {
+	if x != nil {
+		return x.Uuid
+	}
+	return ""
+}
+
 type DownloadManagerItem_Download struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The download status.
@@ -4125,7 +4182,7 @@ type DownloadManagerItem_Download struct {
 
 func (x *DownloadManagerItem_Download) Reset() {
 	*x = DownloadManagerItem_Download{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[74]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[75]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4137,7 +4194,7 @@ func (x *DownloadManagerItem_Download) String() string {
 func (*DownloadManagerItem_Download) ProtoMessage() {}
 
 func (x *DownloadManagerItem_Download) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[74]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[75]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4191,7 +4248,7 @@ type ServerInfo_State struct {
 
 func (x *ServerInfo_State) Reset() {
 	*x = ServerInfo_State{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[75]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[76]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4203,7 +4260,7 @@ func (x *ServerInfo_State) String() string {
 func (*ServerInfo_State) ProtoMessage() {}
 
 func (x *ServerInfo_State) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[75]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[76]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4230,8 +4287,7 @@ var File_pb_clientrpc_v1_rpc_proto protoreflect.FileDescriptor
 
 const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\n" +
-	"\x19pb/clientrpc/v1/rpc.proto\x12\x0fpb.clientrpc.v1\"\x82\n" +
-	"\n" +
+	"\x19pb/clientrpc/v1/rpc.proto\x12\x0fpb.clientrpc.v1\"\xa8\v\n" +
 	"\x05Event\x12/\n" +
 	"\x04type\x18\x01 \x01(\x0e2\x1b.pb.clientrpc.v1.Event.TypeR\x04type\x12R\n" +
 	"\vserver_conn\x18\x02 \x01(\v2,.pb.clientrpc.v1.Event.ServerConnStateChangeH\x00R\n" +
@@ -4241,7 +4297,8 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\n" +
 	"new_update\x18\x05 \x01(\v2 .pb.clientrpc.v1.Event.NewUpdateH\x03R\tnewUpdate\x88\x01\x01\x12i\n" +
 	"\x17download_status_updates\x18\x06 \x01(\v2,.pb.clientrpc.v1.Event.DownloadStatusUpdatesH\x04R\x15downloadStatusUpdates\x88\x01\x01\x12E\n" +
-	"\vnew_dm_item\x18\a \x01(\v2 .pb.clientrpc.v1.Event.NewDmItemH\x05R\tnewDmItem\x88\x01\x01\x1aO\n" +
+	"\vnew_dm_item\x18\a \x01(\v2 .pb.clientrpc.v1.Event.NewDmItemH\x05R\tnewDmItem\x88\x01\x01\x12Q\n" +
+	"\x0fdm_item_removed\x18\b \x01(\v2$.pb.clientrpc.v1.Event.DmItemRemovedH\x06R\rdmItemRemoved\x88\x01\x01\x1aO\n" +
 	"\x15ServerConnStateChange\x126\n" +
 	"\x05state\x18\x02 \x01(\x0e2 .pb.clientrpc.v1.ServerConnStateR\x05state\x1aC\n" +
 	"\fClientOnline\x123\n" +
@@ -4253,7 +4310,9 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\x15DownloadStatusUpdates\x12;\n" +
 	"\x05files\x18\x01 \x03(\v2%.pb.clientrpc.v1.DownloadStatusUpdateR\x05files\x1aE\n" +
 	"\tNewDmItem\x128\n" +
-	"\x04item\x18\x01 \x01(\v2$.pb.clientrpc.v1.DownloadManagerItemR\x04item\"\xcc\x01\n" +
+	"\x04item\x18\x01 \x01(\v2$.pb.clientrpc.v1.DownloadManagerItemR\x04item\x1a#\n" +
+	"\rDmItemRemoved\x12\x12\n" +
+	"\x04uuid\x18\x01 \x01(\tR\x04uuid\"\xe6\x01\n" +
 	"\x04Type\x12\x14\n" +
 	"\x10TYPE_UNSPECIFIED\x10\x00\x12\r\n" +
 	"\tTYPE_STOP\x10\x01\x12!\n" +
@@ -4262,13 +4321,15 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\x13TYPE_CLIENT_OFFLINE\x10\x04\x12\x13\n" +
 	"\x0fTYPE_NEW_UPDATE\x10\x05\x12 \n" +
 	"\x1cTYPE_DOWNLOAD_STATUS_UPDATES\x10\x06\x12\x14\n" +
-	"\x10TYPE_NEW_DM_ITEM\x10\aB\x0e\n" +
+	"\x10TYPE_NEW_DM_ITEM\x10\a\x12\x18\n" +
+	"\x14TYPE_DM_ITEM_REMOVED\x10\bB\x0e\n" +
 	"\f_server_connB\x10\n" +
 	"\x0e_client_onlineB\x11\n" +
 	"\x0f_client_offlineB\r\n" +
 	"\v_new_updateB\x1a\n" +
 	"\x18_download_status_updatesB\x0e\n" +
-	"\f_new_dm_item\"/\n" +
+	"\f_new_dm_itemB\x12\n" +
+	"\x10_dm_item_removed\"/\n" +
 	"\fEventContext\x12\x1f\n" +
 	"\vserver_uuid\x18\x01 \x01(\tR\n" +
 	"serverUuid\"L\n" +
@@ -4557,7 +4618,7 @@ func file_pb_clientrpc_v1_rpc_proto_rawDescGZIP() []byte {
 }
 
 var file_pb_clientrpc_v1_rpc_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_pb_clientrpc_v1_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 76)
+var file_pb_clientrpc_v1_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 77)
 var file_pb_clientrpc_v1_rpc_proto_goTypes = []any{
 	(DownloadStatus)(0),                     // 0: pb.clientrpc.v1.DownloadStatus
 	(ServerConnState)(0),                    // 1: pb.clientrpc.v1.ServerConnState
@@ -4637,8 +4698,9 @@ var file_pb_clientrpc_v1_rpc_proto_goTypes = []any{
 	(*Event_NewUpdate)(nil),                 // 75: pb.clientrpc.v1.Event.NewUpdate
 	(*Event_DownloadStatusUpdates)(nil),     // 76: pb.clientrpc.v1.Event.DownloadStatusUpdates
 	(*Event_NewDmItem)(nil),                 // 77: pb.clientrpc.v1.Event.NewDmItem
-	(*DownloadManagerItem_Download)(nil),    // 78: pb.clientrpc.v1.DownloadManagerItem.Download
-	(*ServerInfo_State)(nil),                // 79: pb.clientrpc.v1.ServerInfo.State
+	(*Event_DmItemRemoved)(nil),             // 78: pb.clientrpc.v1.Event.DmItemRemoved
+	(*DownloadManagerItem_Download)(nil),    // 79: pb.clientrpc.v1.DownloadManagerItem.Download
+	(*ServerInfo_State)(nil),                // 80: pb.clientrpc.v1.ServerInfo.State
 }
 var file_pb_clientrpc_v1_rpc_proto_depIdxs = []int32{
 	2,  // 0: pb.clientrpc.v1.Event.type:type_name -> pb.clientrpc.v1.Event.Type
@@ -4648,97 +4710,98 @@ var file_pb_clientrpc_v1_rpc_proto_depIdxs = []int32{
 	75, // 4: pb.clientrpc.v1.Event.new_update:type_name -> pb.clientrpc.v1.Event.NewUpdate
 	76, // 5: pb.clientrpc.v1.Event.download_status_updates:type_name -> pb.clientrpc.v1.Event.DownloadStatusUpdates
 	77, // 6: pb.clientrpc.v1.Event.new_dm_item:type_name -> pb.clientrpc.v1.Event.NewDmItem
-	6,  // 7: pb.clientrpc.v1.LogMessage.attrs:type_name -> pb.clientrpc.v1.LogMessageAttr
-	0,  // 8: pb.clientrpc.v1.DownloadStatusUpdate.status:type_name -> pb.clientrpc.v1.DownloadStatus
-	3,  // 9: pb.clientrpc.v1.DownloadManagerItem.type:type_name -> pb.clientrpc.v1.DownloadManagerItem.Type
-	78, // 10: pb.clientrpc.v1.DownloadManagerItem.download:type_name -> pb.clientrpc.v1.DownloadManagerItem.Download
-	79, // 11: pb.clientrpc.v1.ServerInfo.state:type_name -> pb.clientrpc.v1.ServerInfo.State
-	4,  // 12: pb.clientrpc.v1.StreamEventsResponse.event:type_name -> pb.clientrpc.v1.Event
-	5,  // 13: pb.clientrpc.v1.StreamEventsResponse.context:type_name -> pb.clientrpc.v1.EventContext
-	7,  // 14: pb.clientrpc.v1.StreamLogsResponse.logs:type_name -> pb.clientrpc.v1.LogMessage
-	11, // 15: pb.clientrpc.v1.GetServersResponse.servers:type_name -> pb.clientrpc.v1.ServerInfo
-	11, // 16: pb.clientrpc.v1.CreateServerResponse.server:type_name -> pb.clientrpc.v1.ServerInfo
-	11, // 17: pb.clientrpc.v1.UpdateServerResponse.server:type_name -> pb.clientrpc.v1.ServerInfo
-	12, // 18: pb.clientrpc.v1.GetSharesResponse.shares:type_name -> pb.clientrpc.v1.ShareInfo
-	12, // 19: pb.clientrpc.v1.CreateShareResponse.share:type_name -> pb.clientrpc.v1.ShareInfo
-	14, // 20: pb.clientrpc.v1.GetDirFilesResponse.content:type_name -> pb.clientrpc.v1.FileMeta
-	14, // 21: pb.clientrpc.v1.GetFileMetaResponse.meta:type_name -> pb.clientrpc.v1.FileMeta
-	13, // 22: pb.clientrpc.v1.GetOnlineUsersResponse.users:type_name -> pb.clientrpc.v1.OnlineUserInfo
-	15, // 23: pb.clientrpc.v1.GetDirectSettingsResponse.settings:type_name -> pb.clientrpc.v1.DirectSettings
-	15, // 24: pb.clientrpc.v1.UpdateDirectSettingsRequest.settings:type_name -> pb.clientrpc.v1.DirectSettings
-	14, // 25: pb.clientrpc.v1.StreamSearchResponse.file:type_name -> pb.clientrpc.v1.FileMeta
-	10, // 26: pb.clientrpc.v1.GetUpdateInfoResponse.current_info:type_name -> pb.clientrpc.v1.UpdateInfo
-	10, // 27: pb.clientrpc.v1.GetUpdateInfoResponse.new_info:type_name -> pb.clientrpc.v1.UpdateInfo
-	10, // 28: pb.clientrpc.v1.CheckForNewUpdateResponse.new_info:type_name -> pb.clientrpc.v1.UpdateInfo
-	9,  // 29: pb.clientrpc.v1.GetDownloadManagerItemsResponse.items:type_name -> pb.clientrpc.v1.DownloadManagerItem
-	1,  // 30: pb.clientrpc.v1.Event.ServerConnStateChange.state:type_name -> pb.clientrpc.v1.ServerConnState
-	13, // 31: pb.clientrpc.v1.Event.ClientOnline.info:type_name -> pb.clientrpc.v1.OnlineUserInfo
-	10, // 32: pb.clientrpc.v1.Event.NewUpdate.info:type_name -> pb.clientrpc.v1.UpdateInfo
-	8,  // 33: pb.clientrpc.v1.Event.DownloadStatusUpdates.files:type_name -> pb.clientrpc.v1.DownloadStatusUpdate
-	9,  // 34: pb.clientrpc.v1.Event.NewDmItem.item:type_name -> pb.clientrpc.v1.DownloadManagerItem
-	0,  // 35: pb.clientrpc.v1.DownloadManagerItem.Download.status:type_name -> pb.clientrpc.v1.DownloadStatus
-	1,  // 36: pb.clientrpc.v1.ServerInfo.State.conn_state:type_name -> pb.clientrpc.v1.ServerConnState
-	18, // 37: pb.clientrpc.v1.ClientRpcService.StreamLogs:input_type -> pb.clientrpc.v1.StreamLogsRequest
-	16, // 38: pb.clientrpc.v1.ClientRpcService.StreamEvents:input_type -> pb.clientrpc.v1.StreamEventsRequest
-	20, // 39: pb.clientrpc.v1.ClientRpcService.Stop:input_type -> pb.clientrpc.v1.StopRequest
-	22, // 40: pb.clientrpc.v1.ClientRpcService.GetClientInfo:input_type -> pb.clientrpc.v1.GetClientInfoRequest
-	24, // 41: pb.clientrpc.v1.ClientRpcService.GetServers:input_type -> pb.clientrpc.v1.GetServersRequest
-	26, // 42: pb.clientrpc.v1.ClientRpcService.CreateServer:input_type -> pb.clientrpc.v1.CreateServerRequest
-	28, // 43: pb.clientrpc.v1.ClientRpcService.DeleteServer:input_type -> pb.clientrpc.v1.DeleteServerRequest
-	30, // 44: pb.clientrpc.v1.ClientRpcService.ConnectServer:input_type -> pb.clientrpc.v1.ConnectServerRequest
-	32, // 45: pb.clientrpc.v1.ClientRpcService.DisconnectServer:input_type -> pb.clientrpc.v1.DisconnectServerRequest
-	34, // 46: pb.clientrpc.v1.ClientRpcService.UpdateServer:input_type -> pb.clientrpc.v1.UpdateServerRequest
-	36, // 47: pb.clientrpc.v1.ClientRpcService.GetShares:input_type -> pb.clientrpc.v1.GetSharesRequest
-	38, // 48: pb.clientrpc.v1.ClientRpcService.CreateShare:input_type -> pb.clientrpc.v1.CreateShareRequest
-	40, // 49: pb.clientrpc.v1.ClientRpcService.DeleteShare:input_type -> pb.clientrpc.v1.DeleteShareRequest
-	42, // 50: pb.clientrpc.v1.ClientRpcService.GetDirFiles:input_type -> pb.clientrpc.v1.GetDirFilesRequest
-	44, // 51: pb.clientrpc.v1.ClientRpcService.GetFileMeta:input_type -> pb.clientrpc.v1.GetFileMetaRequest
-	46, // 52: pb.clientrpc.v1.ClientRpcService.GetOnlineUsers:input_type -> pb.clientrpc.v1.GetOnlineUsersRequest
-	48, // 53: pb.clientrpc.v1.ClientRpcService.ChangeAccountPassword:input_type -> pb.clientrpc.v1.ChangeAccountPasswordRequest
-	50, // 54: pb.clientrpc.v1.ClientRpcService.ServerConnect:input_type -> pb.clientrpc.v1.ServerConnectRequest
-	52, // 55: pb.clientrpc.v1.ClientRpcService.ServerDisconnect:input_type -> pb.clientrpc.v1.ServerDisconnectRequest
-	54, // 56: pb.clientrpc.v1.ClientRpcService.GetDirectSettings:input_type -> pb.clientrpc.v1.GetDirectSettingsRequest
-	56, // 57: pb.clientrpc.v1.ClientRpcService.UpdateDirectSettings:input_type -> pb.clientrpc.v1.UpdateDirectSettingsRequest
-	58, // 58: pb.clientrpc.v1.ClientRpcService.IndexShare:input_type -> pb.clientrpc.v1.IndexShareRequest
-	60, // 59: pb.clientrpc.v1.ClientRpcService.StreamSearch:input_type -> pb.clientrpc.v1.StreamSearchRequest
-	62, // 60: pb.clientrpc.v1.ClientRpcService.GetUpdateInfo:input_type -> pb.clientrpc.v1.GetUpdateInfoRequest
-	64, // 61: pb.clientrpc.v1.ClientRpcService.CheckForNewUpdate:input_type -> pb.clientrpc.v1.CheckForNewUpdateRequest
-	66, // 62: pb.clientrpc.v1.ClientRpcService.GetDownloadManagerItems:input_type -> pb.clientrpc.v1.GetDownloadManagerItemsRequest
-	68, // 63: pb.clientrpc.v1.ClientRpcService.QueueFileDownload:input_type -> pb.clientrpc.v1.QueueFileDownloadRequest
-	70, // 64: pb.clientrpc.v1.ClientRpcService.CancelFileDownload:input_type -> pb.clientrpc.v1.CancelFileDownloadRequest
-	19, // 65: pb.clientrpc.v1.ClientRpcService.StreamLogs:output_type -> pb.clientrpc.v1.StreamLogsResponse
-	17, // 66: pb.clientrpc.v1.ClientRpcService.StreamEvents:output_type -> pb.clientrpc.v1.StreamEventsResponse
-	21, // 67: pb.clientrpc.v1.ClientRpcService.Stop:output_type -> pb.clientrpc.v1.StopResponse
-	23, // 68: pb.clientrpc.v1.ClientRpcService.GetClientInfo:output_type -> pb.clientrpc.v1.GetClientInfoResponse
-	25, // 69: pb.clientrpc.v1.ClientRpcService.GetServers:output_type -> pb.clientrpc.v1.GetServersResponse
-	27, // 70: pb.clientrpc.v1.ClientRpcService.CreateServer:output_type -> pb.clientrpc.v1.CreateServerResponse
-	29, // 71: pb.clientrpc.v1.ClientRpcService.DeleteServer:output_type -> pb.clientrpc.v1.DeleteServerResponse
-	31, // 72: pb.clientrpc.v1.ClientRpcService.ConnectServer:output_type -> pb.clientrpc.v1.ConnectServerResponse
-	33, // 73: pb.clientrpc.v1.ClientRpcService.DisconnectServer:output_type -> pb.clientrpc.v1.DisconnectServerResponse
-	35, // 74: pb.clientrpc.v1.ClientRpcService.UpdateServer:output_type -> pb.clientrpc.v1.UpdateServerResponse
-	37, // 75: pb.clientrpc.v1.ClientRpcService.GetShares:output_type -> pb.clientrpc.v1.GetSharesResponse
-	39, // 76: pb.clientrpc.v1.ClientRpcService.CreateShare:output_type -> pb.clientrpc.v1.CreateShareResponse
-	41, // 77: pb.clientrpc.v1.ClientRpcService.DeleteShare:output_type -> pb.clientrpc.v1.DeleteShareResponse
-	43, // 78: pb.clientrpc.v1.ClientRpcService.GetDirFiles:output_type -> pb.clientrpc.v1.GetDirFilesResponse
-	45, // 79: pb.clientrpc.v1.ClientRpcService.GetFileMeta:output_type -> pb.clientrpc.v1.GetFileMetaResponse
-	47, // 80: pb.clientrpc.v1.ClientRpcService.GetOnlineUsers:output_type -> pb.clientrpc.v1.GetOnlineUsersResponse
-	49, // 81: pb.clientrpc.v1.ClientRpcService.ChangeAccountPassword:output_type -> pb.clientrpc.v1.ChangeAccountPasswordResponse
-	51, // 82: pb.clientrpc.v1.ClientRpcService.ServerConnect:output_type -> pb.clientrpc.v1.ServerConnectResponse
-	53, // 83: pb.clientrpc.v1.ClientRpcService.ServerDisconnect:output_type -> pb.clientrpc.v1.ServerDisconnectResponse
-	55, // 84: pb.clientrpc.v1.ClientRpcService.GetDirectSettings:output_type -> pb.clientrpc.v1.GetDirectSettingsResponse
-	57, // 85: pb.clientrpc.v1.ClientRpcService.UpdateDirectSettings:output_type -> pb.clientrpc.v1.UpdateDirectSettingsResponse
-	59, // 86: pb.clientrpc.v1.ClientRpcService.IndexShare:output_type -> pb.clientrpc.v1.IndexShareResponse
-	61, // 87: pb.clientrpc.v1.ClientRpcService.StreamSearch:output_type -> pb.clientrpc.v1.StreamSearchResponse
-	63, // 88: pb.clientrpc.v1.ClientRpcService.GetUpdateInfo:output_type -> pb.clientrpc.v1.GetUpdateInfoResponse
-	65, // 89: pb.clientrpc.v1.ClientRpcService.CheckForNewUpdate:output_type -> pb.clientrpc.v1.CheckForNewUpdateResponse
-	67, // 90: pb.clientrpc.v1.ClientRpcService.GetDownloadManagerItems:output_type -> pb.clientrpc.v1.GetDownloadManagerItemsResponse
-	69, // 91: pb.clientrpc.v1.ClientRpcService.QueueFileDownload:output_type -> pb.clientrpc.v1.QueueFileDownloadResponse
-	71, // 92: pb.clientrpc.v1.ClientRpcService.CancelFileDownload:output_type -> pb.clientrpc.v1.CancelFileDownloadResponse
-	65, // [65:93] is the sub-list for method output_type
-	37, // [37:65] is the sub-list for method input_type
-	37, // [37:37] is the sub-list for extension type_name
-	37, // [37:37] is the sub-list for extension extendee
-	0,  // [0:37] is the sub-list for field type_name
+	78, // 7: pb.clientrpc.v1.Event.dm_item_removed:type_name -> pb.clientrpc.v1.Event.DmItemRemoved
+	6,  // 8: pb.clientrpc.v1.LogMessage.attrs:type_name -> pb.clientrpc.v1.LogMessageAttr
+	0,  // 9: pb.clientrpc.v1.DownloadStatusUpdate.status:type_name -> pb.clientrpc.v1.DownloadStatus
+	3,  // 10: pb.clientrpc.v1.DownloadManagerItem.type:type_name -> pb.clientrpc.v1.DownloadManagerItem.Type
+	79, // 11: pb.clientrpc.v1.DownloadManagerItem.download:type_name -> pb.clientrpc.v1.DownloadManagerItem.Download
+	80, // 12: pb.clientrpc.v1.ServerInfo.state:type_name -> pb.clientrpc.v1.ServerInfo.State
+	4,  // 13: pb.clientrpc.v1.StreamEventsResponse.event:type_name -> pb.clientrpc.v1.Event
+	5,  // 14: pb.clientrpc.v1.StreamEventsResponse.context:type_name -> pb.clientrpc.v1.EventContext
+	7,  // 15: pb.clientrpc.v1.StreamLogsResponse.logs:type_name -> pb.clientrpc.v1.LogMessage
+	11, // 16: pb.clientrpc.v1.GetServersResponse.servers:type_name -> pb.clientrpc.v1.ServerInfo
+	11, // 17: pb.clientrpc.v1.CreateServerResponse.server:type_name -> pb.clientrpc.v1.ServerInfo
+	11, // 18: pb.clientrpc.v1.UpdateServerResponse.server:type_name -> pb.clientrpc.v1.ServerInfo
+	12, // 19: pb.clientrpc.v1.GetSharesResponse.shares:type_name -> pb.clientrpc.v1.ShareInfo
+	12, // 20: pb.clientrpc.v1.CreateShareResponse.share:type_name -> pb.clientrpc.v1.ShareInfo
+	14, // 21: pb.clientrpc.v1.GetDirFilesResponse.content:type_name -> pb.clientrpc.v1.FileMeta
+	14, // 22: pb.clientrpc.v1.GetFileMetaResponse.meta:type_name -> pb.clientrpc.v1.FileMeta
+	13, // 23: pb.clientrpc.v1.GetOnlineUsersResponse.users:type_name -> pb.clientrpc.v1.OnlineUserInfo
+	15, // 24: pb.clientrpc.v1.GetDirectSettingsResponse.settings:type_name -> pb.clientrpc.v1.DirectSettings
+	15, // 25: pb.clientrpc.v1.UpdateDirectSettingsRequest.settings:type_name -> pb.clientrpc.v1.DirectSettings
+	14, // 26: pb.clientrpc.v1.StreamSearchResponse.file:type_name -> pb.clientrpc.v1.FileMeta
+	10, // 27: pb.clientrpc.v1.GetUpdateInfoResponse.current_info:type_name -> pb.clientrpc.v1.UpdateInfo
+	10, // 28: pb.clientrpc.v1.GetUpdateInfoResponse.new_info:type_name -> pb.clientrpc.v1.UpdateInfo
+	10, // 29: pb.clientrpc.v1.CheckForNewUpdateResponse.new_info:type_name -> pb.clientrpc.v1.UpdateInfo
+	9,  // 30: pb.clientrpc.v1.GetDownloadManagerItemsResponse.items:type_name -> pb.clientrpc.v1.DownloadManagerItem
+	1,  // 31: pb.clientrpc.v1.Event.ServerConnStateChange.state:type_name -> pb.clientrpc.v1.ServerConnState
+	13, // 32: pb.clientrpc.v1.Event.ClientOnline.info:type_name -> pb.clientrpc.v1.OnlineUserInfo
+	10, // 33: pb.clientrpc.v1.Event.NewUpdate.info:type_name -> pb.clientrpc.v1.UpdateInfo
+	8,  // 34: pb.clientrpc.v1.Event.DownloadStatusUpdates.files:type_name -> pb.clientrpc.v1.DownloadStatusUpdate
+	9,  // 35: pb.clientrpc.v1.Event.NewDmItem.item:type_name -> pb.clientrpc.v1.DownloadManagerItem
+	0,  // 36: pb.clientrpc.v1.DownloadManagerItem.Download.status:type_name -> pb.clientrpc.v1.DownloadStatus
+	1,  // 37: pb.clientrpc.v1.ServerInfo.State.conn_state:type_name -> pb.clientrpc.v1.ServerConnState
+	18, // 38: pb.clientrpc.v1.ClientRpcService.StreamLogs:input_type -> pb.clientrpc.v1.StreamLogsRequest
+	16, // 39: pb.clientrpc.v1.ClientRpcService.StreamEvents:input_type -> pb.clientrpc.v1.StreamEventsRequest
+	20, // 40: pb.clientrpc.v1.ClientRpcService.Stop:input_type -> pb.clientrpc.v1.StopRequest
+	22, // 41: pb.clientrpc.v1.ClientRpcService.GetClientInfo:input_type -> pb.clientrpc.v1.GetClientInfoRequest
+	24, // 42: pb.clientrpc.v1.ClientRpcService.GetServers:input_type -> pb.clientrpc.v1.GetServersRequest
+	26, // 43: pb.clientrpc.v1.ClientRpcService.CreateServer:input_type -> pb.clientrpc.v1.CreateServerRequest
+	28, // 44: pb.clientrpc.v1.ClientRpcService.DeleteServer:input_type -> pb.clientrpc.v1.DeleteServerRequest
+	30, // 45: pb.clientrpc.v1.ClientRpcService.ConnectServer:input_type -> pb.clientrpc.v1.ConnectServerRequest
+	32, // 46: pb.clientrpc.v1.ClientRpcService.DisconnectServer:input_type -> pb.clientrpc.v1.DisconnectServerRequest
+	34, // 47: pb.clientrpc.v1.ClientRpcService.UpdateServer:input_type -> pb.clientrpc.v1.UpdateServerRequest
+	36, // 48: pb.clientrpc.v1.ClientRpcService.GetShares:input_type -> pb.clientrpc.v1.GetSharesRequest
+	38, // 49: pb.clientrpc.v1.ClientRpcService.CreateShare:input_type -> pb.clientrpc.v1.CreateShareRequest
+	40, // 50: pb.clientrpc.v1.ClientRpcService.DeleteShare:input_type -> pb.clientrpc.v1.DeleteShareRequest
+	42, // 51: pb.clientrpc.v1.ClientRpcService.GetDirFiles:input_type -> pb.clientrpc.v1.GetDirFilesRequest
+	44, // 52: pb.clientrpc.v1.ClientRpcService.GetFileMeta:input_type -> pb.clientrpc.v1.GetFileMetaRequest
+	46, // 53: pb.clientrpc.v1.ClientRpcService.GetOnlineUsers:input_type -> pb.clientrpc.v1.GetOnlineUsersRequest
+	48, // 54: pb.clientrpc.v1.ClientRpcService.ChangeAccountPassword:input_type -> pb.clientrpc.v1.ChangeAccountPasswordRequest
+	50, // 55: pb.clientrpc.v1.ClientRpcService.ServerConnect:input_type -> pb.clientrpc.v1.ServerConnectRequest
+	52, // 56: pb.clientrpc.v1.ClientRpcService.ServerDisconnect:input_type -> pb.clientrpc.v1.ServerDisconnectRequest
+	54, // 57: pb.clientrpc.v1.ClientRpcService.GetDirectSettings:input_type -> pb.clientrpc.v1.GetDirectSettingsRequest
+	56, // 58: pb.clientrpc.v1.ClientRpcService.UpdateDirectSettings:input_type -> pb.clientrpc.v1.UpdateDirectSettingsRequest
+	58, // 59: pb.clientrpc.v1.ClientRpcService.IndexShare:input_type -> pb.clientrpc.v1.IndexShareRequest
+	60, // 60: pb.clientrpc.v1.ClientRpcService.StreamSearch:input_type -> pb.clientrpc.v1.StreamSearchRequest
+	62, // 61: pb.clientrpc.v1.ClientRpcService.GetUpdateInfo:input_type -> pb.clientrpc.v1.GetUpdateInfoRequest
+	64, // 62: pb.clientrpc.v1.ClientRpcService.CheckForNewUpdate:input_type -> pb.clientrpc.v1.CheckForNewUpdateRequest
+	66, // 63: pb.clientrpc.v1.ClientRpcService.GetDownloadManagerItems:input_type -> pb.clientrpc.v1.GetDownloadManagerItemsRequest
+	68, // 64: pb.clientrpc.v1.ClientRpcService.QueueFileDownload:input_type -> pb.clientrpc.v1.QueueFileDownloadRequest
+	70, // 65: pb.clientrpc.v1.ClientRpcService.CancelFileDownload:input_type -> pb.clientrpc.v1.CancelFileDownloadRequest
+	19, // 66: pb.clientrpc.v1.ClientRpcService.StreamLogs:output_type -> pb.clientrpc.v1.StreamLogsResponse
+	17, // 67: pb.clientrpc.v1.ClientRpcService.StreamEvents:output_type -> pb.clientrpc.v1.StreamEventsResponse
+	21, // 68: pb.clientrpc.v1.ClientRpcService.Stop:output_type -> pb.clientrpc.v1.StopResponse
+	23, // 69: pb.clientrpc.v1.ClientRpcService.GetClientInfo:output_type -> pb.clientrpc.v1.GetClientInfoResponse
+	25, // 70: pb.clientrpc.v1.ClientRpcService.GetServers:output_type -> pb.clientrpc.v1.GetServersResponse
+	27, // 71: pb.clientrpc.v1.ClientRpcService.CreateServer:output_type -> pb.clientrpc.v1.CreateServerResponse
+	29, // 72: pb.clientrpc.v1.ClientRpcService.DeleteServer:output_type -> pb.clientrpc.v1.DeleteServerResponse
+	31, // 73: pb.clientrpc.v1.ClientRpcService.ConnectServer:output_type -> pb.clientrpc.v1.ConnectServerResponse
+	33, // 74: pb.clientrpc.v1.ClientRpcService.DisconnectServer:output_type -> pb.clientrpc.v1.DisconnectServerResponse
+	35, // 75: pb.clientrpc.v1.ClientRpcService.UpdateServer:output_type -> pb.clientrpc.v1.UpdateServerResponse
+	37, // 76: pb.clientrpc.v1.ClientRpcService.GetShares:output_type -> pb.clientrpc.v1.GetSharesResponse
+	39, // 77: pb.clientrpc.v1.ClientRpcService.CreateShare:output_type -> pb.clientrpc.v1.CreateShareResponse
+	41, // 78: pb.clientrpc.v1.ClientRpcService.DeleteShare:output_type -> pb.clientrpc.v1.DeleteShareResponse
+	43, // 79: pb.clientrpc.v1.ClientRpcService.GetDirFiles:output_type -> pb.clientrpc.v1.GetDirFilesResponse
+	45, // 80: pb.clientrpc.v1.ClientRpcService.GetFileMeta:output_type -> pb.clientrpc.v1.GetFileMetaResponse
+	47, // 81: pb.clientrpc.v1.ClientRpcService.GetOnlineUsers:output_type -> pb.clientrpc.v1.GetOnlineUsersResponse
+	49, // 82: pb.clientrpc.v1.ClientRpcService.ChangeAccountPassword:output_type -> pb.clientrpc.v1.ChangeAccountPasswordResponse
+	51, // 83: pb.clientrpc.v1.ClientRpcService.ServerConnect:output_type -> pb.clientrpc.v1.ServerConnectResponse
+	53, // 84: pb.clientrpc.v1.ClientRpcService.ServerDisconnect:output_type -> pb.clientrpc.v1.ServerDisconnectResponse
+	55, // 85: pb.clientrpc.v1.ClientRpcService.GetDirectSettings:output_type -> pb.clientrpc.v1.GetDirectSettingsResponse
+	57, // 86: pb.clientrpc.v1.ClientRpcService.UpdateDirectSettings:output_type -> pb.clientrpc.v1.UpdateDirectSettingsResponse
+	59, // 87: pb.clientrpc.v1.ClientRpcService.IndexShare:output_type -> pb.clientrpc.v1.IndexShareResponse
+	61, // 88: pb.clientrpc.v1.ClientRpcService.StreamSearch:output_type -> pb.clientrpc.v1.StreamSearchResponse
+	63, // 89: pb.clientrpc.v1.ClientRpcService.GetUpdateInfo:output_type -> pb.clientrpc.v1.GetUpdateInfoResponse
+	65, // 90: pb.clientrpc.v1.ClientRpcService.CheckForNewUpdate:output_type -> pb.clientrpc.v1.CheckForNewUpdateResponse
+	67, // 91: pb.clientrpc.v1.ClientRpcService.GetDownloadManagerItems:output_type -> pb.clientrpc.v1.GetDownloadManagerItemsResponse
+	69, // 92: pb.clientrpc.v1.ClientRpcService.QueueFileDownload:output_type -> pb.clientrpc.v1.QueueFileDownloadResponse
+	71, // 93: pb.clientrpc.v1.ClientRpcService.CancelFileDownload:output_type -> pb.clientrpc.v1.CancelFileDownloadResponse
+	66, // [66:94] is the sub-list for method output_type
+	38, // [38:66] is the sub-list for method input_type
+	38, // [38:38] is the sub-list for extension type_name
+	38, // [38:38] is the sub-list for extension extendee
+	0,  // [0:38] is the sub-list for field type_name
 }
 
 func init() { file_pb_clientrpc_v1_rpc_proto_init() }
@@ -4754,14 +4817,14 @@ func file_pb_clientrpc_v1_rpc_proto_init() {
 	file_pb_clientrpc_v1_rpc_proto_msgTypes[56].OneofWrappers = []any{}
 	file_pb_clientrpc_v1_rpc_proto_msgTypes[59].OneofWrappers = []any{}
 	file_pb_clientrpc_v1_rpc_proto_msgTypes[61].OneofWrappers = []any{}
-	file_pb_clientrpc_v1_rpc_proto_msgTypes[74].OneofWrappers = []any{}
+	file_pb_clientrpc_v1_rpc_proto_msgTypes[75].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pb_clientrpc_v1_rpc_proto_rawDesc), len(file_pb_clientrpc_v1_rpc_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   76,
+			NumMessages:   77,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

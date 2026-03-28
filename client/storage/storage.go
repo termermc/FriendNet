@@ -611,3 +611,12 @@ func (s *Storage) UpdateDownloadState(
 	}
 	return nil
 }
+
+// DeleteDownloadState deletes the download state with the specified UUID.
+func (s *Storage) DeleteDownloadState(ctx context.Context, uuid string) error {
+	_, err := s.Exec(ctx, `delete from download_state where uuid = ?`, uuid)
+	if err != nil {
+		return fmt.Errorf(`failed to delete download state with UUID %s: %w`, uuid, err)
+	}
+	return nil
+}

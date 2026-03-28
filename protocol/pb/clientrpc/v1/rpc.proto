@@ -31,6 +31,9 @@ message Event {
 
         // A new download manager item was added.
         TYPE_NEW_DM_ITEM = 7;
+
+        // A download manager item was removed.
+        TYPE_DM_ITEM_REMOVED = 8;
     }
 
     message ServerConnStateChange {
@@ -57,6 +60,10 @@ message Event {
         // The download manager item.
         DownloadManagerItem item = 1;
     }
+    message DmItemRemoved {
+        // The item's UUID.
+        string uuid = 1;
+    }
 
     // The event type.
     // The appropriate field will be filled based on the type.
@@ -68,6 +75,7 @@ message Event {
     optional NewUpdate new_update = 5;
     optional DownloadStatusUpdates download_status_updates = 6;
     optional NewDmItem new_dm_item = 7;
+    optional DmItemRemoved dm_item_removed = 8;
 }
 
 // EventContext is the context about where an event was generated.

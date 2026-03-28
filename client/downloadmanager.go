@@ -534,6 +534,47 @@ func (dm *DownloadManager) Queue(
 	return nil
 }
 
+// Remove removes the item with the specified UUID.
+// If the item did not exist, returns false.
+// Only returns an error if something truly went wrong, not if the item did not exist.
+func (dm *DownloadManager) Remove(uuid string) (bool, error) {
+	if err := dm.storage.DeleteDownloadState(dm.ctx, uuid); err != nil {
+		return false, err
+	}
+
+	var handle *DownloadHandle
+	dm.mu.Lock()
+	for i, hdl := range dm.handles {
+		if hdl.uuid == uuid {
+			handle = hdl
+			dm.handles = slices.Concat(dm.handles[:i], dm.handles[i+1:])
+			break
+		}
+	}
+	dm.mu.Unlock()
+
+	if handle != nil {
+		stopFnPtr := handle.stopFnOrNil.Load()
+		if stopFnPtr != nil {
+			(*stopFnPtr)(pb.DownloadStatus_DOWNLOAD_STATUS_CANCELED)
+		}
+
+		pub := dm.eventBus.CreatePublisher(&v1.EventContext{
+			ServerUuid: handle.server.Uuid,
+		})
+		pub.Publish(&v1.Event{
+			Type: v1.Event_TYPE_DM_ITEM_REMOVED,
+			DmItemRemoved: &v1.Event_DmItemRemoved{
+				Uuid: uuid,
+			},
+		})
+
+		return true, nil
+	}
+
+	return false, nil
+}
+
 // StopWithStatus stops the handle with the specified UUID and sets its status.
 // Returns true if the handle was found, returns false otherwise.
 func (dm *DownloadManager) StopWithStatus(uuid string, status pb.DownloadStatus) bool {
@@ -801,16 +842,14 @@ func (dm *DownloadManager) startDownload(handle *DownloadHandle) error {
 	if finalErr != nil {
 		if errors.Is(finalErr, errIsDir) {
 			// The handle was already removed.
-			// TODO Call method that removes handle and sends out an event bus message for the removal.
 			// Remove handle, since we can't download directories themselves.
-			dm.mu.RLock()
-			for i, hdl := range dm.handles {
-				if hdl.uuid == handle.uuid {
-					dm.handles = slices.Concat(dm.handles[:i], dm.handles[i+1:])
-					break
-				}
+			if _, err := dm.Remove(handle.uuid); err != nil {
+				dm.logger.Error("failed to remove handle after directory crawl",
+					"service", "client.DownloadManager",
+					"uuid", handle.uuid,
+					"error", err,
+				)
 			}
-			dm.mu.RUnlock()
 			return nil
 		}
 		if errors.Is(finalErr, errHandleStopped) {
