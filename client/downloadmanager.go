@@ -269,6 +269,9 @@ func (dm *DownloadManager) downloader() {
 
 			// TODO This launches N workers, but it waits for all of them to complete before launching more.
 			// TODO Rewrite this.
+			// TODO Have a dm struct member that's an atomic counter of the running workers.
+			// TODO Increment this in the startDownload method and decrement it on return.
+			// TODO If the number is below the threshold, launch a downloader.
 			var wg sync.WaitGroup
 			var launched int64
 			for _, state := range dm.handles {
@@ -534,14 +537,14 @@ func (dm *DownloadManager) Queue(
 // StopWithStatus stops the handle with the specified UUID and sets its status.
 // Returns true if the handle was found, returns false otherwise.
 func (dm *DownloadManager) StopWithStatus(uuid string, status pb.DownloadStatus) bool {
-	dm.mu.Lock()
+	dm.mu.RLock()
 
 	// Find handle by UUID.
 	for _, handle := range dm.handles {
 		if handle.uuid == uuid {
 			fnPtr := handle.stopFnOrNil.Load()
 
-			dm.mu.Unlock()
+			dm.mu.RUnlock()
 
 			if fnPtr != nil {
 				(*fnPtr)(status)
@@ -551,7 +554,7 @@ func (dm *DownloadManager) StopWithStatus(uuid string, status pb.DownloadStatus)
 		}
 	}
 
-	dm.mu.Unlock()
+	dm.mu.RUnlock()
 	return false
 }
 
@@ -800,14 +803,14 @@ func (dm *DownloadManager) startDownload(handle *DownloadHandle) error {
 			// The handle was already removed.
 			// TODO Call method that removes handle and sends out an event bus message for the removal.
 			// Remove handle, since we can't download directories themselves.
-			dm.mu.Lock()
+			dm.mu.RLock()
 			for i, hdl := range dm.handles {
 				if hdl.uuid == handle.uuid {
 					dm.handles = slices.Concat(dm.handles[:i], dm.handles[i+1:])
 					break
 				}
 			}
-			dm.mu.Unlock()
+			dm.mu.RUnlock()
 			return nil
 		}
 		if errors.Is(finalErr, errHandleStopped) {
