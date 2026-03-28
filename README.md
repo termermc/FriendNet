@@ -5,6 +5,10 @@ File sharing for friends, like a mini-Soulseek. No port forwarding needed!
 
 [**Official Website**](https://friendnet.org/)
 
+[**GitHub**](https://github.com/termermc/FriendNet)
+
+[**Forgejo Mirror**](https://git.termer.net/termer/FriendNet)
+
 # About
 
 Oldschool file sharing systems like Soulseek use a central server to facilitate file search and peer discovery, making search across
