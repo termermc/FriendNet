@@ -37,7 +37,7 @@ const msgHeaderSize = 8
 var CurrentProtocolVersion = &pb.ProtoVersion{
 	Major: 1,
 	Minor: 0,
-	Patch: 0,
+	Patch: 1,
 }
 
 // DefaultKeepAlivePeriod is the default keepalive period for QUIC connections.
