@@ -138,6 +138,9 @@ type DownloadManager struct {
 	// A queue of pending download progress events to send to the event bus.
 	// It is buffered, but sends should be discarded if the buffer is full instead of blocking.
 	pendingUpdates chan dmUpdate
+
+	// The current number of active workers.
+	activeWorkers atomic.Int64
 }
 
 func NewDownloadManager(
@@ -267,20 +270,14 @@ func (dm *DownloadManager) downloader() {
 
 			dm.mu.RLock()
 
-			// TODO This launches N workers, but it waits for all of them to complete before launching more.
-			// TODO Rewrite this.
-			// TODO Have a dm struct member that's an atomic counter of the running workers.
-			// TODO Increment this in the startDownload method and decrement it on return.
-			// TODO If the number is below the threshold, launch a downloader.
-			var wg sync.WaitGroup
-			var launched int64
+			launched := dm.activeWorkers.Load()
 			for _, state := range dm.handles {
 				if launched >= dlConcurrency {
 					break
 				}
 
 				if *state.status.Load() == pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED {
-					wg.Go(func() {
+					go func() {
 						dlErr := dm.startDownload(state)
 						if dlErr != nil {
 							dm.logger.Error("failed to download queued file",
@@ -291,14 +288,12 @@ func (dm *DownloadManager) downloader() {
 								"err", dlErr,
 							)
 						}
-					})
+					}()
 					launched++
 				}
 			}
 
 			dm.mu.RUnlock()
-
-			wg.Wait()
 		}
 	}
 }
@@ -620,6 +615,9 @@ func (dm *DownloadManager) trySendUpdate(update dmUpdate) {
 }
 
 func (dm *DownloadManager) startDownload(handle *DownloadHandle) error {
+	dm.activeWorkers.Add(1)
+	defer dm.activeWorkers.Add(-1)
+
 	// Return immediately if the file is not in the queued status.
 	if *handle.status.Load() != pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED {
 		return nil
@@ -658,6 +656,9 @@ func (dm *DownloadManager) startDownload(handle *DownloadHandle) error {
 
 			return err
 		}
+		defer func() {
+			_ = reader.Close()
+		}()
 
 		if meta.IsDir {
 			// Crawl and queue directory contents in background.
@@ -772,7 +773,6 @@ func (dm *DownloadManager) startDownload(handle *DownloadHandle) error {
 			shouldDl = false
 			handle.stopFnOrNil.Store(nil)
 			handle.status.Store(&status)
-
 		}))
 
 		go func() {
@@ -878,6 +878,7 @@ func (dm *DownloadManager) startDownload(handle *DownloadHandle) error {
 		}
 
 		errMsg := finalErr.Error()
+		handle.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_ERROR))
 		handle.errorMessage.Store(&errMsg)
 		trySendUpdate(v1.DownloadStatus_DOWNLOAD_STATUS_ERROR, &errMsg)
 		return finalErr
