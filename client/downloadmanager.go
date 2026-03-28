@@ -911,6 +911,12 @@ func (dm *DownloadManager) startDownload(handle *DownloadHandle) error {
 			trySendUpdate(v1.DownloadStatus_DOWNLOAD_STATUS_QUEUED, nil)
 			return nil
 		}
+		if protoErr, ok := errors.AsType[protocol.ProtoMsgError](finalErr); ok && protoErr.Msg.Type == pb.ErrType_ERR_TYPE_CLIENT_NOT_ONLINE {
+			// Peer unreachable; queue again.
+			handle.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED))
+			trySendUpdate(v1.DownloadStatus_DOWNLOAD_STATUS_QUEUED, nil)
+			return nil
+		}
 		if protocol.IsErrorConnCloseOrCancel(finalErr) || errors.Is(finalErr, ErrConnNannyClosed) {
 			// Server connection closed, or application is closed; queue again.
 			handle.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED))
