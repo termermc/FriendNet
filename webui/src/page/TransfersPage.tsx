@@ -56,7 +56,9 @@ const DownloadFolder: Component<{
 			<button
 				onClick={removeAll}
 				title="Remove (does not remove files on disk)"
-			>🗑️</button>{' '}
+			>
+				🗑️
+			</button>{' '}
 			<A
 				href={makeBrowsePath(
 					props.server.uuid,
@@ -82,9 +84,7 @@ const DownloadFolder: Component<{
 				{props.containingDir}
 			</A>
 			<div class={styles.items}>
-				<For each={items}>
-					{(item) => <DownloadItem item={item} />}
-				</For>
+				<For each={items}>{(item) => <DownloadItem item={item} />}</For>
 			</div>
 		</div>
 	)
@@ -95,19 +95,15 @@ const DownloadItem: Component<{ item: Download }> = (props) => {
 
 	const item = props.item
 
-	const filename = item.filePath.substring(
-		item.filePath.lastIndexOf('/') + 1,
-	)
+	const filename = item.filePath.substring(item.filePath.lastIndexOf('/') + 1)
 
 	return (
 		<div
 			classList={{
 				[styles.transfer]: true,
-				[styles.canceled]:
-					item.status() === DownloadStatus.CANCELED,
+				[styles.canceled]: item.status() === DownloadStatus.CANCELED,
 				[styles.done]: item.status() === DownloadStatus.DONE,
-				[styles.pending]:
-					item.status() === DownloadStatus.PENDING,
+				[styles.pending]: item.status() === DownloadStatus.PENDING,
 				[styles.queued]: item.status() === DownloadStatus.QUEUED,
 				[styles.error]: item.status() === DownloadStatus.ERROR,
 			}}
@@ -115,10 +111,7 @@ const DownloadItem: Component<{ item: Download }> = (props) => {
 			<div class={styles.info}>{filename}</div>
 			<div class={styles.progress}>
 				<progress
-					value={
-						item.downloadedBytes() /
-						item.fileSizeBytes()
-					}
+					value={item.downloadedBytes() / item.fileSizeBytes()}
 					max="1"
 				/>
 				<div class={styles.options}>
@@ -129,29 +122,19 @@ const DownloadItem: Component<{ item: Download }> = (props) => {
 						🗑️
 					</button>{' '}
 					<Switch>
-						<Match
-							when={item.status() === DownloadStatus.CANCELED}
-						>
+						<Match when={item.status() === DownloadStatus.CANCELED}>
 							<button title="Retry">🔄</button>
 						</Match>
-						<Match
-							when={item.status() === DownloadStatus.DONE}
-						>
+						<Match when={item.status() === DownloadStatus.DONE}>
 							<b>Done</b>
 						</Match>
-						<Match
-							when={item.status() === DownloadStatus.PENDING}
-						>
+						<Match when={item.status() === DownloadStatus.PENDING}>
 							<button title="Cancel">⛔</button>
 						</Match>
-						<Match
-							when={item.status() === DownloadStatus.QUEUED}
-						>
+						<Match when={item.status() === DownloadStatus.QUEUED}>
 							<button title="Download Now">➡️</button>
 						</Match>
-						<Match
-							when={item.status() === DownloadStatus.ERROR}
-						>
+						<Match when={item.status() === DownloadStatus.ERROR}>
 							<span class={styles.errorMessage}>
 								Error: {item.errorMessage()}
 							</span>
