@@ -35,6 +35,14 @@ async function doRemove(client: RpcClient, uuid: string): Promise<void> {
 		}
 	}
 }
+async function doCancel(client: RpcClient, uuid: string): Promise<void> {
+	try {
+		await client.cancelFileDownload({ uuid })
+	} catch (err) {
+		console.error('failed to cancel download:', err)
+		alert('Failed to cancel download, check console for details')
+	}
+}
 
 const DownloadFolder: Component<{
 	server: Download['server']
@@ -94,8 +102,18 @@ const DownloadItem: Component<{ item: Download }> = (props) => {
 	const client = useRpcClient()
 
 	const item = props.item
-
 	const filename = item.filePath.substring(item.filePath.lastIndexOf('/') + 1)
+
+	async function doResume() {
+		// TODO This does NOT resume the file, it RESTARTS it.
+		// Make an actual resume/download now function.
+
+		await client.queueFileDownload({
+			serverUuid: item.server.uuid,
+			peerUsername: item.peerUsername,
+			filePath: item.filePath,
+		})
+	}
 
 	return (
 		<div
@@ -123,18 +141,30 @@ const DownloadItem: Component<{ item: Download }> = (props) => {
 					</button>{' '}
 					<Switch>
 						<Match when={item.status() === DownloadStatus.CANCELED}>
-							<button title="Retry">🔄</button>
+							<button onClick={doResume} title="Resume">
+								⏩
+							</button>
 						</Match>
 						<Match when={item.status() === DownloadStatus.DONE}>
 							<b>Done</b>
 						</Match>
 						<Match when={item.status() === DownloadStatus.PENDING}>
-							<button title="Cancel">⛔</button>
+							<button
+								onClick={() => doCancel(client, item.uuid)}
+								title="Cancel"
+							>
+								⛔
+							</button>
 						</Match>
 						<Match when={item.status() === DownloadStatus.QUEUED}>
 							<button title="Download Now">➡️</button>
 						</Match>
 						<Match when={item.status() === DownloadStatus.ERROR}>
+							<Match
+								when={item.status() === DownloadStatus.CANCELED}
+							>
+								<button title="Retry">🔄</button>
+							</Match>
 							<span class={styles.errorMessage}>
 								Error: {item.errorMessage()}
 							</span>
