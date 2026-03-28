@@ -1,7 +1,7 @@
 # FriendNet
 File sharing for friends, like a mini-Soulseek. No port forwarding needed!
 
-![logo](logo.png)
+![logo](logo-smaller.png)
 
 [**Official Website**](https://friendnet.org/)
 
