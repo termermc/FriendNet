@@ -349,6 +349,20 @@ message DirectSettings {
     uint32 upnp_timeout_ms = 8;
 }
 
+// TransferSettings are transfer (download and upload) settings for the client.
+message TransferSettings {
+    // The number of concurrent downloads to perform.
+    uint32 download_concurrency = 1;
+
+    // The directory to store incomplete downloads.
+    // Must be an absolute path.
+    string incomplete_download_dir = 2;
+
+    // The directory to store complete downloads.
+    // Must be an absolute path.
+    string complete_download_dir = 3;
+}
+
 message StreamEventsRequest {
 
 }
@@ -588,6 +602,23 @@ message UpdateDirectSettingsResponse {
 
 }
 
+message GetTransferSettingsRequest {
+
+}
+message GetTransferSettingsResponse {
+    // The client's transfer settings.
+    TransferSettings settings = 1;
+}
+
+message UpdateTransferSettingsRequest {
+    // The settings to update.
+    // All fields must be filled.
+    TransferSettings setting = 1;
+}
+message UpdateTransferSettingsResponse {
+
+}
+
 message IndexShareRequest {
     // The associated server UUID.
     string server_uuid = 1;
@@ -808,6 +839,15 @@ service ClientRpcService {
     // Changes will not take effect until the client is restarted.
     // All fields must be filled, default values will not be omitted.
     rpc UpdateDirectSettings(UpdateDirectSettingsRequest) returns (UpdateDirectSettingsResponse) {}
+
+    // GetTransferSettings returns the client's transfer settings.
+    // Some of the settings take effect immediately, others do not.
+    rpc GetTransferSettings(GetTransferSettingsRequest) returns (GetTransferSettingsResponse) {}
+
+    // UpdateTransferSettings updates the client's transfer settings.
+    // Some of the settings take effect immediately, others do not.
+    // All fields must be filled, default values will not be omitted.
+    rpc UpdateTransferSettings(UpdateTransferSettingsRequest) returns (UpdateTransferSettingsResponse) {}
 
     // IndexShare requests that a share be indexed.
     // The share will be scheduled to be indexed in the background.

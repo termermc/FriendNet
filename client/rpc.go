@@ -8,6 +8,7 @@ import (
 	"io"
 	"log/slog"
 	"net/netip"
+	"path/filepath"
 	"time"
 
 	"connectrpc.com/connect"
@@ -46,6 +47,7 @@ type RpcServer struct {
 	eventBus        *event.Bus
 	updateChecker   *updater.UpdateChecker
 	downloadManager *DownloadManager
+	storage         *storage.Storage
 	stopper         func()
 }
 
@@ -55,6 +57,7 @@ func NewRpcServer(
 	eventBus *event.Bus,
 	updateChecker *updater.UpdateChecker,
 	downloadManager *DownloadManager,
+	storage *storage.Storage,
 	stopper func(),
 ) *RpcServer {
 	return &RpcServer{
@@ -63,6 +66,7 @@ func NewRpcServer(
 		eventBus:        eventBus,
 		updateChecker:   updateChecker,
 		downloadManager: downloadManager,
+		storage:         storage,
 		stopper:         stopper,
 	}
 }
@@ -898,4 +902,70 @@ func (s *RpcServer) ResumeFileDownload(_ context.Context, request *v1.ResumeFile
 	}
 
 	return &v1.ResumeFileDownloadResponse{}, nil
+}
+
+func (s *RpcServer) GetTransferSettings(ctx context.Context, _ *v1.GetTransferSettingsRequest) (*v1.GetTransferSettingsResponse, error) {
+	concurrency, err := s.storage.GetSettingIntOr(ctx, DmDlConcurrencySetting, 1)
+	if err != nil {
+		return nil, err
+	}
+	incompleteDir, err := s.storage.GetSettingOr(ctx, DmDirIncompleteSetting, "")
+	if err != nil {
+		return nil, err
+	}
+	if incompleteDir == "" {
+		return nil, errors.New("BUG: expected " + DmDirIncompleteSetting + " to be set")
+	}
+	completeDir, err := s.storage.GetSettingOr(ctx, DmDirCompleteSetting, "")
+	if err != nil {
+		return nil, err
+	}
+	if completeDir == "" {
+		return nil, errors.New("BUG: expected " + DmDirCompleteSetting + " to be set")
+	}
+
+	return &v1.GetTransferSettingsResponse{
+		Settings: &v1.TransferSettings{
+			DownloadConcurrency:   uint32(concurrency),
+			IncompleteDownloadDir: incompleteDir,
+			CompleteDownloadDir:   completeDir,
+		},
+	}, nil
+}
+
+func (s *RpcServer) UpdateTransferSettings(ctx context.Context, request *v1.UpdateTransferSettingsRequest) (*v1.UpdateTransferSettingsResponse, error) {
+	concurrency := request.Setting.DownloadConcurrency
+	incompleteDir := request.Setting.IncompleteDownloadDir
+	completeDir := request.Setting.CompleteDownloadDir
+
+	if concurrency < 1 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("download concurrency must be at least 1"))
+	}
+	if incompleteDir == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("incomplete download directory cannot be empty"))
+	}
+	if completeDir == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("complete download directory cannot be empty"))
+	}
+	if !filepath.IsAbs(incompleteDir) {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("incomplete download directory must be an absolute path"))
+	}
+	if !filepath.IsAbs(completeDir) {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("complete download directory must be an absolute path"))
+	}
+
+	err := s.storage.PutSettingInt(ctx, DmDlConcurrencySetting, int64(concurrency))
+	if err != nil {
+		return nil, err
+	}
+	err = s.storage.PutSetting(ctx, DmDirIncompleteSetting, incompleteDir)
+	if err != nil {
+		return nil, err
+	}
+	err = s.storage.PutSetting(ctx, DmDirCompleteSetting, completeDir)
+	if err != nil {
+		return nil, err
+	}
+
+	return &v1.UpdateTransferSettingsResponse{}, nil
 }

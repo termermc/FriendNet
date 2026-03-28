@@ -433,6 +433,7 @@ func main() {
 			eventBus,
 			updateChecker,
 			downloadManager,
+			store,
 			stop,
 		),
 		func(impl *client.RpcServer, options ...connect.HandlerOption) (string, http.Handler) {

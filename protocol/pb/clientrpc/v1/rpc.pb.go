@@ -1253,6 +1253,72 @@ func (x *DirectSettings) GetUpnpTimeoutMs() uint32 {
 	return 0
 }
 
+// TransferSettings are transfer (download and upload) settings for the client.
+type TransferSettings struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The number of concurrent downloads to perform.
+	DownloadConcurrency uint32 `protobuf:"varint,1,opt,name=download_concurrency,json=downloadConcurrency,proto3" json:"download_concurrency,omitempty"`
+	// The directory to store incomplete downloads.
+	// Must be an absolute path.
+	IncompleteDownloadDir string `protobuf:"bytes,2,opt,name=incomplete_download_dir,json=incompleteDownloadDir,proto3" json:"incomplete_download_dir,omitempty"`
+	// The directory to store complete downloads.
+	// Must be an absolute path.
+	CompleteDownloadDir string `protobuf:"bytes,3,opt,name=complete_download_dir,json=completeDownloadDir,proto3" json:"complete_download_dir,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *TransferSettings) Reset() {
+	*x = TransferSettings{}
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TransferSettings) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TransferSettings) ProtoMessage() {}
+
+func (x *TransferSettings) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TransferSettings.ProtoReflect.Descriptor instead.
+func (*TransferSettings) Descriptor() ([]byte, []int) {
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *TransferSettings) GetDownloadConcurrency() uint32 {
+	if x != nil {
+		return x.DownloadConcurrency
+	}
+	return 0
+}
+
+func (x *TransferSettings) GetIncompleteDownloadDir() string {
+	if x != nil {
+		return x.IncompleteDownloadDir
+	}
+	return ""
+}
+
+func (x *TransferSettings) GetCompleteDownloadDir() string {
+	if x != nil {
+		return x.CompleteDownloadDir
+	}
+	return ""
+}
+
 type StreamEventsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1261,7 +1327,7 @@ type StreamEventsRequest struct {
 
 func (x *StreamEventsRequest) Reset() {
 	*x = StreamEventsRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[12]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1273,7 +1339,7 @@ func (x *StreamEventsRequest) String() string {
 func (*StreamEventsRequest) ProtoMessage() {}
 
 func (x *StreamEventsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[12]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1286,7 +1352,7 @@ func (x *StreamEventsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StreamEventsRequest.ProtoReflect.Descriptor instead.
 func (*StreamEventsRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{12}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{13}
 }
 
 type StreamEventsResponse struct {
@@ -1301,7 +1367,7 @@ type StreamEventsResponse struct {
 
 func (x *StreamEventsResponse) Reset() {
 	*x = StreamEventsResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[13]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1313,7 +1379,7 @@ func (x *StreamEventsResponse) String() string {
 func (*StreamEventsResponse) ProtoMessage() {}
 
 func (x *StreamEventsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[13]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1326,7 +1392,7 @@ func (x *StreamEventsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StreamEventsResponse.ProtoReflect.Descriptor instead.
 func (*StreamEventsResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{13}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *StreamEventsResponse) GetEvent() *Event {
@@ -1354,7 +1420,7 @@ type StreamLogsRequest struct {
 
 func (x *StreamLogsRequest) Reset() {
 	*x = StreamLogsRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[14]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1366,7 +1432,7 @@ func (x *StreamLogsRequest) String() string {
 func (*StreamLogsRequest) ProtoMessage() {}
 
 func (x *StreamLogsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[14]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1379,7 +1445,7 @@ func (x *StreamLogsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StreamLogsRequest.ProtoReflect.Descriptor instead.
 func (*StreamLogsRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{14}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *StreamLogsRequest) GetSendLogsAfterTs() int64 {
@@ -1402,7 +1468,7 @@ type StreamLogsResponse struct {
 
 func (x *StreamLogsResponse) Reset() {
 	*x = StreamLogsResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[15]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1414,7 +1480,7 @@ func (x *StreamLogsResponse) String() string {
 func (*StreamLogsResponse) ProtoMessage() {}
 
 func (x *StreamLogsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[15]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1427,7 +1493,7 @@ func (x *StreamLogsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StreamLogsResponse.ProtoReflect.Descriptor instead.
 func (*StreamLogsResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{15}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *StreamLogsResponse) GetLogs() []*LogMessage {
@@ -1445,7 +1511,7 @@ type StopRequest struct {
 
 func (x *StopRequest) Reset() {
 	*x = StopRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[16]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1457,7 +1523,7 @@ func (x *StopRequest) String() string {
 func (*StopRequest) ProtoMessage() {}
 
 func (x *StopRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[16]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1470,7 +1536,7 @@ func (x *StopRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopRequest.ProtoReflect.Descriptor instead.
 func (*StopRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{16}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{17}
 }
 
 type StopResponse struct {
@@ -1481,7 +1547,7 @@ type StopResponse struct {
 
 func (x *StopResponse) Reset() {
 	*x = StopResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[17]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1493,7 +1559,7 @@ func (x *StopResponse) String() string {
 func (*StopResponse) ProtoMessage() {}
 
 func (x *StopResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[17]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1506,7 +1572,7 @@ func (x *StopResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopResponse.ProtoReflect.Descriptor instead.
 func (*StopResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{17}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{18}
 }
 
 type GetClientInfoRequest struct {
@@ -1517,7 +1583,7 @@ type GetClientInfoRequest struct {
 
 func (x *GetClientInfoRequest) Reset() {
 	*x = GetClientInfoRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[18]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1529,7 +1595,7 @@ func (x *GetClientInfoRequest) String() string {
 func (*GetClientInfoRequest) ProtoMessage() {}
 
 func (x *GetClientInfoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[18]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1542,7 +1608,7 @@ func (x *GetClientInfoRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetClientInfoRequest.ProtoReflect.Descriptor instead.
 func (*GetClientInfoRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{18}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{19}
 }
 
 type GetClientInfoResponse struct {
@@ -1553,7 +1619,7 @@ type GetClientInfoResponse struct {
 
 func (x *GetClientInfoResponse) Reset() {
 	*x = GetClientInfoResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[19]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1565,7 +1631,7 @@ func (x *GetClientInfoResponse) String() string {
 func (*GetClientInfoResponse) ProtoMessage() {}
 
 func (x *GetClientInfoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[19]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1578,7 +1644,7 @@ func (x *GetClientInfoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetClientInfoResponse.ProtoReflect.Descriptor instead.
 func (*GetClientInfoResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{19}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{20}
 }
 
 type GetServersRequest struct {
@@ -1589,7 +1655,7 @@ type GetServersRequest struct {
 
 func (x *GetServersRequest) Reset() {
 	*x = GetServersRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[20]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1601,7 +1667,7 @@ func (x *GetServersRequest) String() string {
 func (*GetServersRequest) ProtoMessage() {}
 
 func (x *GetServersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[20]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1614,7 +1680,7 @@ func (x *GetServersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetServersRequest.ProtoReflect.Descriptor instead.
 func (*GetServersRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{20}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{21}
 }
 
 type GetServersResponse struct {
@@ -1627,7 +1693,7 @@ type GetServersResponse struct {
 
 func (x *GetServersResponse) Reset() {
 	*x = GetServersResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[21]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1639,7 +1705,7 @@ func (x *GetServersResponse) String() string {
 func (*GetServersResponse) ProtoMessage() {}
 
 func (x *GetServersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[21]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1652,7 +1718,7 @@ func (x *GetServersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetServersResponse.ProtoReflect.Descriptor instead.
 func (*GetServersResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{21}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *GetServersResponse) GetServers() []*ServerInfo {
@@ -1680,7 +1746,7 @@ type CreateServerRequest struct {
 
 func (x *CreateServerRequest) Reset() {
 	*x = CreateServerRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[22]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1692,7 +1758,7 @@ func (x *CreateServerRequest) String() string {
 func (*CreateServerRequest) ProtoMessage() {}
 
 func (x *CreateServerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[22]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1705,7 +1771,7 @@ func (x *CreateServerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateServerRequest.ProtoReflect.Descriptor instead.
 func (*CreateServerRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{22}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *CreateServerRequest) GetName() string {
@@ -1753,7 +1819,7 @@ type CreateServerResponse struct {
 
 func (x *CreateServerResponse) Reset() {
 	*x = CreateServerResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[23]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1765,7 +1831,7 @@ func (x *CreateServerResponse) String() string {
 func (*CreateServerResponse) ProtoMessage() {}
 
 func (x *CreateServerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[23]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1778,7 +1844,7 @@ func (x *CreateServerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateServerResponse.ProtoReflect.Descriptor instead.
 func (*CreateServerResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{23}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *CreateServerResponse) GetServer() *ServerInfo {
@@ -1798,7 +1864,7 @@ type DeleteServerRequest struct {
 
 func (x *DeleteServerRequest) Reset() {
 	*x = DeleteServerRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[24]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1810,7 +1876,7 @@ func (x *DeleteServerRequest) String() string {
 func (*DeleteServerRequest) ProtoMessage() {}
 
 func (x *DeleteServerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[24]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1823,7 +1889,7 @@ func (x *DeleteServerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteServerRequest.ProtoReflect.Descriptor instead.
 func (*DeleteServerRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{24}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *DeleteServerRequest) GetUuid() string {
@@ -1841,7 +1907,7 @@ type DeleteServerResponse struct {
 
 func (x *DeleteServerResponse) Reset() {
 	*x = DeleteServerResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[25]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1853,7 +1919,7 @@ func (x *DeleteServerResponse) String() string {
 func (*DeleteServerResponse) ProtoMessage() {}
 
 func (x *DeleteServerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[25]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1866,7 +1932,7 @@ func (x *DeleteServerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteServerResponse.ProtoReflect.Descriptor instead.
 func (*DeleteServerResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{25}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{26}
 }
 
 type ConnectServerRequest struct {
@@ -1879,7 +1945,7 @@ type ConnectServerRequest struct {
 
 func (x *ConnectServerRequest) Reset() {
 	*x = ConnectServerRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[26]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1891,7 +1957,7 @@ func (x *ConnectServerRequest) String() string {
 func (*ConnectServerRequest) ProtoMessage() {}
 
 func (x *ConnectServerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[26]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1904,7 +1970,7 @@ func (x *ConnectServerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConnectServerRequest.ProtoReflect.Descriptor instead.
 func (*ConnectServerRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{26}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *ConnectServerRequest) GetUuid() string {
@@ -1922,7 +1988,7 @@ type ConnectServerResponse struct {
 
 func (x *ConnectServerResponse) Reset() {
 	*x = ConnectServerResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[27]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1934,7 +2000,7 @@ func (x *ConnectServerResponse) String() string {
 func (*ConnectServerResponse) ProtoMessage() {}
 
 func (x *ConnectServerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[27]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1947,7 +2013,7 @@ func (x *ConnectServerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConnectServerResponse.ProtoReflect.Descriptor instead.
 func (*ConnectServerResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{27}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{28}
 }
 
 type DisconnectServerRequest struct {
@@ -1960,7 +2026,7 @@ type DisconnectServerRequest struct {
 
 func (x *DisconnectServerRequest) Reset() {
 	*x = DisconnectServerRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[28]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1972,7 +2038,7 @@ func (x *DisconnectServerRequest) String() string {
 func (*DisconnectServerRequest) ProtoMessage() {}
 
 func (x *DisconnectServerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[28]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1985,7 +2051,7 @@ func (x *DisconnectServerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisconnectServerRequest.ProtoReflect.Descriptor instead.
 func (*DisconnectServerRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{28}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *DisconnectServerRequest) GetUuid() string {
@@ -2003,7 +2069,7 @@ type DisconnectServerResponse struct {
 
 func (x *DisconnectServerResponse) Reset() {
 	*x = DisconnectServerResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[29]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2015,7 +2081,7 @@ func (x *DisconnectServerResponse) String() string {
 func (*DisconnectServerResponse) ProtoMessage() {}
 
 func (x *DisconnectServerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[29]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2028,7 +2094,7 @@ func (x *DisconnectServerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisconnectServerResponse.ProtoReflect.Descriptor instead.
 func (*DisconnectServerResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{29}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{30}
 }
 
 type UpdateServerRequest struct {
@@ -2051,7 +2117,7 @@ type UpdateServerRequest struct {
 
 func (x *UpdateServerRequest) Reset() {
 	*x = UpdateServerRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[30]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2063,7 +2129,7 @@ func (x *UpdateServerRequest) String() string {
 func (*UpdateServerRequest) ProtoMessage() {}
 
 func (x *UpdateServerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[30]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2076,7 +2142,7 @@ func (x *UpdateServerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateServerRequest.ProtoReflect.Descriptor instead.
 func (*UpdateServerRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{30}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *UpdateServerRequest) GetUuid() string {
@@ -2131,7 +2197,7 @@ type UpdateServerResponse struct {
 
 func (x *UpdateServerResponse) Reset() {
 	*x = UpdateServerResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[31]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2143,7 +2209,7 @@ func (x *UpdateServerResponse) String() string {
 func (*UpdateServerResponse) ProtoMessage() {}
 
 func (x *UpdateServerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[31]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2156,7 +2222,7 @@ func (x *UpdateServerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateServerResponse.ProtoReflect.Descriptor instead.
 func (*UpdateServerResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{31}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *UpdateServerResponse) GetServer() *ServerInfo {
@@ -2176,7 +2242,7 @@ type GetSharesRequest struct {
 
 func (x *GetSharesRequest) Reset() {
 	*x = GetSharesRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[32]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2188,7 +2254,7 @@ func (x *GetSharesRequest) String() string {
 func (*GetSharesRequest) ProtoMessage() {}
 
 func (x *GetSharesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[32]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2201,7 +2267,7 @@ func (x *GetSharesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSharesRequest.ProtoReflect.Descriptor instead.
 func (*GetSharesRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{32}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *GetSharesRequest) GetServerUuid() string {
@@ -2221,7 +2287,7 @@ type GetSharesResponse struct {
 
 func (x *GetSharesResponse) Reset() {
 	*x = GetSharesResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[33]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2233,7 +2299,7 @@ func (x *GetSharesResponse) String() string {
 func (*GetSharesResponse) ProtoMessage() {}
 
 func (x *GetSharesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[33]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2246,7 +2312,7 @@ func (x *GetSharesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSharesResponse.ProtoReflect.Descriptor instead.
 func (*GetSharesResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{33}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *GetSharesResponse) GetShares() []*ShareInfo {
@@ -2272,7 +2338,7 @@ type CreateShareRequest struct {
 
 func (x *CreateShareRequest) Reset() {
 	*x = CreateShareRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[34]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2284,7 +2350,7 @@ func (x *CreateShareRequest) String() string {
 func (*CreateShareRequest) ProtoMessage() {}
 
 func (x *CreateShareRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[34]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2297,7 +2363,7 @@ func (x *CreateShareRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateShareRequest.ProtoReflect.Descriptor instead.
 func (*CreateShareRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{34}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *CreateShareRequest) GetServerUuid() string {
@@ -2338,7 +2404,7 @@ type CreateShareResponse struct {
 
 func (x *CreateShareResponse) Reset() {
 	*x = CreateShareResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[35]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2350,7 +2416,7 @@ func (x *CreateShareResponse) String() string {
 func (*CreateShareResponse) ProtoMessage() {}
 
 func (x *CreateShareResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[35]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2363,7 +2429,7 @@ func (x *CreateShareResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateShareResponse.ProtoReflect.Descriptor instead.
 func (*CreateShareResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{35}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *CreateShareResponse) GetShare() *ShareInfo {
@@ -2385,7 +2451,7 @@ type DeleteShareRequest struct {
 
 func (x *DeleteShareRequest) Reset() {
 	*x = DeleteShareRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[36]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2397,7 +2463,7 @@ func (x *DeleteShareRequest) String() string {
 func (*DeleteShareRequest) ProtoMessage() {}
 
 func (x *DeleteShareRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[36]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2410,7 +2476,7 @@ func (x *DeleteShareRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteShareRequest.ProtoReflect.Descriptor instead.
 func (*DeleteShareRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{36}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *DeleteShareRequest) GetServerUuid() string {
@@ -2435,7 +2501,7 @@ type DeleteShareResponse struct {
 
 func (x *DeleteShareResponse) Reset() {
 	*x = DeleteShareResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[37]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2447,7 +2513,7 @@ func (x *DeleteShareResponse) String() string {
 func (*DeleteShareResponse) ProtoMessage() {}
 
 func (x *DeleteShareResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[37]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2460,7 +2526,7 @@ func (x *DeleteShareResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteShareResponse.ProtoReflect.Descriptor instead.
 func (*DeleteShareResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{37}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{38}
 }
 
 type GetDirFilesRequest struct {
@@ -2477,7 +2543,7 @@ type GetDirFilesRequest struct {
 
 func (x *GetDirFilesRequest) Reset() {
 	*x = GetDirFilesRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[38]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2489,7 +2555,7 @@ func (x *GetDirFilesRequest) String() string {
 func (*GetDirFilesRequest) ProtoMessage() {}
 
 func (x *GetDirFilesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[38]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2502,7 +2568,7 @@ func (x *GetDirFilesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDirFilesRequest.ProtoReflect.Descriptor instead.
 func (*GetDirFilesRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{38}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *GetDirFilesRequest) GetServerUuid() string {
@@ -2536,7 +2602,7 @@ type GetDirFilesResponse struct {
 
 func (x *GetDirFilesResponse) Reset() {
 	*x = GetDirFilesResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[39]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2548,7 +2614,7 @@ func (x *GetDirFilesResponse) String() string {
 func (*GetDirFilesResponse) ProtoMessage() {}
 
 func (x *GetDirFilesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[39]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2561,7 +2627,7 @@ func (x *GetDirFilesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDirFilesResponse.ProtoReflect.Descriptor instead.
 func (*GetDirFilesResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{39}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *GetDirFilesResponse) GetContent() []*FileMeta {
@@ -2585,7 +2651,7 @@ type GetFileMetaRequest struct {
 
 func (x *GetFileMetaRequest) Reset() {
 	*x = GetFileMetaRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[40]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2597,7 +2663,7 @@ func (x *GetFileMetaRequest) String() string {
 func (*GetFileMetaRequest) ProtoMessage() {}
 
 func (x *GetFileMetaRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[40]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2610,7 +2676,7 @@ func (x *GetFileMetaRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFileMetaRequest.ProtoReflect.Descriptor instead.
 func (*GetFileMetaRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{40}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *GetFileMetaRequest) GetServerUuid() string {
@@ -2644,7 +2710,7 @@ type GetFileMetaResponse struct {
 
 func (x *GetFileMetaResponse) Reset() {
 	*x = GetFileMetaResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[41]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2656,7 +2722,7 @@ func (x *GetFileMetaResponse) String() string {
 func (*GetFileMetaResponse) ProtoMessage() {}
 
 func (x *GetFileMetaResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[41]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2669,7 +2735,7 @@ func (x *GetFileMetaResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFileMetaResponse.ProtoReflect.Descriptor instead.
 func (*GetFileMetaResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{41}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *GetFileMetaResponse) GetMeta() *FileMeta {
@@ -2689,7 +2755,7 @@ type GetOnlineUsersRequest struct {
 
 func (x *GetOnlineUsersRequest) Reset() {
 	*x = GetOnlineUsersRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[42]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2701,7 +2767,7 @@ func (x *GetOnlineUsersRequest) String() string {
 func (*GetOnlineUsersRequest) ProtoMessage() {}
 
 func (x *GetOnlineUsersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[42]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2714,7 +2780,7 @@ func (x *GetOnlineUsersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOnlineUsersRequest.ProtoReflect.Descriptor instead.
 func (*GetOnlineUsersRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{42}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *GetOnlineUsersRequest) GetServerUuid() string {
@@ -2734,7 +2800,7 @@ type GetOnlineUsersResponse struct {
 
 func (x *GetOnlineUsersResponse) Reset() {
 	*x = GetOnlineUsersResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[43]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2746,7 +2812,7 @@ func (x *GetOnlineUsersResponse) String() string {
 func (*GetOnlineUsersResponse) ProtoMessage() {}
 
 func (x *GetOnlineUsersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[43]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2759,7 +2825,7 @@ func (x *GetOnlineUsersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOnlineUsersResponse.ProtoReflect.Descriptor instead.
 func (*GetOnlineUsersResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{43}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *GetOnlineUsersResponse) GetUsers() []*OnlineUserInfo {
@@ -2783,7 +2849,7 @@ type ChangeAccountPasswordRequest struct {
 
 func (x *ChangeAccountPasswordRequest) Reset() {
 	*x = ChangeAccountPasswordRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[44]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2795,7 +2861,7 @@ func (x *ChangeAccountPasswordRequest) String() string {
 func (*ChangeAccountPasswordRequest) ProtoMessage() {}
 
 func (x *ChangeAccountPasswordRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[44]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2808,7 +2874,7 @@ func (x *ChangeAccountPasswordRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChangeAccountPasswordRequest.ProtoReflect.Descriptor instead.
 func (*ChangeAccountPasswordRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{44}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *ChangeAccountPasswordRequest) GetServerUuid() string {
@@ -2840,7 +2906,7 @@ type ChangeAccountPasswordResponse struct {
 
 func (x *ChangeAccountPasswordResponse) Reset() {
 	*x = ChangeAccountPasswordResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[45]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2852,7 +2918,7 @@ func (x *ChangeAccountPasswordResponse) String() string {
 func (*ChangeAccountPasswordResponse) ProtoMessage() {}
 
 func (x *ChangeAccountPasswordResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[45]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2865,7 +2931,7 @@ func (x *ChangeAccountPasswordResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChangeAccountPasswordResponse.ProtoReflect.Descriptor instead.
 func (*ChangeAccountPasswordResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{45}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{46}
 }
 
 type ServerConnectRequest struct {
@@ -2878,7 +2944,7 @@ type ServerConnectRequest struct {
 
 func (x *ServerConnectRequest) Reset() {
 	*x = ServerConnectRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[46]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2890,7 +2956,7 @@ func (x *ServerConnectRequest) String() string {
 func (*ServerConnectRequest) ProtoMessage() {}
 
 func (x *ServerConnectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[46]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2903,7 +2969,7 @@ func (x *ServerConnectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServerConnectRequest.ProtoReflect.Descriptor instead.
 func (*ServerConnectRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{46}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *ServerConnectRequest) GetUuid() string {
@@ -2921,7 +2987,7 @@ type ServerConnectResponse struct {
 
 func (x *ServerConnectResponse) Reset() {
 	*x = ServerConnectResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[47]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2933,7 +2999,7 @@ func (x *ServerConnectResponse) String() string {
 func (*ServerConnectResponse) ProtoMessage() {}
 
 func (x *ServerConnectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[47]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2946,7 +3012,7 @@ func (x *ServerConnectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServerConnectResponse.ProtoReflect.Descriptor instead.
 func (*ServerConnectResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{47}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{48}
 }
 
 type ServerDisconnectRequest struct {
@@ -2959,7 +3025,7 @@ type ServerDisconnectRequest struct {
 
 func (x *ServerDisconnectRequest) Reset() {
 	*x = ServerDisconnectRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[48]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2971,7 +3037,7 @@ func (x *ServerDisconnectRequest) String() string {
 func (*ServerDisconnectRequest) ProtoMessage() {}
 
 func (x *ServerDisconnectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[48]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2984,7 +3050,7 @@ func (x *ServerDisconnectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServerDisconnectRequest.ProtoReflect.Descriptor instead.
 func (*ServerDisconnectRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{48}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *ServerDisconnectRequest) GetUuid() string {
@@ -3002,7 +3068,7 @@ type ServerDisconnectResponse struct {
 
 func (x *ServerDisconnectResponse) Reset() {
 	*x = ServerDisconnectResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[49]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3014,7 +3080,7 @@ func (x *ServerDisconnectResponse) String() string {
 func (*ServerDisconnectResponse) ProtoMessage() {}
 
 func (x *ServerDisconnectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[49]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3027,7 +3093,7 @@ func (x *ServerDisconnectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServerDisconnectResponse.ProtoReflect.Descriptor instead.
 func (*ServerDisconnectResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{49}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{50}
 }
 
 type GetDirectSettingsRequest struct {
@@ -3038,7 +3104,7 @@ type GetDirectSettingsRequest struct {
 
 func (x *GetDirectSettingsRequest) Reset() {
 	*x = GetDirectSettingsRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[50]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3050,7 +3116,7 @@ func (x *GetDirectSettingsRequest) String() string {
 func (*GetDirectSettingsRequest) ProtoMessage() {}
 
 func (x *GetDirectSettingsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[50]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3063,7 +3129,7 @@ func (x *GetDirectSettingsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDirectSettingsRequest.ProtoReflect.Descriptor instead.
 func (*GetDirectSettingsRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{50}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{51}
 }
 
 type GetDirectSettingsResponse struct {
@@ -3076,7 +3142,7 @@ type GetDirectSettingsResponse struct {
 
 func (x *GetDirectSettingsResponse) Reset() {
 	*x = GetDirectSettingsResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[51]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3088,7 +3154,7 @@ func (x *GetDirectSettingsResponse) String() string {
 func (*GetDirectSettingsResponse) ProtoMessage() {}
 
 func (x *GetDirectSettingsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[51]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3101,7 +3167,7 @@ func (x *GetDirectSettingsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDirectSettingsResponse.ProtoReflect.Descriptor instead.
 func (*GetDirectSettingsResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{51}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *GetDirectSettingsResponse) GetSettings() *DirectSettings {
@@ -3122,7 +3188,7 @@ type UpdateDirectSettingsRequest struct {
 
 func (x *UpdateDirectSettingsRequest) Reset() {
 	*x = UpdateDirectSettingsRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[52]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3134,7 +3200,7 @@ func (x *UpdateDirectSettingsRequest) String() string {
 func (*UpdateDirectSettingsRequest) ProtoMessage() {}
 
 func (x *UpdateDirectSettingsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[52]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3147,7 +3213,7 @@ func (x *UpdateDirectSettingsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateDirectSettingsRequest.ProtoReflect.Descriptor instead.
 func (*UpdateDirectSettingsRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{52}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *UpdateDirectSettingsRequest) GetSettings() *DirectSettings {
@@ -3165,7 +3231,7 @@ type UpdateDirectSettingsResponse struct {
 
 func (x *UpdateDirectSettingsResponse) Reset() {
 	*x = UpdateDirectSettingsResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[53]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3177,7 +3243,7 @@ func (x *UpdateDirectSettingsResponse) String() string {
 func (*UpdateDirectSettingsResponse) ProtoMessage() {}
 
 func (x *UpdateDirectSettingsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[53]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3190,7 +3256,170 @@ func (x *UpdateDirectSettingsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateDirectSettingsResponse.ProtoReflect.Descriptor instead.
 func (*UpdateDirectSettingsResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{53}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{54}
+}
+
+type GetTransferSettingsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetTransferSettingsRequest) Reset() {
+	*x = GetTransferSettingsRequest{}
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[55]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetTransferSettingsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTransferSettingsRequest) ProtoMessage() {}
+
+func (x *GetTransferSettingsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[55]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTransferSettingsRequest.ProtoReflect.Descriptor instead.
+func (*GetTransferSettingsRequest) Descriptor() ([]byte, []int) {
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{55}
+}
+
+type GetTransferSettingsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The client's transfer settings.
+	Settings      *TransferSettings `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetTransferSettingsResponse) Reset() {
+	*x = GetTransferSettingsResponse{}
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[56]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetTransferSettingsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTransferSettingsResponse) ProtoMessage() {}
+
+func (x *GetTransferSettingsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[56]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTransferSettingsResponse.ProtoReflect.Descriptor instead.
+func (*GetTransferSettingsResponse) Descriptor() ([]byte, []int) {
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{56}
+}
+
+func (x *GetTransferSettingsResponse) GetSettings() *TransferSettings {
+	if x != nil {
+		return x.Settings
+	}
+	return nil
+}
+
+type UpdateTransferSettingsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The settings to update.
+	// All fields must be filled.
+	Setting       *TransferSettings `protobuf:"bytes,1,opt,name=setting,proto3" json:"setting,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateTransferSettingsRequest) Reset() {
+	*x = UpdateTransferSettingsRequest{}
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[57]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateTransferSettingsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateTransferSettingsRequest) ProtoMessage() {}
+
+func (x *UpdateTransferSettingsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[57]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateTransferSettingsRequest.ProtoReflect.Descriptor instead.
+func (*UpdateTransferSettingsRequest) Descriptor() ([]byte, []int) {
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{57}
+}
+
+func (x *UpdateTransferSettingsRequest) GetSetting() *TransferSettings {
+	if x != nil {
+		return x.Setting
+	}
+	return nil
+}
+
+type UpdateTransferSettingsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateTransferSettingsResponse) Reset() {
+	*x = UpdateTransferSettingsResponse{}
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[58]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateTransferSettingsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateTransferSettingsResponse) ProtoMessage() {}
+
+func (x *UpdateTransferSettingsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[58]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateTransferSettingsResponse.ProtoReflect.Descriptor instead.
+func (*UpdateTransferSettingsResponse) Descriptor() ([]byte, []int) {
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{58}
 }
 
 type IndexShareRequest struct {
@@ -3205,7 +3434,7 @@ type IndexShareRequest struct {
 
 func (x *IndexShareRequest) Reset() {
 	*x = IndexShareRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[54]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3217,7 +3446,7 @@ func (x *IndexShareRequest) String() string {
 func (*IndexShareRequest) ProtoMessage() {}
 
 func (x *IndexShareRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[54]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3230,7 +3459,7 @@ func (x *IndexShareRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IndexShareRequest.ProtoReflect.Descriptor instead.
 func (*IndexShareRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{54}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *IndexShareRequest) GetServerUuid() string {
@@ -3255,7 +3484,7 @@ type IndexShareResponse struct {
 
 func (x *IndexShareResponse) Reset() {
 	*x = IndexShareResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[55]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3267,7 +3496,7 @@ func (x *IndexShareResponse) String() string {
 func (*IndexShareResponse) ProtoMessage() {}
 
 func (x *IndexShareResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[55]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3280,7 +3509,7 @@ func (x *IndexShareResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IndexShareResponse.ProtoReflect.Descriptor instead.
 func (*IndexShareResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{55}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{60}
 }
 
 type StreamSearchRequest struct {
@@ -3297,7 +3526,7 @@ type StreamSearchRequest struct {
 
 func (x *StreamSearchRequest) Reset() {
 	*x = StreamSearchRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[56]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3309,7 +3538,7 @@ func (x *StreamSearchRequest) String() string {
 func (*StreamSearchRequest) ProtoMessage() {}
 
 func (x *StreamSearchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[56]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3322,7 +3551,7 @@ func (x *StreamSearchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StreamSearchRequest.ProtoReflect.Descriptor instead.
 func (*StreamSearchRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{56}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *StreamSearchRequest) GetServerUuid() string {
@@ -3362,7 +3591,7 @@ type StreamSearchResponse struct {
 
 func (x *StreamSearchResponse) Reset() {
 	*x = StreamSearchResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[57]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3374,7 +3603,7 @@ func (x *StreamSearchResponse) String() string {
 func (*StreamSearchResponse) ProtoMessage() {}
 
 func (x *StreamSearchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[57]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3387,7 +3616,7 @@ func (x *StreamSearchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StreamSearchResponse.ProtoReflect.Descriptor instead.
 func (*StreamSearchResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{57}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *StreamSearchResponse) GetUsername() string {
@@ -3426,7 +3655,7 @@ type GetUpdateInfoRequest struct {
 
 func (x *GetUpdateInfoRequest) Reset() {
 	*x = GetUpdateInfoRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[58]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3438,7 +3667,7 @@ func (x *GetUpdateInfoRequest) String() string {
 func (*GetUpdateInfoRequest) ProtoMessage() {}
 
 func (x *GetUpdateInfoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[58]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3451,7 +3680,7 @@ func (x *GetUpdateInfoRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUpdateInfoRequest.ProtoReflect.Descriptor instead.
 func (*GetUpdateInfoRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{58}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{63}
 }
 
 type GetUpdateInfoResponse struct {
@@ -3467,7 +3696,7 @@ type GetUpdateInfoResponse struct {
 
 func (x *GetUpdateInfoResponse) Reset() {
 	*x = GetUpdateInfoResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[59]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3479,7 +3708,7 @@ func (x *GetUpdateInfoResponse) String() string {
 func (*GetUpdateInfoResponse) ProtoMessage() {}
 
 func (x *GetUpdateInfoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[59]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3492,7 +3721,7 @@ func (x *GetUpdateInfoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUpdateInfoResponse.ProtoReflect.Descriptor instead.
 func (*GetUpdateInfoResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{59}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *GetUpdateInfoResponse) GetCurrentInfo() *UpdateInfo {
@@ -3517,7 +3746,7 @@ type CheckForNewUpdateRequest struct {
 
 func (x *CheckForNewUpdateRequest) Reset() {
 	*x = CheckForNewUpdateRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[60]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3529,7 +3758,7 @@ func (x *CheckForNewUpdateRequest) String() string {
 func (*CheckForNewUpdateRequest) ProtoMessage() {}
 
 func (x *CheckForNewUpdateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[60]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3542,7 +3771,7 @@ func (x *CheckForNewUpdateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckForNewUpdateRequest.ProtoReflect.Descriptor instead.
 func (*CheckForNewUpdateRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{60}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{65}
 }
 
 type CheckForNewUpdateResponse struct {
@@ -3555,7 +3784,7 @@ type CheckForNewUpdateResponse struct {
 
 func (x *CheckForNewUpdateResponse) Reset() {
 	*x = CheckForNewUpdateResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[61]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3567,7 +3796,7 @@ func (x *CheckForNewUpdateResponse) String() string {
 func (*CheckForNewUpdateResponse) ProtoMessage() {}
 
 func (x *CheckForNewUpdateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[61]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3580,7 +3809,7 @@ func (x *CheckForNewUpdateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckForNewUpdateResponse.ProtoReflect.Descriptor instead.
 func (*CheckForNewUpdateResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{61}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *CheckForNewUpdateResponse) GetNewInfo() *UpdateInfo {
@@ -3598,7 +3827,7 @@ type GetDownloadManagerItemsRequest struct {
 
 func (x *GetDownloadManagerItemsRequest) Reset() {
 	*x = GetDownloadManagerItemsRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[62]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[67]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3610,7 +3839,7 @@ func (x *GetDownloadManagerItemsRequest) String() string {
 func (*GetDownloadManagerItemsRequest) ProtoMessage() {}
 
 func (x *GetDownloadManagerItemsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[62]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[67]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3623,7 +3852,7 @@ func (x *GetDownloadManagerItemsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDownloadManagerItemsRequest.ProtoReflect.Descriptor instead.
 func (*GetDownloadManagerItemsRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{62}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{67}
 }
 
 type GetDownloadManagerItemsResponse struct {
@@ -3636,7 +3865,7 @@ type GetDownloadManagerItemsResponse struct {
 
 func (x *GetDownloadManagerItemsResponse) Reset() {
 	*x = GetDownloadManagerItemsResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[63]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[68]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3648,7 +3877,7 @@ func (x *GetDownloadManagerItemsResponse) String() string {
 func (*GetDownloadManagerItemsResponse) ProtoMessage() {}
 
 func (x *GetDownloadManagerItemsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[63]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[68]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3661,7 +3890,7 @@ func (x *GetDownloadManagerItemsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDownloadManagerItemsResponse.ProtoReflect.Descriptor instead.
 func (*GetDownloadManagerItemsResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{63}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{68}
 }
 
 func (x *GetDownloadManagerItemsResponse) GetItems() []*DownloadManagerItem {
@@ -3685,7 +3914,7 @@ type QueueFileDownloadRequest struct {
 
 func (x *QueueFileDownloadRequest) Reset() {
 	*x = QueueFileDownloadRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[64]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[69]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3697,7 +3926,7 @@ func (x *QueueFileDownloadRequest) String() string {
 func (*QueueFileDownloadRequest) ProtoMessage() {}
 
 func (x *QueueFileDownloadRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[64]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[69]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3710,7 +3939,7 @@ func (x *QueueFileDownloadRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueueFileDownloadRequest.ProtoReflect.Descriptor instead.
 func (*QueueFileDownloadRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{64}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{69}
 }
 
 func (x *QueueFileDownloadRequest) GetServerUuid() string {
@@ -3742,7 +3971,7 @@ type QueueFileDownloadResponse struct {
 
 func (x *QueueFileDownloadResponse) Reset() {
 	*x = QueueFileDownloadResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[65]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[70]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3754,7 +3983,7 @@ func (x *QueueFileDownloadResponse) String() string {
 func (*QueueFileDownloadResponse) ProtoMessage() {}
 
 func (x *QueueFileDownloadResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[65]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[70]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3767,7 +3996,7 @@ func (x *QueueFileDownloadResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueueFileDownloadResponse.ProtoReflect.Descriptor instead.
 func (*QueueFileDownloadResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{65}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{70}
 }
 
 type CancelFileDownloadRequest struct {
@@ -3780,7 +4009,7 @@ type CancelFileDownloadRequest struct {
 
 func (x *CancelFileDownloadRequest) Reset() {
 	*x = CancelFileDownloadRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[66]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[71]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3792,7 +4021,7 @@ func (x *CancelFileDownloadRequest) String() string {
 func (*CancelFileDownloadRequest) ProtoMessage() {}
 
 func (x *CancelFileDownloadRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[66]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[71]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3805,7 +4034,7 @@ func (x *CancelFileDownloadRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelFileDownloadRequest.ProtoReflect.Descriptor instead.
 func (*CancelFileDownloadRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{66}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{71}
 }
 
 func (x *CancelFileDownloadRequest) GetUuid() string {
@@ -3823,7 +4052,7 @@ type CancelFileDownloadResponse struct {
 
 func (x *CancelFileDownloadResponse) Reset() {
 	*x = CancelFileDownloadResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[67]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[72]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3835,7 +4064,7 @@ func (x *CancelFileDownloadResponse) String() string {
 func (*CancelFileDownloadResponse) ProtoMessage() {}
 
 func (x *CancelFileDownloadResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[67]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[72]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3848,7 +4077,7 @@ func (x *CancelFileDownloadResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelFileDownloadResponse.ProtoReflect.Descriptor instead.
 func (*CancelFileDownloadResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{67}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{72}
 }
 
 type RemoveDownloadManagerItemRequest struct {
@@ -3861,7 +4090,7 @@ type RemoveDownloadManagerItemRequest struct {
 
 func (x *RemoveDownloadManagerItemRequest) Reset() {
 	*x = RemoveDownloadManagerItemRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[68]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[73]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3873,7 +4102,7 @@ func (x *RemoveDownloadManagerItemRequest) String() string {
 func (*RemoveDownloadManagerItemRequest) ProtoMessage() {}
 
 func (x *RemoveDownloadManagerItemRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[68]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[73]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3886,7 +4115,7 @@ func (x *RemoveDownloadManagerItemRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveDownloadManagerItemRequest.ProtoReflect.Descriptor instead.
 func (*RemoveDownloadManagerItemRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{68}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{73}
 }
 
 func (x *RemoveDownloadManagerItemRequest) GetUuid() string {
@@ -3904,7 +4133,7 @@ type RemoveDownloadManagerItemResponse struct {
 
 func (x *RemoveDownloadManagerItemResponse) Reset() {
 	*x = RemoveDownloadManagerItemResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[69]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[74]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3916,7 +4145,7 @@ func (x *RemoveDownloadManagerItemResponse) String() string {
 func (*RemoveDownloadManagerItemResponse) ProtoMessage() {}
 
 func (x *RemoveDownloadManagerItemResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[69]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[74]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3929,7 +4158,7 @@ func (x *RemoveDownloadManagerItemResponse) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use RemoveDownloadManagerItemResponse.ProtoReflect.Descriptor instead.
 func (*RemoveDownloadManagerItemResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{69}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{74}
 }
 
 type ResumeFileDownloadRequest struct {
@@ -3942,7 +4171,7 @@ type ResumeFileDownloadRequest struct {
 
 func (x *ResumeFileDownloadRequest) Reset() {
 	*x = ResumeFileDownloadRequest{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[70]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[75]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3954,7 +4183,7 @@ func (x *ResumeFileDownloadRequest) String() string {
 func (*ResumeFileDownloadRequest) ProtoMessage() {}
 
 func (x *ResumeFileDownloadRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[70]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[75]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3967,7 +4196,7 @@ func (x *ResumeFileDownloadRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResumeFileDownloadRequest.ProtoReflect.Descriptor instead.
 func (*ResumeFileDownloadRequest) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{70}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{75}
 }
 
 func (x *ResumeFileDownloadRequest) GetUuid() string {
@@ -3985,7 +4214,7 @@ type ResumeFileDownloadResponse struct {
 
 func (x *ResumeFileDownloadResponse) Reset() {
 	*x = ResumeFileDownloadResponse{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[71]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[76]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3997,7 +4226,7 @@ func (x *ResumeFileDownloadResponse) String() string {
 func (*ResumeFileDownloadResponse) ProtoMessage() {}
 
 func (x *ResumeFileDownloadResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[71]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[76]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4010,7 +4239,7 @@ func (x *ResumeFileDownloadResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResumeFileDownloadResponse.ProtoReflect.Descriptor instead.
 func (*ResumeFileDownloadResponse) Descriptor() ([]byte, []int) {
-	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{71}
+	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{76}
 }
 
 type Event_ServerConnStateChange struct {
@@ -4023,7 +4252,7 @@ type Event_ServerConnStateChange struct {
 
 func (x *Event_ServerConnStateChange) Reset() {
 	*x = Event_ServerConnStateChange{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[72]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[77]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4035,7 +4264,7 @@ func (x *Event_ServerConnStateChange) String() string {
 func (*Event_ServerConnStateChange) ProtoMessage() {}
 
 func (x *Event_ServerConnStateChange) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[72]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[77]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4068,7 +4297,7 @@ type Event_ClientOnline struct {
 
 func (x *Event_ClientOnline) Reset() {
 	*x = Event_ClientOnline{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[73]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[78]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4080,7 +4309,7 @@ func (x *Event_ClientOnline) String() string {
 func (*Event_ClientOnline) ProtoMessage() {}
 
 func (x *Event_ClientOnline) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[73]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[78]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4113,7 +4342,7 @@ type Event_ClientOffline struct {
 
 func (x *Event_ClientOffline) Reset() {
 	*x = Event_ClientOffline{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[74]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[79]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4125,7 +4354,7 @@ func (x *Event_ClientOffline) String() string {
 func (*Event_ClientOffline) ProtoMessage() {}
 
 func (x *Event_ClientOffline) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[74]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[79]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4158,7 +4387,7 @@ type Event_NewUpdate struct {
 
 func (x *Event_NewUpdate) Reset() {
 	*x = Event_NewUpdate{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[75]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[80]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4170,7 +4399,7 @@ func (x *Event_NewUpdate) String() string {
 func (*Event_NewUpdate) ProtoMessage() {}
 
 func (x *Event_NewUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[75]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[80]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4203,7 +4432,7 @@ type Event_DownloadStatusUpdates struct {
 
 func (x *Event_DownloadStatusUpdates) Reset() {
 	*x = Event_DownloadStatusUpdates{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[76]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[81]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4215,7 +4444,7 @@ func (x *Event_DownloadStatusUpdates) String() string {
 func (*Event_DownloadStatusUpdates) ProtoMessage() {}
 
 func (x *Event_DownloadStatusUpdates) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[76]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[81]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4248,7 +4477,7 @@ type Event_NewDmItem struct {
 
 func (x *Event_NewDmItem) Reset() {
 	*x = Event_NewDmItem{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[77]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[82]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4260,7 +4489,7 @@ func (x *Event_NewDmItem) String() string {
 func (*Event_NewDmItem) ProtoMessage() {}
 
 func (x *Event_NewDmItem) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[77]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[82]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4293,7 +4522,7 @@ type Event_DmItemRemoved struct {
 
 func (x *Event_DmItemRemoved) Reset() {
 	*x = Event_DmItemRemoved{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[78]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[83]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4305,7 +4534,7 @@ func (x *Event_DmItemRemoved) String() string {
 func (*Event_DmItemRemoved) ProtoMessage() {}
 
 func (x *Event_DmItemRemoved) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[78]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[83]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4344,7 +4573,7 @@ type DownloadManagerItem_Download struct {
 
 func (x *DownloadManagerItem_Download) Reset() {
 	*x = DownloadManagerItem_Download{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[79]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[84]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4356,7 +4585,7 @@ func (x *DownloadManagerItem_Download) String() string {
 func (*DownloadManagerItem_Download) ProtoMessage() {}
 
 func (x *DownloadManagerItem_Download) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[79]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[84]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4410,7 +4639,7 @@ type ServerInfo_State struct {
 
 func (x *ServerInfo_State) Reset() {
 	*x = ServerInfo_State{}
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[80]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[85]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4422,7 +4651,7 @@ func (x *ServerInfo_State) String() string {
 func (*ServerInfo_State) ProtoMessage() {}
 
 func (x *ServerInfo_State) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[80]
+	mi := &file_pb_clientrpc_v1_rpc_proto_msgTypes[85]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4580,7 +4809,11 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\x15advertise_private_ips\x18\x05 \x01(\bR\x13advertisePrivateIps\x12=\n" +
 	"\x1bdisable_public_ip_discovery\x18\x06 \x01(\bR\x18disablePublicIpDiscovery\x12!\n" +
 	"\fdisable_upnp\x18\a \x01(\bR\vdisableUpnp\x12&\n" +
-	"\x0fupnp_timeout_ms\x18\b \x01(\rR\rupnpTimeoutMs\"\x15\n" +
+	"\x0fupnp_timeout_ms\x18\b \x01(\rR\rupnpTimeoutMs\"\xb1\x01\n" +
+	"\x10TransferSettings\x121\n" +
+	"\x14download_concurrency\x18\x01 \x01(\rR\x13downloadConcurrency\x126\n" +
+	"\x17incomplete_download_dir\x18\x02 \x01(\tR\x15incompleteDownloadDir\x122\n" +
+	"\x15complete_download_dir\x18\x03 \x01(\tR\x13completeDownloadDir\"\x15\n" +
 	"\x13StreamEventsRequest\"}\n" +
 	"\x14StreamEventsResponse\x12,\n" +
 	"\x05event\x18\x01 \x01(\v2\x16.pb.clientrpc.v1.EventR\x05event\x127\n" +
@@ -4683,7 +4916,13 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\bsettings\x18\x01 \x01(\v2\x1f.pb.clientrpc.v1.DirectSettingsR\bsettings\"Z\n" +
 	"\x1bUpdateDirectSettingsRequest\x12;\n" +
 	"\bsettings\x18\x01 \x01(\v2\x1f.pb.clientrpc.v1.DirectSettingsR\bsettings\"\x1e\n" +
-	"\x1cUpdateDirectSettingsResponse\"H\n" +
+	"\x1cUpdateDirectSettingsResponse\"\x1c\n" +
+	"\x1aGetTransferSettingsRequest\"\\\n" +
+	"\x1bGetTransferSettingsResponse\x12=\n" +
+	"\bsettings\x18\x01 \x01(\v2!.pb.clientrpc.v1.TransferSettingsR\bsettings\"\\\n" +
+	"\x1dUpdateTransferSettingsRequest\x12;\n" +
+	"\asetting\x18\x01 \x01(\v2!.pb.clientrpc.v1.TransferSettingsR\asetting\" \n" +
+	"\x1eUpdateTransferSettingsResponse\"H\n" +
 	"\x11IndexShareRequest\x12\x1f\n" +
 	"\vserver_uuid\x18\x01 \x01(\tR\n" +
 	"serverUuid\x12\x12\n" +
@@ -4738,7 +4977,7 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\x1dSERVER_CONN_STATE_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18SERVER_CONN_STATE_CLOSED\x10\x01\x12\x1d\n" +
 	"\x19SERVER_CONN_STATE_OPENING\x10\x02\x12\x1a\n" +
-	"\x16SERVER_CONN_STATE_OPEN\x10\x032\xf6\x17\n" +
+	"\x16SERVER_CONN_STATE_OPEN\x10\x032\xe7\x19\n" +
 	"\x10ClientRpcService\x12Y\n" +
 	"\n" +
 	"StreamLogs\x12\".pb.clientrpc.v1.StreamLogsRequest\x1a#.pb.clientrpc.v1.StreamLogsResponse\"\x000\x01\x12_\n" +
@@ -4762,7 +5001,9 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\rServerConnect\x12%.pb.clientrpc.v1.ServerConnectRequest\x1a&.pb.clientrpc.v1.ServerConnectResponse\"\x00\x12i\n" +
 	"\x10ServerDisconnect\x12(.pb.clientrpc.v1.ServerDisconnectRequest\x1a).pb.clientrpc.v1.ServerDisconnectResponse\"\x00\x12l\n" +
 	"\x11GetDirectSettings\x12).pb.clientrpc.v1.GetDirectSettingsRequest\x1a*.pb.clientrpc.v1.GetDirectSettingsResponse\"\x00\x12u\n" +
-	"\x14UpdateDirectSettings\x12,.pb.clientrpc.v1.UpdateDirectSettingsRequest\x1a-.pb.clientrpc.v1.UpdateDirectSettingsResponse\"\x00\x12W\n" +
+	"\x14UpdateDirectSettings\x12,.pb.clientrpc.v1.UpdateDirectSettingsRequest\x1a-.pb.clientrpc.v1.UpdateDirectSettingsResponse\"\x00\x12r\n" +
+	"\x13GetTransferSettings\x12+.pb.clientrpc.v1.GetTransferSettingsRequest\x1a,.pb.clientrpc.v1.GetTransferSettingsResponse\"\x00\x12{\n" +
+	"\x16UpdateTransferSettings\x12..pb.clientrpc.v1.UpdateTransferSettingsRequest\x1a/.pb.clientrpc.v1.UpdateTransferSettingsResponse\"\x00\x12W\n" +
 	"\n" +
 	"IndexShare\x12\".pb.clientrpc.v1.IndexShareRequest\x1a#.pb.clientrpc.v1.IndexShareResponse\"\x00\x12_\n" +
 	"\fStreamSearch\x12$.pb.clientrpc.v1.StreamSearchRequest\x1a%.pb.clientrpc.v1.StreamSearchResponse\"\x000\x01\x12`\n" +
@@ -4788,7 +5029,7 @@ func file_pb_clientrpc_v1_rpc_proto_rawDescGZIP() []byte {
 }
 
 var file_pb_clientrpc_v1_rpc_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_pb_clientrpc_v1_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 81)
+var file_pb_clientrpc_v1_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 86)
 var file_pb_clientrpc_v1_rpc_proto_goTypes = []any{
 	(DownloadStatus)(0),                       // 0: pb.clientrpc.v1.DownloadStatus
 	(ServerConnState)(0),                      // 1: pb.clientrpc.v1.ServerConnState
@@ -4806,90 +5047,95 @@ var file_pb_clientrpc_v1_rpc_proto_goTypes = []any{
 	(*OnlineUserInfo)(nil),                    // 13: pb.clientrpc.v1.OnlineUserInfo
 	(*FileMeta)(nil),                          // 14: pb.clientrpc.v1.FileMeta
 	(*DirectSettings)(nil),                    // 15: pb.clientrpc.v1.DirectSettings
-	(*StreamEventsRequest)(nil),               // 16: pb.clientrpc.v1.StreamEventsRequest
-	(*StreamEventsResponse)(nil),              // 17: pb.clientrpc.v1.StreamEventsResponse
-	(*StreamLogsRequest)(nil),                 // 18: pb.clientrpc.v1.StreamLogsRequest
-	(*StreamLogsResponse)(nil),                // 19: pb.clientrpc.v1.StreamLogsResponse
-	(*StopRequest)(nil),                       // 20: pb.clientrpc.v1.StopRequest
-	(*StopResponse)(nil),                      // 21: pb.clientrpc.v1.StopResponse
-	(*GetClientInfoRequest)(nil),              // 22: pb.clientrpc.v1.GetClientInfoRequest
-	(*GetClientInfoResponse)(nil),             // 23: pb.clientrpc.v1.GetClientInfoResponse
-	(*GetServersRequest)(nil),                 // 24: pb.clientrpc.v1.GetServersRequest
-	(*GetServersResponse)(nil),                // 25: pb.clientrpc.v1.GetServersResponse
-	(*CreateServerRequest)(nil),               // 26: pb.clientrpc.v1.CreateServerRequest
-	(*CreateServerResponse)(nil),              // 27: pb.clientrpc.v1.CreateServerResponse
-	(*DeleteServerRequest)(nil),               // 28: pb.clientrpc.v1.DeleteServerRequest
-	(*DeleteServerResponse)(nil),              // 29: pb.clientrpc.v1.DeleteServerResponse
-	(*ConnectServerRequest)(nil),              // 30: pb.clientrpc.v1.ConnectServerRequest
-	(*ConnectServerResponse)(nil),             // 31: pb.clientrpc.v1.ConnectServerResponse
-	(*DisconnectServerRequest)(nil),           // 32: pb.clientrpc.v1.DisconnectServerRequest
-	(*DisconnectServerResponse)(nil),          // 33: pb.clientrpc.v1.DisconnectServerResponse
-	(*UpdateServerRequest)(nil),               // 34: pb.clientrpc.v1.UpdateServerRequest
-	(*UpdateServerResponse)(nil),              // 35: pb.clientrpc.v1.UpdateServerResponse
-	(*GetSharesRequest)(nil),                  // 36: pb.clientrpc.v1.GetSharesRequest
-	(*GetSharesResponse)(nil),                 // 37: pb.clientrpc.v1.GetSharesResponse
-	(*CreateShareRequest)(nil),                // 38: pb.clientrpc.v1.CreateShareRequest
-	(*CreateShareResponse)(nil),               // 39: pb.clientrpc.v1.CreateShareResponse
-	(*DeleteShareRequest)(nil),                // 40: pb.clientrpc.v1.DeleteShareRequest
-	(*DeleteShareResponse)(nil),               // 41: pb.clientrpc.v1.DeleteShareResponse
-	(*GetDirFilesRequest)(nil),                // 42: pb.clientrpc.v1.GetDirFilesRequest
-	(*GetDirFilesResponse)(nil),               // 43: pb.clientrpc.v1.GetDirFilesResponse
-	(*GetFileMetaRequest)(nil),                // 44: pb.clientrpc.v1.GetFileMetaRequest
-	(*GetFileMetaResponse)(nil),               // 45: pb.clientrpc.v1.GetFileMetaResponse
-	(*GetOnlineUsersRequest)(nil),             // 46: pb.clientrpc.v1.GetOnlineUsersRequest
-	(*GetOnlineUsersResponse)(nil),            // 47: pb.clientrpc.v1.GetOnlineUsersResponse
-	(*ChangeAccountPasswordRequest)(nil),      // 48: pb.clientrpc.v1.ChangeAccountPasswordRequest
-	(*ChangeAccountPasswordResponse)(nil),     // 49: pb.clientrpc.v1.ChangeAccountPasswordResponse
-	(*ServerConnectRequest)(nil),              // 50: pb.clientrpc.v1.ServerConnectRequest
-	(*ServerConnectResponse)(nil),             // 51: pb.clientrpc.v1.ServerConnectResponse
-	(*ServerDisconnectRequest)(nil),           // 52: pb.clientrpc.v1.ServerDisconnectRequest
-	(*ServerDisconnectResponse)(nil),          // 53: pb.clientrpc.v1.ServerDisconnectResponse
-	(*GetDirectSettingsRequest)(nil),          // 54: pb.clientrpc.v1.GetDirectSettingsRequest
-	(*GetDirectSettingsResponse)(nil),         // 55: pb.clientrpc.v1.GetDirectSettingsResponse
-	(*UpdateDirectSettingsRequest)(nil),       // 56: pb.clientrpc.v1.UpdateDirectSettingsRequest
-	(*UpdateDirectSettingsResponse)(nil),      // 57: pb.clientrpc.v1.UpdateDirectSettingsResponse
-	(*IndexShareRequest)(nil),                 // 58: pb.clientrpc.v1.IndexShareRequest
-	(*IndexShareResponse)(nil),                // 59: pb.clientrpc.v1.IndexShareResponse
-	(*StreamSearchRequest)(nil),               // 60: pb.clientrpc.v1.StreamSearchRequest
-	(*StreamSearchResponse)(nil),              // 61: pb.clientrpc.v1.StreamSearchResponse
-	(*GetUpdateInfoRequest)(nil),              // 62: pb.clientrpc.v1.GetUpdateInfoRequest
-	(*GetUpdateInfoResponse)(nil),             // 63: pb.clientrpc.v1.GetUpdateInfoResponse
-	(*CheckForNewUpdateRequest)(nil),          // 64: pb.clientrpc.v1.CheckForNewUpdateRequest
-	(*CheckForNewUpdateResponse)(nil),         // 65: pb.clientrpc.v1.CheckForNewUpdateResponse
-	(*GetDownloadManagerItemsRequest)(nil),    // 66: pb.clientrpc.v1.GetDownloadManagerItemsRequest
-	(*GetDownloadManagerItemsResponse)(nil),   // 67: pb.clientrpc.v1.GetDownloadManagerItemsResponse
-	(*QueueFileDownloadRequest)(nil),          // 68: pb.clientrpc.v1.QueueFileDownloadRequest
-	(*QueueFileDownloadResponse)(nil),         // 69: pb.clientrpc.v1.QueueFileDownloadResponse
-	(*CancelFileDownloadRequest)(nil),         // 70: pb.clientrpc.v1.CancelFileDownloadRequest
-	(*CancelFileDownloadResponse)(nil),        // 71: pb.clientrpc.v1.CancelFileDownloadResponse
-	(*RemoveDownloadManagerItemRequest)(nil),  // 72: pb.clientrpc.v1.RemoveDownloadManagerItemRequest
-	(*RemoveDownloadManagerItemResponse)(nil), // 73: pb.clientrpc.v1.RemoveDownloadManagerItemResponse
-	(*ResumeFileDownloadRequest)(nil),         // 74: pb.clientrpc.v1.ResumeFileDownloadRequest
-	(*ResumeFileDownloadResponse)(nil),        // 75: pb.clientrpc.v1.ResumeFileDownloadResponse
-	(*Event_ServerConnStateChange)(nil),       // 76: pb.clientrpc.v1.Event.ServerConnStateChange
-	(*Event_ClientOnline)(nil),                // 77: pb.clientrpc.v1.Event.ClientOnline
-	(*Event_ClientOffline)(nil),               // 78: pb.clientrpc.v1.Event.ClientOffline
-	(*Event_NewUpdate)(nil),                   // 79: pb.clientrpc.v1.Event.NewUpdate
-	(*Event_DownloadStatusUpdates)(nil),       // 80: pb.clientrpc.v1.Event.DownloadStatusUpdates
-	(*Event_NewDmItem)(nil),                   // 81: pb.clientrpc.v1.Event.NewDmItem
-	(*Event_DmItemRemoved)(nil),               // 82: pb.clientrpc.v1.Event.DmItemRemoved
-	(*DownloadManagerItem_Download)(nil),      // 83: pb.clientrpc.v1.DownloadManagerItem.Download
-	(*ServerInfo_State)(nil),                  // 84: pb.clientrpc.v1.ServerInfo.State
+	(*TransferSettings)(nil),                  // 16: pb.clientrpc.v1.TransferSettings
+	(*StreamEventsRequest)(nil),               // 17: pb.clientrpc.v1.StreamEventsRequest
+	(*StreamEventsResponse)(nil),              // 18: pb.clientrpc.v1.StreamEventsResponse
+	(*StreamLogsRequest)(nil),                 // 19: pb.clientrpc.v1.StreamLogsRequest
+	(*StreamLogsResponse)(nil),                // 20: pb.clientrpc.v1.StreamLogsResponse
+	(*StopRequest)(nil),                       // 21: pb.clientrpc.v1.StopRequest
+	(*StopResponse)(nil),                      // 22: pb.clientrpc.v1.StopResponse
+	(*GetClientInfoRequest)(nil),              // 23: pb.clientrpc.v1.GetClientInfoRequest
+	(*GetClientInfoResponse)(nil),             // 24: pb.clientrpc.v1.GetClientInfoResponse
+	(*GetServersRequest)(nil),                 // 25: pb.clientrpc.v1.GetServersRequest
+	(*GetServersResponse)(nil),                // 26: pb.clientrpc.v1.GetServersResponse
+	(*CreateServerRequest)(nil),               // 27: pb.clientrpc.v1.CreateServerRequest
+	(*CreateServerResponse)(nil),              // 28: pb.clientrpc.v1.CreateServerResponse
+	(*DeleteServerRequest)(nil),               // 29: pb.clientrpc.v1.DeleteServerRequest
+	(*DeleteServerResponse)(nil),              // 30: pb.clientrpc.v1.DeleteServerResponse
+	(*ConnectServerRequest)(nil),              // 31: pb.clientrpc.v1.ConnectServerRequest
+	(*ConnectServerResponse)(nil),             // 32: pb.clientrpc.v1.ConnectServerResponse
+	(*DisconnectServerRequest)(nil),           // 33: pb.clientrpc.v1.DisconnectServerRequest
+	(*DisconnectServerResponse)(nil),          // 34: pb.clientrpc.v1.DisconnectServerResponse
+	(*UpdateServerRequest)(nil),               // 35: pb.clientrpc.v1.UpdateServerRequest
+	(*UpdateServerResponse)(nil),              // 36: pb.clientrpc.v1.UpdateServerResponse
+	(*GetSharesRequest)(nil),                  // 37: pb.clientrpc.v1.GetSharesRequest
+	(*GetSharesResponse)(nil),                 // 38: pb.clientrpc.v1.GetSharesResponse
+	(*CreateShareRequest)(nil),                // 39: pb.clientrpc.v1.CreateShareRequest
+	(*CreateShareResponse)(nil),               // 40: pb.clientrpc.v1.CreateShareResponse
+	(*DeleteShareRequest)(nil),                // 41: pb.clientrpc.v1.DeleteShareRequest
+	(*DeleteShareResponse)(nil),               // 42: pb.clientrpc.v1.DeleteShareResponse
+	(*GetDirFilesRequest)(nil),                // 43: pb.clientrpc.v1.GetDirFilesRequest
+	(*GetDirFilesResponse)(nil),               // 44: pb.clientrpc.v1.GetDirFilesResponse
+	(*GetFileMetaRequest)(nil),                // 45: pb.clientrpc.v1.GetFileMetaRequest
+	(*GetFileMetaResponse)(nil),               // 46: pb.clientrpc.v1.GetFileMetaResponse
+	(*GetOnlineUsersRequest)(nil),             // 47: pb.clientrpc.v1.GetOnlineUsersRequest
+	(*GetOnlineUsersResponse)(nil),            // 48: pb.clientrpc.v1.GetOnlineUsersResponse
+	(*ChangeAccountPasswordRequest)(nil),      // 49: pb.clientrpc.v1.ChangeAccountPasswordRequest
+	(*ChangeAccountPasswordResponse)(nil),     // 50: pb.clientrpc.v1.ChangeAccountPasswordResponse
+	(*ServerConnectRequest)(nil),              // 51: pb.clientrpc.v1.ServerConnectRequest
+	(*ServerConnectResponse)(nil),             // 52: pb.clientrpc.v1.ServerConnectResponse
+	(*ServerDisconnectRequest)(nil),           // 53: pb.clientrpc.v1.ServerDisconnectRequest
+	(*ServerDisconnectResponse)(nil),          // 54: pb.clientrpc.v1.ServerDisconnectResponse
+	(*GetDirectSettingsRequest)(nil),          // 55: pb.clientrpc.v1.GetDirectSettingsRequest
+	(*GetDirectSettingsResponse)(nil),         // 56: pb.clientrpc.v1.GetDirectSettingsResponse
+	(*UpdateDirectSettingsRequest)(nil),       // 57: pb.clientrpc.v1.UpdateDirectSettingsRequest
+	(*UpdateDirectSettingsResponse)(nil),      // 58: pb.clientrpc.v1.UpdateDirectSettingsResponse
+	(*GetTransferSettingsRequest)(nil),        // 59: pb.clientrpc.v1.GetTransferSettingsRequest
+	(*GetTransferSettingsResponse)(nil),       // 60: pb.clientrpc.v1.GetTransferSettingsResponse
+	(*UpdateTransferSettingsRequest)(nil),     // 61: pb.clientrpc.v1.UpdateTransferSettingsRequest
+	(*UpdateTransferSettingsResponse)(nil),    // 62: pb.clientrpc.v1.UpdateTransferSettingsResponse
+	(*IndexShareRequest)(nil),                 // 63: pb.clientrpc.v1.IndexShareRequest
+	(*IndexShareResponse)(nil),                // 64: pb.clientrpc.v1.IndexShareResponse
+	(*StreamSearchRequest)(nil),               // 65: pb.clientrpc.v1.StreamSearchRequest
+	(*StreamSearchResponse)(nil),              // 66: pb.clientrpc.v1.StreamSearchResponse
+	(*GetUpdateInfoRequest)(nil),              // 67: pb.clientrpc.v1.GetUpdateInfoRequest
+	(*GetUpdateInfoResponse)(nil),             // 68: pb.clientrpc.v1.GetUpdateInfoResponse
+	(*CheckForNewUpdateRequest)(nil),          // 69: pb.clientrpc.v1.CheckForNewUpdateRequest
+	(*CheckForNewUpdateResponse)(nil),         // 70: pb.clientrpc.v1.CheckForNewUpdateResponse
+	(*GetDownloadManagerItemsRequest)(nil),    // 71: pb.clientrpc.v1.GetDownloadManagerItemsRequest
+	(*GetDownloadManagerItemsResponse)(nil),   // 72: pb.clientrpc.v1.GetDownloadManagerItemsResponse
+	(*QueueFileDownloadRequest)(nil),          // 73: pb.clientrpc.v1.QueueFileDownloadRequest
+	(*QueueFileDownloadResponse)(nil),         // 74: pb.clientrpc.v1.QueueFileDownloadResponse
+	(*CancelFileDownloadRequest)(nil),         // 75: pb.clientrpc.v1.CancelFileDownloadRequest
+	(*CancelFileDownloadResponse)(nil),        // 76: pb.clientrpc.v1.CancelFileDownloadResponse
+	(*RemoveDownloadManagerItemRequest)(nil),  // 77: pb.clientrpc.v1.RemoveDownloadManagerItemRequest
+	(*RemoveDownloadManagerItemResponse)(nil), // 78: pb.clientrpc.v1.RemoveDownloadManagerItemResponse
+	(*ResumeFileDownloadRequest)(nil),         // 79: pb.clientrpc.v1.ResumeFileDownloadRequest
+	(*ResumeFileDownloadResponse)(nil),        // 80: pb.clientrpc.v1.ResumeFileDownloadResponse
+	(*Event_ServerConnStateChange)(nil),       // 81: pb.clientrpc.v1.Event.ServerConnStateChange
+	(*Event_ClientOnline)(nil),                // 82: pb.clientrpc.v1.Event.ClientOnline
+	(*Event_ClientOffline)(nil),               // 83: pb.clientrpc.v1.Event.ClientOffline
+	(*Event_NewUpdate)(nil),                   // 84: pb.clientrpc.v1.Event.NewUpdate
+	(*Event_DownloadStatusUpdates)(nil),       // 85: pb.clientrpc.v1.Event.DownloadStatusUpdates
+	(*Event_NewDmItem)(nil),                   // 86: pb.clientrpc.v1.Event.NewDmItem
+	(*Event_DmItemRemoved)(nil),               // 87: pb.clientrpc.v1.Event.DmItemRemoved
+	(*DownloadManagerItem_Download)(nil),      // 88: pb.clientrpc.v1.DownloadManagerItem.Download
+	(*ServerInfo_State)(nil),                  // 89: pb.clientrpc.v1.ServerInfo.State
 }
 var file_pb_clientrpc_v1_rpc_proto_depIdxs = []int32{
 	2,  // 0: pb.clientrpc.v1.Event.type:type_name -> pb.clientrpc.v1.Event.Type
-	76, // 1: pb.clientrpc.v1.Event.server_conn:type_name -> pb.clientrpc.v1.Event.ServerConnStateChange
-	77, // 2: pb.clientrpc.v1.Event.client_online:type_name -> pb.clientrpc.v1.Event.ClientOnline
-	78, // 3: pb.clientrpc.v1.Event.client_offline:type_name -> pb.clientrpc.v1.Event.ClientOffline
-	79, // 4: pb.clientrpc.v1.Event.new_update:type_name -> pb.clientrpc.v1.Event.NewUpdate
-	80, // 5: pb.clientrpc.v1.Event.download_status_updates:type_name -> pb.clientrpc.v1.Event.DownloadStatusUpdates
-	81, // 6: pb.clientrpc.v1.Event.new_dm_item:type_name -> pb.clientrpc.v1.Event.NewDmItem
-	82, // 7: pb.clientrpc.v1.Event.dm_item_removed:type_name -> pb.clientrpc.v1.Event.DmItemRemoved
+	81, // 1: pb.clientrpc.v1.Event.server_conn:type_name -> pb.clientrpc.v1.Event.ServerConnStateChange
+	82, // 2: pb.clientrpc.v1.Event.client_online:type_name -> pb.clientrpc.v1.Event.ClientOnline
+	83, // 3: pb.clientrpc.v1.Event.client_offline:type_name -> pb.clientrpc.v1.Event.ClientOffline
+	84, // 4: pb.clientrpc.v1.Event.new_update:type_name -> pb.clientrpc.v1.Event.NewUpdate
+	85, // 5: pb.clientrpc.v1.Event.download_status_updates:type_name -> pb.clientrpc.v1.Event.DownloadStatusUpdates
+	86, // 6: pb.clientrpc.v1.Event.new_dm_item:type_name -> pb.clientrpc.v1.Event.NewDmItem
+	87, // 7: pb.clientrpc.v1.Event.dm_item_removed:type_name -> pb.clientrpc.v1.Event.DmItemRemoved
 	6,  // 8: pb.clientrpc.v1.LogMessage.attrs:type_name -> pb.clientrpc.v1.LogMessageAttr
 	0,  // 9: pb.clientrpc.v1.DownloadStatusUpdate.status:type_name -> pb.clientrpc.v1.DownloadStatus
 	3,  // 10: pb.clientrpc.v1.DownloadManagerItem.type:type_name -> pb.clientrpc.v1.DownloadManagerItem.Type
-	83, // 11: pb.clientrpc.v1.DownloadManagerItem.download:type_name -> pb.clientrpc.v1.DownloadManagerItem.Download
-	84, // 12: pb.clientrpc.v1.ServerInfo.state:type_name -> pb.clientrpc.v1.ServerInfo.State
+	88, // 11: pb.clientrpc.v1.DownloadManagerItem.download:type_name -> pb.clientrpc.v1.DownloadManagerItem.Download
+	89, // 12: pb.clientrpc.v1.ServerInfo.state:type_name -> pb.clientrpc.v1.ServerInfo.State
 	4,  // 13: pb.clientrpc.v1.StreamEventsResponse.event:type_name -> pb.clientrpc.v1.Event
 	5,  // 14: pb.clientrpc.v1.StreamEventsResponse.context:type_name -> pb.clientrpc.v1.EventContext
 	7,  // 15: pb.clientrpc.v1.StreamLogsResponse.logs:type_name -> pb.clientrpc.v1.LogMessage
@@ -4903,83 +5149,89 @@ var file_pb_clientrpc_v1_rpc_proto_depIdxs = []int32{
 	13, // 23: pb.clientrpc.v1.GetOnlineUsersResponse.users:type_name -> pb.clientrpc.v1.OnlineUserInfo
 	15, // 24: pb.clientrpc.v1.GetDirectSettingsResponse.settings:type_name -> pb.clientrpc.v1.DirectSettings
 	15, // 25: pb.clientrpc.v1.UpdateDirectSettingsRequest.settings:type_name -> pb.clientrpc.v1.DirectSettings
-	14, // 26: pb.clientrpc.v1.StreamSearchResponse.file:type_name -> pb.clientrpc.v1.FileMeta
-	10, // 27: pb.clientrpc.v1.GetUpdateInfoResponse.current_info:type_name -> pb.clientrpc.v1.UpdateInfo
-	10, // 28: pb.clientrpc.v1.GetUpdateInfoResponse.new_info:type_name -> pb.clientrpc.v1.UpdateInfo
-	10, // 29: pb.clientrpc.v1.CheckForNewUpdateResponse.new_info:type_name -> pb.clientrpc.v1.UpdateInfo
-	9,  // 30: pb.clientrpc.v1.GetDownloadManagerItemsResponse.items:type_name -> pb.clientrpc.v1.DownloadManagerItem
-	1,  // 31: pb.clientrpc.v1.Event.ServerConnStateChange.state:type_name -> pb.clientrpc.v1.ServerConnState
-	13, // 32: pb.clientrpc.v1.Event.ClientOnline.info:type_name -> pb.clientrpc.v1.OnlineUserInfo
-	10, // 33: pb.clientrpc.v1.Event.NewUpdate.info:type_name -> pb.clientrpc.v1.UpdateInfo
-	8,  // 34: pb.clientrpc.v1.Event.DownloadStatusUpdates.files:type_name -> pb.clientrpc.v1.DownloadStatusUpdate
-	9,  // 35: pb.clientrpc.v1.Event.NewDmItem.item:type_name -> pb.clientrpc.v1.DownloadManagerItem
-	0,  // 36: pb.clientrpc.v1.DownloadManagerItem.Download.status:type_name -> pb.clientrpc.v1.DownloadStatus
-	1,  // 37: pb.clientrpc.v1.ServerInfo.State.conn_state:type_name -> pb.clientrpc.v1.ServerConnState
-	18, // 38: pb.clientrpc.v1.ClientRpcService.StreamLogs:input_type -> pb.clientrpc.v1.StreamLogsRequest
-	16, // 39: pb.clientrpc.v1.ClientRpcService.StreamEvents:input_type -> pb.clientrpc.v1.StreamEventsRequest
-	20, // 40: pb.clientrpc.v1.ClientRpcService.Stop:input_type -> pb.clientrpc.v1.StopRequest
-	22, // 41: pb.clientrpc.v1.ClientRpcService.GetClientInfo:input_type -> pb.clientrpc.v1.GetClientInfoRequest
-	24, // 42: pb.clientrpc.v1.ClientRpcService.GetServers:input_type -> pb.clientrpc.v1.GetServersRequest
-	26, // 43: pb.clientrpc.v1.ClientRpcService.CreateServer:input_type -> pb.clientrpc.v1.CreateServerRequest
-	28, // 44: pb.clientrpc.v1.ClientRpcService.DeleteServer:input_type -> pb.clientrpc.v1.DeleteServerRequest
-	30, // 45: pb.clientrpc.v1.ClientRpcService.ConnectServer:input_type -> pb.clientrpc.v1.ConnectServerRequest
-	32, // 46: pb.clientrpc.v1.ClientRpcService.DisconnectServer:input_type -> pb.clientrpc.v1.DisconnectServerRequest
-	34, // 47: pb.clientrpc.v1.ClientRpcService.UpdateServer:input_type -> pb.clientrpc.v1.UpdateServerRequest
-	36, // 48: pb.clientrpc.v1.ClientRpcService.GetShares:input_type -> pb.clientrpc.v1.GetSharesRequest
-	38, // 49: pb.clientrpc.v1.ClientRpcService.CreateShare:input_type -> pb.clientrpc.v1.CreateShareRequest
-	40, // 50: pb.clientrpc.v1.ClientRpcService.DeleteShare:input_type -> pb.clientrpc.v1.DeleteShareRequest
-	42, // 51: pb.clientrpc.v1.ClientRpcService.GetDirFiles:input_type -> pb.clientrpc.v1.GetDirFilesRequest
-	44, // 52: pb.clientrpc.v1.ClientRpcService.GetFileMeta:input_type -> pb.clientrpc.v1.GetFileMetaRequest
-	46, // 53: pb.clientrpc.v1.ClientRpcService.GetOnlineUsers:input_type -> pb.clientrpc.v1.GetOnlineUsersRequest
-	48, // 54: pb.clientrpc.v1.ClientRpcService.ChangeAccountPassword:input_type -> pb.clientrpc.v1.ChangeAccountPasswordRequest
-	50, // 55: pb.clientrpc.v1.ClientRpcService.ServerConnect:input_type -> pb.clientrpc.v1.ServerConnectRequest
-	52, // 56: pb.clientrpc.v1.ClientRpcService.ServerDisconnect:input_type -> pb.clientrpc.v1.ServerDisconnectRequest
-	54, // 57: pb.clientrpc.v1.ClientRpcService.GetDirectSettings:input_type -> pb.clientrpc.v1.GetDirectSettingsRequest
-	56, // 58: pb.clientrpc.v1.ClientRpcService.UpdateDirectSettings:input_type -> pb.clientrpc.v1.UpdateDirectSettingsRequest
-	58, // 59: pb.clientrpc.v1.ClientRpcService.IndexShare:input_type -> pb.clientrpc.v1.IndexShareRequest
-	60, // 60: pb.clientrpc.v1.ClientRpcService.StreamSearch:input_type -> pb.clientrpc.v1.StreamSearchRequest
-	62, // 61: pb.clientrpc.v1.ClientRpcService.GetUpdateInfo:input_type -> pb.clientrpc.v1.GetUpdateInfoRequest
-	64, // 62: pb.clientrpc.v1.ClientRpcService.CheckForNewUpdate:input_type -> pb.clientrpc.v1.CheckForNewUpdateRequest
-	66, // 63: pb.clientrpc.v1.ClientRpcService.GetDownloadManagerItems:input_type -> pb.clientrpc.v1.GetDownloadManagerItemsRequest
-	68, // 64: pb.clientrpc.v1.ClientRpcService.QueueFileDownload:input_type -> pb.clientrpc.v1.QueueFileDownloadRequest
-	70, // 65: pb.clientrpc.v1.ClientRpcService.CancelFileDownload:input_type -> pb.clientrpc.v1.CancelFileDownloadRequest
-	72, // 66: pb.clientrpc.v1.ClientRpcService.RemoveDownloadManagerItem:input_type -> pb.clientrpc.v1.RemoveDownloadManagerItemRequest
-	74, // 67: pb.clientrpc.v1.ClientRpcService.ResumeFileDownload:input_type -> pb.clientrpc.v1.ResumeFileDownloadRequest
-	19, // 68: pb.clientrpc.v1.ClientRpcService.StreamLogs:output_type -> pb.clientrpc.v1.StreamLogsResponse
-	17, // 69: pb.clientrpc.v1.ClientRpcService.StreamEvents:output_type -> pb.clientrpc.v1.StreamEventsResponse
-	21, // 70: pb.clientrpc.v1.ClientRpcService.Stop:output_type -> pb.clientrpc.v1.StopResponse
-	23, // 71: pb.clientrpc.v1.ClientRpcService.GetClientInfo:output_type -> pb.clientrpc.v1.GetClientInfoResponse
-	25, // 72: pb.clientrpc.v1.ClientRpcService.GetServers:output_type -> pb.clientrpc.v1.GetServersResponse
-	27, // 73: pb.clientrpc.v1.ClientRpcService.CreateServer:output_type -> pb.clientrpc.v1.CreateServerResponse
-	29, // 74: pb.clientrpc.v1.ClientRpcService.DeleteServer:output_type -> pb.clientrpc.v1.DeleteServerResponse
-	31, // 75: pb.clientrpc.v1.ClientRpcService.ConnectServer:output_type -> pb.clientrpc.v1.ConnectServerResponse
-	33, // 76: pb.clientrpc.v1.ClientRpcService.DisconnectServer:output_type -> pb.clientrpc.v1.DisconnectServerResponse
-	35, // 77: pb.clientrpc.v1.ClientRpcService.UpdateServer:output_type -> pb.clientrpc.v1.UpdateServerResponse
-	37, // 78: pb.clientrpc.v1.ClientRpcService.GetShares:output_type -> pb.clientrpc.v1.GetSharesResponse
-	39, // 79: pb.clientrpc.v1.ClientRpcService.CreateShare:output_type -> pb.clientrpc.v1.CreateShareResponse
-	41, // 80: pb.clientrpc.v1.ClientRpcService.DeleteShare:output_type -> pb.clientrpc.v1.DeleteShareResponse
-	43, // 81: pb.clientrpc.v1.ClientRpcService.GetDirFiles:output_type -> pb.clientrpc.v1.GetDirFilesResponse
-	45, // 82: pb.clientrpc.v1.ClientRpcService.GetFileMeta:output_type -> pb.clientrpc.v1.GetFileMetaResponse
-	47, // 83: pb.clientrpc.v1.ClientRpcService.GetOnlineUsers:output_type -> pb.clientrpc.v1.GetOnlineUsersResponse
-	49, // 84: pb.clientrpc.v1.ClientRpcService.ChangeAccountPassword:output_type -> pb.clientrpc.v1.ChangeAccountPasswordResponse
-	51, // 85: pb.clientrpc.v1.ClientRpcService.ServerConnect:output_type -> pb.clientrpc.v1.ServerConnectResponse
-	53, // 86: pb.clientrpc.v1.ClientRpcService.ServerDisconnect:output_type -> pb.clientrpc.v1.ServerDisconnectResponse
-	55, // 87: pb.clientrpc.v1.ClientRpcService.GetDirectSettings:output_type -> pb.clientrpc.v1.GetDirectSettingsResponse
-	57, // 88: pb.clientrpc.v1.ClientRpcService.UpdateDirectSettings:output_type -> pb.clientrpc.v1.UpdateDirectSettingsResponse
-	59, // 89: pb.clientrpc.v1.ClientRpcService.IndexShare:output_type -> pb.clientrpc.v1.IndexShareResponse
-	61, // 90: pb.clientrpc.v1.ClientRpcService.StreamSearch:output_type -> pb.clientrpc.v1.StreamSearchResponse
-	63, // 91: pb.clientrpc.v1.ClientRpcService.GetUpdateInfo:output_type -> pb.clientrpc.v1.GetUpdateInfoResponse
-	65, // 92: pb.clientrpc.v1.ClientRpcService.CheckForNewUpdate:output_type -> pb.clientrpc.v1.CheckForNewUpdateResponse
-	67, // 93: pb.clientrpc.v1.ClientRpcService.GetDownloadManagerItems:output_type -> pb.clientrpc.v1.GetDownloadManagerItemsResponse
-	69, // 94: pb.clientrpc.v1.ClientRpcService.QueueFileDownload:output_type -> pb.clientrpc.v1.QueueFileDownloadResponse
-	71, // 95: pb.clientrpc.v1.ClientRpcService.CancelFileDownload:output_type -> pb.clientrpc.v1.CancelFileDownloadResponse
-	73, // 96: pb.clientrpc.v1.ClientRpcService.RemoveDownloadManagerItem:output_type -> pb.clientrpc.v1.RemoveDownloadManagerItemResponse
-	75, // 97: pb.clientrpc.v1.ClientRpcService.ResumeFileDownload:output_type -> pb.clientrpc.v1.ResumeFileDownloadResponse
-	68, // [68:98] is the sub-list for method output_type
-	38, // [38:68] is the sub-list for method input_type
-	38, // [38:38] is the sub-list for extension type_name
-	38, // [38:38] is the sub-list for extension extendee
-	0,  // [0:38] is the sub-list for field type_name
+	16, // 26: pb.clientrpc.v1.GetTransferSettingsResponse.settings:type_name -> pb.clientrpc.v1.TransferSettings
+	16, // 27: pb.clientrpc.v1.UpdateTransferSettingsRequest.setting:type_name -> pb.clientrpc.v1.TransferSettings
+	14, // 28: pb.clientrpc.v1.StreamSearchResponse.file:type_name -> pb.clientrpc.v1.FileMeta
+	10, // 29: pb.clientrpc.v1.GetUpdateInfoResponse.current_info:type_name -> pb.clientrpc.v1.UpdateInfo
+	10, // 30: pb.clientrpc.v1.GetUpdateInfoResponse.new_info:type_name -> pb.clientrpc.v1.UpdateInfo
+	10, // 31: pb.clientrpc.v1.CheckForNewUpdateResponse.new_info:type_name -> pb.clientrpc.v1.UpdateInfo
+	9,  // 32: pb.clientrpc.v1.GetDownloadManagerItemsResponse.items:type_name -> pb.clientrpc.v1.DownloadManagerItem
+	1,  // 33: pb.clientrpc.v1.Event.ServerConnStateChange.state:type_name -> pb.clientrpc.v1.ServerConnState
+	13, // 34: pb.clientrpc.v1.Event.ClientOnline.info:type_name -> pb.clientrpc.v1.OnlineUserInfo
+	10, // 35: pb.clientrpc.v1.Event.NewUpdate.info:type_name -> pb.clientrpc.v1.UpdateInfo
+	8,  // 36: pb.clientrpc.v1.Event.DownloadStatusUpdates.files:type_name -> pb.clientrpc.v1.DownloadStatusUpdate
+	9,  // 37: pb.clientrpc.v1.Event.NewDmItem.item:type_name -> pb.clientrpc.v1.DownloadManagerItem
+	0,  // 38: pb.clientrpc.v1.DownloadManagerItem.Download.status:type_name -> pb.clientrpc.v1.DownloadStatus
+	1,  // 39: pb.clientrpc.v1.ServerInfo.State.conn_state:type_name -> pb.clientrpc.v1.ServerConnState
+	19, // 40: pb.clientrpc.v1.ClientRpcService.StreamLogs:input_type -> pb.clientrpc.v1.StreamLogsRequest
+	17, // 41: pb.clientrpc.v1.ClientRpcService.StreamEvents:input_type -> pb.clientrpc.v1.StreamEventsRequest
+	21, // 42: pb.clientrpc.v1.ClientRpcService.Stop:input_type -> pb.clientrpc.v1.StopRequest
+	23, // 43: pb.clientrpc.v1.ClientRpcService.GetClientInfo:input_type -> pb.clientrpc.v1.GetClientInfoRequest
+	25, // 44: pb.clientrpc.v1.ClientRpcService.GetServers:input_type -> pb.clientrpc.v1.GetServersRequest
+	27, // 45: pb.clientrpc.v1.ClientRpcService.CreateServer:input_type -> pb.clientrpc.v1.CreateServerRequest
+	29, // 46: pb.clientrpc.v1.ClientRpcService.DeleteServer:input_type -> pb.clientrpc.v1.DeleteServerRequest
+	31, // 47: pb.clientrpc.v1.ClientRpcService.ConnectServer:input_type -> pb.clientrpc.v1.ConnectServerRequest
+	33, // 48: pb.clientrpc.v1.ClientRpcService.DisconnectServer:input_type -> pb.clientrpc.v1.DisconnectServerRequest
+	35, // 49: pb.clientrpc.v1.ClientRpcService.UpdateServer:input_type -> pb.clientrpc.v1.UpdateServerRequest
+	37, // 50: pb.clientrpc.v1.ClientRpcService.GetShares:input_type -> pb.clientrpc.v1.GetSharesRequest
+	39, // 51: pb.clientrpc.v1.ClientRpcService.CreateShare:input_type -> pb.clientrpc.v1.CreateShareRequest
+	41, // 52: pb.clientrpc.v1.ClientRpcService.DeleteShare:input_type -> pb.clientrpc.v1.DeleteShareRequest
+	43, // 53: pb.clientrpc.v1.ClientRpcService.GetDirFiles:input_type -> pb.clientrpc.v1.GetDirFilesRequest
+	45, // 54: pb.clientrpc.v1.ClientRpcService.GetFileMeta:input_type -> pb.clientrpc.v1.GetFileMetaRequest
+	47, // 55: pb.clientrpc.v1.ClientRpcService.GetOnlineUsers:input_type -> pb.clientrpc.v1.GetOnlineUsersRequest
+	49, // 56: pb.clientrpc.v1.ClientRpcService.ChangeAccountPassword:input_type -> pb.clientrpc.v1.ChangeAccountPasswordRequest
+	51, // 57: pb.clientrpc.v1.ClientRpcService.ServerConnect:input_type -> pb.clientrpc.v1.ServerConnectRequest
+	53, // 58: pb.clientrpc.v1.ClientRpcService.ServerDisconnect:input_type -> pb.clientrpc.v1.ServerDisconnectRequest
+	55, // 59: pb.clientrpc.v1.ClientRpcService.GetDirectSettings:input_type -> pb.clientrpc.v1.GetDirectSettingsRequest
+	57, // 60: pb.clientrpc.v1.ClientRpcService.UpdateDirectSettings:input_type -> pb.clientrpc.v1.UpdateDirectSettingsRequest
+	59, // 61: pb.clientrpc.v1.ClientRpcService.GetTransferSettings:input_type -> pb.clientrpc.v1.GetTransferSettingsRequest
+	61, // 62: pb.clientrpc.v1.ClientRpcService.UpdateTransferSettings:input_type -> pb.clientrpc.v1.UpdateTransferSettingsRequest
+	63, // 63: pb.clientrpc.v1.ClientRpcService.IndexShare:input_type -> pb.clientrpc.v1.IndexShareRequest
+	65, // 64: pb.clientrpc.v1.ClientRpcService.StreamSearch:input_type -> pb.clientrpc.v1.StreamSearchRequest
+	67, // 65: pb.clientrpc.v1.ClientRpcService.GetUpdateInfo:input_type -> pb.clientrpc.v1.GetUpdateInfoRequest
+	69, // 66: pb.clientrpc.v1.ClientRpcService.CheckForNewUpdate:input_type -> pb.clientrpc.v1.CheckForNewUpdateRequest
+	71, // 67: pb.clientrpc.v1.ClientRpcService.GetDownloadManagerItems:input_type -> pb.clientrpc.v1.GetDownloadManagerItemsRequest
+	73, // 68: pb.clientrpc.v1.ClientRpcService.QueueFileDownload:input_type -> pb.clientrpc.v1.QueueFileDownloadRequest
+	75, // 69: pb.clientrpc.v1.ClientRpcService.CancelFileDownload:input_type -> pb.clientrpc.v1.CancelFileDownloadRequest
+	77, // 70: pb.clientrpc.v1.ClientRpcService.RemoveDownloadManagerItem:input_type -> pb.clientrpc.v1.RemoveDownloadManagerItemRequest
+	79, // 71: pb.clientrpc.v1.ClientRpcService.ResumeFileDownload:input_type -> pb.clientrpc.v1.ResumeFileDownloadRequest
+	20, // 72: pb.clientrpc.v1.ClientRpcService.StreamLogs:output_type -> pb.clientrpc.v1.StreamLogsResponse
+	18, // 73: pb.clientrpc.v1.ClientRpcService.StreamEvents:output_type -> pb.clientrpc.v1.StreamEventsResponse
+	22, // 74: pb.clientrpc.v1.ClientRpcService.Stop:output_type -> pb.clientrpc.v1.StopResponse
+	24, // 75: pb.clientrpc.v1.ClientRpcService.GetClientInfo:output_type -> pb.clientrpc.v1.GetClientInfoResponse
+	26, // 76: pb.clientrpc.v1.ClientRpcService.GetServers:output_type -> pb.clientrpc.v1.GetServersResponse
+	28, // 77: pb.clientrpc.v1.ClientRpcService.CreateServer:output_type -> pb.clientrpc.v1.CreateServerResponse
+	30, // 78: pb.clientrpc.v1.ClientRpcService.DeleteServer:output_type -> pb.clientrpc.v1.DeleteServerResponse
+	32, // 79: pb.clientrpc.v1.ClientRpcService.ConnectServer:output_type -> pb.clientrpc.v1.ConnectServerResponse
+	34, // 80: pb.clientrpc.v1.ClientRpcService.DisconnectServer:output_type -> pb.clientrpc.v1.DisconnectServerResponse
+	36, // 81: pb.clientrpc.v1.ClientRpcService.UpdateServer:output_type -> pb.clientrpc.v1.UpdateServerResponse
+	38, // 82: pb.clientrpc.v1.ClientRpcService.GetShares:output_type -> pb.clientrpc.v1.GetSharesResponse
+	40, // 83: pb.clientrpc.v1.ClientRpcService.CreateShare:output_type -> pb.clientrpc.v1.CreateShareResponse
+	42, // 84: pb.clientrpc.v1.ClientRpcService.DeleteShare:output_type -> pb.clientrpc.v1.DeleteShareResponse
+	44, // 85: pb.clientrpc.v1.ClientRpcService.GetDirFiles:output_type -> pb.clientrpc.v1.GetDirFilesResponse
+	46, // 86: pb.clientrpc.v1.ClientRpcService.GetFileMeta:output_type -> pb.clientrpc.v1.GetFileMetaResponse
+	48, // 87: pb.clientrpc.v1.ClientRpcService.GetOnlineUsers:output_type -> pb.clientrpc.v1.GetOnlineUsersResponse
+	50, // 88: pb.clientrpc.v1.ClientRpcService.ChangeAccountPassword:output_type -> pb.clientrpc.v1.ChangeAccountPasswordResponse
+	52, // 89: pb.clientrpc.v1.ClientRpcService.ServerConnect:output_type -> pb.clientrpc.v1.ServerConnectResponse
+	54, // 90: pb.clientrpc.v1.ClientRpcService.ServerDisconnect:output_type -> pb.clientrpc.v1.ServerDisconnectResponse
+	56, // 91: pb.clientrpc.v1.ClientRpcService.GetDirectSettings:output_type -> pb.clientrpc.v1.GetDirectSettingsResponse
+	58, // 92: pb.clientrpc.v1.ClientRpcService.UpdateDirectSettings:output_type -> pb.clientrpc.v1.UpdateDirectSettingsResponse
+	60, // 93: pb.clientrpc.v1.ClientRpcService.GetTransferSettings:output_type -> pb.clientrpc.v1.GetTransferSettingsResponse
+	62, // 94: pb.clientrpc.v1.ClientRpcService.UpdateTransferSettings:output_type -> pb.clientrpc.v1.UpdateTransferSettingsResponse
+	64, // 95: pb.clientrpc.v1.ClientRpcService.IndexShare:output_type -> pb.clientrpc.v1.IndexShareResponse
+	66, // 96: pb.clientrpc.v1.ClientRpcService.StreamSearch:output_type -> pb.clientrpc.v1.StreamSearchResponse
+	68, // 97: pb.clientrpc.v1.ClientRpcService.GetUpdateInfo:output_type -> pb.clientrpc.v1.GetUpdateInfoResponse
+	70, // 98: pb.clientrpc.v1.ClientRpcService.CheckForNewUpdate:output_type -> pb.clientrpc.v1.CheckForNewUpdateResponse
+	72, // 99: pb.clientrpc.v1.ClientRpcService.GetDownloadManagerItems:output_type -> pb.clientrpc.v1.GetDownloadManagerItemsResponse
+	74, // 100: pb.clientrpc.v1.ClientRpcService.QueueFileDownload:output_type -> pb.clientrpc.v1.QueueFileDownloadResponse
+	76, // 101: pb.clientrpc.v1.ClientRpcService.CancelFileDownload:output_type -> pb.clientrpc.v1.CancelFileDownloadResponse
+	78, // 102: pb.clientrpc.v1.ClientRpcService.RemoveDownloadManagerItem:output_type -> pb.clientrpc.v1.RemoveDownloadManagerItemResponse
+	80, // 103: pb.clientrpc.v1.ClientRpcService.ResumeFileDownload:output_type -> pb.clientrpc.v1.ResumeFileDownloadResponse
+	72, // [72:104] is the sub-list for method output_type
+	40, // [40:72] is the sub-list for method input_type
+	40, // [40:40] is the sub-list for extension type_name
+	40, // [40:40] is the sub-list for extension extendee
+	0,  // [0:40] is the sub-list for field type_name
 }
 
 func init() { file_pb_clientrpc_v1_rpc_proto_init() }
@@ -4990,19 +5242,19 @@ func file_pb_clientrpc_v1_rpc_proto_init() {
 	file_pb_clientrpc_v1_rpc_proto_msgTypes[0].OneofWrappers = []any{}
 	file_pb_clientrpc_v1_rpc_proto_msgTypes[4].OneofWrappers = []any{}
 	file_pb_clientrpc_v1_rpc_proto_msgTypes[5].OneofWrappers = []any{}
-	file_pb_clientrpc_v1_rpc_proto_msgTypes[14].OneofWrappers = []any{}
-	file_pb_clientrpc_v1_rpc_proto_msgTypes[30].OneofWrappers = []any{}
-	file_pb_clientrpc_v1_rpc_proto_msgTypes[56].OneofWrappers = []any{}
-	file_pb_clientrpc_v1_rpc_proto_msgTypes[59].OneofWrappers = []any{}
+	file_pb_clientrpc_v1_rpc_proto_msgTypes[15].OneofWrappers = []any{}
+	file_pb_clientrpc_v1_rpc_proto_msgTypes[31].OneofWrappers = []any{}
 	file_pb_clientrpc_v1_rpc_proto_msgTypes[61].OneofWrappers = []any{}
-	file_pb_clientrpc_v1_rpc_proto_msgTypes[79].OneofWrappers = []any{}
+	file_pb_clientrpc_v1_rpc_proto_msgTypes[64].OneofWrappers = []any{}
+	file_pb_clientrpc_v1_rpc_proto_msgTypes[66].OneofWrappers = []any{}
+	file_pb_clientrpc_v1_rpc_proto_msgTypes[84].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pb_clientrpc_v1_rpc_proto_rawDesc), len(file_pb_clientrpc_v1_rpc_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   81,
+			NumMessages:   86,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

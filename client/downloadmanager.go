@@ -46,9 +46,17 @@ import (
 	"github.com/google/uuid"
 )
 
-const dmDirIncompleteSetting = "dm_dir_incomplete"
-const dmDirCompleteSetting = "dm_dir_complete"
-const dmDlConcurrencySetting = "dm_dl_concurrency"
+// DmDirIncompleteSetting is the setting key for the download manager's incomplete download directory.
+// Client must be restarted for it to take effect.
+const DmDirIncompleteSetting = "dm_dir_incomplete"
+
+// DmDirCompleteSetting is the setting key for the download manager's complete download directory.
+// Client must be restarted for it to take effect.
+const DmDirCompleteSetting = "dm_dir_complete"
+
+// DmDlConcurrencySetting is the setting key for the number of concurrent downloads to launch.
+// Updates to this will reflect immediately.
+const DmDlConcurrencySetting = "dm_dl_concurrency"
 
 type dmUpdate struct {
 	rpc *v1.DownloadStatusUpdate
@@ -163,12 +171,12 @@ func NewDownloadManager(
 	defDlComplete := filepath.Join(defDlBaseDir, "Complete")
 
 	// Get settings.
-	dirIncomplete, err := storage.GetSettingOrPut(ctx, dmDirIncompleteSetting, defDlIncomplete)
+	dirIncomplete, err := storage.GetSettingOrPut(ctx, DmDirIncompleteSetting, defDlIncomplete)
 	if err != nil {
 		ctxCancel()
 		return nil, err
 	}
-	dirComplete, err := storage.GetSettingOrPut(ctx, dmDirCompleteSetting, defDlComplete)
+	dirComplete, err := storage.GetSettingOrPut(ctx, DmDirCompleteSetting, defDlComplete)
 	if err != nil {
 		ctxCancel()
 		return nil, err
@@ -257,7 +265,7 @@ func (dm *DownloadManager) downloader() {
 		case <-ticker.C:
 			// Fetch the current download concurrency setting.
 			// We fetch this on-demand because this should be able to be changed at runtime.
-			dlConcurrency, settingErr := dm.storage.GetSettingIntOrPut(dm.ctx, dmDlConcurrencySetting, 4)
+			dlConcurrency, settingErr := dm.storage.GetSettingIntOrPut(dm.ctx, DmDlConcurrencySetting, 4)
 			if settingErr != nil {
 				dm.logger.Error("failed to get download concurrency setting",
 					"service", "client.DownloadManager",

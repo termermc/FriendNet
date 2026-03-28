@@ -95,6 +95,12 @@ const (
 	// ClientRpcServiceUpdateDirectSettingsProcedure is the fully-qualified name of the
 	// ClientRpcService's UpdateDirectSettings RPC.
 	ClientRpcServiceUpdateDirectSettingsProcedure = "/pb.clientrpc.v1.ClientRpcService/UpdateDirectSettings"
+	// ClientRpcServiceGetTransferSettingsProcedure is the fully-qualified name of the
+	// ClientRpcService's GetTransferSettings RPC.
+	ClientRpcServiceGetTransferSettingsProcedure = "/pb.clientrpc.v1.ClientRpcService/GetTransferSettings"
+	// ClientRpcServiceUpdateTransferSettingsProcedure is the fully-qualified name of the
+	// ClientRpcService's UpdateTransferSettings RPC.
+	ClientRpcServiceUpdateTransferSettingsProcedure = "/pb.clientrpc.v1.ClientRpcService/UpdateTransferSettings"
 	// ClientRpcServiceIndexShareProcedure is the fully-qualified name of the ClientRpcService's
 	// IndexShare RPC.
 	ClientRpcServiceIndexShareProcedure = "/pb.clientrpc.v1.ClientRpcService/IndexShare"
@@ -219,6 +225,13 @@ type ClientRpcServiceClient interface {
 	// Changes will not take effect until the client is restarted.
 	// All fields must be filled, default values will not be omitted.
 	UpdateDirectSettings(context.Context, *v1.UpdateDirectSettingsRequest) (*v1.UpdateDirectSettingsResponse, error)
+	// GetTransferSettings returns the client's transfer settings.
+	// Some of the settings take effect immediately, others do not.
+	GetTransferSettings(context.Context, *v1.GetTransferSettingsRequest) (*v1.GetTransferSettingsResponse, error)
+	// UpdateTransferSettings updates the client's transfer settings.
+	// Some of the settings take effect immediately, others do not.
+	// All fields must be filled, default values will not be omitted.
+	UpdateTransferSettings(context.Context, *v1.UpdateTransferSettingsRequest) (*v1.UpdateTransferSettingsResponse, error)
 	// IndexShare requests that a share be indexed.
 	// The share will be scheduled to be indexed in the background.
 	//
@@ -400,6 +413,18 @@ func NewClientRpcServiceClient(httpClient connect.HTTPClient, baseURL string, op
 			connect.WithSchema(clientRpcServiceMethods.ByName("UpdateDirectSettings")),
 			connect.WithClientOptions(opts...),
 		),
+		getTransferSettings: connect.NewClient[v1.GetTransferSettingsRequest, v1.GetTransferSettingsResponse](
+			httpClient,
+			baseURL+ClientRpcServiceGetTransferSettingsProcedure,
+			connect.WithSchema(clientRpcServiceMethods.ByName("GetTransferSettings")),
+			connect.WithClientOptions(opts...),
+		),
+		updateTransferSettings: connect.NewClient[v1.UpdateTransferSettingsRequest, v1.UpdateTransferSettingsResponse](
+			httpClient,
+			baseURL+ClientRpcServiceUpdateTransferSettingsProcedure,
+			connect.WithSchema(clientRpcServiceMethods.ByName("UpdateTransferSettings")),
+			connect.WithClientOptions(opts...),
+		),
 		indexShare: connect.NewClient[v1.IndexShareRequest, v1.IndexShareResponse](
 			httpClient,
 			baseURL+ClientRpcServiceIndexShareProcedure,
@@ -480,6 +505,8 @@ type clientRpcServiceClient struct {
 	serverDisconnect          *connect.Client[v1.ServerDisconnectRequest, v1.ServerDisconnectResponse]
 	getDirectSettings         *connect.Client[v1.GetDirectSettingsRequest, v1.GetDirectSettingsResponse]
 	updateDirectSettings      *connect.Client[v1.UpdateDirectSettingsRequest, v1.UpdateDirectSettingsResponse]
+	getTransferSettings       *connect.Client[v1.GetTransferSettingsRequest, v1.GetTransferSettingsResponse]
+	updateTransferSettings    *connect.Client[v1.UpdateTransferSettingsRequest, v1.UpdateTransferSettingsResponse]
 	indexShare                *connect.Client[v1.IndexShareRequest, v1.IndexShareResponse]
 	streamSearch              *connect.Client[v1.StreamSearchRequest, v1.StreamSearchResponse]
 	getUpdateInfo             *connect.Client[v1.GetUpdateInfoRequest, v1.GetUpdateInfoResponse]
@@ -664,6 +691,24 @@ func (c *clientRpcServiceClient) UpdateDirectSettings(ctx context.Context, req *
 	return nil, err
 }
 
+// GetTransferSettings calls pb.clientrpc.v1.ClientRpcService.GetTransferSettings.
+func (c *clientRpcServiceClient) GetTransferSettings(ctx context.Context, req *v1.GetTransferSettingsRequest) (*v1.GetTransferSettingsResponse, error) {
+	response, err := c.getTransferSettings.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// UpdateTransferSettings calls pb.clientrpc.v1.ClientRpcService.UpdateTransferSettings.
+func (c *clientRpcServiceClient) UpdateTransferSettings(ctx context.Context, req *v1.UpdateTransferSettingsRequest) (*v1.UpdateTransferSettingsResponse, error) {
+	response, err := c.updateTransferSettings.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // IndexShare calls pb.clientrpc.v1.ClientRpcService.IndexShare.
 func (c *clientRpcServiceClient) IndexShare(ctx context.Context, req *v1.IndexShareRequest) (*v1.IndexShareResponse, error) {
 	response, err := c.indexShare.CallUnary(ctx, connect.NewRequest(req))
@@ -836,6 +881,13 @@ type ClientRpcServiceHandler interface {
 	// Changes will not take effect until the client is restarted.
 	// All fields must be filled, default values will not be omitted.
 	UpdateDirectSettings(context.Context, *v1.UpdateDirectSettingsRequest) (*v1.UpdateDirectSettingsResponse, error)
+	// GetTransferSettings returns the client's transfer settings.
+	// Some of the settings take effect immediately, others do not.
+	GetTransferSettings(context.Context, *v1.GetTransferSettingsRequest) (*v1.GetTransferSettingsResponse, error)
+	// UpdateTransferSettings updates the client's transfer settings.
+	// Some of the settings take effect immediately, others do not.
+	// All fields must be filled, default values will not be omitted.
+	UpdateTransferSettings(context.Context, *v1.UpdateTransferSettingsRequest) (*v1.UpdateTransferSettingsResponse, error)
 	// IndexShare requests that a share be indexed.
 	// The share will be scheduled to be indexed in the background.
 	//
@@ -1013,6 +1065,18 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 		connect.WithSchema(clientRpcServiceMethods.ByName("UpdateDirectSettings")),
 		connect.WithHandlerOptions(opts...),
 	)
+	clientRpcServiceGetTransferSettingsHandler := connect.NewUnaryHandlerSimple(
+		ClientRpcServiceGetTransferSettingsProcedure,
+		svc.GetTransferSettings,
+		connect.WithSchema(clientRpcServiceMethods.ByName("GetTransferSettings")),
+		connect.WithHandlerOptions(opts...),
+	)
+	clientRpcServiceUpdateTransferSettingsHandler := connect.NewUnaryHandlerSimple(
+		ClientRpcServiceUpdateTransferSettingsProcedure,
+		svc.UpdateTransferSettings,
+		connect.WithSchema(clientRpcServiceMethods.ByName("UpdateTransferSettings")),
+		connect.WithHandlerOptions(opts...),
+	)
 	clientRpcServiceIndexShareHandler := connect.NewUnaryHandlerSimple(
 		ClientRpcServiceIndexShareProcedure,
 		svc.IndexShare,
@@ -1111,6 +1175,10 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 			clientRpcServiceGetDirectSettingsHandler.ServeHTTP(w, r)
 		case ClientRpcServiceUpdateDirectSettingsProcedure:
 			clientRpcServiceUpdateDirectSettingsHandler.ServeHTTP(w, r)
+		case ClientRpcServiceGetTransferSettingsProcedure:
+			clientRpcServiceGetTransferSettingsHandler.ServeHTTP(w, r)
+		case ClientRpcServiceUpdateTransferSettingsProcedure:
+			clientRpcServiceUpdateTransferSettingsHandler.ServeHTTP(w, r)
 		case ClientRpcServiceIndexShareProcedure:
 			clientRpcServiceIndexShareHandler.ServeHTTP(w, r)
 		case ClientRpcServiceStreamSearchProcedure:
@@ -1220,6 +1288,14 @@ func (UnimplementedClientRpcServiceHandler) GetDirectSettings(context.Context, *
 
 func (UnimplementedClientRpcServiceHandler) UpdateDirectSettings(context.Context, *v1.UpdateDirectSettingsRequest) (*v1.UpdateDirectSettingsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.UpdateDirectSettings is not implemented"))
+}
+
+func (UnimplementedClientRpcServiceHandler) GetTransferSettings(context.Context, *v1.GetTransferSettingsRequest) (*v1.GetTransferSettingsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.GetTransferSettings is not implemented"))
+}
+
+func (UnimplementedClientRpcServiceHandler) UpdateTransferSettings(context.Context, *v1.UpdateTransferSettingsRequest) (*v1.UpdateTransferSettingsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.UpdateTransferSettings is not implemented"))
 }
 
 func (UnimplementedClientRpcServiceHandler) IndexShare(context.Context, *v1.IndexShareRequest) (*v1.IndexShareResponse, error) {
