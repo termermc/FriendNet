@@ -681,6 +681,14 @@ message RemoveDownloadManagerItemResponse {
 
 }
 
+message ResumeFileDownloadRequest {
+    // The item's UUID.
+    string uuid = 1;
+}
+message ResumeFileDownloadResponse {
+
+}
+
 // ClientRpcService provides an RPC interface to a running FriendNet client.
 // It can query state and perform actions.
 //
@@ -846,4 +854,9 @@ service ClientRpcService {
     //
     // Returns NOT_FOUND if no such item exists.
     rpc RemoveDownloadManagerItem(RemoveDownloadManagerItemRequest) returns (RemoveDownloadManagerItemResponse) {}
+
+    // ResumeFileDownload resumes or starts the a file download.
+    //
+    // Returns NOT_FOUND if no such download exists.
+    rpc ResumeFileDownload(ResumeFileDownloadRequest) returns (ResumeFileDownloadResponse) {}
 }

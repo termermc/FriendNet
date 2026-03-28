@@ -119,6 +119,9 @@ const (
 	// ClientRpcServiceRemoveDownloadManagerItemProcedure is the fully-qualified name of the
 	// ClientRpcService's RemoveDownloadManagerItem RPC.
 	ClientRpcServiceRemoveDownloadManagerItemProcedure = "/pb.clientrpc.v1.ClientRpcService/RemoveDownloadManagerItem"
+	// ClientRpcServiceResumeFileDownloadProcedure is the fully-qualified name of the ClientRpcService's
+	// ResumeFileDownload RPC.
+	ClientRpcServiceResumeFileDownloadProcedure = "/pb.clientrpc.v1.ClientRpcService/ResumeFileDownload"
 )
 
 // ClientRpcServiceClient is a client for the pb.clientrpc.v1.ClientRpcService service.
@@ -254,6 +257,10 @@ type ClientRpcServiceClient interface {
 	//
 	// Returns NOT_FOUND if no such item exists.
 	RemoveDownloadManagerItem(context.Context, *v1.RemoveDownloadManagerItemRequest) (*v1.RemoveDownloadManagerItemResponse, error)
+	// ResumeFileDownload resumes or starts the a file download.
+	//
+	// Returns NOT_FOUND if no such download exists.
+	ResumeFileDownload(context.Context, *v1.ResumeFileDownloadRequest) (*v1.ResumeFileDownloadResponse, error)
 }
 
 // NewClientRpcServiceClient constructs a client for the pb.clientrpc.v1.ClientRpcService service.
@@ -441,6 +448,12 @@ func NewClientRpcServiceClient(httpClient connect.HTTPClient, baseURL string, op
 			connect.WithSchema(clientRpcServiceMethods.ByName("RemoveDownloadManagerItem")),
 			connect.WithClientOptions(opts...),
 		),
+		resumeFileDownload: connect.NewClient[v1.ResumeFileDownloadRequest, v1.ResumeFileDownloadResponse](
+			httpClient,
+			baseURL+ClientRpcServiceResumeFileDownloadProcedure,
+			connect.WithSchema(clientRpcServiceMethods.ByName("ResumeFileDownload")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -475,6 +488,7 @@ type clientRpcServiceClient struct {
 	queueFileDownload         *connect.Client[v1.QueueFileDownloadRequest, v1.QueueFileDownloadResponse]
 	cancelFileDownload        *connect.Client[v1.CancelFileDownloadRequest, v1.CancelFileDownloadResponse]
 	removeDownloadManagerItem *connect.Client[v1.RemoveDownloadManagerItemRequest, v1.RemoveDownloadManagerItemResponse]
+	resumeFileDownload        *connect.Client[v1.ResumeFileDownloadRequest, v1.ResumeFileDownloadResponse]
 }
 
 // StreamLogs calls pb.clientrpc.v1.ClientRpcService.StreamLogs.
@@ -718,6 +732,15 @@ func (c *clientRpcServiceClient) RemoveDownloadManagerItem(ctx context.Context, 
 	return nil, err
 }
 
+// ResumeFileDownload calls pb.clientrpc.v1.ClientRpcService.ResumeFileDownload.
+func (c *clientRpcServiceClient) ResumeFileDownload(ctx context.Context, req *v1.ResumeFileDownloadRequest) (*v1.ResumeFileDownloadResponse, error) {
+	response, err := c.resumeFileDownload.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // ClientRpcServiceHandler is an implementation of the pb.clientrpc.v1.ClientRpcService service.
 type ClientRpcServiceHandler interface {
 	// StreamLogs returns an ongoing stream of log messages from the client.
@@ -851,6 +874,10 @@ type ClientRpcServiceHandler interface {
 	//
 	// Returns NOT_FOUND if no such item exists.
 	RemoveDownloadManagerItem(context.Context, *v1.RemoveDownloadManagerItemRequest) (*v1.RemoveDownloadManagerItemResponse, error)
+	// ResumeFileDownload resumes or starts the a file download.
+	//
+	// Returns NOT_FOUND if no such download exists.
+	ResumeFileDownload(context.Context, *v1.ResumeFileDownloadRequest) (*v1.ResumeFileDownloadResponse, error)
 }
 
 // NewClientRpcServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -1034,6 +1061,12 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 		connect.WithSchema(clientRpcServiceMethods.ByName("RemoveDownloadManagerItem")),
 		connect.WithHandlerOptions(opts...),
 	)
+	clientRpcServiceResumeFileDownloadHandler := connect.NewUnaryHandlerSimple(
+		ClientRpcServiceResumeFileDownloadProcedure,
+		svc.ResumeFileDownload,
+		connect.WithSchema(clientRpcServiceMethods.ByName("ResumeFileDownload")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/pb.clientrpc.v1.ClientRpcService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ClientRpcServiceStreamLogsProcedure:
@@ -1094,6 +1127,8 @@ func NewClientRpcServiceHandler(svc ClientRpcServiceHandler, opts ...connect.Han
 			clientRpcServiceCancelFileDownloadHandler.ServeHTTP(w, r)
 		case ClientRpcServiceRemoveDownloadManagerItemProcedure:
 			clientRpcServiceRemoveDownloadManagerItemHandler.ServeHTTP(w, r)
+		case ClientRpcServiceResumeFileDownloadProcedure:
+			clientRpcServiceResumeFileDownloadHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -1217,4 +1252,8 @@ func (UnimplementedClientRpcServiceHandler) CancelFileDownload(context.Context, 
 
 func (UnimplementedClientRpcServiceHandler) RemoveDownloadManagerItem(context.Context, *v1.RemoveDownloadManagerItemRequest) (*v1.RemoveDownloadManagerItemResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.RemoveDownloadManagerItem is not implemented"))
+}
+
+func (UnimplementedClientRpcServiceHandler) ResumeFileDownload(context.Context, *v1.ResumeFileDownloadRequest) (*v1.ResumeFileDownloadResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.clientrpc.v1.ClientRpcService.ResumeFileDownload is not implemented"))
 }

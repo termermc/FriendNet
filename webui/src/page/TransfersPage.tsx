@@ -105,13 +105,8 @@ const DownloadItem: Component<{ item: Download }> = (props) => {
 	const filename = item.filePath.substring(item.filePath.lastIndexOf('/') + 1)
 
 	async function doResume() {
-		// TODO This does NOT resume the file, it RESTARTS it.
-		// Make an actual resume/download now function.
-
-		await client.queueFileDownload({
-			serverUuid: item.server.uuid,
-			peerUsername: item.peerUsername,
-			filePath: item.filePath,
+		await client.resumeFileDownload({
+			uuid: item.uuid,
 		})
 	}
 

@@ -455,6 +455,19 @@ func (dm *DownloadManager) SnapshotStates() []*v1.DownloadManagerItem {
 	return items
 }
 
+func (dm *DownloadManager) getByUuid(uuid string) (*DownloadHandle, bool) {
+	dm.mu.RLock()
+	defer dm.mu.RUnlock()
+
+	for _, state := range dm.handles {
+		if state.uuid == uuid {
+			return state, true
+		}
+	}
+
+	return nil, false
+}
+
 // Queue queues a new file download.
 // If there is a pending or queued entry for the same file already, this function is no-op.
 func (dm *DownloadManager) Queue(
@@ -573,25 +586,40 @@ func (dm *DownloadManager) Remove(uuid string) (bool, error) {
 // StopWithStatus stops the handle with the specified UUID and sets its status.
 // Returns true if the handle was found, returns false otherwise.
 func (dm *DownloadManager) StopWithStatus(uuid string, status pb.DownloadStatus) bool {
-	dm.mu.RLock()
-
-	// Find handle by UUID.
-	for _, handle := range dm.handles {
-		if handle.uuid == uuid {
-			fnPtr := handle.stopFnOrNil.Load()
-
-			dm.mu.RUnlock()
-
-			if fnPtr != nil {
-				(*fnPtr)(status)
-			}
-
-			return true
-		}
+	handle, has := dm.getByUuid(uuid)
+	if !has {
+		return false
 	}
 
-	dm.mu.RUnlock()
-	return false
+	fnPtr := handle.stopFnOrNil.Load()
+
+	if fnPtr != nil {
+		(*fnPtr)(status)
+	}
+
+	return true
+}
+
+// DownloadNow starts or resumes the download for the item with the specified UUID.
+// Returns true if the item existed, or false otherwise.
+// The download is launched and managed in the background.
+func (dm *DownloadManager) DownloadNow(uuid string) bool {
+	handle, has := dm.getByUuid(uuid)
+	if !has {
+		return false
+	}
+
+	go func() {
+		if err := dm.startDownload(handle); err != nil {
+			dm.logger.Error("failed to do download",
+				"service", "client.DownloadManager",
+				"uuid", uuid,
+				"error", err,
+			)
+		}
+	}()
+
+	return true
 }
 
 func (dm *DownloadManager) mkIncompletePath(serverUuid string, peerUsername common.NormalizedUsername, path common.ProtoPath) string {
@@ -618,9 +646,12 @@ func (dm *DownloadManager) startDownload(handle *DownloadHandle) error {
 	dm.activeWorkers.Add(1)
 	defer dm.activeWorkers.Add(-1)
 
-	// Return immediately if the file is not in the queued status.
-	if *handle.status.Load() != pb.DownloadStatus_DOWNLOAD_STATUS_QUEUED {
-		return nil
+	// Return immediately if the file is in the pending or done status.
+	{
+		status := *handle.status.Load()
+		if status == pb.DownloadStatus_DOWNLOAD_STATUS_PENDING || status == pb.DownloadStatus_DOWNLOAD_STATUS_DONE {
+			return nil
+		}
 	}
 
 	handle.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_PENDING))

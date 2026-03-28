@@ -890,3 +890,12 @@ func (s *RpcServer) RemoveDownloadManagerItem(_ context.Context, request *v1.Rem
 
 	return &v1.RemoveDownloadManagerItemResponse{}, nil
 }
+
+func (s *RpcServer) ResumeFileDownload(_ context.Context, request *v1.ResumeFileDownloadRequest) (*v1.ResumeFileDownloadResponse, error) {
+	has := s.downloadManager.DownloadNow(request.Uuid)
+	if !has {
+		return nil, errDownloadHandleNotFound
+	}
+
+	return &v1.ResumeFileDownloadResponse{}, nil
+}
