@@ -204,6 +204,14 @@ const Page: Component = () => {
 						return {
 							prefix: prefix,
 							href: makeBrowsePath(uuid, username, filePath),
+							actions: (
+								<QueueButton
+									serverUuid={uuid}
+									peerUsername={username}
+									filePath={filePath}
+									title="Download Folder"
+								/>
+							)
 						}
 					} else {
 						const nonDlUrl = makeFileUrl(
