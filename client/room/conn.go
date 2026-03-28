@@ -441,7 +441,7 @@ func (c *Conn) openC2cBidiWithMsg(
 		directConn, _, connErr = c.tryConnectToPeer(timeoutCtx, username)
 		if connErr != nil {
 			// Was the client not online?
-			if protoErr, ok := errors.AsType[*protocol.ProtoMsgError](connErr); ok {
+			if protoErr, ok := errors.AsType[protocol.ProtoMsgError](connErr); ok {
 				if protoErr.Msg.Type == pb.ErrType_ERR_TYPE_CLIENT_NOT_ONLINE {
 					// The client was offline.
 					// Just return the error as-is.
