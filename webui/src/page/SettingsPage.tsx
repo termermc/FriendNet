@@ -54,7 +54,7 @@ const P2pSettings: Component = () => {
 			if (err instanceof ConnectError) {
 				setError(err.message)
 			} else {
-				console.error('failed to update server:', err)
+				console.error('failed to update settings:', err)
 				setError('Internal error, check console')
 			}
 		} finally {
@@ -77,7 +77,7 @@ const P2pSettings: Component = () => {
 			setDisableUpnp(cfg.disableUpnp)
 			setUpnpTimeoutMs(cfg.upnpTimeoutMs)
 		} catch (err) {
-			console.error('failed to get direct conncetion settings:', err)
+			console.error('failed to get direct connection settings:', err)
 			setError('Internal error, check console')
 		} finally {
 			setLoading(false)
@@ -368,6 +368,181 @@ const P2pSettings: Component = () => {
 	)
 }
 
+const TransferSettings: Component = () => {
+	const client = useRpcClient()
+
+	const [isLoading, setLoading] = createSignal(false)
+
+	const [concurrency, setConcurrency] = createSignal(1)
+	const [incompleteDir, setIncompleteDir] = createSignal('')
+	const [completeDir, setCompleteDir] = createSignal('')
+
+	const [error, setError] = createSignal('')
+	const [isSaving, setSaving] = createSignal(false)
+	const [isSuccess, setSuccess] = createSignal(false)
+	const submit = async function (event: SubmitEvent) {
+		event.preventDefault()
+
+		if (isSaving()) {
+			return
+		}
+
+		setError('')
+		setSuccess(false)
+		setSaving(true)
+
+		try {
+			await client.updateTransferSettings({
+				settings: {
+					downloadConcurrency: concurrency(),
+					incompleteDownloadDir: incompleteDir(),
+					completeDownloadDir: completeDir(),
+				},
+			})
+
+			setSuccess(true)
+		} catch (err) {
+			if (err instanceof ConnectError) {
+				setError(err.message)
+			} else {
+				console.error('failed to update settings:', err)
+				setError('Internal error, check console')
+			}
+		} finally {
+			setSaving(false)
+		}
+	}
+
+	onMount(async () => {
+		setLoading(true)
+		try {
+			const res = await client.getTransferSettings({})
+			const cfg = res.settings!
+
+			setConcurrency(cfg.downloadConcurrency)
+			setIncompleteDir(cfg.incompleteDownloadDir)
+			setCompleteDir(cfg.completeDownloadDir)
+		} catch (err) {
+			console.error('failed to get transfer settings:', err)
+			setError('Internal error, check console')
+		} finally {
+			setLoading(false)
+		}
+	})
+
+	return (
+		<div>
+			<h2>Download/Upload Settings</h2>
+
+			<p>
+				These settings control how the client downloads and uploads
+				files.
+			</p>
+			<p>
+				The complete/incomplete download directory settings require a
+				restart to take effect, but the rest will apply immediately.
+			</p>
+
+			<br />
+
+			<Show when={error()}>
+				<div class={stylesCommon.errorMessage}>{error()}</div>
+			</Show>
+			<Show when={isSuccess()}>
+				<div class={stylesCommon.successMessage}>
+					Settings Saved.
+					<br />A restart is required for some changes to take effect.
+				</div>
+			</Show>
+
+			<Show
+				when={isLoading()}
+				fallback={
+					<form onSubmit={submit} class={stylesCommon.form}>
+						<table>
+							<tbody>
+								<tr>
+									<td>
+										<label
+											for="setting-trans-concurrency"
+											style="cursor:help"
+											title="The maximum number of downloads to run at once. If you have a slow network, you may want to set this to 1."
+										>
+											Download Concurrency<sup>🛈</sup>
+										</label>
+									</td>
+									<td>
+										<input
+											id="setting-trans-concurrency"
+											type="number"
+											min={1}
+											max={100}
+											onChange={(e) =>
+												setConcurrency(
+													Number(e.target.value),
+												)
+											}
+											value={concurrency()}
+										/>
+									</td>
+								</tr>
+
+								<tr>
+									<td>
+										<label for="setting-trans-incomplete">
+											Incomplete Downloads Location:
+										</label>
+									</td>
+									<td>
+										<input
+											type="text"
+											id="setting-trans-incomplete"
+											value={incompleteDir()}
+											onInput={(e) =>
+												setIncompleteDir(
+													e.currentTarget.value,
+												)
+											}
+										/>
+									</td>
+								</tr>
+
+								<tr>
+									<td>
+										<label for="setting-trans-complete">
+											Complete Downloads Location:
+										</label>
+									</td>
+									<td>
+										<input
+											type="text"
+											id="setting-trans-complete"
+											value={completeDir()}
+											onInput={(e) =>
+												setCompleteDir(
+													e.currentTarget.value,
+												)
+											}
+										/>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+
+						<input
+							type="submit"
+							value="Update Settings"
+							disabled={isSaving()}
+						/>
+					</form>
+				}
+			>
+				Loading settings...
+			</Show>
+		</div>
+	)
+}
+
 export const SettingsPage: Component = () => {
 	return (
 		<div
@@ -379,6 +554,7 @@ export const SettingsPage: Component = () => {
 			<h1>Client Settings</h1>
 
 			<P2pSettings />
+			<TransferSettings />
 		</div>
 	)
 }

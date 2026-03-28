@@ -934,9 +934,9 @@ func (s *RpcServer) GetTransferSettings(ctx context.Context, _ *v1.GetTransferSe
 }
 
 func (s *RpcServer) UpdateTransferSettings(ctx context.Context, request *v1.UpdateTransferSettingsRequest) (*v1.UpdateTransferSettingsResponse, error) {
-	concurrency := request.Setting.DownloadConcurrency
-	incompleteDir := request.Setting.IncompleteDownloadDir
-	completeDir := request.Setting.CompleteDownloadDir
+	concurrency := request.Settings.DownloadConcurrency
+	incompleteDir := request.Settings.IncompleteDownloadDir
+	completeDir := request.Settings.CompleteDownloadDir
 
 	if concurrency < 1 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("download concurrency must be at least 1"))

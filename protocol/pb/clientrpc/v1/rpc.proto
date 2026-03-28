@@ -613,7 +613,7 @@ message GetTransferSettingsResponse {
 message UpdateTransferSettingsRequest {
     // The settings to update.
     // All fields must be filled.
-    TransferSettings setting = 1;
+    TransferSettings settings = 1;
 }
 message UpdateTransferSettingsResponse {
 

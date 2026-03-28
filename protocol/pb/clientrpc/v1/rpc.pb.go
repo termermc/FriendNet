@@ -3344,7 +3344,7 @@ type UpdateTransferSettingsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The settings to update.
 	// All fields must be filled.
-	Setting       *TransferSettings `protobuf:"bytes,1,opt,name=setting,proto3" json:"setting,omitempty"`
+	Settings      *TransferSettings `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3379,9 +3379,9 @@ func (*UpdateTransferSettingsRequest) Descriptor() ([]byte, []int) {
 	return file_pb_clientrpc_v1_rpc_proto_rawDescGZIP(), []int{57}
 }
 
-func (x *UpdateTransferSettingsRequest) GetSetting() *TransferSettings {
+func (x *UpdateTransferSettingsRequest) GetSettings() *TransferSettings {
 	if x != nil {
-		return x.Setting
+		return x.Settings
 	}
 	return nil
 }
@@ -4919,9 +4919,9 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\x1cUpdateDirectSettingsResponse\"\x1c\n" +
 	"\x1aGetTransferSettingsRequest\"\\\n" +
 	"\x1bGetTransferSettingsResponse\x12=\n" +
-	"\bsettings\x18\x01 \x01(\v2!.pb.clientrpc.v1.TransferSettingsR\bsettings\"\\\n" +
-	"\x1dUpdateTransferSettingsRequest\x12;\n" +
-	"\asetting\x18\x01 \x01(\v2!.pb.clientrpc.v1.TransferSettingsR\asetting\" \n" +
+	"\bsettings\x18\x01 \x01(\v2!.pb.clientrpc.v1.TransferSettingsR\bsettings\"^\n" +
+	"\x1dUpdateTransferSettingsRequest\x12=\n" +
+	"\bsettings\x18\x01 \x01(\v2!.pb.clientrpc.v1.TransferSettingsR\bsettings\" \n" +
 	"\x1eUpdateTransferSettingsResponse\"H\n" +
 	"\x11IndexShareRequest\x12\x1f\n" +
 	"\vserver_uuid\x18\x01 \x01(\tR\n" +
@@ -5150,7 +5150,7 @@ var file_pb_clientrpc_v1_rpc_proto_depIdxs = []int32{
 	15, // 24: pb.clientrpc.v1.GetDirectSettingsResponse.settings:type_name -> pb.clientrpc.v1.DirectSettings
 	15, // 25: pb.clientrpc.v1.UpdateDirectSettingsRequest.settings:type_name -> pb.clientrpc.v1.DirectSettings
 	16, // 26: pb.clientrpc.v1.GetTransferSettingsResponse.settings:type_name -> pb.clientrpc.v1.TransferSettings
-	16, // 27: pb.clientrpc.v1.UpdateTransferSettingsRequest.setting:type_name -> pb.clientrpc.v1.TransferSettings
+	16, // 27: pb.clientrpc.v1.UpdateTransferSettingsRequest.settings:type_name -> pb.clientrpc.v1.TransferSettings
 	14, // 28: pb.clientrpc.v1.StreamSearchResponse.file:type_name -> pb.clientrpc.v1.FileMeta
 	10, // 29: pb.clientrpc.v1.GetUpdateInfoResponse.current_info:type_name -> pb.clientrpc.v1.UpdateInfo
 	10, // 30: pb.clientrpc.v1.GetUpdateInfoResponse.new_info:type_name -> pb.clientrpc.v1.UpdateInfo
