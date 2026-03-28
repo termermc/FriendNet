@@ -43,6 +43,14 @@ async function doCancel(client: RpcClient, uuid: string): Promise<void> {
 		alert('Failed to cancel download, check console for details')
 	}
 }
+async function doResume(client: RpcClient, uuid: string): Promise<void> {
+	try {
+		await client.resumeFileDownload({ uuid })
+	} catch (err) {
+		console.error('failed to resume download:', err)
+		alert('Failed to resume download, check console for details')
+	}
+}
 
 const DownloadFolder: Component<{
 	server: Download['server']
@@ -104,12 +112,6 @@ const DownloadItem: Component<{ item: Download }> = (props) => {
 	const item = props.item
 	const filename = item.filePath.substring(item.filePath.lastIndexOf('/') + 1)
 
-	async function doResume() {
-		await client.resumeFileDownload({
-			uuid: item.uuid,
-		})
-	}
-
 	return (
 		<div
 			classList={{
@@ -136,7 +138,10 @@ const DownloadItem: Component<{ item: Download }> = (props) => {
 					</button>{' '}
 					<Switch>
 						<Match when={item.status() === DownloadStatus.CANCELED}>
-							<button onClick={doResume} title="Resume">
+							<button
+								onClick={() => doResume(client, item.uuid)}
+								title="Resume"
+							>
 								⏩
 							</button>
 						</Match>
@@ -152,7 +157,12 @@ const DownloadItem: Component<{ item: Download }> = (props) => {
 							</button>
 						</Match>
 						<Match when={item.status() === DownloadStatus.QUEUED}>
-							<button title="Download Now">➡️</button>
+							<button
+								onClick={() => doResume(client, item.uuid)}
+								title="Download Now"
+							>
+								➡️
+							</button>
 						</Match>
 						<Match when={item.status() === DownloadStatus.ERROR}>
 							<Match
