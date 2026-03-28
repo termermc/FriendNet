@@ -38,6 +38,7 @@ var errIndexingDisabled = connect.NewError(connect.CodeFailedPrecondition, error
 var errEmptySearchQuery = connect.NewError(connect.CodeInvalidArgument, errors.New("search query cannot be empty"))
 var errInvalidShareName = connect.NewError(connect.CodeInvalidArgument, share.ErrInvalidShareName)
 var errDownloadHandleNotFound = connect.NewError(connect.CodeNotFound, errors.New("download handle not found"))
+var errDmItemNotFound = connect.NewError(connect.CodeNotFound, errors.New("download manager item not found"))
 
 type RpcServer struct {
 	clogHandler     clog.Handler
@@ -875,4 +876,17 @@ func (s *RpcServer) CancelFileDownload(_ context.Context, request *v1.CancelFile
 	}
 
 	return &v1.CancelFileDownloadResponse{}, nil
+}
+
+func (s *RpcServer) RemoveDownloadManagerItem(_ context.Context, request *v1.RemoveDownloadManagerItemRequest) (*v1.RemoveDownloadManagerItemResponse, error) {
+	has, err := s.downloadManager.Remove(request.Uuid)
+	if err != nil {
+		return nil, err
+	}
+
+	if !has {
+		return nil, errDmItemNotFound
+	}
+
+	return &v1.RemoveDownloadManagerItemResponse{}, nil
 }

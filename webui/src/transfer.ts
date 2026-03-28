@@ -113,6 +113,10 @@ export class TransferManager {
 				new Download(this.#state, item),
 			])
 		})
+		this.#state.event.addEventListener(Event_Type.DM_ITEM_REMOVED, (event) => {
+			const uuid = event.dmItemRemoved!.uuid
+			this.#setDownloads(this.downloads().filter((x) => x.uuid !== uuid))
+		})
 	}
 
 	/**

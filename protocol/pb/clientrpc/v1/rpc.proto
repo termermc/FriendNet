@@ -673,6 +673,14 @@ message CancelFileDownloadResponse {
     
 }
 
+message RemoveDownloadManagerItemRequest {
+    // The item's UUID.
+    string uuid = 1;
+}
+message RemoveDownloadManagerItemResponse {
+
+}
+
 // ClientRpcService provides an RPC interface to a running FriendNet client.
 // It can query state and perform actions.
 //
@@ -832,4 +840,10 @@ service ClientRpcService {
     //
     // Returns NOT_FOUND if no such download exists.
     rpc CancelFileDownload(CancelFileDownloadRequest) returns (CancelFileDownloadResponse) {}
+
+    // RemoveDownloadManagerItem removes a download manager item.
+    // It does not delete anything on disk.
+    //
+    // Returns NOT_FOUND if no such item exists.
+    rpc RemoveDownloadManagerItem(RemoveDownloadManagerItemRequest) returns (RemoveDownloadManagerItemResponse) {}
 }
