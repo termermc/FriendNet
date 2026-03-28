@@ -623,6 +623,8 @@ func (dm *DownloadManager) startDownload(handle *DownloadHandle) error {
 		return nil
 	}
 
+	handle.status.Store(new(pb.DownloadStatus_DOWNLOAD_STATUS_PENDING))
+
 	// Create paths.
 	incompletePath := dm.mkIncompletePath(handle.server.Uuid, handle.peer, handle.filePath)
 	completePath := dm.mkCompletePath(handle.server.Uuid, handle.peer, handle.filePath)
