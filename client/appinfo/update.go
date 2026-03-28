@@ -5,8 +5,8 @@ import "friendnet.org/common/updater"
 // CurrentUpdate is the current update the client is running.
 // If the current update fetched from an online source has a timestamp before this one, it must be ignored.
 var CurrentUpdate = updater.UpdateInfo{
-	CreatedTs:   1773298066,
-	Version:     "1.0.2",
-	Description: "This release simplifies the client and makes some small improvements with how RPC works.\n\nChanges:\n - Client web UI, RPC and file proxy all run under the same HTTP server now\n - Server RPC now supports HTTPS\n - File proxy URLs include an authentication token in the URL, making it safer for remote access setups\n - Fixed root CA install for some Firefox-based browsers under Linux",
-	Url:         "https://github.com/termermc/FriendNet/releases/tag/v1.0.2",
+	CreatedTs:   1774729978,
+	Version:     "1.1.0",
+	Description: "This release brings a complete download manager for resumable and bulk file/folder downloads.\n\nChanges:\n - Added a fully-featured download manager, supporting bulk file and folder downloads, resumable downloads, and concurrent downloads.\n - Fixed opening 127.0.0.1 instead of localhost in the browser, which caused certificate warnings\n - Documented client WebDAV integration (go check out the docs!)",
+	Url:         "https://github.com/termermc/FriendNet/releases/tag/v1.1.0",
 }
