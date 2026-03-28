@@ -6,3 +6,5 @@ it will be able to verify reachability of clients through Yggdrasil for extra as
 
 As long as you have IP probing enabled in your client settings (enabled by default), you do not need to do anything
 special to enable Yggdrasil support.
+
+Next: [Compiling](compiling.md)

@@ -6,4 +6,4 @@ If the client is currently running (in the background or not), shut it down by c
 of the web UI. Once you have done that, simply replace the old `friendnet-client.exe` (or `friendnet-client` on
 other platforms) with the new one. You can now run the client again to start the new version.
 
-Next: [Yggdrasil Support](yggdrasil-support.md)
+Next: [Using with WebDAV](webdav.md)
