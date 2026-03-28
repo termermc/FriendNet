@@ -165,11 +165,12 @@ const DownloadItem: Component<{ item: Download }> = (props) => {
 							</button>
 						</Match>
 						<Match when={item.status() === DownloadStatus.ERROR}>
-							<Match
-								when={item.status() === DownloadStatus.CANCELED}
+							<button
+								onClick={() => doResume(client, item.uuid)}
+								title="Retry"
 							>
-								<button title="Retry">🔄</button>
-							</Match>
+								🔄
+							</button>
 							<span class={styles.errorMessage}>
 								Error: {item.errorMessage()}
 							</span>
