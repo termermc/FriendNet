@@ -47,7 +47,8 @@ export const BaseLayout: Component<BaseLayoutProps, RenderFragments> = (
 	if (description) {
 		descRes = description
 	} else {
-		descRes = 'Self-hostable file sharing for friends, like a mini-Soulseek. No port forwarding needed!'
+		descRes =
+			'Self-hostable file sharing for friends, like a mini-Soulseek. No port forwarding needed!'
 	}
 
 	// noinspection JSUnresolvedLibraryURL
@@ -65,15 +66,9 @@ export const BaseLayout: Component<BaseLayoutProps, RenderFragments> = (
 				<title>${titleRes}</title>
 				<meta property="og:title" content="${titleRes}" />
 
-                <meta
-                    property="og:description"
-                    content="${descRes}"
-                />
-				
-				<meta
-					property="og:image"
-					content="/logo-full.png"
-				/>
+				<meta property="og:description" content="${descRes}" />
+
+				<meta property="og:image" content="/logo-full.png" />
 
 				<link rel="stylesheet" href="/css/main.css" />
 				${(stylesheets ?? []).map(
@@ -84,9 +79,7 @@ export const BaseLayout: Component<BaseLayoutProps, RenderFragments> = (
 				<header>
 					<a href="/" class="header-title">${config.title}</a>
 					<div class="header-nav">
-                        <a href="/" class="header-nav-item">
-                            About
-                        </a>
+						<a href="/" class="header-nav-item"> About </a>
 						<a href="/download/" class="header-nav-item">
 							Download
 						</a>
@@ -105,9 +98,20 @@ export const BaseLayout: Component<BaseLayoutProps, RenderFragments> = (
 				${(scripts ?? []).map(
 					(uri) => html`<script src="${uri}"></script>`,
 				)}
-                <script defer data-domain="friendnet.org" src="https://curiosity.termer.net/js/script.file-downloads.outbound-links.js"></script>
-                <script>window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }</script>
-            </body>
+				<script
+					defer
+					data-domain="friendnet.org"
+					src="https://curiosity.termer.net/js/script.file-downloads.outbound-links.js"
+				></script>
+				<script>
+					window.plausible =
+						window.plausible ||
+						function () {
+							;(window.plausible.q =
+								window.plausible.q || []).push(arguments)
+						}
+				</script>
+			</body>
 		</html>
 	`
 }

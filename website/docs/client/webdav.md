@@ -12,7 +12,7 @@ By default, the server runs on `davs://localhost:20043`.
 > While WebDAV is supported by Windows Explorer, it imposes a 10MB file size limit.
 > The reason for this limit is unclear, but it makes copying or opening files exceeding the limit impossible
 > without editing the registry.
-> 
+>
 > NextCloud documented a fix for this issue [here](https://web.archive.org/web/20260312165616/https://docs.nextcloud.com/server/25/user_manual/en/files/access_webdav.html#id5).
 
 Windows Explorer (the default file explorer) allows you to mount a WebDAV server as a virtual drive, enabling convenient access.
@@ -25,7 +25,7 @@ Then click `Connect to a Web site that you can use to store your documents and p
 
 ![explorer map network drive menu](explorer-map-network-drive-menu.png)
 
-Enter the URL of the FriendNet server, using `https://`, *not* `davs://`.
+Enter the URL of the FriendNet server, using `https://`, _not_ `davs://`.
 
 ![explorer webdav location](explorer-webdav-location.png)
 

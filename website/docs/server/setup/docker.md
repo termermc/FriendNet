@@ -11,8 +11,8 @@ In particular, the sysctl changes that need to be made for better performance.
 
 The Docker image expects the following structure:
 
- - `/var/lib/friendnet` - The image's working directory and data directory
- - `/etc/friendnet` - The directory that contains the `server.json` config file
+- `/var/lib/friendnet` - The image's working directory and data directory
+- `/etc/friendnet` - The directory that contains the `server.json` config file
 
 When running the image, you should map these to volumes or local directories.
 

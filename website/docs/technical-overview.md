@@ -1,6 +1,6 @@
 # Technical Overview
 
-FriendNet is a self-hostable peer-to-peer file sharing system, similar to [Soulseek](https://www.slsknet.org/) or [Direct Connect](https://en.wikipedia.org/wiki/Direct_Connect_(protocol)).
+FriendNet is a self-hostable peer-to-peer file sharing system, similar to [Soulseek](https://www.slsknet.org/) or [Direct Connect](<https://en.wikipedia.org/wiki/Direct_Connect_(protocol)>).
 
 It uses a hub server to coordinate peer discovery and as a fallback relay if peers cannot connect to each other directly.
 The relay functionality provided by servers allows users who cannot open ports to participate, which sets FriendNet apart

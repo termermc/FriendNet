@@ -13,26 +13,44 @@ export const ScreenshotsPage: Component<void, void> = () => {
 		},
 		html`
 			<div class="home">
-                <h1>Screenshots</h1>
+				<h1>Screenshots</h1>
 				<div class="home-content screenshots">
 					<h1>Searching</h1>
 					<img src="/asset/screenshot/search.png" alt="search" />
-					<br/>
-					<img src="/asset/screenshot/search-hakken.png" alt="search hakken" />
-					
+					<br />
+					<img
+						src="/asset/screenshot/search-hakken.png"
+						alt="search hakken"
+					/>
+
 					<h1>Browsing</h1>
-					<img src="/asset/screenshot/browse-preview.png" alt="browse preview" />
-					<br/>
-					<img src="/asset/screenshot/browse-shares.png" alt="browse shares" />
-					
+					<img
+						src="/asset/screenshot/browse-preview.png"
+						alt="browse preview"
+					/>
+					<br />
+					<img
+						src="/asset/screenshot/browse-shares.png"
+						alt="browse shares"
+					/>
+
 					<h1>Custom Profiles</h1>
-					<img src="/asset/screenshot/custom-profile.png" alt="custom profile" />
-					
+					<img
+						src="/asset/screenshot/custom-profile.png"
+						alt="custom profile"
+					/>
+
 					<h1>Download Manager</h1>
-					<img src="/asset/screenshot/transfers.png" alt="download manager" />
-					
+					<img
+						src="/asset/screenshot/transfers.png"
+						alt="download manager"
+					/>
+
 					<h1>Managing Shares</h1>
-					<img src="/asset/screenshot/manage-shares.png" alt="manage shares" />
+					<img
+						src="/asset/screenshot/manage-shares.png"
+						alt="manage shares"
+					/>
 				</div>
 			</div>
 		`,

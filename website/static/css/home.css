@@ -15,8 +15,8 @@
 	text-decoration-color: red;
 }
 .home-footer {
-    margin: 1rem;
-    text-align: center;
+	margin: 1rem;
+	text-align: center;
 }
 
 .home-content {
@@ -35,10 +35,10 @@
 }
 
 .screenshots {
-    text-align: center;
+	text-align: center;
 }
 .screenshots img {
-    max-width: 75%;
-    margin-bottom: 0.5rem;
-    border: 0.3rem solid rgba(255, 0, 0, 0.25);
+	max-width: 75%;
+	margin-bottom: 0.5rem;
+	border: 0.3rem solid rgba(255, 0, 0, 0.25);
 }
