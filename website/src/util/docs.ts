@@ -1,83 +1,6 @@
 import { readdir, readFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
-
-/**
- * Regex that documentation pages must match.
- * The first capture group is the header title.
- *
- * @example
- * ```js
- * `# Hello World
- *
- * This is a documentation page.`.match(docHeaderRegex)
- * // => ['# Hello World', 'Hello World']
- * ```
- */
-const docHeaderRegex = /^#\s+(.+)/
-
-/**
- * A documentation page.
- */
-export type DocPage = {
-	/**
-	 * The page's title.
-	 */
-	title: string
-
-	/**
-	 * The markdown content.
-	 */
-	content: string
-
-	/**
-	 * The first paragraph in the content, or undefined if none.
-	 */
-	firstParagraph: string | undefined
-}
-
-/**
- * Reads a documentation page from a file.
- * @param path The path to the documentation page file.
- * @returns The documentation page.
- * @throws {Error} If the file is not a valid documentation page.
- */
-export async function readDocPage(path: string): Promise<DocPage> {
-	const slashIdx = path.lastIndexOf('/')
-	let filename: string
-	if (slashIdx === -1) {
-		filename = path
-	} else {
-		filename = path.slice(slashIdx + 1)
-	}
-
-	// Read the file
-	let content = await readFile(path, 'utf8')
-
-	// Check if it starts with a header
-	const headerMatch = content.match(docHeaderRegex)
-	if (!headerMatch) {
-		throw new Error(
-			`Doc page ${filename} does not have a header. The first line must be a level 1 heading. Example:\n\n# Hello World`,
-		)
-	}
-
-	const [, title] = headerMatch
-
-	content = content.substring(headerMatch[0].length).trim()
-
-	// Try to find the first paragraph.
-	const nlIdx = content.indexOf('\n\n')
-	let firstParagraph: string | undefined
-	if (nlIdx !== -1) {
-		firstParagraph = content.substring(0, nlIdx)
-	}
-
-	return {
-		title,
-		content,
-		firstParagraph,
-	}
-}
+import { type MarkdownPage, readMarkdownPage } from './markdown.ts'
 
 /**
  * A documentation section.
@@ -92,7 +15,7 @@ export type DocSection = {
 	/**
 	 * The section's page, if any.
 	 */
-	page?: DocPage
+	page?: MarkdownPage
 
 	/**
 	 * The paths to static files in the section.
@@ -168,10 +91,10 @@ export async function scanDirForDocHierarchy(
 				continue
 			}
 
-			const page = await readDocPage(entryPath)
+			const page = await readMarkdownPage(entryPath)
 
 			if (name === 'index.md' || name.startsWith('index_')) {
-				section.page = await readDocPage(entryPath)
+				section.page = await readMarkdownPage(entryPath)
 				continue
 			}
 
