@@ -583,6 +583,24 @@ func (l *QuicProtoListener) Accept(ctx context.Context) (ProtoConn, error) {
 	return ToProtoConn(conn), nil
 }
 
+// NewQuicProtoListenerFromConn creates a ProtoListener listening on the provided net.PacketConn and with the specified TLS config.
+func NewQuicProtoListenerFromConn(conn net.PacketConn, tlsCfg *tls.Config) (ProtoListener, error) {
+	trans := quic.Transport{
+		Conn: conn,
+	}
+	listener, err := trans.Listen(tlsCfg, &quic.Config{
+		KeepAlivePeriod:    DefaultKeepAlivePeriod,
+		MaxIncomingStreams: DefaultMaxIncomingStreams,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &QuicProtoListener{
+		Listener: listener,
+	}, nil
+}
+
 // NewQuicProtoListener creates a ProtoListener on the specified address and with the specified TLS config.
 func NewQuicProtoListener(listenAddr string, tlsCfg *tls.Config) (ProtoListener, error) {
 	addrPort, err := netip.ParseAddrPort(listenAddr)
@@ -607,16 +625,7 @@ func NewQuicProtoListener(listenAddr string, tlsCfg *tls.Config) (ProtoListener,
 		return nil, err
 	}
 
-	trans := quic.Transport{Conn: udpConn}
-	listener, err := trans.Listen(tlsCfg, &quic.Config{
-		KeepAlivePeriod:    DefaultKeepAlivePeriod,
-		MaxIncomingStreams: DefaultMaxIncomingStreams,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &QuicProtoListener{listener}, nil
+	return NewQuicProtoListenerFromConn(udpConn, tlsCfg)
 }
 
 // IsErrorConnCloseOrCancel returns whether the specified error can broadly be considered a connection close or cancel error.
