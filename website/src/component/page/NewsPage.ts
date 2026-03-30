@@ -3,6 +3,7 @@ import { type NewsArticle, newsFileNameNoExtPat } from '../../util/news.ts'
 import { NewsLayout, type NewsLayoutProps } from '../NewsLayout.ts'
 import { rewriteMarkdownLinks } from '../../util/markdown.ts'
 import { marked } from 'marked'
+import { formatDate } from '../../util/misc.ts'
 
 export type NewsPageProps = {
 	/**
@@ -75,6 +76,7 @@ export const NewsPage: Component<NewsPageProps, void> = (props) => {
 		},
 		html`
 			<h1 class="doc-page-title">${article.page.title}</h1>
+			<div class="doc-page-date">${formatDate(article.publishDate)}</div>
 			<div class="doc-page-content">${renderContent}</div>
 		`,
 	)

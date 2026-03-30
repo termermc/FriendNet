@@ -46,3 +46,13 @@
 .release-notes {
 	white-space: pre-wrap;
 }
+
+.article {
+    background-color: rgba(0, 0, 0, 0.15);
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+.article-title {
+    font-weight: bold;
+    font-size: 1.75rem;
+}

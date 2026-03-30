@@ -46,12 +46,17 @@ export const NewsLayout: Component<NewsLayoutProps, RenderFragments> = (
 						/>
 						RSS Feed
 					</a>
+                    <a href="${props.newsRoot}/">All News</a>
 					<div>~</div>
-					${props.articles.slice(0, 10).map((article) =>
-						html(`
-						<a href="${props.newsRoot}/${article.slug}/">${article.page.title}</a>					
-					`),
-					)}
+					${props.articles
+						.slice(0, 10)
+						.map(
+							(article) => html`
+								<a href="${props.newsRoot}/${article.slug}/"
+									>${article.page.title}</a
+								>
+							`,
+						)}
 				</div>
 				<div class="docs-content">${children}</div>
 			</div>
