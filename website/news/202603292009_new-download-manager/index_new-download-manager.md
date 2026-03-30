@@ -5,7 +5,7 @@ FriendNet v1.1.0 was just [released](/download), adding a fully-featured downloa
 ![download manager](transfers.png)
 
 The download manager (located in the `⏳ Transfers` tab) replaces the old method of doing bulk downloads.
-Previously, the `Download Folder` button would generate a zip file for the folder's contents., and the download
+Previously, the `💾 Download Folder` button would generate a zip file for the folder's contents., and the download
 buttons on individual files would just download them in the browser.
 
 The old way of downloading worked, but it was not meant to be the final version. If you closed your browser,
