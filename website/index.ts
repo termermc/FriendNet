@@ -1,3 +1,5 @@
+process.env.TZ = 'UTC'
+
 import { Wunphile } from 'wunphile'
 
 import { type DocSection, scanDirForDocHierarchy } from './src/util/docs.ts'
@@ -12,6 +14,7 @@ import { readFile } from 'node:fs/promises'
 import { DownloadPage } from './src/component/page/DownloadPage.ts'
 import { scanDirForNews } from './src/util/news.ts'
 import { NewsPage } from './src/component/page/NewsPage.ts'
+import { NewsHomePage } from './src/component/page/NewsHomePage.ts'
 
 const ssg = new Wunphile(import.meta.url)
 
@@ -91,6 +94,8 @@ for (const article of newsArticles) {
 		ssg.staticFile(dir + '/' + filename, filePath)
 	}
 }
+
+ssg.page('/news/index.html', () => NewsHomePage({ newsRoot, articles: newsArticles }))
 
 // Mount updater dir.
 ssg.staticDir('/updater', './updater')
