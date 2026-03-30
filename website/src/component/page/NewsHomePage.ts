@@ -27,38 +27,44 @@ export const NewsHomePage: Component<NewsHomePageProps, void> = ({
 			<div class="home">
 				<h1>News</h1>
 				<div class="home-content news">
-                    <p>
-                        All news posts about ${config.title}.
+					<p>
+						All news posts about ${config.title}.
 
-                        <a href="${newsRoot}/feed.xml">
-                            <img src="/feed.svg" style="width:1rem" alt="feed icon" />
-                            RSS feed
-                        </a>
-                    </p>
-					
-					<hr/>
-					
-					${articles.map(
-						(article) => {
-							const url = `${newsRoot}/${article.slug}/`
-							
-                            return (
-								html`
-	                                <div class="article">
-	                                    <a 
-			                                href="${url}"
-			                                class="article-title"
-	                                    >${article.page.title}</a>
-		                                <div class="article-date">${formatDate(article.publishDate)}</div>
-		                                <div class="article-content">
-			                                ${html(marked.parse(article.page.firstParagraph, { async: false }))}
-		                                </div>
-	                                    <a href="${url}">(Read more)</a>
-	                                </div>
-	                            `
-                            )
-                        },
-					)}
+						<a href="${newsRoot}/feed.xml">
+							<img
+								src="/feed.svg"
+								style="width:1rem"
+								alt="feed icon"
+							/>
+							RSS feed
+						</a>
+					</p>
+
+					<hr />
+
+					${articles.map((article) => {
+						const url = `${newsRoot}/${article.slug}/`
+
+						return html`
+							<div class="article">
+								<a href="${url}" class="article-title"
+									>${article.page.title}</a
+								>
+								<div class="article-date">
+									${formatDate(article.publishDate)}
+								</div>
+								<div class="article-content">
+									${html(
+										marked.parse(
+											article.page.firstParagraph,
+											{ async: false },
+										),
+									)}
+								</div>
+								<a href="${url}">(Read more)</a>
+							</div>
+						`
+					})}
 				</div>
 			</div>
 		`,

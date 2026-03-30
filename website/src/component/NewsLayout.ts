@@ -46,7 +46,7 @@ export const NewsLayout: Component<NewsLayoutProps, RenderFragments> = (
 						/>
 						RSS Feed
 					</a>
-                    <a href="${props.newsRoot}/">All News</a>
+					<a href="${props.newsRoot}/">All News</a>
 					<div>~</div>
 					${props.articles
 						.slice(0, 10)

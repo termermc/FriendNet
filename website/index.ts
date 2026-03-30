@@ -1,3 +1,5 @@
+import { NewsFeed } from './src/component/NewsFeed.ts'
+
 process.env.TZ = 'UTC'
 
 import { Wunphile } from 'wunphile'
@@ -95,7 +97,10 @@ for (const article of newsArticles) {
 	}
 }
 
-ssg.page('/news/index.html', () => NewsHomePage({ newsRoot, articles: newsArticles }))
+ssg.page('/news/index.html', () =>
+	NewsHomePage({ newsRoot, articles: newsArticles }),
+)
+ssg.page('/news/feed.xml', () => NewsFeed({ articles: newsArticles }))
 
 // Mount updater dir.
 ssg.staticDir('/updater', './updater')

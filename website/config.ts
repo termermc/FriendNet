@@ -1,5 +1,10 @@
 export default {
 	/**
+	 * The production site root URL.
+	 */
+	prodRootUrl: 'https://friendnet.org',
+
+	/**
 	 * The site's title.
 	 */
 	title: 'FriendNet',
