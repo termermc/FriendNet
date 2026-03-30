@@ -126,15 +126,15 @@ func (a i2pAddr) Network() string {
 
 func runClient(ctx context.Context, sess *sam3.RawSession, destId string) error {
 	println("Client address: " + sess.Addr().String())
-	println("Dialing " + destId + "...")
 
-	i2pConn, err := sess.DialContext(ctx, destId)
-	if err != nil {
-		return fmt.Errorf(`failed to dial %s: %w`, destId, err)
-	}
-	defer func() {
-		_ = i2pConn.Close()
-	}()
+	//println("Dialing " + destId + "...")
+	//i2pConn, err := sess.DialContext(ctx, destId)
+	//if err != nil {
+	//	return fmt.Errorf(`failed to dial %s: %w`, destId, err)
+	//}
+	//defer func() {
+	//	_ = i2pConn.Close()
+	//}()
 
 	tlsCfg := &tls.Config{
 		MinVersion:         tls.VersionTLS13,
@@ -147,7 +147,7 @@ func runClient(ctx context.Context, sess *sam3.RawSession, destId string) error 
 	}
 
 	println("Creating QUIC connection to " + destId + " via " + sess.Addr().String() + "...")
-	qConn, err := quic.Dial(ctx, i2pConn, i2pAddr{destId}, tlsCfg, &quic.Config{
+	qConn, err := quic.Dial(ctx, sess.PacketConn(), i2pAddr{destId}, tlsCfg, &quic.Config{
 		KeepAlivePeriod:    protocol.DefaultKeepAlivePeriod,
 		MaxIncomingStreams: protocol.DefaultMaxIncomingStreams,
 	})
