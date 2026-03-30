@@ -125,8 +125,6 @@ func (a i2pAddr) Network() string {
 }
 
 func runClient(ctx context.Context, sess *sam3.RawSession, destId string) error {
-	println("Client address: " + sess.Addr().String())
-
 	//println("Dialing " + destId + "...")
 	//i2pConn, err := sess.DialContext(ctx, destId)
 	//if err != nil {
@@ -173,6 +171,8 @@ func runClient(ctx context.Context, sess *sam3.RawSession, destId string) error 
 }
 
 func main() {
+	// TODO Send datagrams directly to see if connectivity is even happening at all
+
 	println("Creating SAM client...")
 	client, err := newSamClient()
 	if err != nil {
