@@ -70,7 +70,10 @@ export const BaseLayout: Component<BaseLayoutProps, RenderFragments> = (
 
 				<meta property="og:image" content="/logo-full.png" />
 
-				<link rel="stylesheet" href="/css/main.css?v=${config.buildTimestamp}" />
+				<link
+					rel="stylesheet"
+					href="/css/main.css?v=${config.buildTimestamp}"
+				/>
 				${(stylesheets ?? []).map(
 					(uri) => html` <link rel="stylesheet" href="${uri}" /> `,
 				)}

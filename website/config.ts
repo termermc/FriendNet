@@ -12,5 +12,5 @@ export default {
 	/**
 	 * The timestamp when the website was built.
 	 */
-	buildTimestamp: Date.now()
+	buildTimestamp: Date.now(),
 }

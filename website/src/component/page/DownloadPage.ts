@@ -33,7 +33,8 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 			'Linux (x64)': baseUrl + linuxAmd64Suffix,
 			'Linux (ARM64)': baseUrl + linuxArm64Suffix,
 			// 'MacOS (ARM64)': baseUrl + macosArm64Suffix,
-			'MacOS (coming soon, please build from source for now)': '/docs/client/compiling/',
+			'MacOS (coming soon, please build from source for now)':
+				'/docs/client/compiling/',
 			'Release Page': url,
 		}
 	} else {
@@ -54,7 +55,9 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 					${curUpdate.description
 						? html`
 								<h2>Release Notes</h2>
-								<pre class="release-notes">${curUpdate.description}</pre>
+								<pre class="release-notes">
+${curUpdate.description}</pre
+								>
 							`
 						: ''}
 					<br />

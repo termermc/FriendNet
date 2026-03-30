@@ -119,8 +119,8 @@ header {
 	border-right: 0.25rem solid rgba(0, 0, 0, 0.5);
 }
 .header-title img {
-    height: 2rem;
-    margin-right: 0.5rem;
+	height: 2rem;
+	margin-right: 0.5rem;
 }
 .header-nav {
 	position: relative;
