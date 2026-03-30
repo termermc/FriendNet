@@ -1,6 +1,7 @@
 import { type Component, html, type RenderFragments } from 'wunphile'
 import { type DocSection } from '../util/docs.ts'
 import { BaseLayout, type BaseLayoutProps } from './BaseLayout.ts'
+import config from '../../config.ts'
 
 export type DocsLayoutProps = {
 	/**
@@ -80,7 +81,7 @@ export const DocsLayout: Component<DocsLayoutProps, RenderFragments> = (
 	return BaseLayout(
 		{
 			...props,
-			stylesheets: ['/css/docs.css'],
+			stylesheets: ['/css/docs.css?v=' + config.buildTimestamp],
 		},
 		html`
 			<div class="docs">

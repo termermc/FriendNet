@@ -3,6 +3,7 @@ import { type DocSection } from '../../util/docs.ts'
 import { marked } from 'marked'
 import { DocsLayout, type DocsLayoutProps } from '../DocsLayout.ts'
 import { basename } from 'node:path'
+import { rewriteMarkdownLinks } from '../../util/markdown.ts'
 
 export type DocPageProps = {
 	/**
@@ -11,11 +12,8 @@ export type DocPageProps = {
 	section: DocSection
 } & Omit<DocsLayoutProps, 'title' | 'description'>
 
-const mdLinkRegex = /\[([^\]]+)]\(([^)]+)\)/g
-
 /**
  * A documentation page.
- * It is only the page, it does not include the layout.
  */
 export const DocPage: Component<DocPageProps, void> = (props) => {
 	const { section } = props
@@ -25,51 +23,48 @@ export const DocPage: Component<DocPageProps, void> = (props) => {
 
 	if (page?.content?.trim()) {
 		// Rewrite links.
-		const content = page.content.replace(
-			mdLinkRegex,
-			function (substring, label: string, link: string) {
-				if (link.startsWith('/')) {
-					return substring
-				}
-				if (link.startsWith('http://') || link.startsWith('https://')) {
-					return substring
-				}
+		const content = rewriteMarkdownLinks(page.content, (label, link) => {
+			if (link.startsWith('/')) {
+				return null
+			}
+			if (link.startsWith('http://') || link.startsWith('https://')) {
+				return null
+			}
 
-				let mdDir: string
-				if (section.children.length === 0) {
-					mdDir = props.curRelativePath.substring(
-						0,
-						props.curRelativePath.lastIndexOf('/'),
-					)
+			let mdDir: string
+			if (section.children.length === 0) {
+				mdDir = props.curRelativePath.substring(
+					0,
+					props.curRelativePath.lastIndexOf('/'),
+				)
+			} else {
+				mdDir = props.curRelativePath
+			}
+
+			let newLink: string
+			if (link.endsWith('.md')) {
+				const filename = basename(link)
+				if (filename === 'index.md' || filename.startsWith('index_')) {
+					newLink =
+						mdDir +
+						'/' +
+						link.substring(0, link.lastIndexOf(filename))
 				} else {
-					mdDir = props.curRelativePath
+					newLink =
+						mdDir +
+						'/' +
+						link.substring(0, link.length - '.md'.length) +
+						'/'
 				}
+			} else {
+				newLink = mdDir + '/' + link
+			}
 
-				let newLink: string
-				if (link.endsWith('.md')) {
-					const filename = basename(link)
-					if (
-						filename === 'index.md' ||
-						filename.startsWith('index_')
-					) {
-						newLink =
-							mdDir +
-							'/' +
-							link.substring(0, link.lastIndexOf(filename))
-					} else {
-						newLink =
-							mdDir +
-							'/' +
-							link.substring(0, link.length - '.md'.length) +
-							'/'
-					}
-				} else {
-					newLink = mdDir + '/' + link
-				}
-
-				return `[${label}](${props.docsRoot}${newLink})`
-			},
-		)
+			return {
+				label: label,
+				link: props.docsRoot + newLink,
+			}
+		})
 
 		// Render markdown with marked library.
 		renderContent = html(marked.parse(content, { async: false }))

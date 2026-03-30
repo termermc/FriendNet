@@ -1,6 +1,7 @@
 import { html } from 'wunphile'
 import type { Component } from 'wunphile'
 import { BaseLayout } from '../BaseLayout.ts'
+import config from '../../../config.ts'
 
 /**
  * The homepage.
@@ -8,7 +9,7 @@ import { BaseLayout } from '../BaseLayout.ts'
 export const HomePage: Component<void, void> = () => {
 	return BaseLayout(
 		{
-			stylesheets: ['/css/home.css'],
+			stylesheets: ['/css/home.css?v=' + config.buildTimestamp],
 		},
 		html`
 			<div class="home">
@@ -52,6 +53,7 @@ export const HomePage: Component<void, void> = () => {
 						<a href="/screenshots/" class="big-button"
 							>Screenshots</a
 						>
+						<a href="/news/" class="big-button">News</a>
 						<a href="/docs/" class="big-button">Documentation</a>
 					</div>
 				</div>

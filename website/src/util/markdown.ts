@@ -77,3 +77,45 @@ export async function readMarkdownPage(path: string): Promise<MarkdownPage> {
 		firstParagraph,
 	}
 }
+
+const mdLinkRegex = /\[([^\]]+)]\(([^)]+)\)/g
+
+/**
+ * A function that rewrites markdown links.
+ * @param label The link label.
+ * @param link The link URL.
+ * @returns The new label and link, or null if the link should not be changed.
+ * If the link is empty, the link will be stripped and the label will be used as plaintext.
+ */
+type MarkdownLinkRewriteFn = (
+	label: string,
+	link: string,
+) => { label: string; link: string } | null
+
+/**
+ * Rewrites markdown links.
+ * @param content The markdown content.
+ * @param rewriteFn The function to use for replacing links.
+ * @returns The rewritten markdown content.
+ */
+export function rewriteMarkdownLinks(
+	content: string,
+	rewriteFn: MarkdownLinkRewriteFn,
+): string {
+	return content.replace(
+		mdLinkRegex,
+		function (substring, label: string, link: string) {
+			const res = rewriteFn(label, link)
+
+			if (res === null) {
+				return substring
+			}
+
+			if (res.link === '') {
+				return res.label
+			}
+
+			return `[${res.label}](${res.link})`
+		},
+	)
+}

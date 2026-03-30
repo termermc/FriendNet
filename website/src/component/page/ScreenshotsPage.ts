@@ -1,6 +1,7 @@
 import { html } from 'wunphile'
 import type { Component } from 'wunphile'
 import { BaseLayout } from '../BaseLayout.ts'
+import config from '../../../config.ts'
 
 /**
  * The screenshots page.
@@ -9,7 +10,7 @@ export const ScreenshotsPage: Component<void, void> = () => {
 	return BaseLayout(
 		{
 			title: 'Screenshots',
-			stylesheets: ['/css/home.css'],
+			stylesheets: ['/css/home.css?v=' + config.buildTimestamp],
 		},
 		html`
 			<div class="home">

@@ -10,6 +10,8 @@ import { basename, join } from 'node:path'
 import { ScreenshotsPage } from './src/component/page/ScreenshotsPage.ts'
 import { readFile } from 'node:fs/promises'
 import { DownloadPage } from './src/component/page/DownloadPage.ts'
+import { scanDirForNews } from './src/util/news.ts'
+import { NewsPage } from './src/component/page/NewsPage.ts'
 
 const ssg = new Wunphile(import.meta.url)
 
@@ -32,6 +34,7 @@ ssg.page('/download/index.html', () => DownloadPage({ curUpdate }))
 // Mount static files.
 ssg.staticDir('/', './static')
 
+// Docs.
 const rootDocSection = await scanDirForDocHierarchy(
 	import.meta.dirname + '/docs',
 )
@@ -64,6 +67,30 @@ const mountDocSection = (section: DocSection, pathRelative: string) => {
 }
 
 mountDocSection(rootDocSection, '')
+
+// News.
+const newsArticles = await scanDirForNews(import.meta.dirname + '/news')
+const newsRoot = '/news'
+
+for (const article of newsArticles) {
+	const dir = newsRoot + '/' + article.slug
+	const path = dir + '/index.html'
+
+	ssg.page(path, () =>
+		NewsPage({
+			newsRoot: newsRoot,
+			article: article,
+			curRelativePath: dir,
+			articles: newsArticles,
+		}),
+	)
+
+	for (const filePathFull of article.staticFilePaths) {
+		const filename = basename(filePathFull)
+		const filePath = filePathFull.substring(import.meta.dirname.length)
+		ssg.staticFile(dir + '/' + filename, filePath)
+	}
+}
 
 // Mount updater dir.
 ssg.staticDir('/updater', './updater')

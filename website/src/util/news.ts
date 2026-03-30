@@ -25,9 +25,18 @@ export type NewsArticle = {
 	 * These must be absolute paths.
 	 */
 	staticFilePaths: string[]
+
+	/**
+	 * The article's containing directory, if any.
+	 * This will only be set if the article is in its own directory, as opposed to a freestanding markdown file.
+	 */
+	containingDir?: string
 }
 
-const newsFileNameNoExtPat = /^(\d{12})_(.+)$/
+/**
+ * The pattern for news article filenames, without the extension.
+ */
+export const newsFileNameNoExtPat = /^(\d{12})_(.+)$/
 
 /**
  * Scans a directory for news articles.
@@ -84,9 +93,12 @@ export async function scanDirForNews(dirPath: string): Promise<NewsArticle[]> {
 
 		const staticFilePaths: string[] = []
 		let page: MarkdownPage
+		let containingDir: string | undefined
 
 		if (ext === '') {
 			// File is a directory; search for index and files.
+
+			containingDir = name
 
 			const subFiles = await readdir(`${dirPath}/${name}`)
 
@@ -135,6 +147,7 @@ export async function scanDirForNews(dirPath: string): Promise<NewsArticle[]> {
 			publishDate: date,
 			page: page,
 			staticFilePaths: staticFilePaths,
+			containingDir: containingDir,
 		})
 	}
 
