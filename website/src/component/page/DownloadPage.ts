@@ -2,6 +2,7 @@ import { html } from 'wunphile'
 import type { Component } from 'wunphile'
 import { BaseLayout } from '../BaseLayout.ts'
 import type { UpdateInfo } from '../../../update.ts'
+import config from '../../../config.ts'
 
 type DownloadPageProps = {
 	curUpdate: UpdateInfo
@@ -44,7 +45,7 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 	return BaseLayout(
 		{
 			title: 'Download',
-			stylesheets: ['/css/home.css'],
+			stylesheets: ['/css/home.css?v=' + config.buildTimestamp],
 		},
 		html`
 			<div class="home">
@@ -53,7 +54,7 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 					${curUpdate.description
 						? html`
 								<h2>Release Notes</h2>
-								<pre>${curUpdate.description}</pre>
+								<pre class="release-notes">${curUpdate.description}</pre>
 							`
 						: ''}
 					<br />
