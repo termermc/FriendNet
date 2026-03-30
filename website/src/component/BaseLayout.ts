@@ -70,14 +70,17 @@ export const BaseLayout: Component<BaseLayoutProps, RenderFragments> = (
 
 				<meta property="og:image" content="/logo-full.png" />
 
-				<link rel="stylesheet" href="/css/main.css" />
+				<link rel="stylesheet" href="/css/main.css?v=${config.buildTimestamp}" />
 				${(stylesheets ?? []).map(
 					(uri) => html` <link rel="stylesheet" href="${uri}" /> `,
 				)}
 			</head>
 			<body>
 				<header>
-					<a href="/" class="header-title">${config.title}</a>
+					<a href="/" class="header-title">
+						<img src="/logo-full.png" alt="logo" />
+						<span>${config.title}</span>
+					</a>
 					<div class="header-nav">
 						<a href="/" class="header-nav-item"> About </a>
 						<a href="/download/" class="header-nav-item">
@@ -86,6 +89,7 @@ export const BaseLayout: Component<BaseLayoutProps, RenderFragments> = (
 						<a href="/screenshots/" class="header-nav-item">
 							Screenshots
 						</a>
+						<a href="/news/" class="header-nav-item"> News </a>
 						<a href="/docs/" class="header-nav-item">
 							Documentation
 						</a>
