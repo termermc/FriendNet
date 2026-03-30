@@ -26,14 +26,14 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 		const windowsAmd64Suffix = '-windows_amd64.exe'
 		const linuxAmd64Suffix = '-linux_amd64'
 		const linuxArm64Suffix = '-linux_arm64'
-		const macosArm64Suffix = '-macos_arm64'
+		// const macosArm64Suffix = '-macos_arm64'
 
 		dlUrls = {
 			'Windows (x64)': baseUrl + windowsAmd64Suffix,
 			'Linux (x64)': baseUrl + linuxAmd64Suffix,
 			'Linux (ARM64)': baseUrl + linuxArm64Suffix,
-			'MacOS (coming soon, please build from source for now)':
-				'#' + baseUrl + macosArm64Suffix,
+			// 'MacOS (ARM64)': baseUrl + macosArm64Suffix,
+			'MacOS (coming soon, please build from source for now)': '/docs/client/compiling/',
 			'Release Page': url,
 		}
 	} else {
