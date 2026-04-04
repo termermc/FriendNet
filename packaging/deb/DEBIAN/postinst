@@ -11,4 +11,9 @@ if command -v gtk-update-icon-cache >/dev/null 2>&1; then
   gtk-update-icon-cache -q /usr/share/icons/hicolor || true
 fi
 
+# Raise UDP buffer sizes for improved QUIC speed on high-bandwidth connections.
+# See https://github.com/quic-go/quic-go/wiki/UDP-Buffer-Sizes
+sysctl -w net.core.rmem_max=7500000
+sysctl -w net.core.wmem_max=7500000
+
 exit 0
