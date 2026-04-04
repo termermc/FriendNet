@@ -1,0 +1,12 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "ES2022",
+		"noEmit": true,
+		"moduleResolution": "node",
+		"allowImportingTsExtensions": true,
+		"noUnusedParameters": true,
+		"noUnusedLocals": true,
+		"types": ["node"]
+	}
+}

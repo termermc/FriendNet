@@ -1,0 +1,7 @@
+Package: friendnet-client
+Version: $VERSION
+Section: net
+Priority: optional
+Architecture: $ARCH
+Maintainer: termer <termer@termer.net>
+Description: FriendNet Client
