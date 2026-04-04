@@ -12,8 +12,6 @@ export async function debMain(args: string[]): Promise<number> {
 		'fakeroot',
 	])
 
-	await rm(clientExportRoot, { recursive: true, force: true })
-
 	if (!args.includes('--no-ui')) {
 		console.log('Building web UI...')
 		await runCmd('make', ['webui'], repoRoot)
