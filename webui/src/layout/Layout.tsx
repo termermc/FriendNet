@@ -104,10 +104,10 @@ export const Layout: Component<LayoutProps> = (props) => {
 
 							return (
 								<div class={styles.errorContainer}>
-									<h1>
-										Failed to render page content
-									</h1>
-									<div class={styles.error}>{err?.message ?? err}</div>
+									<h1>Failed to render page content</h1>
+									<div class={styles.error}>
+										{err?.message ?? err}
+									</div>
 									<p>See console for details.</p>
 								</div>
 							)
