@@ -117,7 +117,14 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 								</div>
 							`
 						: ''}
-					<br />
+					<br/>
+                    <hr />
+                    <p>
+                        <b>Looking for the server download?</b>
+                        Check out the
+                        <a href="/docs/server/setup/">setup guide</a>.
+                    </p>
+					<hr />
 					<div class="download-items">
 						${items.map(
 							(item) => html`
@@ -154,12 +161,6 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 							`,
 						)}
 					</div>
-					<hr />
-					<p>
-						<b>Looking for the server download?</b>
-						Check out the
-						<a href="/docs/server/setup/">setup guide</a>.
-					</p>
 				</div>
 			</div>
 		`,
