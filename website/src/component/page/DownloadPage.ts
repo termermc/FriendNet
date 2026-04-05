@@ -23,6 +23,7 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 	let items: {
 		name: string
 		url: string
+		isDirect: boolean
 		subtitle?: string
 		icons?: string[]
 	}[]
@@ -39,18 +40,21 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 			{
 				name: 'Windows (x64)',
 				url: baseUrl + windowsAmd64Suffix,
+				isDirect: true,
 				subtitle: 'Requires Windows 10 or later.',
 				icons: ['windows.svg'],
 			},
 			{
 				name: 'MacOS (coming soon)',
 				url: '/docs/client/compiling/',
+				isDirect: true,
 				subtitle: 'Please build from source for now.',
 				icons: ['apple.svg'],
 			},
 			{
 				name: 'Linux (x64)',
 				url: baseUrl + linuxAmd64Suffix,
+				isDirect: true,
 				subtitle:
 					'Works on all distros. Use if there is no specific package for your distro.',
 				icons: ['linux.svg'],
@@ -58,6 +62,7 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 			{
 				name: 'Linux (ARM64)',
 				url: baseUrl + linuxArm64Suffix,
+				isDirect: true,
 				subtitle:
 					'Works on all distros. Use if there is no specific package for your distro.',
 				icons: ['linux.svg'],
@@ -65,12 +70,14 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 			{
 				name: 'Debian/Ubuntu (x64)',
 				url: baseUrl + debAmd64Suffix,
+				isDirect: true,
 				subtitle: 'Works on Debian-based and Ubuntu-based distros.',
 				icons: ['debian.svg', 'ubuntu.svg'],
 			},
 			{
 				name: 'Debian/Ubuntu (ARM64)',
 				url: baseUrl + debArm64Suffix,
+				isDirect: true,
 				subtitle:
 					'Works on Debian-based and Ubuntu-based distros. Use this if you use Raspberry Pi OS.',
 				icons: ['debian.svg', 'ubuntu.svg', 'raspberry-pi.svg'],
@@ -78,6 +85,7 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 			{
 				name: 'Arch Linux',
 				url: 'https://aur.archlinux.org/packages/friendnet-client-bin',
+				isDirect: false,
 				subtitle:
 					'Binary releases are provided by friendnet-client-bin (AUR).',
 				icons: ['archlinux.svg'],
@@ -85,6 +93,7 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 			{
 				name: 'Release Page',
 				url: url,
+				isDirect: false,
 				icons: ['github.svg'],
 			},
 		]
@@ -93,6 +102,7 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 			{
 				name: 'All Platforms',
 				url: url,
+				isDirect: false,
 			},
 		]
 	}
@@ -117,13 +127,13 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 								</div>
 							`
 						: ''}
-					<br/>
-                    <hr />
-                    <p>
-                        <b>Looking for the server download?</b>
-                        Check out the
-                        <a href="/docs/server/setup/">setup guide</a>.
-                    </p>
+					<br />
+					<hr />
+					<p>
+						<b>Looking for the server download?</b>
+						Check out the
+						<a href="/docs/server/setup/">setup guide</a>.
+					</p>
 					<hr />
 					<div class="download-items">
 						${items.map(
@@ -142,11 +152,15 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 												/>`,
 										)}
 										${item.name}
-										<img
-											src="/asset/icon/download.svg"
-											alt="download"
-											class="download-item-download"
-										/>
+										${item.isDirect
+											? html`
+													<img
+														src="/asset/icon/download.svg"
+														alt="download"
+														class="download-item-download"
+													/>
+												`
+											: ''}
 									</a>
 									${item.subtitle
 										? html`
