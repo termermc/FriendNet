@@ -47,7 +47,7 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 			{
 				name: 'MacOS (coming soon)',
 				url: '/docs/client/compiling/',
-				isDirect: true,
+				isDirect: false,
 				subtitle: 'Please build from source for now.',
 				icons: ['apple.svg'],
 			},
