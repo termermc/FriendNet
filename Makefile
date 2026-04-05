@@ -12,6 +12,8 @@
 	client-linux-amd64-noui \
     client-linux-arm64-noui \
 	client-darwin-arm64-noui \
+	client-debs \
+	client-debs-noui \
 	rpcclient \
 	rpcclient-linux-amd64 \
 	rpcclient-linux-arm64 \
@@ -66,6 +68,12 @@ client-linux-arm64-noui:
 client-darwin-arm64-noui:
 	cd client && CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o friendnet-client friendnet.org/client/cmd/client
 
+client-debs:
+	cd packaging && node index.ts deb
+
+client-debs-noui:
+	cd packaging && node index.ts deb --no-ui
+
 rpcclient:
 	cd rpcclient && CGO_ENABLED=0 go build -o friendnet-rpcclient friendnet.org/rpcclient/cmd/cli
 
@@ -93,7 +101,9 @@ release-artifacts:
 	make client-linux-amd64-noui && mv client/friendnet-client /tmp/fn-release/friendnet-client-linux_amd64
 	make client-linux-arm64-noui && mv client/friendnet-client /tmp/fn-release/friendnet-client-linux_arm64
 	make client-windows-amd64-noui && mv client/friendnet-client.exe /tmp/fn-release/friendnet-client-windows_amd64.exe
-	make client-darwin-arm64-noui && mv client/friendnet-client /tmp/fn-release/friendnet-client-macos_arm64
+	#make client-darwin-arm64-noui && mv client/friendnet-client /tmp/fn-release/friendnet-client-macos_arm64
+
+	make client-debs-noui && mv client/*.deb /tmp/fn-release/
 
 	make server-linux-amd64 && mv server/friendnet-server /tmp/fn-release/server
 	make rpcclient-linux-amd64 && mv rpcclient/friendnet-rpcclient /tmp/fn-release/rpcclient

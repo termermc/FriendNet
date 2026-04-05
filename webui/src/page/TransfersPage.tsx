@@ -126,7 +126,11 @@ const DownloadItem: Component<{ item: Download }> = (props) => {
 			<div class={styles.info}>{filename}</div>
 			<div class={styles.progress}>
 				<progress
-					value={item.downloadedBytes() / item.fileSizeBytes()}
+					value={
+						item.fileSizeBytes() === 0
+							? 1
+							: item.downloadedBytes() / item.fileSizeBytes()
+					}
 					max="1"
 				/>
 				<div class={styles.options}>

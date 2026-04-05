@@ -99,11 +99,19 @@ export const Layout: Component<LayoutProps> = (props) => {
 
 				<div class={styles.content}>
 					<ErrorBoundary
-						fallback={
-							<h1>
-								Failed to render page content, check console
-							</h1>
-						}
+						fallback={(err) => {
+							console.log('failed to render page content:', err)
+
+							return (
+								<div class={styles.errorContainer}>
+									<h1>Failed to render page content</h1>
+									<div class={styles.error}>
+										{err?.message ?? err}
+									</div>
+									<p>See console for details.</p>
+								</div>
+							)
+						}}
 					>
 						{props.children}
 					</ErrorBoundary>

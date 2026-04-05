@@ -1,0 +1,17 @@
+#!/bin/sh
+set -e
+
+# Refresh desktop entry cache (harmless if tool isn't installed)
+if command -v update-desktop-database >/dev/null 2>&1; then
+  update-desktop-database -q /usr/share/applications || true
+fi
+
+# Refresh icon cache for hicolor theme
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+  gtk-update-icon-cache -q /usr/share/icons/hicolor || true
+fi
+
+# Apply sysctl.d conf from package.
+sysctl --system
+
+exit 0

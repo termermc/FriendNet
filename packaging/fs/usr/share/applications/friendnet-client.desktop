@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=FriendNet Client
+GenericName=Peer-to-Peer File Sharing
+Comment=Client for FriendNet (Web UI)
+Exec=friendnet-client
+TryExec=friendnet-client
+Icon=friendnet-client
+StartupNotify=true
+Terminal=false
+Keywords=FriendNet;p2p;filesharing;file sharing;share;peer to peer;download;
+Categories=Network;FileTransfer;P2P;

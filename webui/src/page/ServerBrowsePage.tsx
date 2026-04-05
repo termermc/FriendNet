@@ -151,7 +151,7 @@ const Page: Component = () => {
 									filePath={filePath}
 									title="Download Folder"
 								/>
-							)
+							),
 						}
 					} else {
 						const nonDlUrl = makeFileUrl(

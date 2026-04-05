@@ -1,0 +1,15 @@
+{
+  "name": "packaging",
+  "version": "0.0.0",
+  "description": "Packaging utility scripts",
+  "license": "AGPL-3.0",
+  "author": "",
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2"
+  }
+}

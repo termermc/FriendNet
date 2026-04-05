@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cc="http://web.resource.org/cc/" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:svg="http://www.w3.org/2000/svg" xmlns:ns1="http://sozi.baierouge.fr" id="svg2963" viewBox="0 0 48 48" version="1.1" inkscape:version="0.91 r13725">
+  <defs id="defs3">
+    <radialGradient id="radialGradient6719" xlink:href="#linearGradient5060" gradientUnits="userSpaceOnUse" cy="486.65" cx="605.71" gradientTransform="matrix(-2.7744 0 0 1.9697 112.76 -872.89)" r="117.14"/>
+    <linearGradient id="linearGradient5060">
+      <stop id="stop5062" style="stop-color:#000000" offset="0"/>
+      <stop id="stop5064" style="stop-color:#000000;stop-opacity:0" offset="1"/>
+    </linearGradient>
+    <radialGradient id="radialGradient6717" xlink:href="#linearGradient5060" gradientUnits="userSpaceOnUse" cy="486.65" cx="605.71" gradientTransform="matrix(2.7744 0 0 1.9697 -1891.6 -872.89)" r="117.14"/>
+    <linearGradient id="linearGradient6715" y2="609.51" gradientUnits="userSpaceOnUse" x2="302.86" gradientTransform="matrix(2.7744 0 0 1.9697 -1892.2 -872.89)" y1="366.65" x1="302.86">
+      <stop id="stop5050" style="stop-color:#000000;stop-opacity:0" offset="0"/>
+      <stop id="stop5056" style="stop-color:#000000" offset=".5"/>
+      <stop id="stop5052" style="stop-color:#000000;stop-opacity:0" offset="1"/>
+    </linearGradient>
+    <linearGradient id="linearGradient2269" y2="12.334" gradientUnits="userSpaceOnUse" x2="17.696" gradientTransform="matrix(.73770 0 0 .73770 6.6371 13.546)" y1="13.445" x1="30.062">
+      <stop id="stop4981" style="stop-color:#fbf0e0" offset="0"/>
+      <stop id="stop4983" style="stop-color:#f0ce99" offset="1"/>
+    </linearGradient>
+    <linearGradient id="linearGradient2274" y2="15.268" gradientUnits="userSpaceOnUse" x2="47.066" gradientTransform="matrix(.73770 0 0 .73770 6.6371 13.546)" y1="14.662" x1="36.289">
+      <stop id="stop4997" style="stop-color:#de9523" offset="0"/>
+      <stop id="stop4999" style="stop-color:#a36d18" offset="1"/>
+    </linearGradient>
+    <linearGradient id="linearGradient2277" y2="16.17" gradientUnits="userSpaceOnUse" x2="24.119" gradientTransform="matrix(.73770 0 0 .72763 6.6371 13.78)" y1="24.721" x1="25.381">
+      <stop id="stop4194" style="stop-color:#e9b96e" offset="0"/>
+      <stop id="stop4196" style="stop-color:#f1d19e" offset="1"/>
+    </linearGradient>
+    <linearGradient id="linearGradient2280" y2="12.637" gradientUnits="userSpaceOnUse" x2="34.194" gradientTransform="matrix(.73770 0 0 .76661 6.6371 13.516)" y1="12.637" x1="16.149">
+      <stop id="stop4184" style="stop-color:#a36d18" offset="0"/>
+      <stop id="stop4186" style="stop-color:#d79020" offset="1"/>
+    </linearGradient>
+    <linearGradient id="linearGradient2282" y2="16.021" gradientUnits="userSpaceOnUse" x2="22.072" gradientTransform="matrix(.73770 0 0 .73770 6.6371 13.546)" y1="9.7577" x1="21.907">
+      <stop id="stop4989" style="stop-color:#a0670c" offset="0"/>
+      <stop id="stop4991" style="stop-color:#a0670c;stop-opacity:0" offset="1"/>
+    </linearGradient>
+    <linearGradient id="linearGradient2285" y2="47.388" gradientUnits="userSpaceOnUse" x2="30.015" gradientTransform="matrix(.73770 0 0 .73770 6.6371 13.546)" y1="19.912" x1="18.707">
+      <stop id="stop4224" style="stop-color:#ffffff" offset="0"/>
+      <stop id="stop4226" style="stop-color:#ffffff;stop-opacity:.68639" offset="1"/>
+    </linearGradient>
+    <linearGradient id="linearGradient2288" y2="22.585" gradientUnits="userSpaceOnUse" x2="24.99" gradientTransform="matrix(.73770 0 0 .73770 6.6371 13.546)" y1="34.005" x1="24.99">
+      <stop id="stop4212" style="stop-color:#eaba6f" offset="0"/>
+      <stop id="stop4214" style="stop-color:#b97a1b" offset="1"/>
+    </linearGradient>
+    <linearGradient id="linearGradient3666" y2="11.943" gradientUnits="userSpaceOnUse" x2="28.921" gradientTransform="matrix(.73770 0 0 .73770 6.747 13.546)" y1="-13.9" x1="13.74">
+      <stop id="stop3662" style="stop-color:#00ff07" offset="0"/>
+      <stop id="stop3664" style="stop-color:#0d6203" offset="1"/>
+    </linearGradient>
+  </defs>
+  <g id="layer1">
+    <g id="g6707" transform="matrix(.015532 0 0 .015394 38.064 39.664)">
+      <rect id="rect6709" style="opacity:.40206;color:#000000;fill:url(#linearGradient6715)" height="478.36" width="1339.6" y="-150.7" x="-1559.3"/>
+      <path id="path6711" style="opacity:.40206;color:#000000;fill:url(#radialGradient6717)" d="m-219.62-150.68v478.33c142.87 0.90045 345.4-107.17 345.4-239.2s-159.44-239.13-345.4-239.13z"/>
+      <path id="path6713" style="opacity:.40206;color:#000000;fill:url(#radialGradient6719)" d="m-1559.3-150.68v478.33c-142.87 0.90045-345.4-107.17-345.4-239.2s159.44-239.13 345.4-239.13z"/>
+    </g>
+    <rect id="rect3115" style="color:#000000;stroke:#a0670c;stroke-width:.73770;display:block;fill:url(#linearGradient2288)" rx="1.7883" ry="1.7664" height="17.05" width="23.59" y="24.815" x="12.142"/>
+    <rect id="rect4220" style="opacity:.48101;color:#000000;stroke:url(#linearGradient2285);stroke-width:.73770;display:block;fill:none" rx=".94772" ry=".94772" height="15.547" width="21.987" y="25.529" x="12.907"/>
+    <path id="path4162" style="fill-rule:evenodd;stroke:url(#linearGradient2282);stroke-width:.73770;fill:url(#linearGradient2280)" d="m13.107 25.753 3.7254-5.0244 13.865-0.07452 3.8508 4.9969-21.442 0.10198z"/>
+    <path id="path4164" style="stroke-linejoin:round;color:#000000;stroke:#a0670c;stroke-linecap:round;stroke-width:.73770;display:block;fill:url(#linearGradient2277)" d="m34.874 25.59 3.8308 5.3075h-29.145l3.4407-5.3112 21.874 0.0036z"/>
+    <path id="path4178" style="stroke-linejoin:round;color:#000000;stroke:#a0670c;stroke-linecap:round;stroke-width:.73770;display:block;fill:url(#linearGradient2274)" d="m30.87 20.639 3.4546 5.1066 6.6641 3.2347-5.9861-6.5749-4.1326-1.7664z"/>
+    <path id="path4180" style="stroke-linejoin:round;color:#000000;stroke:#a0670c;stroke-linecap:round;stroke-width:.73770;display:block;fill:#f8e8cf" d="m16.683 20.713-2.9329 4.9575-6.7386 3.2347 5.9861-6.5749 3.6855-1.6173z"/>
+    <path id="path4954" style="color:#000000;stroke:#f4e3ca;stroke-width:.73770;display:block;fill:none" d="m33.95 25.671 3.2857 4.4682h-26.432l3.0548-4.5592 20.092 0.091z"/>
+    <path id="path4966" style="opacity:.87975;stroke-linejoin:round;stroke:url(#linearGradient2269);stroke-linecap:round;stroke-width:.73770;fill:none" d="m13.758 25.624 2.4966-4.263 15.107-0.05549 2.8342 4.3171-20.438 0.0014z"/>
+    <path id="path2882" style="stroke:#1b6701;stroke-width:.73770;fill:url(#linearGradient3666)" d="m20.456 3.6612-0.04611 8.7478h-3.1583l6.6854 11.573 6.6854-11.573h-3.1352l-0.04611-8.7478h-6.9851z"/>
+  </g>
+  <metadata>
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+        <cc:license rdf:resource="http://creativecommons.org/licenses/publicdomain/"/>
+        <dc:publisher>
+          <cc:Agent rdf:about="http://openclipart.org/">
+            <dc:title>Openclipart</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:title>Download package</dc:title>
+        <dc:date>2010-09-29T09:19:57</dc:date>
+        <dc:description>Tango package icon with green arrow.</dc:description>
+        <dc:source>https://openclipart.org/detail/87799/download-package-by-kuba</dc:source>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>kuba</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>arrow</rdf:li>
+            <rdf:li>download</rdf:li>
+            <rdf:li>green</rdf:li>
+            <rdf:li>package</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+      </cc:Work>
+      <cc:License rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <cc:permits rdf:resource="http://creativecommons.org/ns#Reproduction"/>
+        <cc:permits rdf:resource="http://creativecommons.org/ns#Distribution"/>
+        <cc:permits rdf:resource="http://creativecommons.org/ns#DerivativeWorks"/>
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>
