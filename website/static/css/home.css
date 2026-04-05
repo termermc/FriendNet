@@ -24,6 +24,35 @@
 	padding: 1rem;
 	max-width: calc(100% - 4rem);
 }
+.download-items {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+}
+.download-item {
+	background-color: rgba(0, 0, 0, 0.15);
+	margin: 1rem;
+	padding: 1rem;
+	display: flex;
+	flex-direction: column;
+	flex: auto;
+	width: 40%;
+}
+.download-item-link {
+	font-weight: bold;
+	font-size: 1.25rem;
+}
+.download-item-icon {
+	width: auto;
+	height: 1.25rem;
+	position: relative;
+	top: 0.25rem;
+}
+.download-item-download {
+	position: relative;
+	top: 0.4rem;
+	height: 2rem;
+}
 
 .big-button {
 	display: inline-block;
