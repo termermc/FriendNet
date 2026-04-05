@@ -26,6 +26,8 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 		const windowsAmd64Suffix = '-windows_amd64.exe'
 		const linuxAmd64Suffix = '-linux_amd64'
 		const linuxArm64Suffix = '-linux_arm64'
+		const debAmd64Suffix = '-linux_amd64.deb'
+		const debArm64Suffix = '-linux_arm64.deb'
 		// const macosArm64Suffix = '-macos_arm64'
 
 		dlUrls = {
@@ -35,6 +37,10 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 			// 'MacOS (ARM64)': baseUrl + macosArm64Suffix,
 			'MacOS (coming soon, please build from source for now)':
 				'/docs/client/compiling/',
+			'Debian/Ubuntu (x64)': baseUrl + debAmd64Suffix,
+			'Debian/Ubuntu/Raspberry Pi OS (ARM64)': baseUrl + debArm64Suffix,
+			'Arch Linux':
+				'https://aur.archlinux.org/packages/friendnet-client-bin',
 			'Release Page': url,
 		}
 	} else {
