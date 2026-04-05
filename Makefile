@@ -101,7 +101,7 @@ release-artifacts:
 	make client-linux-amd64-noui && mv client/friendnet-client /tmp/fn-release/friendnet-client-linux_amd64
 	make client-linux-arm64-noui && mv client/friendnet-client /tmp/fn-release/friendnet-client-linux_arm64
 	make client-windows-amd64-noui && mv client/friendnet-client.exe /tmp/fn-release/friendnet-client-windows_amd64.exe
-	make client-darwin-arm64-noui && mv client/friendnet-client /tmp/fn-release/friendnet-client-macos_arm64
+	#make client-darwin-arm64-noui && mv client/friendnet-client /tmp/fn-release/friendnet-client-macos_arm64
 
 	make client-debs-noui && mv client/*.deb /tmp/fn-release/
 
