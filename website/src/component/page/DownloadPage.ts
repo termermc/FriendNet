@@ -52,22 +52,6 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 				icons: ['apple.svg'],
 			},
 			{
-				name: 'Linux (x64)',
-				url: baseUrl + linuxAmd64Suffix,
-				isDirect: true,
-				subtitle:
-					'Works on all distros. Use if there is no specific package for your distro.',
-				icons: ['linux.svg'],
-			},
-			{
-				name: 'Linux (ARM64)',
-				url: baseUrl + linuxArm64Suffix,
-				isDirect: true,
-				subtitle:
-					'Works on all distros. Use if there is no specific package for your distro.',
-				icons: ['linux.svg'],
-			},
-			{
 				name: 'Debian/Ubuntu (x64)',
 				url: baseUrl + debAmd64Suffix,
 				isDirect: true,
@@ -75,7 +59,7 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 				icons: ['debian.svg', 'ubuntu.svg'],
 			},
 			{
-				name: 'Debian/Ubuntu (ARM64)',
+				name: 'Debian/Ubuntu/Raspberry Pi OS (ARM64)',
 				url: baseUrl + debArm64Suffix,
 				isDirect: true,
 				subtitle:
@@ -89,6 +73,22 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 				subtitle:
 					'Binary releases are provided by friendnet-client-bin (AUR).',
 				icons: ['archlinux.svg'],
+			},
+			{
+				name: 'Linux Generic (x64)',
+				url: baseUrl + linuxAmd64Suffix,
+				isDirect: true,
+				subtitle:
+					'Works on all distros. Use if there is no specific package for your distro.',
+				icons: ['linux.svg'],
+			},
+			{
+				name: 'Linux Generic (ARM64)',
+				url: baseUrl + linuxArm64Suffix,
+				isDirect: true,
+				subtitle:
+					'Works on all distros. Use if there is no specific package for your distro.',
+				icons: ['linux.svg'],
 			},
 			{
 				name: 'Release Page',
