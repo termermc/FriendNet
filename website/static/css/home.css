@@ -24,6 +24,15 @@
 	padding: 1rem;
 	max-width: calc(100% - 4rem);
 }
+.download-server {
+	font-size: 1.5rem;
+	font-weight: bold;
+}
+.download-server span {
+	text-decoration: underline;
+	text-decoration-color: red;
+	text-decoration-thickness: 0.25rem;
+}
 .download-items {
 	display: flex;
 	flex-wrap: wrap;

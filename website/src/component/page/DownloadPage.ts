@@ -129,8 +129,9 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 						: ''}
 					<br />
 					<hr />
-					<p>
-						<b>Looking for the server download?</b>
+					<p class="download-server">
+						⚠️ <span>Looking for the server download?</span>
+
 						Check out the
 						<a href="/docs/server/setup/">setup guide</a>.
 					</p>
