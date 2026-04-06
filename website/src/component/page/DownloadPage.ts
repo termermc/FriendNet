@@ -79,7 +79,7 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 				url: baseUrl + linuxAmd64Suffix,
 				isDirect: true,
 				subtitle:
-					'Works on all distros. Use if there is no specific package for your distro.',
+					'Works on all distros. Use if there is no specific package for your distro. You will need to mark it as executable with "chmod +x" to work.',
 				icons: ['linux.svg'],
 			},
 			{
@@ -87,7 +87,7 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 				url: baseUrl + linuxArm64Suffix,
 				isDirect: true,
 				subtitle:
-					'Works on all distros. Use if there is no specific package for your distro.',
+					'Works on all distros. Use if there is no specific package for your distro. You will need to mark it as executable with "chmod +x" to work.',
 				icons: ['linux.svg'],
 			},
 			{
