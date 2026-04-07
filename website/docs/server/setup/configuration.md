@@ -44,6 +44,18 @@ By default, you will want to keep the first RPC entry because that will be used 
 Other RPC entries can be used for exposing public RPC endpoints for things like widgets or querying information about
 the server.
 
+To require an authorization token to access an endpoint, add a `bearer_token` property to it, like so:
+
+```json
+{
+	"address": "http://127.0.0.1:8080",
+	"allowed_methods": [
+		"*"
+	],
+	"bearer_token": "some-secure-random-token"
+}
+```
+
 ---
 
 Next: [Management](management.md)
