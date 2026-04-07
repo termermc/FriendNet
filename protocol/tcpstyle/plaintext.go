@@ -31,10 +31,11 @@ var emptyAppErr = &quic.ApplicationError{
 var ErrConnManagerClosed = errors.New("ConnManager is closed")
 
 // DialFunc is a function that dials an address and returns an outgoing TCP-style plaintext connection.
+// If the underlying connection is closed, it must return net.ErrClosed.
 type DialFunc func(addr string) (net.Conn, error)
 
 // AcceptFunc is a function that returns an incoming TCP-style plaintext connection.
-// If there are no more connections to accept, it must return (nil, nil).
+// If there are no more connections to accept, it must return net.ErrClosed.
 type AcceptFunc func() (net.Conn, error)
 
 type streamOp uint8
@@ -87,7 +88,7 @@ type ConnManager struct {
 // NewConnManager creates a new ConnManager with the provided dial and accept functions.
 func NewConnManager(
 	logger *slog.Logger,
-	close io.Closer,
+	closer io.Closer,
 	dial DialFunc,
 	accept AcceptFunc,
 	connInactivityTimeout time.Duration,
@@ -95,7 +96,7 @@ func NewConnManager(
 	m := &ConnManager{
 		logger: logger,
 
-		closer: close,
+		closer: closer,
 		dial:   dial,
 		accept: accept,
 
@@ -108,6 +109,11 @@ func NewConnManager(
 		for !m.isClosed {
 			rawConn, err := m.accept()
 			if err != nil {
+				if errors.Is(err, net.ErrClosed) {
+					_ = m.Close()
+					return
+				}
+
 				m.logger.Error("failed to accept connection",
 					"service", "tcpstyle.ConnManager",
 					"err", err,
@@ -264,6 +270,11 @@ func (m *ConnManager) Dial(addr string) (*Conn, error) {
 
 	openConn, err := m.dial(addr)
 	if err != nil {
+		if errors.Is(err, net.ErrClosed) {
+			_ = m.Close()
+			return nil, ErrConnManagerClosed
+		}
+
 		return nil, err
 	}
 	defer func() {
@@ -271,7 +282,7 @@ func (m *ConnManager) Dial(addr string) (*Conn, error) {
 	}()
 
 	err = writeStreamHeader(openConn, streamHeader{
-		ConnId: 0,
+		ConnId: protoVersion,
 		Op:     streamOpOpenConn,
 	})
 	if err != nil {
@@ -282,6 +293,11 @@ func (m *ConnManager) Dial(addr string) (*Conn, error) {
 	var idBytes [8]byte
 	_, err = io.ReadFull(openConn, idBytes[:])
 	if err != nil {
+		if errors.Is(err, io.EOF) {
+			// Connection was closed on the other side.
+			return nil, emptyAppErr
+		}
+
 		return nil, err
 	}
 	id := int64(binary.LittleEndian.Uint64(idBytes[:]))
@@ -395,6 +411,11 @@ func (c *Conn) OpenBidiWithMsg(typ pb.MsgType, msg proto.Message) (bidi protocol
 
 	netConn, err := c.m.dial(c.addr.String())
 	if err != nil {
+		if errors.Is(err, net.ErrClosed) {
+			_ = c.CloseWithReason("underlying dialer closed")
+			return bidi, emptyAppErr
+		}
+
 		return bidi, err
 	}
 
