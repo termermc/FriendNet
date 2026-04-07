@@ -12,11 +12,6 @@ require (
 	modernc.org/sqlite v1.46.1
 )
 
-replace (
-	friendnet.org/common => ../common
-	friendnet.org/protocol => ../protocol
-)
-
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
@@ -31,4 +26,10 @@ require (
 	modernc.org/libc v1.68.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
+)
+
+replace (
+	friendnet.org/common => ../common
+	friendnet.org/protocol => ../protocol
+	friendnet.org/rpcclient => ../rpcclient
 )

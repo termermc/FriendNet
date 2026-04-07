@@ -2,109 +2,165 @@ package rpcclient
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 
+	"connectrpc.com/connect"
 	v1 "friendnet.org/protocol/pb/serverrpc/v1"
 	"friendnet.org/protocol/pb/serverrpc/v1/serverrpcv1connect"
 	"github.com/chzyer/readline"
 )
 
+// Opt is a function that configures a CLI.
+type Opt func(*Cli)
+
+// WithHeaders sets the headers to send along with RPC requests.
+func WithHeaders(headers http.Header) Opt {
+	return func(cli *Cli) {
+		cli.headers = headers
+	}
+}
+
+// WithWelcomeMsg sets the welcome message to print when the CLI starts.
+// An empty string will use the default.
+func WithWelcomeMsg(msg string) Opt {
+	return func(cli *Cli) {
+		cli.welcomeMsg = msg
+	}
+}
+
 type Cmd struct {
 	Name    string
 	Usage   string
-	Handler func(cli *Cli, args []string) error
+	Handler func(ctx context.Context, cli *Cli, args []string) error
 }
 
 // Cli is a command-line interface for the server RPC service.
 type Cli struct {
-	client   serverrpcv1connect.ServerRpcServiceClient
-	commands []Cmd
+	client     serverrpcv1connect.ServerRpcServiceClient
+	headers    http.Header
+	welcomeMsg string
+	commands   []Cmd
 }
 
-func NewCli(client serverrpcv1connect.ServerRpcServiceClient) *Cli {
-	cli := &Cli{client: client}
+var errStop = errors.New("stop")
+
+// NewCli creates a new CLI.
+func NewCli(client serverrpcv1connect.ServerRpcServiceClient, opts ...Opt) *Cli {
+	cli := &Cli{
+		client: client,
+	}
+	for _, opt := range opts {
+		opt(cli)
+	}
+
+	if cli.headers == nil {
+		cli.headers = make(http.Header)
+	}
+
 	cli.commands = []Cmd{
 		{
 			Name:  "help",
 			Usage: "help [command]",
-			Handler: func(cli *Cli, args []string) error {
-				return cli.cmdHelp(args)
+			Handler: func(ctx context.Context, cli *Cli, args []string) error {
+				return cli.cmdHelp(ctx, args)
+			},
+		},
+		{
+			Name:  "exit",
+			Usage: "exit",
+			Handler: func(ctx context.Context, cli *Cli, args []string) error {
+				return cli.cmdExit(ctx, args)
 			},
 		},
 		{
 			Name:  "getrooms",
 			Usage: "getrooms",
-			Handler: func(cli *Cli, args []string) error {
-				return cli.cmdGetRooms(args)
+			Handler: func(ctx context.Context, cli *Cli, args []string) error {
+				return cli.cmdGetRooms(ctx, args)
 			},
 		},
 		{
 			Name:  "getroominfo",
 			Usage: "getroominfo <room>",
-			Handler: func(cli *Cli, args []string) error {
-				return cli.cmdGetRoomInfo(args)
+			Handler: func(ctx context.Context, cli *Cli, args []string) error {
+				return cli.cmdGetRoomInfo(ctx, args)
 			},
 		},
 		{
 			Name:  "getonlineusers",
 			Usage: "getonlineusers <room>",
-			Handler: func(cli *Cli, args []string) error {
-				return cli.cmdGetOnlineUsers(args)
+			Handler: func(ctx context.Context, cli *Cli, args []string) error {
+				return cli.cmdGetOnlineUsers(ctx, args)
 			},
 		},
 		{
 			Name:  "getonlineuserinfo",
 			Usage: "getonlineuserinfo <room> <username>",
-			Handler: func(cli *Cli, args []string) error {
-				return cli.cmdGetOnlineUserInfo(args)
+			Handler: func(ctx context.Context, cli *Cli, args []string) error {
+				return cli.cmdGetOnlineUserInfo(ctx, args)
 			},
 		},
 		{
 			Name:  "getaccounts",
 			Usage: "getaccounts <room>",
-			Handler: func(cli *Cli, args []string) error {
-				return cli.cmdGetAccounts(args)
+			Handler: func(ctx context.Context, cli *Cli, args []string) error {
+				return cli.cmdGetAccounts(ctx, args)
 			},
 		},
 		{
 			Name:  "createroom",
 			Usage: "createroom <room>",
-			Handler: func(cli *Cli, args []string) error {
-				return cli.cmdCreateRoom(args)
+			Handler: func(ctx context.Context, cli *Cli, args []string) error {
+				return cli.cmdCreateRoom(ctx, args)
 			},
 		},
 		{
 			Name:  "deleteroom",
 			Usage: "deleteroom <room>",
-			Handler: func(cli *Cli, args []string) error {
-				return cli.cmdDeleteRoom(args)
+			Handler: func(ctx context.Context, cli *Cli, args []string) error {
+				return cli.cmdDeleteRoom(ctx, args)
 			},
 		},
 		{
 			Name:  "createaccount",
 			Usage: "createaccount <room> <username> [password]",
-			Handler: func(cli *Cli, args []string) error {
-				return cli.cmdCreateAccount(args)
+			Handler: func(ctx context.Context, cli *Cli, args []string) error {
+				return cli.cmdCreateAccount(ctx, args)
 			},
 		},
 		{
 			Name:  "deleteaccount",
 			Usage: "deleteaccount <room> <username>",
-			Handler: func(cli *Cli, args []string) error {
-				return cli.cmdDeleteAccount(args)
+			Handler: func(ctx context.Context, cli *Cli, args []string) error {
+				return cli.cmdDeleteAccount(ctx, args)
 			},
 		},
 		{
 			Name:  "updateaccountpassword",
 			Usage: "updateaccountpassword <room> <username> [password]",
-			Handler: func(cli *Cli, args []string) error {
-				return cli.cmdUpdateAccountPassword(args)
+			Handler: func(ctx context.Context, cli *Cli, args []string) error {
+				return cli.cmdUpdateAccountPassword(ctx, args)
 			},
 		},
 	}
 	return cli
+}
+
+func (c *Cli) mkCtx() context.Context {
+	ctx, callInfo := connect.NewClientContext(context.Background())
+	for header, vals := range c.headers {
+		if len(vals) == 0 {
+			continue
+		}
+
+		callInfo.RequestHeader().Set(header, vals[0])
+	}
+
+	return ctx
 }
 
 func (c *Cli) Do(cmdStr string) error {
@@ -117,7 +173,7 @@ func (c *Cli) Do(cmdStr string) error {
 	name := parts[0]
 	for _, cmd := range c.commands {
 		if cmd.Name == name {
-			return cmd.Handler(c, parts[1:])
+			return cmd.Handler(c.mkCtx(), c, parts[1:])
 		}
 	}
 
@@ -126,7 +182,7 @@ func (c *Cli) Do(cmdStr string) error {
 	return nil
 }
 
-func (c *Cli) cmdHelp(args []string) error {
+func (c *Cli) cmdHelp(_ context.Context, args []string) error {
 	if len(args) > 1 {
 		return fmt.Errorf("usage: help [command]")
 	}
@@ -155,12 +211,16 @@ func (c *Cli) cmdHelp(args []string) error {
 	return nil
 }
 
-func (c *Cli) cmdGetRooms(args []string) error {
+func (c *Cli) cmdExit(_ context.Context, _ []string) error {
+	return errStop
+}
+
+func (c *Cli) cmdGetRooms(ctx context.Context, args []string) error {
 	if err := validateArgCount(args, 0, 0, "getrooms"); err != nil {
 		return err
 	}
 
-	resp, err := c.client.GetRooms(context.Background(), &v1.GetRoomsRequest{})
+	resp, err := c.client.GetRooms(ctx, &v1.GetRoomsRequest{})
 	if err != nil {
 		return err
 	}
@@ -179,12 +239,12 @@ func (c *Cli) cmdGetRooms(args []string) error {
 	return nil
 }
 
-func (c *Cli) cmdGetRoomInfo(args []string) error {
+func (c *Cli) cmdGetRoomInfo(ctx context.Context, args []string) error {
 	if err := validateArgCount(args, 1, 1, "getroominfo <room>"); err != nil {
 		return err
 	}
 
-	resp, err := c.client.GetRoomInfo(context.Background(), &v1.GetRoomInfoRequest{
+	resp, err := c.client.GetRoomInfo(ctx, &v1.GetRoomInfoRequest{
 		Name: args[0],
 	})
 	if err != nil {
@@ -200,12 +260,12 @@ func (c *Cli) cmdGetRoomInfo(args []string) error {
 	return nil
 }
 
-func (c *Cli) cmdGetOnlineUsers(args []string) error {
+func (c *Cli) cmdGetOnlineUsers(ctx context.Context, args []string) error {
 	if err := validateArgCount(args, 1, 1, "getonlineusers <room>"); err != nil {
 		return err
 	}
 
-	stream, err := c.client.GetOnlineUsers(context.Background(), &v1.GetOnlineUsersRequest{
+	stream, err := c.client.GetOnlineUsers(ctx, &v1.GetOnlineUsersRequest{
 		Room: args[0],
 	})
 	if err != nil {
@@ -232,12 +292,12 @@ func (c *Cli) cmdGetOnlineUsers(args []string) error {
 	return nil
 }
 
-func (c *Cli) cmdGetOnlineUserInfo(args []string) error {
+func (c *Cli) cmdGetOnlineUserInfo(ctx context.Context, args []string) error {
 	if err := validateArgCount(args, 2, 2, "getonlineuserinfo <room> <username>"); err != nil {
 		return err
 	}
 
-	resp, err := c.client.GetOnlineUserInfo(context.Background(), &v1.GetOnlineUserInfoRequest{
+	resp, err := c.client.GetOnlineUserInfo(ctx, &v1.GetOnlineUserInfoRequest{
 		Room:     args[0],
 		Username: args[1],
 	})
@@ -254,12 +314,12 @@ func (c *Cli) cmdGetOnlineUserInfo(args []string) error {
 	return nil
 }
 
-func (c *Cli) cmdGetAccounts(args []string) error {
+func (c *Cli) cmdGetAccounts(ctx context.Context, args []string) error {
 	if err := validateArgCount(args, 1, 1, "getaccounts <room>"); err != nil {
 		return err
 	}
 
-	resp, err := c.client.GetAccounts(context.Background(), &v1.GetAccountsRequest{
+	resp, err := c.client.GetAccounts(ctx, &v1.GetAccountsRequest{
 		Room: args[0],
 	})
 	if err != nil {
@@ -280,12 +340,12 @@ func (c *Cli) cmdGetAccounts(args []string) error {
 	return nil
 }
 
-func (c *Cli) cmdCreateRoom(args []string) error {
+func (c *Cli) cmdCreateRoom(ctx context.Context, args []string) error {
 	if err := validateArgCount(args, 1, 1, "createroom <room>"); err != nil {
 		return err
 	}
 
-	resp, err := c.client.CreateRoom(context.Background(), &v1.CreateRoomRequest{
+	resp, err := c.client.CreateRoom(ctx, &v1.CreateRoomRequest{
 		Name: args[0],
 	})
 	if err != nil {
@@ -301,12 +361,12 @@ func (c *Cli) cmdCreateRoom(args []string) error {
 	return nil
 }
 
-func (c *Cli) cmdDeleteRoom(args []string) error {
+func (c *Cli) cmdDeleteRoom(ctx context.Context, args []string) error {
 	if err := validateArgCount(args, 1, 1, "deleteroom <room>"); err != nil {
 		return err
 	}
 
-	_, err := c.client.DeleteRoom(context.Background(), &v1.DeleteRoomRequest{
+	_, err := c.client.DeleteRoom(ctx, &v1.DeleteRoomRequest{
 		Name: args[0],
 	})
 	if err != nil {
@@ -317,7 +377,7 @@ func (c *Cli) cmdDeleteRoom(args []string) error {
 	return nil
 }
 
-func (c *Cli) cmdCreateAccount(args []string) error {
+func (c *Cli) cmdCreateAccount(ctx context.Context, args []string) error {
 	if err := validateArgCount(args, 2, 3, "createaccount <room> <username> [password]"); err != nil {
 		return err
 	}
@@ -327,7 +387,7 @@ func (c *Cli) cmdCreateAccount(args []string) error {
 		pass = args[2]
 	}
 
-	resp, err := c.client.CreateAccount(context.Background(), &v1.CreateAccountRequest{
+	resp, err := c.client.CreateAccount(ctx, &v1.CreateAccountRequest{
 		Room:     args[0],
 		Username: args[1],
 		Password: pass,
@@ -344,12 +404,12 @@ func (c *Cli) cmdCreateAccount(args []string) error {
 	return nil
 }
 
-func (c *Cli) cmdDeleteAccount(args []string) error {
+func (c *Cli) cmdDeleteAccount(ctx context.Context, args []string) error {
 	if err := validateArgCount(args, 2, 2, "deleteaccount <room> <username>"); err != nil {
 		return err
 	}
 
-	_, err := c.client.DeleteAccount(context.Background(), &v1.DeleteAccountRequest{
+	_, err := c.client.DeleteAccount(ctx, &v1.DeleteAccountRequest{
 		Room:     args[0],
 		Username: args[1],
 	})
@@ -361,7 +421,7 @@ func (c *Cli) cmdDeleteAccount(args []string) error {
 	return nil
 }
 
-func (c *Cli) cmdUpdateAccountPassword(args []string) error {
+func (c *Cli) cmdUpdateAccountPassword(ctx context.Context, args []string) error {
 	if err := validateArgCount(args, 2, 3, "updateaccountpassword <room> <username> [password]"); err != nil {
 		return err
 	}
@@ -371,7 +431,7 @@ func (c *Cli) cmdUpdateAccountPassword(args []string) error {
 		pass = args[2]
 	}
 
-	resp, err := c.client.UpdateAccountPassword(context.Background(), &v1.UpdateAccountPasswordRequest{
+	resp, err := c.client.UpdateAccountPassword(ctx, &v1.UpdateAccountPasswordRequest{
 		Room:     args[0],
 		Username: args[1],
 		Password: pass,
@@ -402,10 +462,19 @@ func validateArgCount(args []string, min int, max int, usage string) error {
 	return nil
 }
 
+const defaultWelcomeMsg = "Welcome to the FriendNet server RPC CLI."
+
 // Run runs the CLI.
 // It returns when the client presses CTRL+D.
 func (c *Cli) Run() {
-	println("Welcome to the FriendNet server RPC CLI.\nType \"help\" for a list of commands.")
+	var msg string
+	if c.welcomeMsg == "" {
+		msg = defaultWelcomeMsg
+	} else {
+		msg = c.welcomeMsg
+	}
+
+	println(msg + "\nType \"help\" for a list of commands.")
 	rl, newErr := readline.NewEx(&readline.Config{
 		Prompt:       "> ",
 		AutoComplete: c.completer(),
@@ -425,6 +494,10 @@ func (c *Cli) Run() {
 
 		doErr := c.Do(line)
 		if doErr != nil {
+			if errors.Is(doErr, errStop) {
+				break
+			}
+
 			_, _ = fmt.Fprintln(os.Stderr, doErr.Error()+"\n")
 		}
 	}
