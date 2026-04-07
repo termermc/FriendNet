@@ -18,12 +18,19 @@ import (
 
 func main() {
 	var rpcAddrRaw string
+	var token string
 	var doCmd string
 	flag.StringVar(
 		&rpcAddrRaw,
 		"addr",
 		"unix://friendnet-server.sock",
 		`The RPC server address (such as "unix:///var/run/friendnet-server.sock" or "http://127.0.0.1:8080")`,
+	)
+	flag.StringVar(
+		&token,
+		"token",
+		"",
+		"The bearer token to use for authenticating with the RPC server",
 	)
 	flag.StringVar(
 		&doCmd,
@@ -87,7 +94,12 @@ func main() {
 		connect.WithGRPCWeb(),
 	)
 
-	cli := rpcclient.NewCli(rpcClient)
+	headers := make(http.Header)
+	if token != "" {
+		headers.Set("Authorization", "Bearer "+token)
+	}
+
+	cli := rpcclient.NewCli(rpcClient, rpcclient.WithHeaders(headers))
 
 	if doCmd != "" {
 		doErr := cli.Do(doCmd)
