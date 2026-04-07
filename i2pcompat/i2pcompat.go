@@ -4,20 +4,23 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math/rand/v2"
 	"net"
+	"strconv"
 	"time"
 
-	"friendnet.org/common"
 	"friendnet.org/protocol/compat"
 	sam3 "github.com/go-i2p/go-sam-go"
+	"github.com/go-i2p/go-sam-go/stream"
 	"github.com/go-i2p/i2pkeys"
 )
 
 // I2pManager creates a SAM connection and manages I2P connections.
 // It uses compat.ConnManager to emulate QUIC semantics over I2P streams.
 type I2pManager struct {
-	sam  *sam3.SAM
-	keys i2pkeys.I2PKeys
+	sam      *sam3.SAM
+	keys     i2pkeys.I2PKeys
+	listener *stream.StreamListener
 
 	cm *compat.ConnManager
 }
@@ -27,8 +30,12 @@ type I2pManager struct {
 func NewI2pManager(
 	logger *slog.Logger,
 	samAddr string,
-	connTimeout time.Duration,
+	connInactivityTimeout time.Duration,
 ) (*I2pManager, error) {
+	logger.Debug("creating SAM client",
+		"service", "i2pcompat.I2pManager",
+	)
+
 	sam, err := sam3.NewSAM(samAddr)
 	if err != nil {
 		return nil, fmt.Errorf(`failed to create SAM client: %w`, err)
@@ -39,8 +46,14 @@ func NewI2pManager(
 		return nil, fmt.Errorf(`failed to generate I2P keys: %w`, err)
 	}
 
-	sess, err := sam.NewStreamSession(
-		"i2pcompat-"+common.RandomB64UrlStr(16),
+	logger.Debug("creating stream session",
+		"addr", keys.Addr().String(),
+		"service", "i2pcompat.I2pManager",
+	)
+
+	sess, err := stream.NewStreamSession(
+		sam.SAM,
+		"i2pcompat"+strconv.FormatInt(rand.Int64(), 10),
 		keys,
 		sam3.Options_Default,
 	)
@@ -49,11 +62,22 @@ func NewI2pManager(
 		return nil, fmt.Errorf(`failed to create stream session: %w`, err)
 	}
 
+	logger.Debug("stream session created",
+		"addr", keys.Addr().String(),
+		"service", "i2pcompat.I2pManager",
+	)
+
+	listener, err := sess.Listen()
+	if err != nil {
+		_ = sess.Close()
+		return nil, fmt.Errorf(`failed to create incoming stream listener: %w`, err)
+	}
+
 	dial := func(ctx context.Context, addr string) (net.Conn, error) {
 		return sess.DialContext(ctx, addr)
 	}
 	accept := func() (net.Conn, error) {
-		return sess.Accept()
+		return listener.Accept()
 	}
 
 	cm := compat.NewConnManager(
@@ -61,12 +85,13 @@ func NewI2pManager(
 		sam,
 		dial,
 		accept,
-		connTimeout,
+		connInactivityTimeout,
 	)
 
 	return &I2pManager{
-		sam:  sam,
-		keys: keys,
+		sam:      sam,
+		keys:     keys,
+		listener: listener,
 
 		cm: cm,
 	}, nil
@@ -75,6 +100,7 @@ func NewI2pManager(
 // Close closes the I2P manager and all owned connections.
 func (i *I2pManager) Close() error {
 	_ = i.cm.Close()
+	_ = i.listener.Close()
 	_ = i.sam.Close()
 	return nil
 }
