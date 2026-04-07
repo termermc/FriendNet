@@ -1,4 +1,4 @@
-package tcpstyle
+package compat
 
 import (
 	"context"
@@ -32,7 +32,7 @@ var ErrConnManagerClosed = errors.New("ConnManager is closed")
 
 // DialFunc is a function that dials an address and returns an outgoing TCP-style plaintext connection.
 // If the underlying connection is closed, it must return net.ErrClosed.
-type DialFunc func(addr string) (net.Conn, error)
+type DialFunc func(ctx context.Context, addr string) (net.Conn, error)
 
 // AcceptFunc is a function that returns an incoming TCP-style plaintext connection.
 // If there are no more connections to accept, it must return net.ErrClosed.
@@ -220,6 +220,31 @@ func NewConnManager(
 	return m
 }
 
+// Close closes the ConnManager if it is not already closed.
+// It calls Close on the closer passed to the ConnManager when it was created exactly once.
+// If the ConnManager is already closed, it is a no-op.
+func (m *ConnManager) Close() error {
+	m.mu.Lock()
+	if m.isClosed {
+		m.mu.Unlock()
+		return nil
+	}
+	m.isClosed = true
+	conns := make([]*Conn, 0, len(m.conns))
+	for _, c := range m.conns {
+		conns = append(conns, c)
+	}
+	m.mu.Unlock()
+
+	close(m.acceptCh)
+
+	for _, c := range conns {
+		_ = c.CloseWithReason("ConnManager closed")
+	}
+
+	return m.closer.Close()
+}
+
 // Accept waits for a new incoming connection and returns it.
 // Returns ErrConnManagerClosed if the ConnManager is closed.
 func (m *ConnManager) Accept(ctx context.Context) (*Conn, error) {
@@ -242,25 +267,8 @@ func (m *ConnManager) Accept(ctx context.Context) (*Conn, error) {
 	}
 }
 
-// Close closes the ConnManager if it is not already closed.
-// It calls Close on the closer passed to the ConnManager when it was created exactly once.
-// If the ConnManager is already closed, it is a no-op.
-func (m *ConnManager) Close() error {
-	m.mu.Lock()
-	if m.isClosed {
-		m.mu.Unlock()
-		return nil
-	}
-	m.isClosed = true
-	m.mu.Unlock()
-
-	close(m.acceptCh)
-
-	return m.closer.Close()
-}
-
 // Dial makes a new outgoing connection to the specified address.
-func (m *ConnManager) Dial(addr string) (*Conn, error) {
+func (m *ConnManager) Dial(ctx context.Context, addr string) (*Conn, error) {
 	m.mu.RLock()
 	if m.isClosed {
 		m.mu.RUnlock()
@@ -268,7 +276,7 @@ func (m *ConnManager) Dial(addr string) (*Conn, error) {
 	}
 	m.mu.RUnlock()
 
-	openConn, err := m.dial(addr)
+	openConn, err := m.dial(ctx, addr)
 	if err != nil {
 		if errors.Is(err, net.ErrClosed) {
 			_ = m.Close()
@@ -385,7 +393,9 @@ func (c *Conn) CloseWithReason(string) error {
 	c.ctxCancel()
 
 	go func() {
-		conn, err := c.m.dial(c.addr.String())
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		conn, err := c.m.dial(ctx, c.addr.String())
 		if err != nil {
 			// It is what it is.
 			return
@@ -409,7 +419,7 @@ func (c *Conn) OpenBidiWithMsg(typ pb.MsgType, msg proto.Message) (bidi protocol
 	}
 	c.mu.Unlock()
 
-	netConn, err := c.m.dial(c.addr.String())
+	netConn, err := c.m.dial(c.ctx, c.addr.String())
 	if err != nil {
 		if errors.Is(err, net.ErrClosed) {
 			_ = c.CloseWithReason("underlying dialer closed")

@@ -10,6 +10,7 @@ require (
 	friendnet.org/upnp v0.0.0
 	friendnet.org/webui v0.0.0
 	github.com/go-i2p/go-sam-go v0.33.0
+	github.com/go-i2p/i2pkeys v0.33.92
 	github.com/google/uuid v1.6.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/quic-go/quic-go v0.59.0
@@ -23,7 +24,6 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/go-i2p/common v0.0.1 // indirect
 	github.com/go-i2p/crypto v0.0.1 // indirect
-	github.com/go-i2p/i2pkeys v0.33.92 // indirect
 	github.com/go-i2p/logger v0.0.1 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect

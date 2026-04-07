@@ -1,6 +1,7 @@
-package tcpstyle
+package compat
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -24,7 +25,7 @@ var logger = slog.New(
 	),
 )
 
-func tcpDialer(addr string) (net.Conn, error) {
+func tcpDialer(_ context.Context, addr string) (net.Conn, error) {
 	return net.Dial("tcp", addr)
 }
 
@@ -74,7 +75,7 @@ func TestPing(t *testing.T) {
 	resChan := make(chan error, 1)
 
 	go func() {
-		toB, err := sides.mgrA.Dial(sides.addrB)
+		toB, err := sides.mgrA.Dial(context.Background(), sides.addrB)
 		if err != nil {
 			resChan <- fmt.Errorf(`A failed to dial B: %w`, err)
 			return
@@ -144,7 +145,7 @@ func TestTimeout(t *testing.T) {
 	resChan := make(chan error)
 
 	go func() {
-		toB, err := sides.mgrA.Dial(sides.addrB)
+		toB, err := sides.mgrA.Dial(context.Background(), sides.addrB)
 		if err != nil {
 			resChan <- fmt.Errorf(`A failed to dial B: %w`, err)
 			return
