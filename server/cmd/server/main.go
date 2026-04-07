@@ -184,7 +184,7 @@ func main() {
 
 	go func() {
 		<-ctx.Done()
-		logger.Info("shutdown signal received, closing server")
+		logger.Info("closing server")
 
 		_ = webServer.Close()
 
