@@ -187,6 +187,7 @@ func TestTimeout(t *testing.T) {
 		if err != nil {
 			if _, ok := errors.AsType[*quic.ApplicationError](err); !ok {
 				resChan <- fmt.Errorf(`expected ApplicationError, got %T: %w`, err, err)
+				return
 			}
 
 			resChan <- nil
