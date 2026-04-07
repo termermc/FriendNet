@@ -6,18 +6,15 @@ require (
 	connectrpc.com/connect v1.19.1
 	friendnet.org/common v0.0.0
 	friendnet.org/protocol v0.0.0
+	friendnet.org/rpcclient v0.0.0
 	github.com/quic-go/quic-go v0.59.0
 	github.com/termermc/go-mcf-password v1.0.0
 	google.golang.org/protobuf v1.36.11
 	modernc.org/sqlite v1.46.1
 )
 
-replace (
-	friendnet.org/common => ../common
-	friendnet.org/protocol => ../protocol
-)
-
 require (
+	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -31,4 +28,10 @@ require (
 	modernc.org/libc v1.68.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
+)
+
+replace (
+	friendnet.org/common => ../common
+	friendnet.org/protocol => ../protocol
+	friendnet.org/rpcclient => ../rpcclient
 )

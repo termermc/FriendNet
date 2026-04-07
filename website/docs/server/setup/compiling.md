@@ -21,7 +21,7 @@ make server
 The compiled server will be in the `server` directory, named something like `friendnet-server` or
 `friendnet-server.exe`.
 
-You will also need to build the RPC client:
+You will also need to compile the RPC client if you want to remotely manage the server:
 
 ```shell
 make rpcclient

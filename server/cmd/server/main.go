@@ -5,8 +5,10 @@ import (
 	"crypto/tls"
 	"errors"
 	"flag"
+	"fmt"
 	"log/slog"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"os/signal"
 	"sync"
@@ -20,6 +22,7 @@ import (
 	"friendnet.org/common/webserver"
 	"friendnet.org/protocol"
 	"friendnet.org/protocol/pb/serverrpc/v1/serverrpcv1connect"
+	"friendnet.org/rpcclient"
 	"friendnet.org/server"
 	"friendnet.org/server/cert"
 	"friendnet.org/server/config"
@@ -31,10 +34,13 @@ func main() {
 		Level: slog.LevelDebug,
 	}))
 
-	configPath := flag.String("config", "server.json", "path to server config JSON")
+	var configPath string
+	var noCli bool
+	flag.StringVar(&configPath, "config", "server.json", "path to server config JSON")
+	flag.BoolVar(&noCli, "nocli", false, "disable CLI")
 	flag.Parse()
 
-	cfg, err := config.LoadOrCreate(*configPath)
+	cfg, err := config.LoadOrCreate(configPath)
 	if err != nil {
 		logger.Error("failed to load config", "err", err)
 		os.Exit(1)
@@ -117,13 +123,14 @@ func main() {
 	webServer := webserver.NewWebServer(logger, webserver.WithHttpsSupport(rpcCert))
 
 	// Create RPC servers.
+	rpcServer := server.NewRpcServer(srv)
 	rpcs := make([]*common.RpcServer[*server.RpcServer], 0, len(cfg.Rpc.Interfaces))
 	for _, iface := range cfg.Rpc.Interfaces {
 		rpcSrv, err := common.NewRpcServer(
 			logger,
 			webServer,
 			iface,
-			server.NewRpcServer(srv),
+			rpcServer,
 			func(impl *server.RpcServer, options ...connect.HandlerOption) (string, http.Handler) {
 				return serverrpcv1connect.NewServerRpcServiceHandler(impl, options...)
 			},
@@ -142,9 +149,42 @@ func main() {
 	// Close server on SIGTERM.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+
+	if !noCli {
+		go func() {
+			localRpcToken := common.RandomB64UrlStr(32)
+			expectAuthz := fmt.Sprintf("Bearer %s", localRpcToken)
+
+			mux := http.NewServeMux()
+			path, hdlr := serverrpcv1connect.NewServerRpcServiceHandler(rpcServer)
+			mux.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+				if r.Header.Get("Authorization") != expectAuthz {
+					w.WriteHeader(http.StatusUnauthorized)
+					return
+				}
+				hdlr.ServeHTTP(w, r)
+			})
+
+			clientHeaders := make(http.Header)
+			clientHeaders.Set("Authorization", expectAuthz)
+			localServer := httptest.NewServer(mux)
+			cli := rpcclient.NewCli(
+				serverrpcv1connect.NewServerRpcServiceClient(
+					localServer.Client(),
+					localServer.URL,
+					connect.WithGRPCWeb(),
+				),
+				rpcclient.WithHeaders(clientHeaders),
+				rpcclient.WithWelcomeMsg("Welcome to the FriendNet server CLI."),
+			)
+			cli.Run()
+			stop()
+		}()
+	}
+
 	go func() {
 		<-ctx.Done()
-		logger.Info("shutdown signal received, closing server")
+		logger.Info("closing server")
 
 		_ = webServer.Close()
 
