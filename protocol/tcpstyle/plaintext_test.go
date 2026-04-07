@@ -1,7 +1,6 @@
 package tcpstyle
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
 	"math/rand/v2"
@@ -24,16 +23,7 @@ var logger = slog.New(
 )
 
 func tcpDialer(addr string) (net.Conn, error) {
-	conn, err := net.Dial("tcp", addr)
-	if err != nil {
-		if errors.Is(err, net.ErrClosed) {
-			return nil, nil
-		}
-
-		return nil, err
-	}
-
-	return conn, nil
+	return net.Dial("tcp", addr)
 }
 
 func mkConnManager(tcpAddr string, connInactivityTimeout time.Duration) *ConnManager {
