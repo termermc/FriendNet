@@ -9,11 +9,23 @@ import (
 	"log/slog"
 	"net"
 	"sync"
+	"time"
 
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
+	"github.com/quic-go/quic-go"
 	"google.golang.org/protobuf/proto"
 )
+
+// protoVersion is the version of the protocol used by this implementation.
+// The first int64 of the open message (the connection ID field) is the protocol version.
+const protoVersion int64 = 1
+
+var emptyAppErr = &quic.ApplicationError{
+	Remote:       true,
+	ErrorMessage: "",
+	ErrorCode:    0,
+}
 
 // ErrConnManagerClosed is returned by ConnManager methods when the ConnManager is closed.
 var ErrConnManagerClosed = errors.New("ConnManager is closed")
@@ -78,6 +90,7 @@ func NewConnManager(
 	close io.Closer,
 	dial DialFunc,
 	accept AcceptFunc,
+	connInactivityTimeout time.Duration,
 ) *ConnManager {
 	m := &ConnManager{
 		logger: logger,
@@ -119,8 +132,9 @@ func NewConnManager(
 
 				switch header.Op {
 				case streamOpOpenConn:
-					// Connection ID should be 0 here.
-					if header.ConnId != 0 {
+					// The connection ID is used as the protocol version field for this op.
+					if header.ConnId != protoVersion {
+						// Plaintext protocol version mismatch.
 						_ = rawConn.Close()
 						return
 					}
@@ -130,8 +144,16 @@ func NewConnManager(
 					_, _ = rand.Read(idBytes[:])
 					id := int64(binary.LittleEndian.Uint64(idBytes[:]))
 
+					m.mu.RLock()
+					if m.isClosed {
+						m.mu.RUnlock()
+						_ = rawConn.Close()
+						return
+					}
+					m.mu.RUnlock()
+
 					// Wait for the connection to be accepted.
-					c := newConn(m, rawConn.RemoteAddr())
+					c := newConn(m, id, rawConn.RemoteAddr())
 					m.acceptCh <- c
 
 					// Connection accepted, add to map and write success.
@@ -169,7 +191,49 @@ func NewConnManager(
 		}
 	}()
 
+	// Periodically check for connections that have been inactive for too long and close them.
+	go func() {
+		ticker := time.NewTicker(time.Second)
+		for range ticker.C {
+			if m.isClosed {
+				return
+			}
+
+			m.mu.RLock()
+			for _, c := range m.conns {
+				if time.Since(c.lastActivity) > connInactivityTimeout {
+					go func() {
+						_ = c.CloseWithReason("connection inactivity timeout")
+					}()
+				}
+			}
+			m.mu.RUnlock()
+		}
+	}()
+
 	return m
+}
+
+// Accept waits for a new incoming connection and returns it.
+// Returns ErrConnManagerClosed if the ConnManager is closed.
+func (m *ConnManager) Accept(ctx context.Context) (*Conn, error) {
+	m.mu.RLock()
+	if m.isClosed {
+		m.mu.RUnlock()
+		return nil, ErrConnManagerClosed
+	}
+	m.mu.RUnlock()
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case c := <-m.acceptCh:
+		if c == nil {
+			return nil, ErrConnManagerClosed
+		}
+
+		return c, nil
+	}
 }
 
 // Close closes the ConnManager if it is not already closed.
@@ -184,11 +248,20 @@ func (m *ConnManager) Close() error {
 	m.isClosed = true
 	m.mu.Unlock()
 
+	close(m.acceptCh)
+
 	return m.closer.Close()
 }
 
 // Dial makes a new outgoing connection to the specified address.
 func (m *ConnManager) Dial(addr string) (*Conn, error) {
+	m.mu.RLock()
+	if m.isClosed {
+		m.mu.RUnlock()
+		return nil, ErrConnManagerClosed
+	}
+	m.mu.RUnlock()
+
 	openConn, err := m.dial(addr)
 	if err != nil {
 		return nil, err
@@ -213,7 +286,7 @@ func (m *ConnManager) Dial(addr string) (*Conn, error) {
 	}
 	id := int64(binary.LittleEndian.Uint64(idBytes[:]))
 
-	conn := newConn(m, openConn.RemoteAddr())
+	conn := newConn(m, id, openConn.RemoteAddr())
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -231,12 +304,25 @@ func (m *ConnManager) Dial(addr string) (*Conn, error) {
 	return conn, nil
 }
 
+func (m *ConnManager) removeConn(id int64) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	delete(m.conns, id)
+}
+
 // Conn is an implementation of protocol.ProtoConn that uses TCP-style plaintext connections under the hood to emulate
 // QUIC bidi streams.
 type Conn struct {
-	mu sync.RWMutex
+	mu       sync.Mutex
+	isClosed bool
+
+	lastActivity time.Time
+
+	ctx       context.Context
+	ctxCancel context.CancelFunc
 
 	m    *ConnManager
+	id   int64
 	addr net.Addr
 
 	incomingBidiCh chan net.Conn
@@ -244,9 +330,17 @@ type Conn struct {
 
 var _ protocol.ProtoConn = (*Conn)(nil)
 
-func newConn(m *ConnManager, addr net.Addr) *Conn {
+func newConn(m *ConnManager, id int64, addr net.Addr) *Conn {
+	ctx, ctxCancel := context.WithCancel(context.Background())
+
 	return &Conn{
+		lastActivity: time.Now(),
+
+		ctx:       ctx,
+		ctxCancel: ctxCancel,
+
 		m:    m,
+		id:   id,
 		addr: addr,
 
 		incomingBidiCh: make(chan net.Conn),
@@ -261,27 +355,193 @@ func (c *Conn) RemoteAddr() net.Addr {
 	return c.addr
 }
 
-func (c *Conn) CloseWithReason(s string) error {
-	//TODO implement me
-	panic("implement me")
+func (c *Conn) CloseWithReason(string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.isClosed {
+		return nil
+	}
+
+	// Remove self from manager conn map.
+	c.m.removeConn(c.id)
+
+	c.isClosed = true
+	c.ctxCancel()
+
+	go func() {
+		conn, err := c.m.dial(c.addr.String())
+		if err != nil {
+			// It is what it is.
+			return
+		}
+
+		_ = writeStreamHeader(conn, streamHeader{
+			ConnId: c.id,
+			Op:     streamOpCloseConn,
+		})
+		_ = conn.Close()
+	}()
+
+	return nil
 }
 
 func (c *Conn) OpenBidiWithMsg(typ pb.MsgType, msg proto.Message) (bidi protocol.ProtoBidi, err error) {
-	//TODO implement me
-	panic("implement me")
+	c.mu.Lock()
+	if c.isClosed {
+		c.mu.Unlock()
+		return protocol.ProtoBidi{}, emptyAppErr
+	}
+	c.mu.Unlock()
+
+	netConn, err := c.m.dial(c.addr.String())
+	if err != nil {
+		return bidi, err
+	}
+
+	err = writeStreamHeader(netConn, streamHeader{
+		ConnId: c.id,
+		Op:     streamOpOpenBidi,
+	})
+	if err != nil {
+		_ = netConn.Close()
+		return bidi, err
+	}
+
+	s := newStream(c.ctx, c, netConn)
+	bidi = protocol.ProtoBidi{
+		Stream:            s,
+		ProtoStreamReader: protocol.NewProtoStreamReader(s),
+		ProtoStreamWriter: protocol.NewProtoStreamWriter(s),
+	}
+
+	err = bidi.Write(typ, msg)
+	if err != nil {
+		_ = bidi.Close()
+		return bidi, err
+	}
+
+	return bidi, nil
 }
 
 func (c *Conn) WaitForBidi(ctx context.Context) (protocol.ProtoBidi, error) {
-	//TODO implement me
-	panic("implement me")
+	select {
+	case <-ctx.Done():
+		return protocol.ProtoBidi{}, emptyAppErr
+	case netConn := <-c.incomingBidiCh:
+		c.mu.Lock()
+		c.lastActivity = time.Now()
+		c.mu.Unlock()
+
+		s := newStream(ctx, c, netConn)
+		return protocol.ProtoBidi{
+			Stream:            s,
+			ProtoStreamReader: protocol.NewProtoStreamReader(s),
+			ProtoStreamWriter: protocol.NewProtoStreamWriter(s),
+		}, nil
+	}
 }
 
 func (c *Conn) SendAndReceive(typ pb.MsgType, msg proto.Message) (*protocol.UntypedProtoMsg, error) {
-	//TODO implement me
-	panic("implement me")
+	bidi, err := c.OpenBidiWithMsg(typ, msg)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = bidi.Close()
+	}()
+
+	return bidi.Read()
 }
 
 func (c *Conn) SendAndReceiveAck(typ pb.MsgType, msg proto.Message) error {
-	//TODO implement me
-	panic("implement me")
+	reply, err := c.SendAndReceive(typ, msg)
+	if err != nil {
+		return err
+	}
+
+	if reply.Type != pb.MsgType_MSG_TYPE_ACKNOWLEDGED {
+		return protocol.UnexpectedMsgTypeError{
+			Expected: pb.MsgType_MSG_TYPE_ACKNOWLEDGED,
+			Actual:   reply.Type,
+		}
+	}
+
+	return nil
+}
+
+// stream implements protocol.ProtoBidiStream.
+type stream struct {
+	c         *Conn
+	netConn   net.Conn
+	ctx       context.Context
+	ctxCancel context.CancelFunc
+}
+
+var _ protocol.ProtoBidiStream = (*stream)(nil)
+
+func newStream(ctx context.Context, c *Conn, netConn net.Conn) *stream {
+	ctx, ctxCancel := context.WithCancel(ctx)
+
+	return &stream{
+		c:         c,
+		netConn:   netConn,
+		ctx:       ctx,
+		ctxCancel: ctxCancel,
+	}
+}
+
+func (s *stream) Close() error {
+	s.ctxCancel()
+	_ = s.netConn.Close()
+
+	return nil
+}
+
+func (s *stream) Read(p []byte) (n int, err error) {
+	select {
+	case <-s.ctx.Done():
+		return 0, emptyAppErr
+	default:
+		n, err = s.netConn.Read(p)
+		if err != nil {
+			if n == 0 {
+				return 0, emptyAppErr
+			}
+
+			return n, err
+		}
+
+		s.c.m.mu.Lock()
+		defer s.c.m.mu.Unlock()
+		s.c.lastActivity = time.Now()
+
+		return n, nil
+	}
+}
+
+func (s *stream) Write(p []byte) (n int, err error) {
+	select {
+	case <-s.ctx.Done():
+		return 0, emptyAppErr
+	default:
+		n, err = s.netConn.Write(p)
+		if err != nil {
+			if n == 0 {
+				return 0, emptyAppErr
+			}
+
+			return n, err
+		}
+
+		s.c.m.mu.Lock()
+		defer s.c.m.mu.Unlock()
+		s.c.lastActivity = time.Now()
+
+		return n, nil
+	}
+}
+
+func (s *stream) CancelRead(quic.StreamErrorCode) {
+	// Error code part is not implemented.
+	_ = s.Close()
 }

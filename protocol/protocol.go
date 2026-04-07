@@ -440,9 +440,25 @@ func (w *ProtoStreamWriter) Write(typ pb.MsgType, msg proto.Message) error {
 	return nil
 }
 
+// ProtoBidiStream is an underlying stream in a ProtoBidi.
+// It is usually a QUIC bidirectional stream, but it may be implemented by other transports.
+// It is expected to emulate QUIC semantics if not an actual QUIC stream.
+type ProtoBidiStream interface {
+	io.Reader
+	io.Writer
+	io.Closer
+
+	// CancelRead cancels the read side of the stream.
+	// After it is called, no more data can be read from the stream.
+	// It does not necessarily close the write side of the stream, but it may, and writes after calling must not be
+	// assumed to work.
+	// The error code is not guaranteed to be honored by the underlying transport unless it is QUIC.
+	CancelRead(errorCode quic.StreamErrorCode)
+}
+
 // ProtoBidi is a wrapper around a QUIC bidirectional stream with a protocol reader and writer.
 type ProtoBidi struct {
-	Stream *quic.Stream
+	Stream ProtoBidiStream
 	*ProtoStreamReader
 	*ProtoStreamWriter
 }
