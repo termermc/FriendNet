@@ -72,7 +72,7 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 
 	const refreshUsers = async () => {
 		try {
-			await props.server.refreshOnlineUsers()
+			props.server.refreshOnlineUsers()
 		} catch (err) {
 			if (err instanceof ConnectError && err.code === Code.NotFound) {
 				// Server was probably deleted.
