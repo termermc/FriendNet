@@ -1,6 +1,7 @@
 package i2pcompat
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -43,7 +44,6 @@ func runServer(session *sam3.StreamSession) error {
 		_ = listener.Close()
 	}()
 
-	// vvvv WORKING
 	buf := make([]byte, 10)
 	for {
 		println("Awaiting connection...")
@@ -92,7 +92,7 @@ func runClient(sess *sam3.StreamSession, serverAddr i2pkeys.I2PAddr) error {
 		}
 		i++
 
-		conn, err := sess.DialI2P(serverAddr)
+		conn, err := sess.NewDialer().DialI2PContext(context.Background(), serverAddr)
 		if err != nil {
 			return fmt.Errorf(`failed to open conn to %s: %w`, serverAddr.String(), err)
 		}

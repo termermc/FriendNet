@@ -20,6 +20,7 @@ import (
 type I2pManager struct {
 	sam      *sam3.SAM
 	keys     i2pkeys.I2PKeys
+	sess     *stream.StreamSession
 	listener *stream.StreamListener
 
 	cm *compat.ConnManager
@@ -47,7 +48,6 @@ func NewI2pManager(
 	}
 
 	logger.Debug("creating stream session",
-		"addr", keys.Addr().String(),
 		"service", "i2pcompat.I2pManager",
 	)
 
@@ -63,7 +63,7 @@ func NewI2pManager(
 	}
 
 	logger.Debug("stream session created",
-		"addr", keys.Addr().String(),
+		"addr", sess.Addr().String(),
 		"service", "i2pcompat.I2pManager",
 	)
 
@@ -91,6 +91,7 @@ func NewI2pManager(
 	return &I2pManager{
 		sam:      sam,
 		keys:     keys,
+		sess:     sess,
 		listener: listener,
 
 		cm: cm,
@@ -106,8 +107,8 @@ func (i *I2pManager) Close() error {
 }
 
 // Addr returns the I2P address of the I2P manager.
-func (i *I2pManager) Addr() net.Addr {
-	return i.keys.Addr()
+func (i *I2pManager) Addr() i2pkeys.I2PAddr {
+	return i.sess.Addr()
 }
 
 // Accept waits for a new incoming connection and returns it.
@@ -116,7 +117,7 @@ func (i *I2pManager) Accept(ctx context.Context) (*compat.Conn, error) {
 	return i.cm.Accept(ctx)
 }
 
-// Dial makes a new outgoing connection to the specified address.
+// Dial makes a new outgoing connection to the specified I2P address.
 func (i *I2pManager) Dial(ctx context.Context, addr string) (*compat.Conn, error) {
 	return i.cm.Dial(ctx, addr)
 }

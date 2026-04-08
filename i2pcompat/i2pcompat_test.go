@@ -58,7 +58,7 @@ func TestPing(t *testing.T) {
 	resChan := make(chan error, 1)
 
 	go func() {
-		toB, err := sides.a.Dial(context.Background(), sides.a.Addr().String())
+		toB, err := sides.a.Dial(context.Background(), sides.b.Addr().String())
 		if err != nil {
 			resChan <- fmt.Errorf(`A failed to dial B: %w`, err)
 			return
@@ -120,12 +120,11 @@ func TestPing(t *testing.T) {
 }
 
 func TestTimeout(t *testing.T) {
-	sides := mkSides(2 * time.Second)
+	timeout := 10_000 * time.Millisecond
+	sides := mkSides(timeout)
 	defer func() {
 		_ = sides.Close()
 	}()
-
-	time.Sleep(10 * time.Second)
 
 	resChan := make(chan error)
 
@@ -140,7 +139,7 @@ func TestTimeout(t *testing.T) {
 			_ = toB.CloseWithReason("")
 		}()
 
-		time.Sleep(1 * time.Second)
+		time.Sleep(timeout / 2)
 
 		_, err = protocol.SendAndReceiveExpect[*pb.MsgPong](toB, pb.MsgType_MSG_TYPE_PING, &pb.MsgPing{
 			SentTs: time.Now().UnixNano(),
@@ -150,11 +149,10 @@ func TestTimeout(t *testing.T) {
 			return
 		}
 
-		time.Sleep(1500 * time.Millisecond)
+		time.Sleep(time.Duration(float64(timeout) * 0.75))
 
-		// Total elapsed time >2.5s
-		// Since there was activity, the connection should not have been closed, even though it's more than the 2
-		// second timeout.
+		// Total elapsed time > timeout * 1.5
+		// Since there was activity, the connection should not have been closed, even though it's more than the timeout.
 
 		_, err = protocol.SendAndReceiveExpect[*pb.MsgPong](toB, pb.MsgType_MSG_TYPE_PING, &pb.MsgPing{
 			SentTs: time.Now().UnixNano(),
@@ -165,7 +163,7 @@ func TestTimeout(t *testing.T) {
 		}
 
 		// Wait more than the timeout.
-		time.Sleep(2500 * time.Millisecond)
+		time.Sleep(time.Duration(float64(timeout) * 1.5))
 
 		_, err = protocol.SendAndReceiveExpect[*pb.MsgPong](toB, pb.MsgType_MSG_TYPE_PING, &pb.MsgPing{
 			SentTs: time.Now().UnixNano(),
