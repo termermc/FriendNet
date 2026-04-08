@@ -3,6 +3,8 @@ package config
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"net/url"
 	"os"
 
 	"friendnet.org/common"
@@ -100,6 +102,14 @@ func LoadOrCreate(path string) (*ServerConfig, error) {
 	}
 	if len(cfg.Listen) == 0 {
 		return nil, errors.New("at least one listen address is required")
+	}
+
+	// Ensure all RPC interface addresses are valid URLs.
+	for _, iface := range cfg.Rpc.Interfaces {
+		_, err = url.Parse(iface.Address)
+		if err != nil {
+			return nil, fmt.Errorf(`interface address %q is not a valid URL: %w`, iface.Address, err)
+		}
 	}
 
 	return &cfg, nil
