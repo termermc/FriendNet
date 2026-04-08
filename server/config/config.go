@@ -35,6 +35,9 @@ type ServerConfig struct {
 	// A new self-signed certificate will be generated if it does not exist.
 	PemPath string `json:"pem_path"`
 
+	// If true, the server will periodically check for updates and log to the console if a new version is available.
+	DisableUpdateChecker bool `json:"disable_update_checker"`
+
 	// The configuration for the server's RPC service.
 	Rpc ServerRpcConfig `json:"rpc"`
 }
@@ -45,8 +48,9 @@ var Default = &ServerConfig{
 		"0.0.0.0:20038",
 		"[::]:20038",
 	},
-	DbPath:  "server.db",
-	PemPath: "server.pem",
+	DbPath:               "server.db",
+	PemPath:              "server.pem",
+	DisableUpdateChecker: false,
 
 	Rpc: ServerRpcConfig{
 		Interfaces: []common.RpcServerConfig{

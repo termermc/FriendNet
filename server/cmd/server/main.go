@@ -29,6 +29,7 @@ import (
 	"friendnet.org/server/cert"
 	"friendnet.org/server/config"
 	"friendnet.org/server/storage"
+	"friendnet.org/updater"
 )
 
 func main() {
@@ -167,6 +168,19 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	var updateChecker *updater.UpdateChecker
+	if !cfg.DisableUpdateChecker {
+		// We do not need to listen to the update channel because the updater already logs everything we need.
+		// Instantiating a new instance and keeping it alive is enough.
+		updateChecker = updater.NewUpdateChecker(
+			logger,
+			updater.UpdateCheckerBaseUrl,
+			updater.CurrentUpdate,
+			updater.Ed25519Pubkey,
+			updater.UpdateCheckerInterval,
+		)
+	}
+
 	if !noCli {
 		go func() {
 			localRpcToken := common.RandomB64UrlStr(32)
@@ -203,6 +217,10 @@ func main() {
 		<-ctx.Done()
 		logger.Info("closing server")
 
+		if updateChecker != nil {
+			_ = updateChecker.Close()
+		}
+		_ = rpcServer.Close()
 		_ = webServer.Close()
 
 		var wg sync.WaitGroup

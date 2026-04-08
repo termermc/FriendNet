@@ -40,6 +40,7 @@ It will look something like this:
 	"listen": ["0.0.0.0:20038", "[::]:20038"],
 	"db_path": "server.db",
 	"pem_path": "server.pem",
+    "disable_update_checker": false,
 	"rpc": {
 		"interfaces": [
 			{
