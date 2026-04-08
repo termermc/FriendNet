@@ -1,13 +1,14 @@
 // TODO Test if the RPC is accessible without a token and refuse to use it if it has no token requirement.
 
 import { Component, ErrorBoundary, Show, Suspense } from 'solid-js'
-import {
-	bearerTokenKey,
-	RpcClientCtx,
-	rpcUrlKey,
-} from './ctx'
+import { bearerTokenKey, RpcClientCtx, rpcUrlKey } from './ctx'
 import App from './App'
-import { createClient, Interceptor } from '@connectrpc/connect'
+import {
+	Code,
+	ConnectError,
+	createClient,
+	Interceptor,
+} from '@connectrpc/connect'
 import {
 	ServerRpcService,
 	GetServerInfoResponse,
@@ -148,6 +149,12 @@ export const Loader: Component = () => {
 	const everything = createAsync(async (): Promise<Everything> => {
 		const serverInfo = await client.getServerInfo({})
 
+		if (!serverInfo.rpc!.requiresBearerToken) {
+			throw new Error(
+				'RPC does not require a bearer token. Exposing an administrative RPC interface without requiring a bearer token is dangerous! For security, the admin UI refuses to use this RPC interface until bearer token authentication is configured.',
+			)
+		}
+
 		return {
 			serverInfo,
 		}
@@ -156,20 +163,42 @@ export const Loader: Component = () => {
 	return (
 		<Suspense fallback={<div>Loading...</div>}>
 			<ErrorBoundary
-				fallback={
-					<div>
-						<p>Failed to connect to server RPC.</p>
-						<button
-							onClick={() => {
-								localStorage.removeItem(rpcUrlKey)
-								localStorage.removeItem(bearerTokenKey)
-								window.location.reload()
-							}}
-						>
-							Clear RPC URL and token.
-						</button>
-					</div>
-				}
+				fallback={(err) => {
+					if (
+						err instanceof ConnectError &&
+						err.code === Code.PermissionDenied
+					) {
+						return (
+							<div>
+								<p>
+									Permission denied. Either your token is
+									invalid or the RPC does not allow the{' '}
+									<code>GetServerInfo</code> method.
+								</p>
+							</div>
+						)
+					}
+
+					return (
+						<div>
+							<p>
+								Failed to connect to server RPC:
+								<br />
+								<br />
+								{err?.message ?? String(err)}
+							</p>
+							<button
+								onClick={() => {
+									localStorage.removeItem(rpcUrlKey)
+									localStorage.removeItem(bearerTokenKey)
+									window.location.reload()
+								}}
+							>
+								Clear RPC URL and token.
+							</button>
+						</div>
+					)
+				}}
 			>
 				<Show when={everything()}>
 					<RpcClientCtx.Provider value={client}>

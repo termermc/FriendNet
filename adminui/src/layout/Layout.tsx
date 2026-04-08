@@ -16,10 +16,7 @@ export const Layout: Component<LayoutProps> = (props) => {
 				<span class={styles.headerTitle}>{AppName}</span>
 
 				<div class={styles.options}>
-					<A
-						href="/todo"
-						class={styles.option}
-					>
+					<A href="/todo" class={styles.option}>
 						⏳ TODO
 					</A>{' '}
 					<A href="/todo" class={styles.option}>
@@ -29,9 +26,7 @@ export const Layout: Component<LayoutProps> = (props) => {
 			</header>
 
 			<main>
-				<div class={styles.sidebar}>
-					TODO Rooms browser
-				</div>
+				<div class={styles.sidebar}>TODO Rooms browser</div>
 
 				<div class={styles.content}>
 					<ErrorBoundary

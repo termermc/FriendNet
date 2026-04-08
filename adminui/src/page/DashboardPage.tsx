@@ -12,9 +12,7 @@ export const DashboardPage: Component = () => {
 			}}
 		>
 			<h1>Welcome to {AppName}</h1>
-			<p>
-				TODO
-			</p>
+			<p>TODO</p>
 		</div>
 	)
 }
