@@ -37,33 +37,28 @@ It will look something like this:
 
 ```json
 {
-  "listen": [
-    "0.0.0.0:20038",
-    "[::]:20038"
-  ],
-  "db_path": "server.db",
-  "pem_path": "server.pem",
-  "rpc": {
-    "interfaces": [
-      {
-        "address": "unix://friendnet-server.sock",
-        "allowed_methods": [
-          "*"
-        ],
-        "cors_allow_all_origins": false
-      },
-      {
-        "address": "http://127.0.0.1:8080",
-        "allowed_methods": [
-          "GetRooms",
-          "GetRoomInfo",
-          "GetOnlineUsers",
-          "GetOnlineUserInfo"
-        ],
-        "cors_allow_all_origins": true
-      }
-    ]
-  }
+	"listen": ["0.0.0.0:20038", "[::]:20038"],
+	"db_path": "server.db",
+	"pem_path": "server.pem",
+	"rpc": {
+		"interfaces": [
+			{
+				"address": "unix://friendnet-server.sock",
+				"allowed_methods": ["*"],
+				"cors_allow_all_origins": false
+			},
+			{
+				"address": "http://127.0.0.1:8080",
+				"allowed_methods": [
+					"GetRooms",
+					"GetRoomInfo",
+					"GetOnlineUsers",
+					"GetOnlineUserInfo"
+				],
+				"cors_allow_all_origins": true
+			}
+		]
+	}
 }
 ```
 
@@ -87,9 +82,7 @@ To require an authorization token to access an endpoint, add a `bearer_token` pr
 ```json
 {
 	"address": "http://127.0.0.1:8080",
-	"allowed_methods": [
-		"*"
-	],
+	"allowed_methods": ["*"],
 	"bearer_token": "some-secure-random-token"
 }
 ```
