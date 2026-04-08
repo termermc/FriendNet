@@ -1,12 +1,4 @@
-import {
-	Component,
-	createEffect,
-	createSignal,
-	For,
-	onCleanup,
-	onMount,
-	Show,
-} from 'solid-js'
+import { Component, createEffect, createSignal, For, onCleanup, onMount, Show } from 'solid-js'
 import { useGlobalState } from '../ctx'
 
 import styles from './ServerBrowser.module.css'
@@ -105,6 +97,13 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 		}
 	})()
 	onCleanup(() => (runRefresher = false))
+
+	createEffect(() => {
+		if (props.server.connState() === ServerConnState.OPEN) {
+			refreshUsers()
+				.catch(err => console.error('failed to refresh online users after connection:', err))
+		}
+	})
 
 	const [isDeleting, setDeleting] = createSignal(false)
 	const doDelete = async () => {
