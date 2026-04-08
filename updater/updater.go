@@ -271,6 +271,15 @@ func (c *UpdateChecker) loop() {
 			return
 		}
 
+		if newUpdate != nil {
+			c.logger.Error("a new update is available",
+				"service", "updater.UpdateChecker",
+				"version", newUpdate.Version,
+				"description", newUpdate.Description,
+				"url", newUpdate.Url,
+			)
+		}
+
 		notifyNew(newUpdate, nil)
 	}
 
