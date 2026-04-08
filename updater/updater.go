@@ -152,6 +152,9 @@ type UpdateChecker struct {
 
 	logger *slog.Logger
 
+	// The latest known update.
+	latest UpdateInfo
+
 	// CurrentUpdate is the current update the client is running.
 	// Do not update.
 	CurrentUpdate UpdateInfo
@@ -191,6 +194,7 @@ func NewUpdateChecker(
 
 		logger: logger,
 
+		latest:        curUpdate,
 		CurrentUpdate: curUpdate,
 
 		baseUrl:  baseUrl,
@@ -246,7 +250,11 @@ func (c *UpdateChecker) loop() {
 		ctx, cancel := context.WithTimeout(c.ctx, 10*time.Second)
 		defer cancel()
 
-		newUpdate, err := CheckUpdate(ctx, c.baseUrl, c.CurrentUpdate, c.pubkey)
+		c.mu.Lock()
+		latest := c.latest
+		c.mu.Unlock()
+
+		newUpdate, err := CheckUpdate(ctx, c.baseUrl, latest, c.pubkey)
 		if err != nil {
 			if errors.Is(err, context.DeadlineExceeded) ||
 				errors.Is(err, context.Canceled) {
@@ -272,6 +280,10 @@ func (c *UpdateChecker) loop() {
 		}
 
 		if newUpdate != nil {
+			c.mu.Lock()
+			c.latest = *newUpdate
+			c.mu.Unlock()
+
 			c.logger.Error("a new update is available",
 				"service", "updater.UpdateChecker",
 				"version", newUpdate.Version,
