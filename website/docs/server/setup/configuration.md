@@ -33,8 +33,46 @@ important data for the server. If the file is removed or replaced, existing room
 The `server.json` file contains the server configuration that you can edit. It specifies the host+ports to listen on,
 the paths to the certificate and database files, and RPC settings.
 
+It will look something like this:
+
+```json
+{
+  "listen": [
+    "0.0.0.0:20038",
+    "[::]:20038"
+  ],
+  "db_path": "server.db",
+  "pem_path": "server.pem",
+  "rpc": {
+    "interfaces": [
+      {
+        "address": "unix://friendnet-server.sock",
+        "allowed_methods": [
+          "*"
+        ],
+        "cors_allow_all_origins": false
+      },
+      {
+        "address": "http://127.0.0.1:8080",
+        "allowed_methods": [
+          "GetRooms",
+          "GetRoomInfo",
+          "GetOnlineUsers",
+          "GetOnlineUserInfo"
+        ],
+        "cors_allow_all_origins": true
+      }
+    ]
+  }
+}
+```
+
 By default, the server will listen on all interfaces on port `20038`, for both IPv4 and IPv6. In most cases, you do not
 need to change this.
+
+Please note that if you are testing the server locally on your machine, you should connect to the address
+`127.0.0.1:20038` instead of `0.0.0.0:20038` because the latter is a wildcard address, not a real address that you can
+connect to directly. In the case of IPv6, you should use `[::1]:20038` instead of `[::]:20038` for the same reason.
 
 The `rpc` property specifies which interfaces to expose the RPC interface on, and which RPC methods are allowed on those
 interfaces.
