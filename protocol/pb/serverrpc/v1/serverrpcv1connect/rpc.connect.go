@@ -33,6 +33,9 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// ServerRpcServiceGetServerInfoProcedure is the fully-qualified name of the ServerRpcService's
+	// GetServerInfo RPC.
+	ServerRpcServiceGetServerInfoProcedure = "/pb.serverrpc.v1.ServerRpcService/GetServerInfo"
 	// ServerRpcServiceGetRoomsProcedure is the fully-qualified name of the ServerRpcService's GetRooms
 	// RPC.
 	ServerRpcServiceGetRoomsProcedure = "/pb.serverrpc.v1.ServerRpcService/GetRooms"
@@ -67,6 +70,9 @@ const (
 
 // ServerRpcServiceClient is a client for the pb.serverrpc.v1.ServerRpcService service.
 type ServerRpcServiceClient interface {
+	// GetServerInfo returns information about the server.
+	// It also returns information about the RPC interface used to call the method.
+	GetServerInfo(context.Context, *v1.GetServerInfoRequest) (*v1.GetServerInfoResponse, error)
 	// GetRooms returns a list of all rooms in the server.
 	GetRooms(context.Context, *v1.GetRoomsRequest) (*v1.GetRoomsResponse, error)
 	// GetRoomInfo returns information about a room.
@@ -115,6 +121,12 @@ func NewServerRpcServiceClient(httpClient connect.HTTPClient, baseURL string, op
 	baseURL = strings.TrimRight(baseURL, "/")
 	serverRpcServiceMethods := v1.File_pb_serverrpc_v1_rpc_proto.Services().ByName("ServerRpcService").Methods()
 	return &serverRpcServiceClient{
+		getServerInfo: connect.NewClient[v1.GetServerInfoRequest, v1.GetServerInfoResponse](
+			httpClient,
+			baseURL+ServerRpcServiceGetServerInfoProcedure,
+			connect.WithSchema(serverRpcServiceMethods.ByName("GetServerInfo")),
+			connect.WithClientOptions(opts...),
+		),
 		getRooms: connect.NewClient[v1.GetRoomsRequest, v1.GetRoomsResponse](
 			httpClient,
 			baseURL+ServerRpcServiceGetRoomsProcedure,
@@ -180,6 +192,7 @@ func NewServerRpcServiceClient(httpClient connect.HTTPClient, baseURL string, op
 
 // serverRpcServiceClient implements ServerRpcServiceClient.
 type serverRpcServiceClient struct {
+	getServerInfo         *connect.Client[v1.GetServerInfoRequest, v1.GetServerInfoResponse]
 	getRooms              *connect.Client[v1.GetRoomsRequest, v1.GetRoomsResponse]
 	getRoomInfo           *connect.Client[v1.GetRoomInfoRequest, v1.GetRoomInfoResponse]
 	getOnlineUsers        *connect.Client[v1.GetOnlineUsersRequest, v1.GetOnlineUsersResponse]
@@ -190,6 +203,15 @@ type serverRpcServiceClient struct {
 	createAccount         *connect.Client[v1.CreateAccountRequest, v1.CreateAccountResponse]
 	deleteAccount         *connect.Client[v1.DeleteAccountRequest, v1.DeleteAccountResponse]
 	updateAccountPassword *connect.Client[v1.UpdateAccountPasswordRequest, v1.UpdateAccountPasswordResponse]
+}
+
+// GetServerInfo calls pb.serverrpc.v1.ServerRpcService.GetServerInfo.
+func (c *serverRpcServiceClient) GetServerInfo(ctx context.Context, req *v1.GetServerInfoRequest) (*v1.GetServerInfoResponse, error) {
+	response, err := c.getServerInfo.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // GetRooms calls pb.serverrpc.v1.ServerRpcService.GetRooms.
@@ -280,6 +302,9 @@ func (c *serverRpcServiceClient) UpdateAccountPassword(ctx context.Context, req 
 
 // ServerRpcServiceHandler is an implementation of the pb.serverrpc.v1.ServerRpcService service.
 type ServerRpcServiceHandler interface {
+	// GetServerInfo returns information about the server.
+	// It also returns information about the RPC interface used to call the method.
+	GetServerInfo(context.Context, *v1.GetServerInfoRequest) (*v1.GetServerInfoResponse, error)
 	// GetRooms returns a list of all rooms in the server.
 	GetRooms(context.Context, *v1.GetRoomsRequest) (*v1.GetRoomsResponse, error)
 	// GetRoomInfo returns information about a room.
@@ -324,6 +349,12 @@ type ServerRpcServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewServerRpcServiceHandler(svc ServerRpcServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	serverRpcServiceMethods := v1.File_pb_serverrpc_v1_rpc_proto.Services().ByName("ServerRpcService").Methods()
+	serverRpcServiceGetServerInfoHandler := connect.NewUnaryHandlerSimple(
+		ServerRpcServiceGetServerInfoProcedure,
+		svc.GetServerInfo,
+		connect.WithSchema(serverRpcServiceMethods.ByName("GetServerInfo")),
+		connect.WithHandlerOptions(opts...),
+	)
 	serverRpcServiceGetRoomsHandler := connect.NewUnaryHandlerSimple(
 		ServerRpcServiceGetRoomsProcedure,
 		svc.GetRooms,
@@ -386,6 +417,8 @@ func NewServerRpcServiceHandler(svc ServerRpcServiceHandler, opts ...connect.Han
 	)
 	return "/pb.serverrpc.v1.ServerRpcService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case ServerRpcServiceGetServerInfoProcedure:
+			serverRpcServiceGetServerInfoHandler.ServeHTTP(w, r)
 		case ServerRpcServiceGetRoomsProcedure:
 			serverRpcServiceGetRoomsHandler.ServeHTTP(w, r)
 		case ServerRpcServiceGetRoomInfoProcedure:
@@ -414,6 +447,10 @@ func NewServerRpcServiceHandler(svc ServerRpcServiceHandler, opts ...connect.Han
 
 // UnimplementedServerRpcServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedServerRpcServiceHandler struct{}
+
+func (UnimplementedServerRpcServiceHandler) GetServerInfo(context.Context, *v1.GetServerInfoRequest) (*v1.GetServerInfoResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.serverrpc.v1.ServerRpcService.GetServerInfo is not implemented"))
+}
 
 func (UnimplementedServerRpcServiceHandler) GetRooms(context.Context, *v1.GetRoomsRequest) (*v1.GetRoomsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.serverrpc.v1.ServerRpcService.GetRooms is not implemented"))

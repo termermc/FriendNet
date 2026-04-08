@@ -1,0 +1,30 @@
+{
+	"name": "adminui",
+	"version": "0.0.0",
+	"description": "FriendNet server admin UI",
+	"type": "module",
+	"scripts": {
+		"start": "vite",
+		"dev": "vite",
+		"build": "vite build",
+		"serve": "vite preview",
+		"fmt": "prettier --write .",
+		"check": "tsc --noEmit"
+	},
+	"license": "AGPL-3.0-only",
+	"devDependencies": {
+		"@bufbuild/buf": "^1.65.0",
+		"@bufbuild/protoc-gen-es": "^2.11.0",
+		"prettier": "^3.8.1",
+		"typescript": "^5.7.2",
+		"vite": "^7.1.4",
+		"vite-plugin-solid": "^2.11.8"
+	},
+	"dependencies": {
+		"@bufbuild/protobuf": "^2.11.0",
+		"@connectrpc/connect": "^2.1.1",
+		"@connectrpc/connect-web": "^2.1.1",
+		"@solidjs/router": "^0.15.4",
+		"solid-js": "^1.9.5"
+	}
+}

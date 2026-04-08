@@ -296,3 +296,8 @@ func (s *RpcServer) UpdateAccountPassword(ctx context.Context, req *v1.UpdateAcc
 		GeneratedPassword: passOrNil,
 	}, nil
 }
+
+func (s *RpcServer) GetServerInfo(ctx context.Context, request *v1.GetServerInfoRequest) (*v1.GetServerInfoResponse, error) {
+	//TODO implement me
+	panic("implement me")
+}

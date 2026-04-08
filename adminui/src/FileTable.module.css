@@ -1,0 +1,34 @@
+.files {
+	width: 100%;
+	height: calc(100% - 5rem);
+	overflow: auto;
+}
+.files table {
+	width: 100%;
+	border-collapse: collapse;
+}
+.files table tr {
+	border-bottom: 0.1rem solid rgba(0, 0, 0, 0.25);
+}
+.files table tr:hover {
+	background-color: rgba(0, 0, 0, 0.1);
+}
+.files table td a {
+	text-decoration: none;
+}
+
+.label {
+	cursor: pointer;
+}
+.label a {
+	display: inline-block;
+	width: 100%;
+}
+
+.actionsTd {
+	width: 5rem;
+}
+.actions {
+	text-align: right;
+	margin-right: 1rem;
+}

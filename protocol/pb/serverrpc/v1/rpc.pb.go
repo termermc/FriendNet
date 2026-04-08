@@ -168,6 +168,96 @@ func (x *AccountInfo) GetUsername() string {
 	return ""
 }
 
+type GetServerInfoRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetServerInfoRequest) Reset() {
+	*x = GetServerInfoRequest{}
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetServerInfoRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetServerInfoRequest) ProtoMessage() {}
+
+func (x *GetServerInfoRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetServerInfoRequest.ProtoReflect.Descriptor instead.
+func (*GetServerInfoRequest) Descriptor() ([]byte, []int) {
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{3}
+}
+
+type GetServerInfoResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The server's version.
+	Version string `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	// Information about the RPC interface being accessed.
+	Rpc           *GetServerInfoResponse_Rpc `protobuf:"bytes,2,opt,name=rpc,proto3" json:"rpc,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetServerInfoResponse) Reset() {
+	*x = GetServerInfoResponse{}
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetServerInfoResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetServerInfoResponse) ProtoMessage() {}
+
+func (x *GetServerInfoResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetServerInfoResponse.ProtoReflect.Descriptor instead.
+func (*GetServerInfoResponse) Descriptor() ([]byte, []int) {
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *GetServerInfoResponse) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *GetServerInfoResponse) GetRpc() *GetServerInfoResponse_Rpc {
+	if x != nil {
+		return x.Rpc
+	}
+	return nil
+}
+
 type GetRoomsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -176,7 +266,7 @@ type GetRoomsRequest struct {
 
 func (x *GetRoomsRequest) Reset() {
 	*x = GetRoomsRequest{}
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[3]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -188,7 +278,7 @@ func (x *GetRoomsRequest) String() string {
 func (*GetRoomsRequest) ProtoMessage() {}
 
 func (x *GetRoomsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[3]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -201,7 +291,7 @@ func (x *GetRoomsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRoomsRequest.ProtoReflect.Descriptor instead.
 func (*GetRoomsRequest) Descriptor() ([]byte, []int) {
-	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{3}
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{5}
 }
 
 type GetRoomsResponse struct {
@@ -214,7 +304,7 @@ type GetRoomsResponse struct {
 
 func (x *GetRoomsResponse) Reset() {
 	*x = GetRoomsResponse{}
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[4]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -226,7 +316,7 @@ func (x *GetRoomsResponse) String() string {
 func (*GetRoomsResponse) ProtoMessage() {}
 
 func (x *GetRoomsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[4]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -239,7 +329,7 @@ func (x *GetRoomsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRoomsResponse.ProtoReflect.Descriptor instead.
 func (*GetRoomsResponse) Descriptor() ([]byte, []int) {
-	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{4}
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetRoomsResponse) GetRooms() []*RoomInfo {
@@ -259,7 +349,7 @@ type GetRoomInfoRequest struct {
 
 func (x *GetRoomInfoRequest) Reset() {
 	*x = GetRoomInfoRequest{}
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[5]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -271,7 +361,7 @@ func (x *GetRoomInfoRequest) String() string {
 func (*GetRoomInfoRequest) ProtoMessage() {}
 
 func (x *GetRoomInfoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[5]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -284,7 +374,7 @@ func (x *GetRoomInfoRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRoomInfoRequest.ProtoReflect.Descriptor instead.
 func (*GetRoomInfoRequest) Descriptor() ([]byte, []int) {
-	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{5}
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetRoomInfoRequest) GetName() string {
@@ -304,7 +394,7 @@ type GetRoomInfoResponse struct {
 
 func (x *GetRoomInfoResponse) Reset() {
 	*x = GetRoomInfoResponse{}
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[6]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -316,7 +406,7 @@ func (x *GetRoomInfoResponse) String() string {
 func (*GetRoomInfoResponse) ProtoMessage() {}
 
 func (x *GetRoomInfoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[6]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -329,7 +419,7 @@ func (x *GetRoomInfoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRoomInfoResponse.ProtoReflect.Descriptor instead.
 func (*GetRoomInfoResponse) Descriptor() ([]byte, []int) {
-	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{6}
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GetRoomInfoResponse) GetRoom() *RoomInfo {
@@ -349,7 +439,7 @@ type GetOnlineUsersRequest struct {
 
 func (x *GetOnlineUsersRequest) Reset() {
 	*x = GetOnlineUsersRequest{}
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[7]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -361,7 +451,7 @@ func (x *GetOnlineUsersRequest) String() string {
 func (*GetOnlineUsersRequest) ProtoMessage() {}
 
 func (x *GetOnlineUsersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[7]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -374,7 +464,7 @@ func (x *GetOnlineUsersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOnlineUsersRequest.ProtoReflect.Descriptor instead.
 func (*GetOnlineUsersRequest) Descriptor() ([]byte, []int) {
-	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{7}
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetOnlineUsersRequest) GetRoom() string {
@@ -393,7 +483,7 @@ type GetOnlineUsersResponse struct {
 
 func (x *GetOnlineUsersResponse) Reset() {
 	*x = GetOnlineUsersResponse{}
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[8]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -405,7 +495,7 @@ func (x *GetOnlineUsersResponse) String() string {
 func (*GetOnlineUsersResponse) ProtoMessage() {}
 
 func (x *GetOnlineUsersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[8]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -418,7 +508,7 @@ func (x *GetOnlineUsersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOnlineUsersResponse.ProtoReflect.Descriptor instead.
 func (*GetOnlineUsersResponse) Descriptor() ([]byte, []int) {
-	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{8}
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetOnlineUsersResponse) GetUsers() []*OnlineUserInfo {
@@ -440,7 +530,7 @@ type GetOnlineUserInfoRequest struct {
 
 func (x *GetOnlineUserInfoRequest) Reset() {
 	*x = GetOnlineUserInfoRequest{}
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[9]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -452,7 +542,7 @@ func (x *GetOnlineUserInfoRequest) String() string {
 func (*GetOnlineUserInfoRequest) ProtoMessage() {}
 
 func (x *GetOnlineUserInfoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[9]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -465,7 +555,7 @@ func (x *GetOnlineUserInfoRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOnlineUserInfoRequest.ProtoReflect.Descriptor instead.
 func (*GetOnlineUserInfoRequest) Descriptor() ([]byte, []int) {
-	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{9}
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GetOnlineUserInfoRequest) GetRoom() string {
@@ -492,7 +582,7 @@ type GetOnlineUserInfoResponse struct {
 
 func (x *GetOnlineUserInfoResponse) Reset() {
 	*x = GetOnlineUserInfoResponse{}
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[10]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -504,7 +594,7 @@ func (x *GetOnlineUserInfoResponse) String() string {
 func (*GetOnlineUserInfoResponse) ProtoMessage() {}
 
 func (x *GetOnlineUserInfoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[10]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -517,7 +607,7 @@ func (x *GetOnlineUserInfoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOnlineUserInfoResponse.ProtoReflect.Descriptor instead.
 func (*GetOnlineUserInfoResponse) Descriptor() ([]byte, []int) {
-	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{10}
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetOnlineUserInfoResponse) GetUser() *OnlineUserInfo {
@@ -537,7 +627,7 @@ type GetAccountsRequest struct {
 
 func (x *GetAccountsRequest) Reset() {
 	*x = GetAccountsRequest{}
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[11]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -549,7 +639,7 @@ func (x *GetAccountsRequest) String() string {
 func (*GetAccountsRequest) ProtoMessage() {}
 
 func (x *GetAccountsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[11]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -562,7 +652,7 @@ func (x *GetAccountsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAccountsRequest.ProtoReflect.Descriptor instead.
 func (*GetAccountsRequest) Descriptor() ([]byte, []int) {
-	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{11}
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetAccountsRequest) GetRoom() string {
@@ -582,7 +672,7 @@ type GetAccountsResponse struct {
 
 func (x *GetAccountsResponse) Reset() {
 	*x = GetAccountsResponse{}
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[12]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -594,7 +684,7 @@ func (x *GetAccountsResponse) String() string {
 func (*GetAccountsResponse) ProtoMessage() {}
 
 func (x *GetAccountsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[12]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -607,7 +697,7 @@ func (x *GetAccountsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAccountsResponse.ProtoReflect.Descriptor instead.
 func (*GetAccountsResponse) Descriptor() ([]byte, []int) {
-	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{12}
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetAccountsResponse) GetAccounts() []*AccountInfo {
@@ -627,7 +717,7 @@ type CreateRoomRequest struct {
 
 func (x *CreateRoomRequest) Reset() {
 	*x = CreateRoomRequest{}
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[13]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -639,7 +729,7 @@ func (x *CreateRoomRequest) String() string {
 func (*CreateRoomRequest) ProtoMessage() {}
 
 func (x *CreateRoomRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[13]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -652,7 +742,7 @@ func (x *CreateRoomRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRoomRequest.ProtoReflect.Descriptor instead.
 func (*CreateRoomRequest) Descriptor() ([]byte, []int) {
-	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{13}
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *CreateRoomRequest) GetName() string {
@@ -672,7 +762,7 @@ type CreateRoomResponse struct {
 
 func (x *CreateRoomResponse) Reset() {
 	*x = CreateRoomResponse{}
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[14]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -684,7 +774,7 @@ func (x *CreateRoomResponse) String() string {
 func (*CreateRoomResponse) ProtoMessage() {}
 
 func (x *CreateRoomResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[14]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -697,7 +787,7 @@ func (x *CreateRoomResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRoomResponse.ProtoReflect.Descriptor instead.
 func (*CreateRoomResponse) Descriptor() ([]byte, []int) {
-	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{14}
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *CreateRoomResponse) GetRoom() *RoomInfo {
@@ -717,7 +807,7 @@ type DeleteRoomRequest struct {
 
 func (x *DeleteRoomRequest) Reset() {
 	*x = DeleteRoomRequest{}
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[15]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -729,7 +819,7 @@ func (x *DeleteRoomRequest) String() string {
 func (*DeleteRoomRequest) ProtoMessage() {}
 
 func (x *DeleteRoomRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[15]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -742,7 +832,7 @@ func (x *DeleteRoomRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRoomRequest.ProtoReflect.Descriptor instead.
 func (*DeleteRoomRequest) Descriptor() ([]byte, []int) {
-	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{15}
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *DeleteRoomRequest) GetName() string {
@@ -760,7 +850,7 @@ type DeleteRoomResponse struct {
 
 func (x *DeleteRoomResponse) Reset() {
 	*x = DeleteRoomResponse{}
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[16]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -772,7 +862,7 @@ func (x *DeleteRoomResponse) String() string {
 func (*DeleteRoomResponse) ProtoMessage() {}
 
 func (x *DeleteRoomResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[16]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -785,7 +875,7 @@ func (x *DeleteRoomResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRoomResponse.ProtoReflect.Descriptor instead.
 func (*DeleteRoomResponse) Descriptor() ([]byte, []int) {
-	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{16}
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{18}
 }
 
 type CreateAccountRequest struct {
@@ -802,7 +892,7 @@ type CreateAccountRequest struct {
 
 func (x *CreateAccountRequest) Reset() {
 	*x = CreateAccountRequest{}
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[17]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -814,7 +904,7 @@ func (x *CreateAccountRequest) String() string {
 func (*CreateAccountRequest) ProtoMessage() {}
 
 func (x *CreateAccountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[17]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -827,7 +917,7 @@ func (x *CreateAccountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAccountRequest.ProtoReflect.Descriptor instead.
 func (*CreateAccountRequest) Descriptor() ([]byte, []int) {
-	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{17}
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *CreateAccountRequest) GetRoom() string {
@@ -861,7 +951,7 @@ type CreateAccountResponse struct {
 
 func (x *CreateAccountResponse) Reset() {
 	*x = CreateAccountResponse{}
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[18]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -873,7 +963,7 @@ func (x *CreateAccountResponse) String() string {
 func (*CreateAccountResponse) ProtoMessage() {}
 
 func (x *CreateAccountResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[18]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -886,7 +976,7 @@ func (x *CreateAccountResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAccountResponse.ProtoReflect.Descriptor instead.
 func (*CreateAccountResponse) Descriptor() ([]byte, []int) {
-	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{18}
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *CreateAccountResponse) GetGeneratedPassword() string {
@@ -908,7 +998,7 @@ type DeleteAccountRequest struct {
 
 func (x *DeleteAccountRequest) Reset() {
 	*x = DeleteAccountRequest{}
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[19]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -920,7 +1010,7 @@ func (x *DeleteAccountRequest) String() string {
 func (*DeleteAccountRequest) ProtoMessage() {}
 
 func (x *DeleteAccountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[19]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -933,7 +1023,7 @@ func (x *DeleteAccountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAccountRequest.ProtoReflect.Descriptor instead.
 func (*DeleteAccountRequest) Descriptor() ([]byte, []int) {
-	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{19}
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *DeleteAccountRequest) GetRoom() string {
@@ -958,7 +1048,7 @@ type DeleteAccountResponse struct {
 
 func (x *DeleteAccountResponse) Reset() {
 	*x = DeleteAccountResponse{}
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[20]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -970,7 +1060,7 @@ func (x *DeleteAccountResponse) String() string {
 func (*DeleteAccountResponse) ProtoMessage() {}
 
 func (x *DeleteAccountResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[20]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -983,7 +1073,7 @@ func (x *DeleteAccountResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAccountResponse.ProtoReflect.Descriptor instead.
 func (*DeleteAccountResponse) Descriptor() ([]byte, []int) {
-	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{20}
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{22}
 }
 
 type UpdateAccountPasswordRequest struct {
@@ -1000,7 +1090,7 @@ type UpdateAccountPasswordRequest struct {
 
 func (x *UpdateAccountPasswordRequest) Reset() {
 	*x = UpdateAccountPasswordRequest{}
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[21]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1012,7 +1102,7 @@ func (x *UpdateAccountPasswordRequest) String() string {
 func (*UpdateAccountPasswordRequest) ProtoMessage() {}
 
 func (x *UpdateAccountPasswordRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[21]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1025,7 +1115,7 @@ func (x *UpdateAccountPasswordRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateAccountPasswordRequest.ProtoReflect.Descriptor instead.
 func (*UpdateAccountPasswordRequest) Descriptor() ([]byte, []int) {
-	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{21}
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *UpdateAccountPasswordRequest) GetRoom() string {
@@ -1059,7 +1149,7 @@ type UpdateAccountPasswordResponse struct {
 
 func (x *UpdateAccountPasswordResponse) Reset() {
 	*x = UpdateAccountPasswordResponse{}
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[22]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1071,7 +1161,7 @@ func (x *UpdateAccountPasswordResponse) String() string {
 func (*UpdateAccountPasswordResponse) ProtoMessage() {}
 
 func (x *UpdateAccountPasswordResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[22]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1084,7 +1174,7 @@ func (x *UpdateAccountPasswordResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateAccountPasswordResponse.ProtoReflect.Descriptor instead.
 func (*UpdateAccountPasswordResponse) Descriptor() ([]byte, []int) {
-	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{22}
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *UpdateAccountPasswordResponse) GetGeneratedPassword() string {
@@ -1092,6 +1182,61 @@ func (x *UpdateAccountPasswordResponse) GetGeneratedPassword() string {
 		return *x.GeneratedPassword
 	}
 	return ""
+}
+
+type GetServerInfoResponse_Rpc struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// A list of all allowed methods on the RPC interface.
+	// If all permissions are allowed, it will contain a single "*".
+	AllowedMethods []string `protobuf:"bytes,1,rep,name=allowed_methods,json=allowedMethods,proto3" json:"allowed_methods,omitempty"`
+	// Whether the RPC interface requires a bearer token.
+	RequiresBearerToken bool `protobuf:"varint,2,opt,name=requires_bearer_token,json=requiresBearerToken,proto3" json:"requires_bearer_token,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *GetServerInfoResponse_Rpc) Reset() {
+	*x = GetServerInfoResponse_Rpc{}
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetServerInfoResponse_Rpc) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetServerInfoResponse_Rpc) ProtoMessage() {}
+
+func (x *GetServerInfoResponse_Rpc) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetServerInfoResponse_Rpc.ProtoReflect.Descriptor instead.
+func (*GetServerInfoResponse_Rpc) Descriptor() ([]byte, []int) {
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{4, 0}
+}
+
+func (x *GetServerInfoResponse_Rpc) GetAllowedMethods() []string {
+	if x != nil {
+		return x.AllowedMethods
+	}
+	return nil
+}
+
+func (x *GetServerInfoResponse_Rpc) GetRequiresBearerToken() bool {
+	if x != nil {
+		return x.RequiresBearerToken
+	}
+	return false
 }
 
 var File_pb_serverrpc_v1_rpc_proto protoreflect.FileDescriptor
@@ -1105,7 +1250,14 @@ const file_pb_serverrpc_v1_rpc_proto_rawDesc = "" +
 	"\x0eOnlineUserInfo\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\")\n" +
 	"\vAccountInfo\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\"\x11\n" +
+	"\busername\x18\x01 \x01(\tR\busername\"\x16\n" +
+	"\x14GetServerInfoRequest\"\xd3\x01\n" +
+	"\x15GetServerInfoResponse\x12\x18\n" +
+	"\aversion\x18\x01 \x01(\tR\aversion\x12<\n" +
+	"\x03rpc\x18\x02 \x01(\v2*.pb.serverrpc.v1.GetServerInfoResponse.RpcR\x03rpc\x1ab\n" +
+	"\x03Rpc\x12'\n" +
+	"\x0fallowed_methods\x18\x01 \x03(\tR\x0eallowedMethods\x122\n" +
+	"\x15requires_bearer_token\x18\x02 \x01(\bR\x13requiresBearerToken\"\x11\n" +
 	"\x0fGetRoomsRequest\"C\n" +
 	"\x10GetRoomsResponse\x12/\n" +
 	"\x05rooms\x18\x01 \x03(\v2\x19.pb.serverrpc.v1.RoomInfoR\x05rooms\"(\n" +
@@ -1150,8 +1302,9 @@ const file_pb_serverrpc_v1_rpc_proto_rawDesc = "" +
 	"\bpassword\x18\x03 \x01(\tR\bpassword\"j\n" +
 	"\x1dUpdateAccountPasswordResponse\x122\n" +
 	"\x12generated_password\x18\x01 \x01(\tH\x00R\x11generatedPassword\x88\x01\x01B\x15\n" +
-	"\x13_generated_password2\xe2\a\n" +
-	"\x10ServerRpcService\x12Q\n" +
+	"\x13_generated_password2\xc4\b\n" +
+	"\x10ServerRpcService\x12`\n" +
+	"\rGetServerInfo\x12%.pb.serverrpc.v1.GetServerInfoRequest\x1a&.pb.serverrpc.v1.GetServerInfoResponse\"\x00\x12Q\n" +
 	"\bGetRooms\x12 .pb.serverrpc.v1.GetRoomsRequest\x1a!.pb.serverrpc.v1.GetRoomsResponse\"\x00\x12Z\n" +
 	"\vGetRoomInfo\x12#.pb.serverrpc.v1.GetRoomInfoRequest\x1a$.pb.serverrpc.v1.GetRoomInfoResponse\"\x00\x12e\n" +
 	"\x0eGetOnlineUsers\x12&.pb.serverrpc.v1.GetOnlineUsersRequest\x1a'.pb.serverrpc.v1.GetOnlineUsersResponse\"\x000\x01\x12l\n" +
@@ -1178,64 +1331,70 @@ func file_pb_serverrpc_v1_rpc_proto_rawDescGZIP() []byte {
 	return file_pb_serverrpc_v1_rpc_proto_rawDescData
 }
 
-var file_pb_serverrpc_v1_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
+var file_pb_serverrpc_v1_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_pb_serverrpc_v1_rpc_proto_goTypes = []any{
 	(*RoomInfo)(nil),                      // 0: pb.serverrpc.v1.RoomInfo
 	(*OnlineUserInfo)(nil),                // 1: pb.serverrpc.v1.OnlineUserInfo
 	(*AccountInfo)(nil),                   // 2: pb.serverrpc.v1.AccountInfo
-	(*GetRoomsRequest)(nil),               // 3: pb.serverrpc.v1.GetRoomsRequest
-	(*GetRoomsResponse)(nil),              // 4: pb.serverrpc.v1.GetRoomsResponse
-	(*GetRoomInfoRequest)(nil),            // 5: pb.serverrpc.v1.GetRoomInfoRequest
-	(*GetRoomInfoResponse)(nil),           // 6: pb.serverrpc.v1.GetRoomInfoResponse
-	(*GetOnlineUsersRequest)(nil),         // 7: pb.serverrpc.v1.GetOnlineUsersRequest
-	(*GetOnlineUsersResponse)(nil),        // 8: pb.serverrpc.v1.GetOnlineUsersResponse
-	(*GetOnlineUserInfoRequest)(nil),      // 9: pb.serverrpc.v1.GetOnlineUserInfoRequest
-	(*GetOnlineUserInfoResponse)(nil),     // 10: pb.serverrpc.v1.GetOnlineUserInfoResponse
-	(*GetAccountsRequest)(nil),            // 11: pb.serverrpc.v1.GetAccountsRequest
-	(*GetAccountsResponse)(nil),           // 12: pb.serverrpc.v1.GetAccountsResponse
-	(*CreateRoomRequest)(nil),             // 13: pb.serverrpc.v1.CreateRoomRequest
-	(*CreateRoomResponse)(nil),            // 14: pb.serverrpc.v1.CreateRoomResponse
-	(*DeleteRoomRequest)(nil),             // 15: pb.serverrpc.v1.DeleteRoomRequest
-	(*DeleteRoomResponse)(nil),            // 16: pb.serverrpc.v1.DeleteRoomResponse
-	(*CreateAccountRequest)(nil),          // 17: pb.serverrpc.v1.CreateAccountRequest
-	(*CreateAccountResponse)(nil),         // 18: pb.serverrpc.v1.CreateAccountResponse
-	(*DeleteAccountRequest)(nil),          // 19: pb.serverrpc.v1.DeleteAccountRequest
-	(*DeleteAccountResponse)(nil),         // 20: pb.serverrpc.v1.DeleteAccountResponse
-	(*UpdateAccountPasswordRequest)(nil),  // 21: pb.serverrpc.v1.UpdateAccountPasswordRequest
-	(*UpdateAccountPasswordResponse)(nil), // 22: pb.serverrpc.v1.UpdateAccountPasswordResponse
+	(*GetServerInfoRequest)(nil),          // 3: pb.serverrpc.v1.GetServerInfoRequest
+	(*GetServerInfoResponse)(nil),         // 4: pb.serverrpc.v1.GetServerInfoResponse
+	(*GetRoomsRequest)(nil),               // 5: pb.serverrpc.v1.GetRoomsRequest
+	(*GetRoomsResponse)(nil),              // 6: pb.serverrpc.v1.GetRoomsResponse
+	(*GetRoomInfoRequest)(nil),            // 7: pb.serverrpc.v1.GetRoomInfoRequest
+	(*GetRoomInfoResponse)(nil),           // 8: pb.serverrpc.v1.GetRoomInfoResponse
+	(*GetOnlineUsersRequest)(nil),         // 9: pb.serverrpc.v1.GetOnlineUsersRequest
+	(*GetOnlineUsersResponse)(nil),        // 10: pb.serverrpc.v1.GetOnlineUsersResponse
+	(*GetOnlineUserInfoRequest)(nil),      // 11: pb.serverrpc.v1.GetOnlineUserInfoRequest
+	(*GetOnlineUserInfoResponse)(nil),     // 12: pb.serverrpc.v1.GetOnlineUserInfoResponse
+	(*GetAccountsRequest)(nil),            // 13: pb.serverrpc.v1.GetAccountsRequest
+	(*GetAccountsResponse)(nil),           // 14: pb.serverrpc.v1.GetAccountsResponse
+	(*CreateRoomRequest)(nil),             // 15: pb.serverrpc.v1.CreateRoomRequest
+	(*CreateRoomResponse)(nil),            // 16: pb.serverrpc.v1.CreateRoomResponse
+	(*DeleteRoomRequest)(nil),             // 17: pb.serverrpc.v1.DeleteRoomRequest
+	(*DeleteRoomResponse)(nil),            // 18: pb.serverrpc.v1.DeleteRoomResponse
+	(*CreateAccountRequest)(nil),          // 19: pb.serverrpc.v1.CreateAccountRequest
+	(*CreateAccountResponse)(nil),         // 20: pb.serverrpc.v1.CreateAccountResponse
+	(*DeleteAccountRequest)(nil),          // 21: pb.serverrpc.v1.DeleteAccountRequest
+	(*DeleteAccountResponse)(nil),         // 22: pb.serverrpc.v1.DeleteAccountResponse
+	(*UpdateAccountPasswordRequest)(nil),  // 23: pb.serverrpc.v1.UpdateAccountPasswordRequest
+	(*UpdateAccountPasswordResponse)(nil), // 24: pb.serverrpc.v1.UpdateAccountPasswordResponse
+	(*GetServerInfoResponse_Rpc)(nil),     // 25: pb.serverrpc.v1.GetServerInfoResponse.Rpc
 }
 var file_pb_serverrpc_v1_rpc_proto_depIdxs = []int32{
-	0,  // 0: pb.serverrpc.v1.GetRoomsResponse.rooms:type_name -> pb.serverrpc.v1.RoomInfo
-	0,  // 1: pb.serverrpc.v1.GetRoomInfoResponse.room:type_name -> pb.serverrpc.v1.RoomInfo
-	1,  // 2: pb.serverrpc.v1.GetOnlineUsersResponse.users:type_name -> pb.serverrpc.v1.OnlineUserInfo
-	1,  // 3: pb.serverrpc.v1.GetOnlineUserInfoResponse.user:type_name -> pb.serverrpc.v1.OnlineUserInfo
-	2,  // 4: pb.serverrpc.v1.GetAccountsResponse.accounts:type_name -> pb.serverrpc.v1.AccountInfo
-	0,  // 5: pb.serverrpc.v1.CreateRoomResponse.room:type_name -> pb.serverrpc.v1.RoomInfo
-	3,  // 6: pb.serverrpc.v1.ServerRpcService.GetRooms:input_type -> pb.serverrpc.v1.GetRoomsRequest
-	5,  // 7: pb.serverrpc.v1.ServerRpcService.GetRoomInfo:input_type -> pb.serverrpc.v1.GetRoomInfoRequest
-	7,  // 8: pb.serverrpc.v1.ServerRpcService.GetOnlineUsers:input_type -> pb.serverrpc.v1.GetOnlineUsersRequest
-	9,  // 9: pb.serverrpc.v1.ServerRpcService.GetOnlineUserInfo:input_type -> pb.serverrpc.v1.GetOnlineUserInfoRequest
-	11, // 10: pb.serverrpc.v1.ServerRpcService.GetAccounts:input_type -> pb.serverrpc.v1.GetAccountsRequest
-	13, // 11: pb.serverrpc.v1.ServerRpcService.CreateRoom:input_type -> pb.serverrpc.v1.CreateRoomRequest
-	15, // 12: pb.serverrpc.v1.ServerRpcService.DeleteRoom:input_type -> pb.serverrpc.v1.DeleteRoomRequest
-	17, // 13: pb.serverrpc.v1.ServerRpcService.CreateAccount:input_type -> pb.serverrpc.v1.CreateAccountRequest
-	19, // 14: pb.serverrpc.v1.ServerRpcService.DeleteAccount:input_type -> pb.serverrpc.v1.DeleteAccountRequest
-	21, // 15: pb.serverrpc.v1.ServerRpcService.UpdateAccountPassword:input_type -> pb.serverrpc.v1.UpdateAccountPasswordRequest
-	4,  // 16: pb.serverrpc.v1.ServerRpcService.GetRooms:output_type -> pb.serverrpc.v1.GetRoomsResponse
-	6,  // 17: pb.serverrpc.v1.ServerRpcService.GetRoomInfo:output_type -> pb.serverrpc.v1.GetRoomInfoResponse
-	8,  // 18: pb.serverrpc.v1.ServerRpcService.GetOnlineUsers:output_type -> pb.serverrpc.v1.GetOnlineUsersResponse
-	10, // 19: pb.serverrpc.v1.ServerRpcService.GetOnlineUserInfo:output_type -> pb.serverrpc.v1.GetOnlineUserInfoResponse
-	12, // 20: pb.serverrpc.v1.ServerRpcService.GetAccounts:output_type -> pb.serverrpc.v1.GetAccountsResponse
-	14, // 21: pb.serverrpc.v1.ServerRpcService.CreateRoom:output_type -> pb.serverrpc.v1.CreateRoomResponse
-	16, // 22: pb.serverrpc.v1.ServerRpcService.DeleteRoom:output_type -> pb.serverrpc.v1.DeleteRoomResponse
-	18, // 23: pb.serverrpc.v1.ServerRpcService.CreateAccount:output_type -> pb.serverrpc.v1.CreateAccountResponse
-	20, // 24: pb.serverrpc.v1.ServerRpcService.DeleteAccount:output_type -> pb.serverrpc.v1.DeleteAccountResponse
-	22, // 25: pb.serverrpc.v1.ServerRpcService.UpdateAccountPassword:output_type -> pb.serverrpc.v1.UpdateAccountPasswordResponse
-	16, // [16:26] is the sub-list for method output_type
-	6,  // [6:16] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	25, // 0: pb.serverrpc.v1.GetServerInfoResponse.rpc:type_name -> pb.serverrpc.v1.GetServerInfoResponse.Rpc
+	0,  // 1: pb.serverrpc.v1.GetRoomsResponse.rooms:type_name -> pb.serverrpc.v1.RoomInfo
+	0,  // 2: pb.serverrpc.v1.GetRoomInfoResponse.room:type_name -> pb.serverrpc.v1.RoomInfo
+	1,  // 3: pb.serverrpc.v1.GetOnlineUsersResponse.users:type_name -> pb.serverrpc.v1.OnlineUserInfo
+	1,  // 4: pb.serverrpc.v1.GetOnlineUserInfoResponse.user:type_name -> pb.serverrpc.v1.OnlineUserInfo
+	2,  // 5: pb.serverrpc.v1.GetAccountsResponse.accounts:type_name -> pb.serverrpc.v1.AccountInfo
+	0,  // 6: pb.serverrpc.v1.CreateRoomResponse.room:type_name -> pb.serverrpc.v1.RoomInfo
+	3,  // 7: pb.serverrpc.v1.ServerRpcService.GetServerInfo:input_type -> pb.serverrpc.v1.GetServerInfoRequest
+	5,  // 8: pb.serverrpc.v1.ServerRpcService.GetRooms:input_type -> pb.serverrpc.v1.GetRoomsRequest
+	7,  // 9: pb.serverrpc.v1.ServerRpcService.GetRoomInfo:input_type -> pb.serverrpc.v1.GetRoomInfoRequest
+	9,  // 10: pb.serverrpc.v1.ServerRpcService.GetOnlineUsers:input_type -> pb.serverrpc.v1.GetOnlineUsersRequest
+	11, // 11: pb.serverrpc.v1.ServerRpcService.GetOnlineUserInfo:input_type -> pb.serverrpc.v1.GetOnlineUserInfoRequest
+	13, // 12: pb.serverrpc.v1.ServerRpcService.GetAccounts:input_type -> pb.serverrpc.v1.GetAccountsRequest
+	15, // 13: pb.serverrpc.v1.ServerRpcService.CreateRoom:input_type -> pb.serverrpc.v1.CreateRoomRequest
+	17, // 14: pb.serverrpc.v1.ServerRpcService.DeleteRoom:input_type -> pb.serverrpc.v1.DeleteRoomRequest
+	19, // 15: pb.serverrpc.v1.ServerRpcService.CreateAccount:input_type -> pb.serverrpc.v1.CreateAccountRequest
+	21, // 16: pb.serverrpc.v1.ServerRpcService.DeleteAccount:input_type -> pb.serverrpc.v1.DeleteAccountRequest
+	23, // 17: pb.serverrpc.v1.ServerRpcService.UpdateAccountPassword:input_type -> pb.serverrpc.v1.UpdateAccountPasswordRequest
+	4,  // 18: pb.serverrpc.v1.ServerRpcService.GetServerInfo:output_type -> pb.serverrpc.v1.GetServerInfoResponse
+	6,  // 19: pb.serverrpc.v1.ServerRpcService.GetRooms:output_type -> pb.serverrpc.v1.GetRoomsResponse
+	8,  // 20: pb.serverrpc.v1.ServerRpcService.GetRoomInfo:output_type -> pb.serverrpc.v1.GetRoomInfoResponse
+	10, // 21: pb.serverrpc.v1.ServerRpcService.GetOnlineUsers:output_type -> pb.serverrpc.v1.GetOnlineUsersResponse
+	12, // 22: pb.serverrpc.v1.ServerRpcService.GetOnlineUserInfo:output_type -> pb.serverrpc.v1.GetOnlineUserInfoResponse
+	14, // 23: pb.serverrpc.v1.ServerRpcService.GetAccounts:output_type -> pb.serverrpc.v1.GetAccountsResponse
+	16, // 24: pb.serverrpc.v1.ServerRpcService.CreateRoom:output_type -> pb.serverrpc.v1.CreateRoomResponse
+	18, // 25: pb.serverrpc.v1.ServerRpcService.DeleteRoom:output_type -> pb.serverrpc.v1.DeleteRoomResponse
+	20, // 26: pb.serverrpc.v1.ServerRpcService.CreateAccount:output_type -> pb.serverrpc.v1.CreateAccountResponse
+	22, // 27: pb.serverrpc.v1.ServerRpcService.DeleteAccount:output_type -> pb.serverrpc.v1.DeleteAccountResponse
+	24, // 28: pb.serverrpc.v1.ServerRpcService.UpdateAccountPassword:output_type -> pb.serverrpc.v1.UpdateAccountPasswordResponse
+	18, // [18:29] is the sub-list for method output_type
+	7,  // [7:18] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_pb_serverrpc_v1_rpc_proto_init() }
@@ -1243,15 +1402,15 @@ func file_pb_serverrpc_v1_rpc_proto_init() {
 	if File_pb_serverrpc_v1_rpc_proto != nil {
 		return
 	}
-	file_pb_serverrpc_v1_rpc_proto_msgTypes[18].OneofWrappers = []any{}
-	file_pb_serverrpc_v1_rpc_proto_msgTypes[22].OneofWrappers = []any{}
+	file_pb_serverrpc_v1_rpc_proto_msgTypes[20].OneofWrappers = []any{}
+	file_pb_serverrpc_v1_rpc_proto_msgTypes[24].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pb_serverrpc_v1_rpc_proto_rawDesc), len(file_pb_serverrpc_v1_rpc_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   23,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

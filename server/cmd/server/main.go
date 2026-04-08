@@ -1,3 +1,6 @@
+// TODO Log a big warning if any RPC interfaces have wildcard permissions and listen on a non-loopback and non-UNIX
+// address without a bearer token requirement.
+
 package main
 
 import (

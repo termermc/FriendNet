@@ -1,0 +1,95 @@
+.center {
+	text-align: center;
+}
+.w100 {
+	width: 100%;
+}
+.h100 {
+	height: 100%;
+}
+.displayInlineBlock {
+	display: inline-block;
+}
+.opacity05 {
+	opacity: 0.5;
+}
+
+.help {
+	cursor: help;
+}
+
+.errorMessage {
+	font-weight: bold;
+	background-color: rgba(255, 0, 0, 0.15);
+	color: white;
+	border: 0.5rem solid red;
+	padding: 1rem;
+}
+.successMessage {
+	font-weight: bold;
+	background-color: rgba(0, 255, 0, 0.15);
+	color: white;
+	border: 0.5rem solid green;
+}
+
+.sidebarContainer {
+	display: flex;
+	flex-direction: column;
+
+	width: 100%;
+}
+.sidebarContainer summary {
+	width: calc(100% - 0.5rem);
+	height: 1.3rem;
+	overflow: hidden;
+	background-color: rgba(0, 0, 0, 0.35);
+	font-weight: bold;
+	margin-bottom: 0.25rem;
+	padding: 0.25rem;
+	cursor: pointer;
+}
+.sidebarContainer summary .action {
+	float: right;
+	text-decoration: none;
+	background: none;
+	border: none;
+	cursor: pointer;
+}
+.sidebarContainer summary span {
+	display: inline-block;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	max-width: calc(100% - 4rem);
+	max-height: 1.3rem;
+	word-break: break-all;
+	white-space: nowrap;
+}
+
+.form {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+.form input[type='text'],
+.form input[type='password'] {
+	width: 100%;
+}
+.form table {
+	width: 30rem;
+	margin-bottom: 1rem;
+	border-collapse: collapse;
+}
+.form table tr {
+	border: 0.3rem solid rgba(0, 0, 0, 0.25);
+}
+.form table td {
+	padding: 0.5rem;
+}
+.form table td:nth-child(1) {
+	font-weight: bold;
+	text-align: left;
+}
+.form table td:nth-child(2) {
+	text-align: right;
+}
