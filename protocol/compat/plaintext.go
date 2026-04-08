@@ -1,3 +1,7 @@
+// TODO Implement a way to send along StreamError with error codes.
+// This is required for running the server proxy, since it needs an out-of-band method for telling clients that a peer
+// is unreachable.
+
 package compat
 
 import (
@@ -107,6 +111,9 @@ func NewConnManager(
 
 	go func() {
 		for !m.isClosed {
+			m.logger.Debug("waiting for connection",
+				"service", "compat.ConnManager",
+			)
 			rawConn, err := m.accept()
 			if err != nil {
 				if errors.Is(err, net.ErrClosed) {
@@ -115,7 +122,7 @@ func NewConnManager(
 				}
 
 				m.logger.Error("failed to accept connection",
-					"service", "tcpstyle.ConnManager",
+					"service", "compat.ConnManager",
 					"err", err,
 				)
 				continue
