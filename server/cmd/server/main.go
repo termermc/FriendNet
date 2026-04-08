@@ -57,7 +57,7 @@ func main() {
 				continue
 			}
 
-			logger.Warn("RPC interface has wildcard permissions but does not require a bearer token! THIS IS DANGEROUS!",
+			logger.Warn("DANGER! RPC interface has wildcard permissions but does not require a bearer token!",
 				"address", iface.Address,
 			)
 		}
