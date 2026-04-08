@@ -24,7 +24,6 @@ import (
 
 	"connectrpc.com/connect"
 	"friendnet.org/client"
-	"friendnet.org/client/appinfo"
 	"friendnet.org/client/cert"
 	"friendnet.org/client/clog"
 	"friendnet.org/client/direct"
@@ -34,11 +33,11 @@ import (
 	"friendnet.org/client/storage"
 	"friendnet.org/common"
 	"friendnet.org/common/machine"
-	"friendnet.org/common/updater"
 	"friendnet.org/common/webserver"
 	"friendnet.org/mkcert"
 	v1 "friendnet.org/protocol/pb/clientrpc/v1"
 	"friendnet.org/protocol/pb/clientrpc/v1/clientrpcv1connect"
+	"friendnet.org/updater"
 	"friendnet.org/webui"
 	"github.com/pkg/browser"
 	"golang.org/x/net/webdav"
@@ -354,10 +353,10 @@ func main() {
 
 	updateChecker := updater.NewUpdateChecker(
 		logger,
-		appinfo.UpdateCheckerBaseUrl,
-		appinfo.CurrentUpdate,
-		appinfo.Ed25519Pubkey,
-		appinfo.UpdateCheckerInterval,
+		updater.UpdateCheckerBaseUrl,
+		updater.CurrentUpdate,
+		updater.Ed25519Pubkey,
+		updater.UpdateCheckerInterval,
 	)
 	go func() {
 		for {

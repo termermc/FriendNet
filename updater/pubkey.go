@@ -1,4 +1,4 @@
-package appinfo
+package updater
 
 import "crypto/ed25519"
 
