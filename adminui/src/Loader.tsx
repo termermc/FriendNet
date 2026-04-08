@@ -1,5 +1,3 @@
-// TODO Test if the RPC is accessible without a token and refuse to use it if it has no token requirement.
-
 import { Component, ErrorBoundary, Show, Suspense } from 'solid-js'
 import { bearerTokenKey, RpcClientCtx, rpcUrlKey } from './ctx'
 import App from './App'
