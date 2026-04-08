@@ -1,6 +1,3 @@
-// TODO Log a big warning if any RPC interfaces have wildcard permissions and listen on a non-loopback and non-UNIX
-// address without a bearer token requirement.
-
 package main
 
 import (
@@ -12,8 +9,10 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"os/signal"
+	"slices"
 	"sync"
 	"syscall"
 	"time"
@@ -47,6 +46,21 @@ func main() {
 	if err != nil {
 		logger.Error("failed to load config", "err", err)
 		os.Exit(1)
+	}
+
+	// Check for insecure RPC interfaces that have wildcard permissions.
+	for _, iface := range cfg.Rpc.Interfaces {
+		if iface.BearerToken == "" && slices.Contains(iface.AllowedMethods, "*") {
+			addr, _ := url.Parse(iface.Address)
+			if addr.Scheme == "unix" {
+				// UNIX sockets are exempt from warning.
+				continue
+			}
+
+			logger.Warn("RPC interface has wildcard permissions but does not require a bearer token! THIS IS DANGEROUS!",
+				"address", iface.Address,
+			)
+		}
 	}
 
 	keyPair, err := cert.ReadOrCreatePem(cfg.PemPath, cert.ServerCommonName)
