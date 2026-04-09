@@ -17,6 +17,9 @@ Some useful commands to set up a new server:
 
 The usage for each command is documented in the CLI.
 
+Be aware that the server CLI is only enabled when running the server in a terminal.
+It will not be enabled if you are running it in a systemd service, in Docker, etc.
+
 ## RPC Client
 
 To manage the server remotely or without having to touch its CLI, you can use the RPC client. It works the same way as
