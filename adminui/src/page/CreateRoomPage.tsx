@@ -21,10 +21,15 @@ export const CreateRoomPage: Component = () => {
 		}
 
 		try {
+			const nameProc = name().trim()
+			if (!nameProc) {
+				return
+			}
+
 			setCreating(true)
 
 			const { room } = await client.createRoom({
-				name: name(),
+				name: nameProc,
 			})
 
 			addRoom(room!)
