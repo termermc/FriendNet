@@ -23,7 +23,7 @@ export const Layout: Component<LayoutProps> = (props) => {
 					<A href="/createroom" class={styles.option}>
 						🚪 Create Room
 					</A>{' '}
-					<Show when={serverInfo.rpc!.allowedMethods.includes('*')}>
+					<Show when={!serverInfo.rpc!.allowedMethods.includes('*')}>
 						<span
 							title="Click for information"
 							onClick={() =>
