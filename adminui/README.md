@@ -1,7 +1,7 @@
-# FriendNet Web UI
+# FriendNet Admin UI
 
-This is the web UI for FriendNet clients.
+This is the admin UI for FriendNet servers.
 
-It is a client-side rendered Solid.js app that uses gRPC-Web to communicate with the FriendNet client.
+It is a client-side rendered Solid.js app that uses gRPC-Web to communicate with a FriendNet RPC interface.
 
-It is packaged into the client itself using the `go:embed` directive in [webui.go](webui.go).
+It is packaged into the server itself using the `go:embed` directive in [adminui.go](adminui.go).
