@@ -1,5 +1,5 @@
 import { Component, ErrorBoundary, Show, Suspense } from 'solid-js'
-import { bearerTokenKey, RpcClientCtx, rpcUrlKey } from './ctx'
+import { bearerTokenKey, RpcClientCtx, rpcUrlKey, ServerInfoCtx } from './ctx'
 import App from './App'
 import {
 	Code,
@@ -207,9 +207,11 @@ export const Loader: Component = () => {
 				}}
 			>
 				<Show when={everything()}>
-					<RpcClientCtx.Provider value={client}>
-						<App />
-					</RpcClientCtx.Provider>
+					<ServerInfoCtx.Provider value={everything()!.serverInfo}>
+						<RpcClientCtx.Provider value={client}>
+							<App />
+						</RpcClientCtx.Provider>
+					</ServerInfoCtx.Provider>
 				</Show>
 			</ErrorBoundary>
 		</Suspense>
