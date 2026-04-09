@@ -138,14 +138,13 @@ func main() {
 	webServer := webserver.NewWebServer(logger, webserver.WithHttpsSupport(rpcCert))
 
 	// Create RPC servers.
-	rpcServer := server.NewRpcServer(srv)
 	rpcs := make([]*common.RpcServer[*server.RpcServer], 0, len(cfg.Rpc.Interfaces))
 	for _, iface := range cfg.Rpc.Interfaces {
 		rpcSrv, err := common.NewRpcServer(
 			logger,
 			webServer,
 			iface,
-			rpcServer,
+			server.NewRpcServer(srv, iface),
 			func(impl *server.RpcServer, options ...connect.HandlerOption) (string, http.Handler) {
 				return serverrpcv1connect.NewServerRpcServiceHandler(impl, options...)
 			},
@@ -184,7 +183,14 @@ func main() {
 			expectAuthz := fmt.Sprintf("Bearer %s", localRpcToken)
 
 			mux := http.NewServeMux()
-			path, hdlr := serverrpcv1connect.NewServerRpcServiceHandler(rpcServer)
+			path, hdlr := serverrpcv1connect.NewServerRpcServiceHandler(
+				server.NewRpcServer(
+					srv,
+					common.RpcServerConfig{
+						AllowedMethods: []string{"*"},
+					},
+				),
+			)
 			mux.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
 				if r.Header.Get("Authorization") != expectAuthz {
 					w.WriteHeader(http.StatusUnauthorized)
@@ -217,7 +223,6 @@ func main() {
 		if updateChecker != nil {
 			_ = updateChecker.Close()
 		}
-		_ = rpcServer.Close()
 		_ = webServer.Close()
 
 		var wg sync.WaitGroup

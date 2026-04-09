@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"slices"
 	"strings"
 
 	"connectrpc.com/connect"
@@ -74,6 +75,13 @@ func NewCli(client serverrpcv1connect.ServerRpcServiceClient, opts ...Opt) *Cli 
 			Usage: "exit",
 			Handler: func(ctx context.Context, cli *Cli, args []string) error {
 				return cli.cmdExit(ctx, args)
+			},
+		},
+		{
+			Name:  "getserverinfo",
+			Usage: "getserverinfo",
+			Handler: func(ctx context.Context, cli *Cli, args []string) error {
+				return cli.cmdGetServerInfo(ctx, args)
 			},
 		},
 		{
@@ -213,6 +221,27 @@ func (c *Cli) cmdHelp(_ context.Context, args []string) error {
 
 func (c *Cli) cmdExit(_ context.Context, _ []string) error {
 	return errStop
+}
+
+func (c *Cli) cmdGetServerInfo(ctx context.Context, _ []string) error {
+	resp, err := c.client.GetServerInfo(ctx, &v1.GetServerInfoRequest{})
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Server version: %s\n", resp.GetVersion())
+	fmt.Printf("RPC requires bearer token authentication: %t\n", resp.GetRpc().GetRequiresBearerToken())
+	allowedMethods := resp.GetRpc().GetAllowedMethods()
+	if slices.Contains(allowedMethods, "*") {
+		fmt.Printf("Allowed methods for this RPC interface: all\n")
+	} else {
+		fmt.Printf("Allowed methods for this RPC interface:\n")
+		for _, method := range resp.GetRpc().GetAllowedMethods() {
+			fmt.Printf("  %s\n", method)
+		}
+	}
+
+	return nil
 }
 
 func (c *Cli) cmdGetRooms(ctx context.Context, args []string) error {
