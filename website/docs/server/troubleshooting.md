@@ -38,7 +38,7 @@ the client will be able to connect to the server again.
 
 Every client that previously connected to the server will need to perform these steps to be able to connect again.
 
-### You're running the server in Docker without host networking
+### 5. You're running the server in Docker without host networking
 
 Docker can have issues with UDP forwarding which prevents the server from sending or receiving UDP traffic.
 You should run the server with the host network driver. See the [Docker setup guide](./setup/docker.md) for more
