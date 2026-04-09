@@ -59,7 +59,7 @@ export const CreateRoomPage: Component = () => {
 
 			<Show when={error()}>
 				<div class={stylesCommon.errorMessage}>{error()}</div>
-				<br/>
+				<br />
 			</Show>
 
 			<form class={stylesCommon.form} onSubmit={submit}>

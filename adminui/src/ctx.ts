@@ -47,6 +47,8 @@ export function useRefreshRooms(): () => Promise<void> {
 
 	return async () => {
 		const rooms = (await client.getRooms({})).rooms
+		rooms.sort((a, b) => a.name.localeCompare(b.name))
+
 		setRooms(rooms)
 	}
 }
@@ -59,5 +61,16 @@ export function useAddRoom(): (room: RoomInfo) => void {
 
 	return (room: RoomInfo) => {
 		setRooms((rooms) => [...rooms, room])
+	}
+}
+
+/**
+ * Returns a function that removes a room from the list of loaded rooms.
+ */
+export function useRemoveRoom(): (room: RoomInfo) => void {
+	const [rooms, setRooms] = useContext(RoomsCtx)!
+
+	return (room: RoomInfo) => {
+		setRooms(rooms().filter((r) => r.name !== room.name))
 	}
 }

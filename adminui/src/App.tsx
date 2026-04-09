@@ -4,6 +4,7 @@ import { Layout } from './layout/Layout'
 import { DashboardPage } from './page/DashboardPage'
 import { NotFoundPage } from './page/NotFoundPage'
 import { CreateRoomPage } from './page/CreateRoomPage'
+import { RoomPage } from './page/RoomPage'
 
 const App: Component = () => {
 	const routes: RouteDefinition[] = [
@@ -14,6 +15,10 @@ const App: Component = () => {
 		{
 			path: '/createroom',
 			component: CreateRoomPage,
+		},
+		{
+			path: '/room/:name',
+			component: RoomPage,
 		},
 
 		{
