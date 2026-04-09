@@ -3,7 +3,7 @@
 If your server is not yet running, start it.
 
 The server can be managed in the following ways:
- - Using built-in CLI while it is running
+ - Using the built-in CLI while it is running
  - The separate RPC client remotely
  - The admin UI
 
