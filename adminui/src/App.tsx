@@ -3,12 +3,17 @@ import { RouteDefinition, Router } from '@solidjs/router'
 import { Layout } from './layout/Layout'
 import { DashboardPage } from './page/DashboardPage'
 import { NotFoundPage } from './page/NotFoundPage'
+import { CreateRoomPage } from './page/CreateRoomPage'
 
 const App: Component = () => {
 	const routes: RouteDefinition[] = [
 		{
 			path: '/',
 			component: DashboardPage,
+		},
+		{
+			path: '/createroom',
+			component: CreateRoomPage,
 		},
 
 		{

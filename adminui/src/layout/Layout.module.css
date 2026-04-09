@@ -46,10 +46,10 @@
 }
 
 .missingPermissions {
-    color: red;
-    background-color: rgba(255, 0, 0, 0.25);
-    font-weight: bold;
-    cursor: pointer;
+	color: red;
+	background-color: rgba(255, 0, 0, 0.25);
+	font-weight: bold;
+	cursor: pointer;
 }
 
 .sidebar {

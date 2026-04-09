@@ -1,5 +1,5 @@
-import { createContext, useContext } from 'solid-js'
-import { GetServerInfoResponse } from '../pb/serverrpc/v1/rpc_pb'
+import { Accessor, createContext, createSignal, useContext } from 'solid-js'
+import { GetServerInfoResponse, RoomInfo } from '../pb/serverrpc/v1/rpc_pb'
 import { RpcClient } from './protobuf'
 
 /**
@@ -14,6 +14,7 @@ export const rpcUrlKey = 'friendnet.rpc'
 
 export const ServerInfoCtx = createContext<GetServerInfoResponse>()
 export const RpcClientCtx = createContext<RpcClient>()
+export const RoomsCtx = createContext(createSignal<RoomInfo[]>([]))
 
 /**
  * Returns information about the server.
@@ -27,4 +28,36 @@ export function useServerInfo(): GetServerInfoResponse {
  */
 export function useRpcClient(): RpcClient {
 	return useContext(RpcClientCtx)!
+}
+
+/**
+ * Returns a signal containing all loaded rooms.
+ */
+export function useRooms(): Accessor<RoomInfo[]> {
+	const [getRooms] = useContext(RoomsCtx)!
+	return getRooms
+}
+
+/**
+ * Returns a function that refreshes the loaded rooms.
+ */
+export function useRefreshRooms(): () => Promise<void> {
+	const client = useRpcClient()
+	const [, setRooms] = useContext(RoomsCtx)!
+
+	return async () => {
+		const rooms = (await client.getRooms({})).rooms
+		setRooms(rooms)
+	}
+}
+
+/**
+ * Returns a function that adds a room to the list of loaded rooms.
+ */
+export function useAddRoom(): (room: RoomInfo) => void {
+	const [, setRooms] = useContext(RoomsCtx)!
+
+	return (room: RoomInfo) => {
+		setRooms((rooms) => [...rooms, room])
+	}
 }

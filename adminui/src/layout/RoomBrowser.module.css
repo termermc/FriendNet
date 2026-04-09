@@ -1,0 +1,18 @@
+.container {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.room {
+	text-decoration: none;
+	display: flex;
+	flex-direction: column;
+
+	background-color: rgba(0, 0, 0, 0.25);
+
+	padding: 0.5rem;
+	margin-left: 0.5rem;
+	margin-right: 0.5rem;
+	margin-top: 0.5rem;
+}

@@ -5,6 +5,7 @@ import styles from './Layout.module.css'
 import { AppName } from '../constant'
 import { A } from '@solidjs/router'
 import { useServerInfo } from '../ctx'
+import { RoomBrowser } from './RoomBrowser'
 
 type LayoutProps = {
 	children: JSX.Element
@@ -19,17 +20,17 @@ export const Layout: Component<LayoutProps> = (props) => {
 				<span class={styles.headerTitle}>{AppName}</span>
 
 				<div class={styles.options}>
-					<A href="/todo" class={styles.option}>
-						⏳ TODO
+					<A href="/createroom" class={styles.option}>
+						🚪 Create Room
 					</A>{' '}
-					<A href="/todo" class={styles.option}>
-						🔧 TODO
-					</A>{' '}
-
 					<Show when={serverInfo.rpc!.allowedMethods.includes('*')}>
 						<span
 							title="Click for information"
-							onClick={() => alert('The server RPC interface being used does not have wildcard permissions. Some functionality may not work.')}
+							onClick={() =>
+								alert(
+									'The server RPC interface being used does not have wildcard permissions. Some functionality may not work.',
+								)
+							}
 							classList={{
 								[styles.option]: true,
 								[styles.missingPermissions]: true,
@@ -42,7 +43,9 @@ export const Layout: Component<LayoutProps> = (props) => {
 			</header>
 
 			<main>
-				<div class={styles.sidebar}>TODO Rooms browser</div>
+				<div class={styles.sidebar}>
+					<RoomBrowser />
+				</div>
 
 				<div class={styles.content}>
 					<ErrorBoundary
