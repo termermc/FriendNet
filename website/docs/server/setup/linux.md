@@ -6,7 +6,8 @@ The FriendNet server can run on any Linux distro running a kernel released in th
 
 Before doing anything, you need to allow FriendNet through your firewall.
 The default FriendNet server port is `20038`, and we will be using it for the rest of this
-guide. If you used something else, replace `20038` with whatever you are using.
+guide. If you used something else, replace `20038` with whatever you are using. **Remember to allow UDP traffic through
+the port, not TCP.**
 
 <details>
 <summary>Open Port with UFW (Debian, Ubuntu)</summary>

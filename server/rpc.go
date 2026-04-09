@@ -8,10 +8,12 @@ import (
 
 	"connectrpc.com/connect"
 	"friendnet.org/common"
+	"friendnet.org/common/password"
 	v1 "friendnet.org/protocol/pb/serverrpc/v1"
 	"friendnet.org/protocol/pb/serverrpc/v1/serverrpcv1connect"
 	"friendnet.org/server/room"
 	"friendnet.org/server/storage"
+	"friendnet.org/updater"
 )
 
 var errRoomNotFound = connect.NewError(connect.CodeNotFound, errors.New("room not found"))
@@ -23,11 +25,15 @@ var errInvalidRoomName = connect.NewError(connect.CodeInvalidArgument, errors.Ne
 var errInvalidUsername = connect.NewError(connect.CodeInvalidArgument, errors.New("invalid username"))
 
 type RpcServer struct {
-	s *Server
+	s     *Server
+	iface common.RpcServerConfig
 }
 
-func NewRpcServer(s *Server) *RpcServer {
-	return &RpcServer{s: s}
+func NewRpcServer(s *Server, iface common.RpcServerConfig) *RpcServer {
+	return &RpcServer{
+		s:     s,
+		iface: iface,
+	}
 }
 
 func (s *RpcServer) Close() error {
@@ -232,10 +238,18 @@ func (s *RpcServer) CreateAccount(ctx context.Context, req *v1.CreateAccountRequ
 		if errors.Is(err, room.ErrAccountExists) {
 			return nil, errAccountExists
 		}
+		if _, ok := errors.AsType[password.Error](err); ok {
+			return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		}
+
 		return nil, err
 	}
 
-	res := &v1.CreateAccountResponse{}
+	res := &v1.CreateAccountResponse{
+		Account: &v1.AccountInfo{
+			Username: username.String(),
+		},
+	}
 	if wasGen {
 		res.GeneratedPassword = &pass
 	}
@@ -294,5 +308,15 @@ func (s *RpcServer) UpdateAccountPassword(ctx context.Context, req *v1.UpdateAcc
 
 	return &v1.UpdateAccountPasswordResponse{
 		GeneratedPassword: passOrNil,
+	}, nil
+}
+
+func (s *RpcServer) GetServerInfo(_ context.Context, _ *v1.GetServerInfoRequest) (*v1.GetServerInfoResponse, error) {
+	return &v1.GetServerInfoResponse{
+		Version: updater.CurrentUpdate.Version,
+		Rpc: &v1.GetServerInfoResponse_Rpc{
+			AllowedMethods:      s.iface.AllowedMethods,
+			RequiresBearerToken: s.iface.BearerToken != "",
+		},
 	}, nil
 }

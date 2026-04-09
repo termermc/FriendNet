@@ -1,0 +1,23 @@
+{
+	"compilerOptions": {
+		// General
+		"jsx": "preserve",
+		"jsxImportSource": "solid-js",
+		"target": "ESNext",
+
+		// Modules
+		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
+		"isolatedModules": true,
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"noEmit": true,
+
+		"noUnusedLocals": true,
+		"noUncheckedSideEffectImports": true,
+		"noUnusedParameters": true,
+		"strict": true,
+		"types": ["vite/client"]
+	},
+	"include": ["src/**/*"]
+}

@@ -59,6 +59,10 @@ type RpcServerConfig struct {
 	// If true, sets necessary CORS headers to allow cross-origin requests.
 	// You do not need this unless the RPC interface is accessed by web browsers.
 	CorsAllowAllOrigins bool `json:"cors_allow_all_origins"`
+
+	// If true, the admin UI will be served on the interface.
+	// Only works in the server module, ignored everywhere else.
+	EnableAdminUi bool `json:"enable_admin_ui"`
 }
 
 // RpcHandlerConstructor is a constructor for creating an RPC handler.

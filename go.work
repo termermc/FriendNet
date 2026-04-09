@@ -1,4 +1,4 @@
-go 1.26.1
+go 1.26.0
 
 use (
 	./client
@@ -8,6 +8,7 @@ use (
 	./protocol
 	./rpcclient
 	./server
+	./updater
 	./upnp
 	./webui
 )

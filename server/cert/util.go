@@ -24,7 +24,10 @@ func ReadFullChainPem(path string) (tls.Certificate, error) {
 }
 
 // ReadOrCreatePem reads a PEM file from the specified path, or generates a new one at that path if it does not exist.
-func ReadOrCreatePem(path string, commonName string) (tls.Certificate, error) {
+//
+// If makeBrowserCompatible is true, it uses an algorithm that is broadly
+// compatible with browsers (ECDSA P-256). If false, it uses Ed25519.
+func ReadOrCreatePem(path string, commonName string, makeBrowserCompatible bool) (tls.Certificate, error) {
 	cert, err := ReadFullChainPem(path)
 	if err == nil {
 		return cert, nil
@@ -33,7 +36,7 @@ func ReadOrCreatePem(path string, commonName string) (tls.Certificate, error) {
 		return tls.Certificate{}, fmt.Errorf("failed to read PEM file at %q: %w", path, err)
 	}
 
-	raw, err := common.GenSelfSignedPem(commonName)
+	raw, err := common.GenSelfSignedPem(commonName, makeBrowserCompatible)
 	if err != nil {
 		return tls.Certificate{}, fmt.Errorf("failed to generate self-signed certificate: %w", err)
 	}

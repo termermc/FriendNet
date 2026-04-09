@@ -15,13 +15,11 @@ async function isFile(path: string): Promise<boolean> {
 	}
 }
 
-const goTempl = `package appinfo
+const goTempl = `package updater
 
-import "friendnet.org/common/updater"
-
-// CurrentUpdate is the current update the client is running.
+// CurrentUpdate is the current update the program is running.
 // If the current update fetched from an online source has a timestamp before this one, it must be ignored.
-var CurrentUpdate = updater.UpdateInfo{
+var CurrentUpdate = UpdateInfo{
 	CreatedTs:   __CREATED_TS__,
 	Version:     __VERSION__,
 	Description: __DESC__,
@@ -32,14 +30,7 @@ var CurrentUpdate = updater.UpdateInfo{
 const updaterDir = join(import.meta.dirname, '..', 'updater', 'client')
 const destUpdateFile = join(updaterDir, 'latest.json')
 const destUpdateSigFile = destUpdateFile + '.sig'
-const destGoFile = join(
-	import.meta.dirname,
-	'..',
-	'..',
-	'client',
-	'appinfo',
-	'update.go',
-)
+const destGoFile = join(import.meta.dirname, '..', '..', 'updater', 'update.go')
 
 // First, check for the update file.
 const tmpUpdateFilePath = '/tmp/update.json'

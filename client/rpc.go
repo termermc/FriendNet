@@ -19,11 +19,11 @@ import (
 	"friendnet.org/client/share"
 	"friendnet.org/client/storage"
 	"friendnet.org/common"
-	"friendnet.org/common/updater"
 	"friendnet.org/protocol"
 	v1 "friendnet.org/protocol/pb/clientrpc/v1"
 	"friendnet.org/protocol/pb/clientrpc/v1/clientrpcv1connect"
 	pb "friendnet.org/protocol/pb/v1"
+	"friendnet.org/updater"
 )
 
 var errServerNotFound = connect.NewError(connect.CodeNotFound, errors.New("server not found"))

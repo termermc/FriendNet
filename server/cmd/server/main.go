@@ -9,13 +9,16 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"os/signal"
+	"slices"
 	"sync"
 	"syscall"
 	"time"
 
 	"connectrpc.com/connect"
+	"friendnet.org/adminui"
 	"friendnet.org/common"
 	"friendnet.org/common/machine"
 	"friendnet.org/common/password"
@@ -27,6 +30,8 @@ import (
 	"friendnet.org/server/cert"
 	"friendnet.org/server/config"
 	"friendnet.org/server/storage"
+	"friendnet.org/updater"
+	"golang.org/x/term"
 )
 
 func main() {
@@ -46,15 +51,50 @@ func main() {
 		os.Exit(1)
 	}
 
-	keyPair, err := cert.ReadOrCreatePem(cfg.PemPath, cert.ServerCommonName)
+	// Check for insecure RPC interfaces that have wildcard permissions.
+	for _, iface := range cfg.Rpc.Interfaces {
+		if iface.BearerToken == "" {
+			if iface.EnableAdminUi {
+				logger.Error("RPC interface has admin UI enabled but does not require a bearer token",
+					"address", iface.Address,
+				)
+				os.Exit(1)
+			}
+
+			if slices.Contains(iface.AllowedMethods, "*") {
+				addr, _ := url.Parse(iface.Address)
+				if addr.Scheme == "unix" {
+					// UNIX sockets are exempt from warning.
+					continue
+				}
+
+				logger.Warn("DANGER! RPC interface has wildcard permissions but does not require a bearer token!",
+					"address", iface.Address,
+				)
+			}
+		}
+	}
+
+	serverCert, err := cert.ReadOrCreatePem(cfg.PemPath, cert.ServerCommonName, false)
 	if err != nil {
-		logger.Error("failed to load PEM", "err", err)
+		logger.Error("failed to load server PEM certificate", "err", err)
+		os.Exit(1)
+	}
+	if cfg.Rpc.HttpsPemPath == "" {
+		logger.Warn("missing rpc.https_pem_path in config, using default value; you should add it to your config!",
+			"default", config.DefaultRpcPemPath,
+		)
+		cfg.Rpc.HttpsPemPath = config.DefaultRpcPemPath
+	}
+	rpcCert, err := cert.ReadOrCreatePem(cfg.Rpc.HttpsPemPath, "localhost", true)
+	if err != nil {
+		logger.Error("failed to load RPC PEM certificate", "err", err)
 		os.Exit(1)
 	}
 
 	tlsCfg := &tls.Config{
 		MinVersion:   tls.VersionTLS13,
-		Certificates: []tls.Certificate{keyPair},
+		Certificates: []tls.Certificate{serverCert},
 		NextProtos:   []string{protocol.AlpnProtoName},
 	}
 
@@ -106,31 +146,16 @@ func main() {
 		<-timeoutCtx.Done()
 	}()
 
-	// Create web server use for serving RPC interfaces.
-	var rpcCert tls.Certificate
-	if cfg.Rpc.HttpsFullChainCertPath != "" {
-		rpcCert, err = cert.ReadFullChainPem(cfg.Rpc.HttpsFullChainCertPath)
-		if err != nil {
-			logger.Error("failed to read HTTPS certificate for RPC interfaces",
-				"path", cfg.Rpc.HttpsFullChainCertPath,
-				"err", err,
-			)
-			os.Exit(1)
-		}
-	} else {
-		rpcCert = keyPair
-	}
 	webServer := webserver.NewWebServer(logger, webserver.WithHttpsSupport(rpcCert))
 
 	// Create RPC servers.
-	rpcServer := server.NewRpcServer(srv)
 	rpcs := make([]*common.RpcServer[*server.RpcServer], 0, len(cfg.Rpc.Interfaces))
 	for _, iface := range cfg.Rpc.Interfaces {
 		rpcSrv, err := common.NewRpcServer(
 			logger,
 			webServer,
 			iface,
-			rpcServer,
+			server.NewRpcServer(srv, iface),
 			func(impl *server.RpcServer, options ...connect.HandlerOption) (string, http.Handler) {
 				return serverrpcv1connect.NewServerRpcServiceHandler(impl, options...)
 			},
@@ -143,6 +168,17 @@ func main() {
 			)
 			os.Exit(1)
 		}
+
+		if iface.EnableAdminUi {
+			err = webServer.Mount(iface.Address, "/", adminui.Handler{})
+			if err != nil {
+				logger.Error("failed to mount admin UI",
+					"address", iface.Address,
+					"err", err,
+				)
+			}
+		}
+
 		rpcs = append(rpcs, rpcSrv)
 	}
 
@@ -150,13 +186,33 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	if !noCli {
+	var updateChecker *updater.UpdateChecker
+	if !cfg.DisableUpdateChecker {
+		// We do not need to listen to the update channel because the updater already logs everything we need.
+		// Instantiating a new instance and keeping it alive is enough.
+		updateChecker = updater.NewUpdateChecker(
+			logger,
+			updater.UpdateCheckerBaseUrl,
+			updater.CurrentUpdate,
+			updater.Ed25519Pubkey,
+			updater.UpdateCheckerInterval,
+		)
+	}
+
+	if !noCli && term.IsTerminal(int(os.Stdin.Fd())) {
 		go func() {
 			localRpcToken := common.RandomB64UrlStr(32)
 			expectAuthz := fmt.Sprintf("Bearer %s", localRpcToken)
 
 			mux := http.NewServeMux()
-			path, hdlr := serverrpcv1connect.NewServerRpcServiceHandler(rpcServer)
+			path, hdlr := serverrpcv1connect.NewServerRpcServiceHandler(
+				server.NewRpcServer(
+					srv,
+					common.RpcServerConfig{
+						AllowedMethods: []string{"*"},
+					},
+				),
+			)
 			mux.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
 				if r.Header.Get("Authorization") != expectAuthz {
 					w.WriteHeader(http.StatusUnauthorized)
@@ -186,6 +242,9 @@ func main() {
 		<-ctx.Done()
 		logger.Info("closing server")
 
+		if updateChecker != nil {
+			_ = updateChecker.Close()
+		}
 		_ = webServer.Close()
 
 		var wg sync.WaitGroup
@@ -220,6 +279,14 @@ func main() {
 		logger.Info("RPC listening",
 			"addr", rpc.Addr,
 		)
+	}
+	for _, iface := range cfg.Rpc.Interfaces {
+		if iface.EnableAdminUi {
+			logger.Info("admin UI listening",
+				"url", iface.Address+"?token="+iface.BearerToken,
+				"token", iface.BearerToken,
+			)
+		}
 	}
 
 	go func() {

@@ -46,7 +46,7 @@ func ConfigFromSettings(ctx context.Context, store *storage.Storage) (*Config, e
 		return nil, err
 	}
 	if keypairPem, err = store.GetSettingOrPutFunc(ctx, SettingKeypairPem, func() (string, error) {
-		bytes, certErr := common.GenSelfSignedPem(CommonName)
+		bytes, certErr := common.GenSelfSignedPem(CommonName, false)
 		if certErr != nil {
 			return "", certErr
 		}

@@ -25,6 +25,26 @@ message AccountInfo {
     string username = 1;
 }
 
+message GetServerInfoRequest {
+
+}
+message GetServerInfoResponse {
+    message Rpc {
+        // A list of all allowed methods on the RPC interface.
+        // If all permissions are allowed, it will contain a single "*".
+        repeated string allowed_methods = 1;
+
+        // Whether the RPC interface requires a bearer token.
+        bool requires_bearer_token = 2;
+    }
+
+    // The server's version.
+    string version = 1;
+
+    // Information about the RPC interface being accessed.
+    Rpc rpc = 2;
+}
+
 message GetRoomsRequest {
 
 }
@@ -99,8 +119,11 @@ message CreateAccountRequest {
     string password = 3;
 }
 message CreateAccountResponse {
+    // The newly created account.
+    AccountInfo account = 1;
+
     // The generated password, if applicable.
-    optional string generated_password = 1;
+    optional string generated_password = 2;
 }
 
 message DeleteAccountRequest {
@@ -135,6 +158,10 @@ message UpdateAccountPasswordResponse {
 // If authorization is required but not provided, returns status code UNAUTHENTICATED.
 // If authorization is invalid, returns PERMISSION_DENIED status code.
 service ServerRpcService {
+    // GetServerInfo returns information about the server.
+    // It also returns information about the RPC interface used to call the method.
+    rpc GetServerInfo(GetServerInfoRequest) returns (GetServerInfoResponse) {}
+
     // GetRooms returns a list of all rooms in the server.
     rpc GetRooms(GetRoomsRequest) returns (GetRoomsResponse) {}
 
@@ -167,6 +194,7 @@ service ServerRpcService {
     // It can generate a password if none is given.
     // Returns status code NOT_FOUND if no such room exists.
     // Returns status code ALREADY_EXISTS if an account with the same username already exists in the room.
+    // Returns status code INVALID_ARGUMENT if the password does not meet minimum requirements.
     rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse) {}
 
     // DeleteAccount deletes an existing account in a room.

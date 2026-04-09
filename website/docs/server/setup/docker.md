@@ -7,6 +7,13 @@ This guide assumes you already have Docker installed and running.
 You should still read the [linux guide](linux.md) to get a better understanding of setting up the server on Linux.
 In particular, the sysctl changes that need to be made for better performance.
 
+> It is **highly recommended** to run the server with the
+> [host network driver](https://docs.docker.com/engine/network/drivers/host/).
+> This removes the need for the Docker network bridge and will improve performance.
+> Docker also sometimes has issues with UDP traffic when using the network bridge.
+>
+> If you are using the Docker Compose file provided with this guide, you do not need to do anything extra.
+
 ## Structure
 
 The Docker image expects the following structure:

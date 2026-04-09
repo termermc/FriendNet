@@ -19,9 +19,14 @@ The `server.pem` file is the TLS certificate used to encrypt traffic to and from
 This is a self-signed certificate generated automatically by the server.
 
 Clients use a Trust On First Use (TOFU) policy to verify the server's certificate, which means that they will trust the
-certificate when they first connect and associate it with the server's hostname/IP address. You need to be careful to
+certificate when they first connect and associate it with the server's hostname/IP address. **You need to be careful to
 keep the certificate safe, because if you remove or replace it, clients that previously connected to the server will
-be unable to connect.
+be unable to connect.** If you are familiar with [SSH](https://en.wikipedia.org/wiki/Secure_Shell), this TOFU system
+should be familiar, as it works very similarly to SSH's
+[known_hosts](https://stackoverflow.com/questions/33243393/what-is-actually-in-known-hosts) file.
+
+See the [troubleshooting guide](../troubleshooting.md) for how to make clients forget a server's old certificate if you
+accidentally remove or replace it.
 
 You do not need to use LetsEncrypt or any other certificate authority to generate a certificate.
 
@@ -33,8 +38,43 @@ important data for the server. If the file is removed or replaced, existing room
 The `server.json` file contains the server configuration that you can edit. It specifies the host+ports to listen on,
 the paths to the certificate and database files, and RPC settings.
 
+It will look something like this:
+
+```json
+{
+	"listen": ["0.0.0.0:20038", "[::]:20038"],
+	"db_path": "server.db",
+	"pem_path": "server.pem",
+	"disable_update_checker": false,
+	"rpc": {
+		"https_pem_path": "rpc.pem",
+		"interfaces": [
+			{
+				"address": "unix://friendnet-server.sock",
+				"allowed_methods": ["*"],
+				"cors_allow_all_origins": false
+			},
+			{
+				"address": "http://127.0.0.1:8080",
+				"allowed_methods": [
+					"GetRooms",
+					"GetRoomInfo",
+					"GetOnlineUsers",
+					"GetOnlineUserInfo"
+				],
+				"cors_allow_all_origins": true
+			}
+		]
+	}
+}
+```
+
 By default, the server will listen on all interfaces on port `20038`, for both IPv4 and IPv6. In most cases, you do not
 need to change this.
+
+Please note that if you are testing the server locally on your machine, you should connect to the address
+`127.0.0.1:20038` instead of `0.0.0.0:20038` because the latter is a wildcard address, not a real address that you can
+connect to directly. In the case of IPv6, you should use `[::1]:20038` instead of `[::]:20038` for the same reason.
 
 The `rpc` property specifies which interfaces to expose the RPC interface on, and which RPC methods are allowed on those
 interfaces.
@@ -49,9 +89,7 @@ To require an authorization token to access an endpoint, add a `bearer_token` pr
 ```json
 {
 	"address": "http://127.0.0.1:8080",
-	"allowed_methods": [
-		"*"
-	],
+	"allowed_methods": ["*"],
 	"bearer_token": "some-secure-random-token"
 }
 ```

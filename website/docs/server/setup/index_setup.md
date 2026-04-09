@@ -2,6 +2,11 @@
 
 Setting up a FriendNet server is pretty easy, provided you have very basic administration skills.
 
+> **🚨 IMPORTANT**
+>
+> Read all the instructions before reporting setup issues.
+> You can also find a list of common issues on the [Troubleshooting](../troubleshooting.md) page.
+
 You can install it on virtually any hardware and operating system, provided your OS has at least
 100mb of RAM free and [Go](https://go.dev/wiki/MinimumRequirements) can compile programs for it.
 

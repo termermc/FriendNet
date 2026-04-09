@@ -3,19 +3,23 @@ package config
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"net/url"
 	"os"
 
 	"friendnet.org/common"
 )
 
+// DefaultRpcPemPath is the default path to the RPC HTTPS certificate file.
+const DefaultRpcPemPath = "rpc.pem"
+
 // ServerRpcConfig is the configuration for the server's RPC service.
 type ServerRpcConfig struct {
+	// HttpsPemPath is the path to the full chain certificate to use for serving RPC endpoints over HTTPS.
+	HttpsPemPath string `json:"https_pem_path"`
+
 	// Interfaces is a list of RPC server interfaces and their settings.
 	Interfaces []common.RpcServerConfig `json:"interfaces"`
-
-	// HttpsFullChainCertPath is the path to the full chain certificate to use for serving RPC endpoints over HTTPS.
-	// If omitted, HTTPS can be used, but it will use the self-signed certificate used for serving the main protocol.
-	HttpsFullChainCertPath string `json:"https_full_chain_cert_path,omitempty"`
 }
 
 // ServerConfig is the server configuration.
@@ -33,6 +37,9 @@ type ServerConfig struct {
 	// A new self-signed certificate will be generated if it does not exist.
 	PemPath string `json:"pem_path"`
 
+	// If true, the server will periodically check for updates and log to the console if a new version is available.
+	DisableUpdateChecker bool `json:"disable_update_checker"`
+
 	// The configuration for the server's RPC service.
 	Rpc ServerRpcConfig `json:"rpc"`
 }
@@ -43,10 +50,12 @@ var Default = &ServerConfig{
 		"0.0.0.0:20038",
 		"[::]:20038",
 	},
-	DbPath:  "server.db",
-	PemPath: "server.pem",
+	DbPath:               "server.db",
+	PemPath:              "server.pem",
+	DisableUpdateChecker: false,
 
 	Rpc: ServerRpcConfig{
+		HttpsPemPath: DefaultRpcPemPath,
 		Interfaces: []common.RpcServerConfig{
 			{
 				Address:        "unix://friendnet-server.sock",
@@ -100,6 +109,14 @@ func LoadOrCreate(path string) (*ServerConfig, error) {
 	}
 	if len(cfg.Listen) == 0 {
 		return nil, errors.New("at least one listen address is required")
+	}
+
+	// Ensure all RPC interface addresses are valid URLs.
+	for _, iface := range cfg.Rpc.Interfaces {
+		_, err = url.Parse(iface.Address)
+		if err != nil {
+			return nil, fmt.Errorf(`interface address %q is not a valid URL: %w`, iface.Address, err)
+		}
 	}
 
 	return &cfg, nil
