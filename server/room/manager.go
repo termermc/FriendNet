@@ -193,6 +193,10 @@ func (m *Manager) DeleteRoomByName(ctx context.Context, name common.NormalizedRo
 	// Close room first.
 	_ = room.Close()
 
+	m.mu.Lock()
+	delete(m.rooms, name.String())
+	m.mu.Unlock()
+
 	// Delete from storage.
 	return m.storage.DeleteRoomByName(ctx, name)
 }
