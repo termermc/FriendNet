@@ -17,7 +17,7 @@ Servers only allow one client connected per-user, so have the user check their c
 If they see something like `username already connected`, they are already connected on another client, or they have
 multiple server entries on their client for the same server.
 
-### 3. The user has the wrong credentials.
+### 3. The user has the wrong credentials
 
 Have the user check their client's log viewer. If they have the wrong credentials, they will see a message like
 `invalid credentials`.
