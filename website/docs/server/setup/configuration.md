@@ -42,6 +42,7 @@ It will look something like this:
 	"pem_path": "server.pem",
     "disable_update_checker": false,
 	"rpc": {
+        "https_pem_path": "rpc.pem",
 		"interfaces": [
 			{
 				"address": "unix://friendnet-server.sock",

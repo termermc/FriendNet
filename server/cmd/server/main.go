@@ -64,15 +64,26 @@ func main() {
 		}
 	}
 
-	keyPair, err := cert.ReadOrCreatePem(cfg.PemPath, cert.ServerCommonName)
+	serverCert, err := cert.ReadOrCreatePem(cfg.PemPath, cert.ServerCommonName, false)
 	if err != nil {
-		logger.Error("failed to load PEM", "err", err)
+		logger.Error("failed to load server PEM certificate", "err", err)
+		os.Exit(1)
+	}
+	if cfg.Rpc.HttpsPemPath == "" {
+		logger.Warn("missing rpc.https_pem_path in config, using default value; you should add it to your config!",
+			"default", config.DefaultRpcPemPath,
+		)
+		cfg.Rpc.HttpsPemPath = config.DefaultRpcPemPath
+	}
+	rpcCert, err := cert.ReadOrCreatePem(cfg.Rpc.HttpsPemPath, "localhost", true)
+	if err != nil {
+		logger.Error("failed to load RPC PEM certificate", "err", err)
 		os.Exit(1)
 	}
 
 	tlsCfg := &tls.Config{
 		MinVersion:   tls.VersionTLS13,
-		Certificates: []tls.Certificate{keyPair},
+		Certificates: []tls.Certificate{serverCert},
 		NextProtos:   []string{protocol.AlpnProtoName},
 	}
 
@@ -124,20 +135,6 @@ func main() {
 		<-timeoutCtx.Done()
 	}()
 
-	// Create web server use for serving RPC interfaces.
-	var rpcCert tls.Certificate
-	if cfg.Rpc.HttpsFullChainCertPath != "" {
-		rpcCert, err = cert.ReadFullChainPem(cfg.Rpc.HttpsFullChainCertPath)
-		if err != nil {
-			logger.Error("failed to read HTTPS certificate for RPC interfaces",
-				"path", cfg.Rpc.HttpsFullChainCertPath,
-				"err", err,
-			)
-			os.Exit(1)
-		}
-	} else {
-		rpcCert = keyPair
-	}
 	webServer := webserver.NewWebServer(logger, webserver.WithHttpsSupport(rpcCert))
 
 	// Create RPC servers.

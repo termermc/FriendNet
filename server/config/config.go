@@ -10,14 +10,16 @@ import (
 	"friendnet.org/common"
 )
 
+// DefaultRpcPemPath is the default path to the RPC HTTPS certificate file.
+const DefaultRpcPemPath = "rpc.pem"
+
 // ServerRpcConfig is the configuration for the server's RPC service.
 type ServerRpcConfig struct {
+	// HttpsPemPath is the path to the full chain certificate to use for serving RPC endpoints over HTTPS.
+	HttpsPemPath string `json:"https_pem_path"`
+
 	// Interfaces is a list of RPC server interfaces and their settings.
 	Interfaces []common.RpcServerConfig `json:"interfaces"`
-
-	// HttpsFullChainCertPath is the path to the full chain certificate to use for serving RPC endpoints over HTTPS.
-	// If omitted, HTTPS can be used, but it will use the self-signed certificate used for serving the main protocol.
-	HttpsFullChainCertPath string `json:"https_full_chain_cert_path,omitempty"`
 }
 
 // ServerConfig is the server configuration.
@@ -53,6 +55,7 @@ var Default = &ServerConfig{
 	DisableUpdateChecker: false,
 
 	Rpc: ServerRpcConfig{
+		HttpsPemPath: DefaultRpcPemPath,
 		Interfaces: []common.RpcServerConfig{
 			{
 				Address:        "unix://friendnet-server.sock",
