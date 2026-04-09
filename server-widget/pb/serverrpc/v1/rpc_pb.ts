@@ -660,6 +660,7 @@ export const ServerRpcService: GenService<{
    * It can generate a password if none is given.
    * Returns status code NOT_FOUND if no such room exists.
    * Returns status code ALREADY_EXISTS if an account with the same username already exists in the room.
+   * Returns status code INVALID_ARGUMENT if the password does not meet minimum requirements.
    *
    * @generated from rpc pb.serverrpc.v1.ServerRpcService.CreateAccount
    */

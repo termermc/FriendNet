@@ -8,6 +8,7 @@ import (
 
 	"connectrpc.com/connect"
 	"friendnet.org/common"
+	"friendnet.org/common/password"
 	v1 "friendnet.org/protocol/pb/serverrpc/v1"
 	"friendnet.org/protocol/pb/serverrpc/v1/serverrpcv1connect"
 	"friendnet.org/server/room"
@@ -237,6 +238,10 @@ func (s *RpcServer) CreateAccount(ctx context.Context, req *v1.CreateAccountRequ
 		if errors.Is(err, room.ErrAccountExists) {
 			return nil, errAccountExists
 		}
+		if _, ok := errors.AsType[password.Error](err); ok {
+			return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		}
+
 		return nil, err
 	}
 

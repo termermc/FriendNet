@@ -98,6 +98,7 @@ type ServerRpcServiceClient interface {
 	// It can generate a password if none is given.
 	// Returns status code NOT_FOUND if no such room exists.
 	// Returns status code ALREADY_EXISTS if an account with the same username already exists in the room.
+	// Returns status code INVALID_ARGUMENT if the password does not meet minimum requirements.
 	CreateAccount(context.Context, *v1.CreateAccountRequest) (*v1.CreateAccountResponse, error)
 	// DeleteAccount deletes an existing account in a room.
 	// Returns status code NOT_FOUND if no such room exists.
@@ -330,6 +331,7 @@ type ServerRpcServiceHandler interface {
 	// It can generate a password if none is given.
 	// Returns status code NOT_FOUND if no such room exists.
 	// Returns status code ALREADY_EXISTS if an account with the same username already exists in the room.
+	// Returns status code INVALID_ARGUMENT if the password does not meet minimum requirements.
 	CreateAccount(context.Context, *v1.CreateAccountRequest) (*v1.CreateAccountResponse, error)
 	// DeleteAccount deletes an existing account in a room.
 	// Returns status code NOT_FOUND if no such room exists.
