@@ -31,6 +31,7 @@ import (
 	"friendnet.org/server/config"
 	"friendnet.org/server/storage"
 	"friendnet.org/updater"
+	"golang.org/x/term"
 )
 
 func main() {
@@ -198,7 +199,7 @@ func main() {
 		)
 	}
 
-	if !noCli {
+	if !noCli && term.IsTerminal(int(os.Stdin.Fd())) {
 		go func() {
 			localRpcToken := common.RandomB64UrlStr(32)
 			expectAuthz := fmt.Sprintf("Bearer %s", localRpcToken)
