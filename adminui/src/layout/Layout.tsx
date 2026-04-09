@@ -1,15 +1,18 @@
-import { Component, ErrorBoundary, JSX } from 'solid-js'
+import { Component, ErrorBoundary, JSX, Show } from 'solid-js'
 
 import styles from './Layout.module.css'
 
 import { AppName } from '../constant'
 import { A } from '@solidjs/router'
+import { useServerInfo } from '../ctx'
 
 type LayoutProps = {
 	children: JSX.Element
 }
 
 export const Layout: Component<LayoutProps> = (props) => {
+	const serverInfo = useServerInfo()
+
 	return (
 		<div class={styles.container}>
 			<header>
@@ -21,7 +24,20 @@ export const Layout: Component<LayoutProps> = (props) => {
 					</A>{' '}
 					<A href="/todo" class={styles.option}>
 						🔧 TODO
-					</A>
+					</A>{' '}
+
+					<Show when={serverInfo.rpc!.allowedMethods.includes('*')}>
+						<span
+							title="Click for information"
+							onClick={() => alert('The server RPC interface being used does not have wildcard permissions. Some functionality may not work.')}
+							classList={{
+								[styles.option]: true,
+								[styles.missingPermissions]: true,
+							}}
+						>
+							⚠️ Missing Permissions
+						</span>
+					</Show>
 				</div>
 			</header>
 
