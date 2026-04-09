@@ -60,6 +60,7 @@ const PasswordField: Component<{
 					id="account-password"
 					value={props.password()}
 					onInput={(e) => props.setPassword(e.currentTarget.value)}
+					required
 				/>
 			</Show>
 		</div>
@@ -119,6 +120,9 @@ const CreateAccount: Component<AccountsProps> = (props) => {
 					a.username.localeCompare(b.username),
 				),
 			)
+
+			setUsername('')
+			setPassword('')
 		} catch (err) {
 			if (err instanceof ConnectError) {
 				if (err.code === Code.PermissionDenied) {
@@ -172,6 +176,7 @@ const CreateAccount: Component<AccountsProps> = (props) => {
 									onInput={(e) =>
 										setUsername(e.currentTarget.value)
 									}
+									required
 								/>
 							</td>
 						</tr>
