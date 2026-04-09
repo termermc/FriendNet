@@ -49,8 +49,8 @@ const PasswordField: Component<{
 					}
 				}}
 			>
-				<option value="auto">Generate</option>
-				<option value="manual">Specific Password</option>
+				<option value="auto">🎲 Generate</option>
+				<option value="manual">⌨️ Specific Password</option>
 			</select>
 
 			<Show when={mode() === 'manual'}>
@@ -324,7 +324,7 @@ const Account: Component<AccountsProps & { account: AccountInfo }> = (
 				</button>
 
 				<details>
-					<summary>Change Password</summary>
+					<summary>🔑 Change Password</summary>
 
 					<div>
 						<br/>
