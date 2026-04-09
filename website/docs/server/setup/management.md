@@ -19,6 +19,7 @@ The usage for each command is documented in the CLI.
 
 Be aware that the server CLI is only enabled when running the server in a terminal.
 It will not be enabled if you are running it in a systemd service, in Docker, etc.
+In such cases, you will need to use the RPC client or the admin UI.
 
 ## RPC Client
 
