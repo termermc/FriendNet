@@ -1,6 +1,6 @@
 FROM docker.io/golang:1.26.2-alpine3.23 AS builder
 
-RUN apk add make nodejs
+RUN apk add make nodejs npm
 
 WORKDIR /data/build
 
