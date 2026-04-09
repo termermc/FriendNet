@@ -170,9 +170,17 @@ export const Loader: Component = () => {
 							<div>
 								<p>
 									Permission denied. Either your token is
-									invalid or the RPC does not allow the{' '}
-									<code>GetServerInfo</code> method.
+									invalid or the RPC interface does not allow
+									the <code>GetServerInfo</code> method.
 								</p>
+								<button
+									onClick={() => {
+										localStorage.removeItem(bearerTokenKey)
+										window.location.reload()
+									}}
+								>
+									Clear token.
+								</button>
 							</div>
 						)
 					}
