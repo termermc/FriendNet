@@ -39,7 +39,6 @@ make rpcclient
 The RPC client will be in the `rpcclient` directory, named `friendnet-rpcclient` or
 `friendnet-rpcclient.exe`.
 
-
 ---
 
 Next: [Configuration](configuration.md)

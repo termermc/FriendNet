@@ -30,13 +30,7 @@ var CurrentUpdate = UpdateInfo{
 const updaterDir = join(import.meta.dirname, '..', 'updater', 'client')
 const destUpdateFile = join(updaterDir, 'latest.json')
 const destUpdateSigFile = destUpdateFile + '.sig'
-const destGoFile = join(
-	import.meta.dirname,
-	'..',
-	'..',
-	'updater',
-	'update.go',
-)
+const destGoFile = join(import.meta.dirname, '..', '..', 'updater', 'update.go')
 
 // First, check for the update file.
 const tmpUpdateFilePath = '/tmp/update.json'

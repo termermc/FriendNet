@@ -11,7 +11,7 @@ In particular, the sysctl changes that need to be made for better performance.
 > [host network driver](https://docs.docker.com/engine/network/drivers/host/).
 > This removes the need for the Docker network bridge and will improve performance.
 > Docker also sometimes has issues with UDP traffic when using the network bridge.
-> 
+>
 > If you are using the Docker Compose file provided with this guide, you do not need to do anything extra.
 
 ## Structure

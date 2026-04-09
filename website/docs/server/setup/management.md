@@ -3,9 +3,10 @@
 If your server is not yet running, start it.
 
 The server can be managed in the following ways:
- - Using the built-in CLI while it is running
- - The separate RPC client remotely
- - The admin UI
+
+- Using the built-in CLI while it is running
+- The separate RPC client remotely
+- The admin UI
 
 When the server is running, its CLI will be accessible through the terminal.
 You can type `help` to see a list of commands.
@@ -47,12 +48,10 @@ To enable it, you will need to add an RPC interface to your config JSON:
 
 ```json
 {
-    "address": "https://127.0.0.1:9999",
-    "allowed_methods": [
-        "*"
-    ],
-    "bearer_token": "A_SECRET_LONG_RANDOM_STRING",
-    "enable_admin_ui": true
+	"address": "https://127.0.0.1:9999",
+	"allowed_methods": ["*"],
+	"bearer_token": "A_SECRET_LONG_RANDOM_STRING",
+	"enable_admin_ui": true
 }
 ```
 

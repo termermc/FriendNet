@@ -45,9 +45,9 @@ It will look something like this:
 	"listen": ["0.0.0.0:20038", "[::]:20038"],
 	"db_path": "server.db",
 	"pem_path": "server.pem",
-    "disable_update_checker": false,
+	"disable_update_checker": false,
 	"rpc": {
-        "https_pem_path": "rpc.pem",
+		"https_pem_path": "rpc.pem",
 		"interfaces": [
 			{
 				"address": "unix://friendnet-server.sock",
