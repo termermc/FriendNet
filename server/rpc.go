@@ -240,7 +240,11 @@ func (s *RpcServer) CreateAccount(ctx context.Context, req *v1.CreateAccountRequ
 		return nil, err
 	}
 
-	res := &v1.CreateAccountResponse{}
+	res := &v1.CreateAccountResponse{
+		Account: &v1.AccountInfo{
+			Username: username.String(),
+		},
+	}
 	if wasGen {
 		res.GeneratedPassword = &pass
 	}

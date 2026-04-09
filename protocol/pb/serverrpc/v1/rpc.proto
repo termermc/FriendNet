@@ -119,8 +119,11 @@ message CreateAccountRequest {
     string password = 3;
 }
 message CreateAccountResponse {
+    // The newly created account.
+    AccountInfo account = 1;
+
     // The generated password, if applicable.
-    optional string generated_password = 1;
+    optional string generated_password = 2;
 }
 
 message DeleteAccountRequest {

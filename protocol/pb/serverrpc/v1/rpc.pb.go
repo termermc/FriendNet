@@ -943,8 +943,10 @@ func (x *CreateAccountRequest) GetPassword() string {
 
 type CreateAccountResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// The newly created account.
+	Account *AccountInfo `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
 	// The generated password, if applicable.
-	GeneratedPassword *string `protobuf:"bytes,1,opt,name=generated_password,json=generatedPassword,proto3,oneof" json:"generated_password,omitempty"`
+	GeneratedPassword *string `protobuf:"bytes,2,opt,name=generated_password,json=generatedPassword,proto3,oneof" json:"generated_password,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -977,6 +979,13 @@ func (x *CreateAccountResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use CreateAccountResponse.ProtoReflect.Descriptor instead.
 func (*CreateAccountResponse) Descriptor() ([]byte, []int) {
 	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *CreateAccountResponse) GetAccount() *AccountInfo {
+	if x != nil {
+		return x.Account
+	}
+	return nil
 }
 
 func (x *CreateAccountResponse) GetGeneratedPassword() string {
@@ -1288,9 +1297,10 @@ const file_pb_serverrpc_v1_rpc_proto_rawDesc = "" +
 	"\x14CreateAccountRequest\x12\x12\n" +
 	"\x04room\x18\x01 \x01(\tR\x04room\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1a\n" +
-	"\bpassword\x18\x03 \x01(\tR\bpassword\"b\n" +
-	"\x15CreateAccountResponse\x122\n" +
-	"\x12generated_password\x18\x01 \x01(\tH\x00R\x11generatedPassword\x88\x01\x01B\x15\n" +
+	"\bpassword\x18\x03 \x01(\tR\bpassword\"\x9a\x01\n" +
+	"\x15CreateAccountResponse\x126\n" +
+	"\aaccount\x18\x01 \x01(\v2\x1c.pb.serverrpc.v1.AccountInfoR\aaccount\x122\n" +
+	"\x12generated_password\x18\x02 \x01(\tH\x00R\x11generatedPassword\x88\x01\x01B\x15\n" +
 	"\x13_generated_password\"F\n" +
 	"\x14DeleteAccountRequest\x12\x12\n" +
 	"\x04room\x18\x01 \x01(\tR\x04room\x12\x1a\n" +
@@ -1368,33 +1378,34 @@ var file_pb_serverrpc_v1_rpc_proto_depIdxs = []int32{
 	1,  // 4: pb.serverrpc.v1.GetOnlineUserInfoResponse.user:type_name -> pb.serverrpc.v1.OnlineUserInfo
 	2,  // 5: pb.serverrpc.v1.GetAccountsResponse.accounts:type_name -> pb.serverrpc.v1.AccountInfo
 	0,  // 6: pb.serverrpc.v1.CreateRoomResponse.room:type_name -> pb.serverrpc.v1.RoomInfo
-	3,  // 7: pb.serverrpc.v1.ServerRpcService.GetServerInfo:input_type -> pb.serverrpc.v1.GetServerInfoRequest
-	5,  // 8: pb.serverrpc.v1.ServerRpcService.GetRooms:input_type -> pb.serverrpc.v1.GetRoomsRequest
-	7,  // 9: pb.serverrpc.v1.ServerRpcService.GetRoomInfo:input_type -> pb.serverrpc.v1.GetRoomInfoRequest
-	9,  // 10: pb.serverrpc.v1.ServerRpcService.GetOnlineUsers:input_type -> pb.serverrpc.v1.GetOnlineUsersRequest
-	11, // 11: pb.serverrpc.v1.ServerRpcService.GetOnlineUserInfo:input_type -> pb.serverrpc.v1.GetOnlineUserInfoRequest
-	13, // 12: pb.serverrpc.v1.ServerRpcService.GetAccounts:input_type -> pb.serverrpc.v1.GetAccountsRequest
-	15, // 13: pb.serverrpc.v1.ServerRpcService.CreateRoom:input_type -> pb.serverrpc.v1.CreateRoomRequest
-	17, // 14: pb.serverrpc.v1.ServerRpcService.DeleteRoom:input_type -> pb.serverrpc.v1.DeleteRoomRequest
-	19, // 15: pb.serverrpc.v1.ServerRpcService.CreateAccount:input_type -> pb.serverrpc.v1.CreateAccountRequest
-	21, // 16: pb.serverrpc.v1.ServerRpcService.DeleteAccount:input_type -> pb.serverrpc.v1.DeleteAccountRequest
-	23, // 17: pb.serverrpc.v1.ServerRpcService.UpdateAccountPassword:input_type -> pb.serverrpc.v1.UpdateAccountPasswordRequest
-	4,  // 18: pb.serverrpc.v1.ServerRpcService.GetServerInfo:output_type -> pb.serverrpc.v1.GetServerInfoResponse
-	6,  // 19: pb.serverrpc.v1.ServerRpcService.GetRooms:output_type -> pb.serverrpc.v1.GetRoomsResponse
-	8,  // 20: pb.serverrpc.v1.ServerRpcService.GetRoomInfo:output_type -> pb.serverrpc.v1.GetRoomInfoResponse
-	10, // 21: pb.serverrpc.v1.ServerRpcService.GetOnlineUsers:output_type -> pb.serverrpc.v1.GetOnlineUsersResponse
-	12, // 22: pb.serverrpc.v1.ServerRpcService.GetOnlineUserInfo:output_type -> pb.serverrpc.v1.GetOnlineUserInfoResponse
-	14, // 23: pb.serverrpc.v1.ServerRpcService.GetAccounts:output_type -> pb.serverrpc.v1.GetAccountsResponse
-	16, // 24: pb.serverrpc.v1.ServerRpcService.CreateRoom:output_type -> pb.serverrpc.v1.CreateRoomResponse
-	18, // 25: pb.serverrpc.v1.ServerRpcService.DeleteRoom:output_type -> pb.serverrpc.v1.DeleteRoomResponse
-	20, // 26: pb.serverrpc.v1.ServerRpcService.CreateAccount:output_type -> pb.serverrpc.v1.CreateAccountResponse
-	22, // 27: pb.serverrpc.v1.ServerRpcService.DeleteAccount:output_type -> pb.serverrpc.v1.DeleteAccountResponse
-	24, // 28: pb.serverrpc.v1.ServerRpcService.UpdateAccountPassword:output_type -> pb.serverrpc.v1.UpdateAccountPasswordResponse
-	18, // [18:29] is the sub-list for method output_type
-	7,  // [7:18] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	2,  // 7: pb.serverrpc.v1.CreateAccountResponse.account:type_name -> pb.serverrpc.v1.AccountInfo
+	3,  // 8: pb.serverrpc.v1.ServerRpcService.GetServerInfo:input_type -> pb.serverrpc.v1.GetServerInfoRequest
+	5,  // 9: pb.serverrpc.v1.ServerRpcService.GetRooms:input_type -> pb.serverrpc.v1.GetRoomsRequest
+	7,  // 10: pb.serverrpc.v1.ServerRpcService.GetRoomInfo:input_type -> pb.serverrpc.v1.GetRoomInfoRequest
+	9,  // 11: pb.serverrpc.v1.ServerRpcService.GetOnlineUsers:input_type -> pb.serverrpc.v1.GetOnlineUsersRequest
+	11, // 12: pb.serverrpc.v1.ServerRpcService.GetOnlineUserInfo:input_type -> pb.serverrpc.v1.GetOnlineUserInfoRequest
+	13, // 13: pb.serverrpc.v1.ServerRpcService.GetAccounts:input_type -> pb.serverrpc.v1.GetAccountsRequest
+	15, // 14: pb.serverrpc.v1.ServerRpcService.CreateRoom:input_type -> pb.serverrpc.v1.CreateRoomRequest
+	17, // 15: pb.serverrpc.v1.ServerRpcService.DeleteRoom:input_type -> pb.serverrpc.v1.DeleteRoomRequest
+	19, // 16: pb.serverrpc.v1.ServerRpcService.CreateAccount:input_type -> pb.serverrpc.v1.CreateAccountRequest
+	21, // 17: pb.serverrpc.v1.ServerRpcService.DeleteAccount:input_type -> pb.serverrpc.v1.DeleteAccountRequest
+	23, // 18: pb.serverrpc.v1.ServerRpcService.UpdateAccountPassword:input_type -> pb.serverrpc.v1.UpdateAccountPasswordRequest
+	4,  // 19: pb.serverrpc.v1.ServerRpcService.GetServerInfo:output_type -> pb.serverrpc.v1.GetServerInfoResponse
+	6,  // 20: pb.serverrpc.v1.ServerRpcService.GetRooms:output_type -> pb.serverrpc.v1.GetRoomsResponse
+	8,  // 21: pb.serverrpc.v1.ServerRpcService.GetRoomInfo:output_type -> pb.serverrpc.v1.GetRoomInfoResponse
+	10, // 22: pb.serverrpc.v1.ServerRpcService.GetOnlineUsers:output_type -> pb.serverrpc.v1.GetOnlineUsersResponse
+	12, // 23: pb.serverrpc.v1.ServerRpcService.GetOnlineUserInfo:output_type -> pb.serverrpc.v1.GetOnlineUserInfoResponse
+	14, // 24: pb.serverrpc.v1.ServerRpcService.GetAccounts:output_type -> pb.serverrpc.v1.GetAccountsResponse
+	16, // 25: pb.serverrpc.v1.ServerRpcService.CreateRoom:output_type -> pb.serverrpc.v1.CreateRoomResponse
+	18, // 26: pb.serverrpc.v1.ServerRpcService.DeleteRoom:output_type -> pb.serverrpc.v1.DeleteRoomResponse
+	20, // 27: pb.serverrpc.v1.ServerRpcService.CreateAccount:output_type -> pb.serverrpc.v1.CreateAccountResponse
+	22, // 28: pb.serverrpc.v1.ServerRpcService.DeleteAccount:output_type -> pb.serverrpc.v1.DeleteAccountResponse
+	24, // 29: pb.serverrpc.v1.ServerRpcService.UpdateAccountPassword:output_type -> pb.serverrpc.v1.UpdateAccountPasswordResponse
+	19, // [19:30] is the sub-list for method output_type
+	8,  // [8:19] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_pb_serverrpc_v1_rpc_proto_init() }
