@@ -19,9 +19,14 @@ The `server.pem` file is the TLS certificate used to encrypt traffic to and from
 This is a self-signed certificate generated automatically by the server.
 
 Clients use a Trust On First Use (TOFU) policy to verify the server's certificate, which means that they will trust the
-certificate when they first connect and associate it with the server's hostname/IP address. You need to be careful to
+certificate when they first connect and associate it with the server's hostname/IP address. **You need to be careful to
 keep the certificate safe, because if you remove or replace it, clients that previously connected to the server will
-be unable to connect.
+be unable to connect.** If you are familiar with [SSH](https://en.wikipedia.org/wiki/Secure_Shell), this TOFU system
+should be familiar, as it works very similarly to SSH's
+[known_hosts](https://stackoverflow.com/questions/33243393/what-is-actually-in-known-hosts) file.
+
+See the [troubleshooting guide](../troubleshooting.md) for how to make clients forget a server's old certificate if you
+accidentally remove or replace it.
 
 You do not need to use LetsEncrypt or any other certificate authority to generate a certificate.
 

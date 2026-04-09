@@ -22,6 +22,22 @@ multiple server entries on their client for the same server.
 Have the user check their client's log viewer. If they have the wrong credentials, they will see a message like
 `invalid credentials`.
 
+### 4. The server's certificate was changed
+
+Have the user check their client's log viewer. If they see something like `server certificate mismatch`, then the
+server's certificate has changed.
+
+If the server was recreated or its `server.pem` file was deleted or replaced, the server will have a different
+certificate from the last time the client connected. Clients will refuse to connect to a server if its certificate is
+different from the last time the client connected.
+
+To make the client forget the old certificate, have the user run `friendnet-client -rmcerthost <hostname>`. The
+`<hostname>` must be the server's host without the port, so `127.0.0.1`, `example.com`, etc. For example, if the client
+is trying to connect to `127.0.0.1:20038`, then they must type `friendnet-client -rmcerthost 127.0.0.1`. After doing,
+the client will be able to connect to the server again.
+
+Every client that previously connected to the server will need to perform these steps to be able to connect again.
+
 ### You're running the server in Docker without host networking
 
 Docker can have issues with UDP forwarding which prevents the server from sending or receiving UDP traffic.
