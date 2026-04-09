@@ -1,6 +1,6 @@
 module friendnet.org/mkcert
 
-go 1.26.0
+go 1.26.2
 
 require (
 	friendnet.org/common v0.0.0
