@@ -61,7 +61,7 @@ export const HomePage: Component<void, void> = () => {
 
 			<div class="home-footer">
 				Brought to you by <a href="https://termer.net">termer</a> and
-				the friends who helped along the way
+				the <a href="/donate/">friends who helped along the way</a>
 			</div>
 		`,
 	)

@@ -17,12 +17,14 @@ import { DownloadPage } from './src/component/page/DownloadPage.ts'
 import { scanDirForNews } from './src/util/news.ts'
 import { NewsPage } from './src/component/page/NewsPage.ts'
 import { NewsHomePage } from './src/component/page/NewsHomePage.ts'
+import { DonatePage } from './src/component/page/DonatePage.ts'
 
 const ssg = new Wunphile(import.meta.url)
 
 // Basic pages.
 ssg.page('/index.html', HomePage)
 ssg.page('/screenshots/index.html', ScreenshotsPage)
+ssg.page('/donate/index.html', DonatePage)
 
 // Read current update info and mount download page.
 let curUpdate: UpdateInfo

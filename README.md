@@ -3,7 +3,7 @@ File sharing for friends, like a mini-Soulseek. No port forwarding needed!
 
 ![logo](logo-smaller.png)
 
-[**Official Website**](https://friendnet.org/)
+[**Official Website**](https://friendnet.org/) / [**Screenshots**](https://friendnet.org/screenshots/)
 
 [**GitHub**](https://github.com/termermc/FriendNet)
 
@@ -46,9 +46,8 @@ See the [protocol](protocol) directory.
 
 # Support
 
-I would appreciate it if you considered supporting the project with
-[GitHub Sponsors](https://github.com/sponsors/termermc), or Monero/XMR:
-`452fRbsyyTpPZDXUpu14ZCYCFyAxyiHeaiGPLKAjBaR7FJxztuTt7NjNFYwxKaCpQeWXKD9xNxtPYdaSqL375L599YVpa7w`
+I would appreciate it if you considered [supporting the project](https://friendnet.org/donate/).
+If you would like, I'll add your name and link to the website.
 
 # Contact
 
