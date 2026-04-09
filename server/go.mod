@@ -1,12 +1,14 @@
 module friendnet.org/server
 
-go 1.26.0
+go 1.26.2
 
 require (
 	connectrpc.com/connect v1.19.1
+	friendnet.org/adminui v0.0.0
 	friendnet.org/common v0.0.0
 	friendnet.org/protocol v0.0.0
 	friendnet.org/rpcclient v0.0.0
+	friendnet.org/updater v0.0.0
 	github.com/quic-go/quic-go v0.59.0
 	github.com/termermc/go-mcf-password v1.0.0
 	google.golang.org/protobuf v1.36.11
@@ -31,7 +33,9 @@ require (
 )
 
 replace (
+	friendnet.org/adminui => ../adminui
 	friendnet.org/common => ../common
 	friendnet.org/protocol => ../protocol
 	friendnet.org/rpcclient => ../rpcclient
+	friendnet.org/updater => ../updater
 )

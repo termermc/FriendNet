@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"friendnet.org/adminui"
 	"friendnet.org/common"
 	"friendnet.org/common/machine"
 	"friendnet.org/common/password"
@@ -51,16 +52,25 @@ func main() {
 
 	// Check for insecure RPC interfaces that have wildcard permissions.
 	for _, iface := range cfg.Rpc.Interfaces {
-		if iface.BearerToken == "" && slices.Contains(iface.AllowedMethods, "*") {
-			addr, _ := url.Parse(iface.Address)
-			if addr.Scheme == "unix" {
-				// UNIX sockets are exempt from warning.
-				continue
+		if iface.BearerToken == "" {
+			if iface.EnableAdminUi {
+				logger.Error("RPC interface has admin UI enabled but does not require a bearer token",
+					"address", iface.Address,
+				)
+				os.Exit(1)
 			}
 
-			logger.Warn("DANGER! RPC interface has wildcard permissions but does not require a bearer token!",
-				"address", iface.Address,
-			)
+			if slices.Contains(iface.AllowedMethods, "*") {
+				addr, _ := url.Parse(iface.Address)
+				if addr.Scheme == "unix" {
+					// UNIX sockets are exempt from warning.
+					continue
+				}
+
+				logger.Warn("DANGER! RPC interface has wildcard permissions but does not require a bearer token!",
+					"address", iface.Address,
+				)
+			}
 		}
 	}
 
@@ -157,6 +167,17 @@ func main() {
 			)
 			os.Exit(1)
 		}
+
+		if iface.EnableAdminUi {
+			err = webServer.Mount(iface.Address, "/", adminui.Handler{})
+			if err != nil {
+				logger.Error("failed to mount admin UI",
+					"address", iface.Address,
+					"err", err,
+				)
+			}
+		}
+
 		rpcs = append(rpcs, rpcSrv)
 	}
 
@@ -257,6 +278,14 @@ func main() {
 		logger.Info("RPC listening",
 			"addr", rpc.Addr,
 		)
+	}
+	for _, iface := range cfg.Rpc.Interfaces {
+		if iface.EnableAdminUi {
+			logger.Info("admin UI listening",
+				"url", iface.Address+"?token="+iface.BearerToken,
+				"token", iface.BearerToken,
+			)
+		}
 	}
 
 	go func() {

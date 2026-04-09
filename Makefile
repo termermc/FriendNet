@@ -2,9 +2,11 @@
 	help \
 	install-tools \
 	pb \
+	adminui \
 	server \
-	server-linux-amd64 \
-	server-linux-arm64 \
+	server-noui \
+	server-linux-amd64-noui \
+	server-linux-arm64-noui \
 	webui \
 	client \
 	client-noui \
@@ -36,13 +38,19 @@ pb:
 	cd server-widget && npx buf lint && npx buf generate
 	cd adminui && npx buf lint && npx buf generate
 
+adminui:
+	cd adminui && go generate
+
 server:
+	make adminui && cd server && CGO_ENABLED=0 go build -o friendnet-server friendnet.org/server/cmd/server
+
+server-noui:
 	cd server && CGO_ENABLED=0 go build -o friendnet-server friendnet.org/server/cmd/server
 
-server-linux-amd64:
+server-linux-amd64-noui:
 	cd server && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o friendnet-server friendnet.org/server/cmd/server
 
-server-linux-arm64:
+server-linux-arm64-noui:
 	cd server && CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o friendnet-server friendnet.org/server/cmd/server
 
 webui:
@@ -103,13 +111,15 @@ release-artifacts:
 
 	make client-debs-noui && mv client/*.deb /tmp/fn-release/
 
-	make server-linux-amd64 && mv server/friendnet-server /tmp/fn-release/server
+	make adminui
+
+	make server-linux-amd64-noui && mv server/friendnet-server /tmp/fn-release/server
 	make rpcclient-linux-amd64 && mv rpcclient/friendnet-rpcclient /tmp/fn-release/rpcclient
 	chmod +x /tmp/fn-release/*
 	cd /tmp/fn-release && tar -czf friendnet-server-linux_amd64.tar.gz server rpcclient
 	rm /tmp/fn-release/server && rm /tmp/fn-release/rpcclient
 
-	make server-linux-arm64 && mv server/friendnet-server /tmp/fn-release/server
+	make server-linux-arm64-noui && mv server/friendnet-server /tmp/fn-release/server
 	make rpcclient-linux-arm64 && mv rpcclient/friendnet-rpcclient /tmp/fn-release/rpcclient
 	chmod +x /tmp/fn-release/*
 	cd /tmp/fn-release && tar -czf friendnet-server-linux_arm64.tar.gz server rpcclient
