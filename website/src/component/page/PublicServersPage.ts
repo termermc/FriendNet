@@ -17,16 +17,22 @@ export const PublicServersPage: Component<void, void> = () => {
 				<h1>Public Servers</h1>
 				<div class="home-content donate">
 					<p>
-						These are <b>UNOFFICIAL</b> public servers, <b>not affiliated with the FriendNet project in any way</b>.
+						These are <b>UNOFFICIAL</b> public servers,
+						<b
+							>not affiliated with the FriendNet project in any
+							way</b
+						>.
 					</p>
 					<p>
-						<a href="https://termer.net/">Contact me</a> to list yours. The server must accept registrations
-						or have a way to apply to join.
+						<a href="https://termer.net/">Contact me</a> to list
+						yours. The server must accept registrations or have a
+						way to apply to join.
 					</p>
-					
+
 					<ul>
 						<li>
-							<a href="https://friendly.st">friendly.st</a> - public server
+							<a href="https://friendly.st">friendly.st</a> -
+							public server
 						</li>
 					</ul>
 				</div>
