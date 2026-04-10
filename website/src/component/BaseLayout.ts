@@ -102,6 +102,9 @@ export const BaseLayout: Component<BaseLayoutProps, RenderFragments> = (
 						<a href="/donate/" class="header-nav-item">
 							❤️ Donate
 						</a>
+                        <a href="/publicservers/" class="header-nav-item">
+                            Public Servers
+                        </a>
 					</div>
 				</header>
 				<main>${children}</main>

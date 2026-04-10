@@ -18,6 +18,7 @@ import { scanDirForNews } from './src/util/news.ts'
 import { NewsPage } from './src/component/page/NewsPage.ts'
 import { NewsHomePage } from './src/component/page/NewsHomePage.ts'
 import { DonatePage } from './src/component/page/DonatePage.ts'
+import { PublicServersPage } from './src/component/page/PublicServersPage.ts'
 
 const ssg = new Wunphile(import.meta.url)
 
@@ -25,6 +26,7 @@ const ssg = new Wunphile(import.meta.url)
 ssg.page('/index.html', HomePage)
 ssg.page('/screenshots/index.html', ScreenshotsPage)
 ssg.page('/donate/index.html', DonatePage)
+ssg.page('/publicservers/index.html', PublicServersPage)
 
 // Read current update info and mount download page.
 let curUpdate: UpdateInfo
