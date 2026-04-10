@@ -29,8 +29,8 @@ export const HomePage: Component<void, void> = () => {
 							href="https://en.wikipedia.org/wiki/Peer-to-peer_file_sharing"
 							>P2P networks</a
 						>,
-						<a href="/docs/peering/">port forwarding is optional</a
-						>!
+						<a href="/docs/peering/">port forwarding is optional</a>
+						and it works behind asymmetric NAT!
 					</p>
 					<p>
 						You can host a private room for your friends or group to
