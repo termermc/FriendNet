@@ -15,6 +15,7 @@ const Page: Component = () => {
 		return <h1>No such server "{uuid}"</h1>
 	}
 
+	const profileRoot = makeFileUrl(fsUrl, uuid, username, '/_profile')
 	const indexUrl = makeFileUrl(fsUrl, uuid, username, '/_profile/index.html')
 
 	const resolved = createAsync(async () => {
@@ -147,17 +148,15 @@ const Page: Component = () => {
 					)
 				}
 
-				const parts = path.split('/')
-				for (const part of parts) {
-					if (part === '..') {
-						return (
-							<div>
-								<p>Profile contains invalid paths.</p>
-								<p>Paths must not contain "..".</p>
-								<div class={styles.code}>{elem.outerHTML}</div>
-							</div>
-						)
-					}
+				const resolved = (new URL(path, window.location.origin)).pathname
+				if (!resolved.startsWith(profileRoot)) {
+					return (
+						<div>
+							<p>Profile contains invalid paths.</p>
+							<p>Paths must be in the profile root.</p>
+							<div class={styles.code}>{elem.outerHTML}</div>
+						</div>
+					)
 				}
 
 				// Path is ok.
