@@ -84,3 +84,20 @@ span.docs-nav-section-label::before {
 		flex-direction: column;
 	}
 }
+
+table {
+    table-layout: fixed;
+    border-collapse: collapse;
+    border: 0.25rem solid rgba(0, 0, 0, 0.25);
+}
+tbody tr:nth-child(odd) {
+    background-color: rgba(0, 0, 0, 0.25);
+}
+thead {
+    border-bottom: 0.25rem solid rgba(0, 0, 0, 0.25);
+}
+th, td {
+    padding: 0.25rem;
+    text-align: left;
+    border: 0.1rem solid rgba(0, 0, 0, 0.25);
+}
