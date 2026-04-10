@@ -23,7 +23,7 @@ export const HomePage: Component<void, void> = () => {
 					<p>
 						FriendNet is <b>self-hostable</b>,
 						<b>open source</b> file sharing for friends, like a
-						mini-<a href="https://slsknet.org">Soulseek</a>. Unlike
+						mini-<a href="/docs/compared-to/soulseek/">Soulseek</a>. Unlike
 						Soulseek and other
 						<a
 							href="https://en.wikipedia.org/wiki/Peer-to-peer_file_sharing"
