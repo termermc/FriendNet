@@ -47,6 +47,20 @@ export const HomePage: Component<void, void> = () => {
 					<br />
 					<br />
 					<div class="center">
+						<iframe
+							width="560"
+							height="315"
+							src="https://www.youtube-nocookie.com/embed/cD27wskKkPs?si=wq7lDBIcy09-LB1G"
+							title="YouTube video player"
+							frameborder="0"
+							allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+							referrerpolicy="strict-origin-when-cross-origin"
+							allowfullscreen
+						></iframe>
+                    </div>
+					<br />
+					<br />
+					<div class="center">
 						<a href="/download/" class="big-button"
 							>Download Now!</a
 						>

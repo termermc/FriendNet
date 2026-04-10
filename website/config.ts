@@ -22,5 +22,6 @@ export default {
 	/**
 	 * The project's donation Monero address.
 	 */
-	moneroAddress: '452fRbsyyTpPZDXUpu14ZCYCFyAxyiHeaiGPLKAjBaR7FJxztuTt7NjNFYwxKaCpQeWXKD9xNxtPYdaSqL375L599YVpa7w',
+	moneroAddress:
+		'452fRbsyyTpPZDXUpu14ZCYCFyAxyiHeaiGPLKAjBaR7FJxztuTt7NjNFYwxKaCpQeWXKD9xNxtPYdaSqL375L599YVpa7w',
 }

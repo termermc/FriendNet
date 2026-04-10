@@ -100,7 +100,7 @@ export const BaseLayout: Component<BaseLayoutProps, RenderFragments> = (
 							GitHub
 						</a>
 						<a href="/donate/" class="header-nav-item">
-                            ❤️ Donate
+							❤️ Donate
 						</a>
 					</div>
 				</header>
