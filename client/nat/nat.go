@@ -5,12 +5,12 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
-	"net/netip"
 	"time"
 
 	"github.com/quic-go/quic-go"
 )
 
+// TryTraverse attempts NAT traversal by sending UDP packets to a peer while simultaneously listening and dialing.
 func TryTraverse(
 	ctx context.Context,
 	listenAddr string,
@@ -19,28 +19,24 @@ func TryTraverse(
 	tlsConf *tls.Config,
 	quicConf *quic.Config,
 ) (*quic.Conn, error) {
-	listenAddrPort, err := netip.ParseAddrPort(listenAddr)
+	listenUdpAddr, err := net.ResolveUDPAddr("udp", listenAddr)
 	if err != nil {
-		return nil, fmt.Errorf(`failed to parse listen address %q: %w`, listenAddr, err)
+		return nil, fmt.Errorf(`failed to resolve listen address %q: %w`, listenAddr, err)
 	}
-	peerAddrPort, err := netip.ParseAddrPort(peerAddr)
+	peerUdpAddr, err := net.ResolveUDPAddr("udp", peerAddr)
 	if err != nil {
-		return nil, fmt.Errorf(`failed to parse peer address %q: %w`, peerAddr, err)
-	}
-	peerUdpAddr := &net.UDPAddr{
-		IP:   peerAddrPort.Addr().AsSlice(),
-		Port: int(peerAddrPort.Port()),
+		return nil, fmt.Errorf(`failed to resolve peer address %q: %w`, peerAddr, err)
 	}
 
-	udp, err := net.ListenUDP("udp", &net.UDPAddr{
-		IP:   listenAddrPort.Addr().AsSlice(),
-		Port: int(listenAddrPort.Port()),
-	})
+	udp, err := net.ListenUDP("udp", listenUdpAddr)
 	if err != nil {
 		return nil, fmt.Errorf(`failed to listen on UDP %q: %w`, listenAddr, err)
 	}
+	tr := &quic.Transport{
+		Conn: udp,
+	}
 
-	qListener, err := quic.Listen(udp, tlsConf, quicConf)
+	qListener, err := tr.Listen(tlsConf, quicConf)
 	if err != nil {
 		return nil, fmt.Errorf(`failed to listen QUIC on existing UDP listener on %q: %w`, listenAddr, err)
 	}
@@ -77,7 +73,7 @@ func TryTraverse(
 				return
 			}
 
-			conn, err := quic.Dial(ctx, udp, peerUdpAddr, tlsConf, quicConf)
+			conn, err := tr.Dial(ctx, peerUdpAddr, tlsConf, quicConf)
 			if err != nil {
 				continue
 			}
