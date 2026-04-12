@@ -6,7 +6,7 @@ a peer-to-peer sharing model.
 
 The main differences are:
  - Soulseek is a single network, you cannot host a private server
- - FriendNet works without port forwarding and on asymmetric NATs (via relay)
+ - FriendNet works without port forwarding and on symmetric NATs (via relay)
 
 FriendNet is not meant as a replacement for Soulseek, it is rather a tool heavily inspired by it to serve small- to
 medium-sized groups who want to share files.

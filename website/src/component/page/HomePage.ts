@@ -30,7 +30,7 @@ export const HomePage: Component<void, void> = () => {
 							>P2P networks</a
 						>,
 						<a href="/docs/peering/">port forwarding is optional</a>
-						and it works behind asymmetric NAT!
+						and it works behind symmetric NAT!
 					</p>
 					<p>
 						You can host a private room for your friends or group to
