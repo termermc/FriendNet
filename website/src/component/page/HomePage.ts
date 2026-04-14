@@ -15,7 +15,10 @@ export const HomePage: Component<void, void> = () => {
 			<div class="home">
 				<div class="home-header">
 					<h1>FriendNet</h1>
-					<img src="/logo-wall.png" alt="Logo" />
+					<picture>
+						<source type="image/avif" srcset="/logo-wall.avif" />
+						<img src="/logo-wall.png" alt="Logo" />
+					</picture>
 					<h2>is file sharing</h2>
 					<h1>for <span class="friends">friends</span></h1>
 				</div>
@@ -23,8 +26,8 @@ export const HomePage: Component<void, void> = () => {
 					<p>
 						FriendNet is <b>self-hostable</b>,
 						<b>open source</b> file sharing for friends, like a
-						mini-<a href="/docs/compared-to/soulseek/">Soulseek</a>. Unlike
-						Soulseek and other
+						mini-<a href="/docs/compared-to/soulseek/">Soulseek</a>.
+						Unlike Soulseek and other
 						<a
 							href="https://en.wikipedia.org/wiki/Peer-to-peer_file_sharing"
 							>P2P networks</a
