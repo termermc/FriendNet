@@ -163,3 +163,25 @@ Examples:
 | `/foo/`       | `/foo`            |
 | `\pics\dogs`  | `/pics/dogs`      |
 
+# NAT Hole Punching
+
+(This section is a WIP)
+
+FriendNet supports NAT hole punching (hereby referred to as "punching" for brevity) using the server to coordinate
+between peers. In non-NAT scenarios, clients will advertise their connection methods to the server, and other clients
+can query them. Clients that are willing to attempt punching use this system to advertise their willingness to perform
+punching.
+
+During the peering process, if the initiating client supports punching and learns that the target client also supports
+it, it will send a MSG_TYPE_START_PUNCH message to the server. The server will then reach out to the peer with a
+MSG_TYPE_START_PUNCH message and wait for a confirmation. Once the confirmation is received, the server will send a
+MSG_TYPE_PUNCH_ENDPOINT message to both peers that contains an endpoint for them both to reach out to and a token to
+provide to it. Once each peer has sent their token to the endpoint, the server will send both peers a
+MSG_TYPE_PUNCH_ADDRESS message containing the address and port of the other peer, and each peer's role (client, server).
+The server will then close each client's stream.
+
+After each peer has received the other's address and port and their own role, they will attempt to connect to establish
+a connection using the same socket they use to reach out to the discovery endpoint. The "server" peer will listen, and
+the "client" peer will connect to it. Both sides will send each other UDP packets to try and punch their NATs and
+firewalls. At this point, the connections will look the same as any other direct connection; the connection attempt will
+either succeed or time out and fail.
