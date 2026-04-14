@@ -452,6 +452,10 @@ enum ConnMethodType {
     // Yggdrasil connection.
     // Addresses are formatted as: `[YGGDRASIL_IP]:PORT`.
     CONN_METHOD_TYPE_YGGDRASIL = 2;
+
+    // NAT hole punching.
+    // Addresses are ignored; the method signifies willingness to attempt NAT hole punching.
+    CONN_METHOD_TYPE_NAT_HOLEPUNCH = 3;
 }
 
 // See MSG_TYPE_ADVERTISE_CONN_METHOD.

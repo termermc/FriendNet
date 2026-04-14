@@ -2,6 +2,7 @@ package nat
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/tls"
 	"fmt"
 	"net"
@@ -10,15 +11,19 @@ import (
 	"github.com/quic-go/quic-go"
 )
 
-// TryTraverse attempts NAT traversal by sending UDP packets to a peer while simultaneously listening and dialing.
+// TryTraverse attempts NAT traversal by sending UDP packets to a peer while listening or dialing.
+// If isServerSide is true, it will listen for an incoming connection, otherwise it will dial.
 func TryTraverse(
 	ctx context.Context,
 	listenAddr string,
 	peerAddr string,
-	token string,
+	isServerSide bool,
 	tlsConf *tls.Config,
 	quicConf *quic.Config,
 ) (*quic.Conn, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	listenUdpAddr, err := net.ResolveUDPAddr("udp", listenAddr)
 	if err != nil {
 		return nil, fmt.Errorf(`failed to resolve listen address %q: %w`, listenAddr, err)
@@ -36,73 +41,40 @@ func TryTraverse(
 		Conn: udp,
 	}
 
-	qListener, err := tr.Listen(tlsConf, quicConf)
-	if err != nil {
-		return nil, fmt.Errorf(`failed to listen QUIC on existing UDP listener on %q: %w`, listenAddr, err)
-	}
-
-	connChan := make(chan *quic.Conn)
-
-	isRunning := true
-	defer func() {
-		isRunning = false
-	}()
-
-	// Listen for an incoming connection.
-	go func() {
-		for isRunning {
-			conn, err := qListener.Accept(ctx)
-			if err != nil {
-				continue
-			}
-
-			// TODO Wait for incoming verification token.
-
-			connChan <- conn
-			return
-		}
-	}()
-
-	// Try outgoing connections.
-	go func() {
-		ticker := time.NewTicker(100 * time.Millisecond)
-		defer ticker.Stop()
-
-		for range ticker.C {
-			if !isRunning {
-				return
-			}
-
-			conn, err := tr.Dial(ctx, peerUdpAddr, tlsConf, quicConf)
-			if err != nil {
-				continue
-			}
-
-			// TODO Send out verification token and wait for ACK.
-
-			connChan <- conn
-			return
-		}
-	}()
-
 	// Send out UDP packets to hole punch.
 	go func() {
-		tokenBytes := []byte(token)
-		ticker := time.NewTicker(100 * time.Millisecond)
+		tokenBytes := make([]byte, 100)
+		_, _ = rand.Read(tokenBytes)
+		ticker := time.NewTicker(50 * time.Millisecond)
 		defer ticker.Stop()
-		for range ticker.C {
-			if !isRunning {
+		for {
+			select {
+			case <-ctx.Done():
 				return
+			case <-ticker.C:
+				_, _ = udp.WriteToUDP(tokenBytes, peerUdpAddr)
 			}
-
-			_, _ = udp.WriteToUDP(tokenBytes, peerUdpAddr)
 		}
 	}()
 
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	case conn := <-connChan:
-		return conn, nil
+	var conn *quic.Conn
+
+	if isServerSide {
+		qListener, err := tr.Listen(tlsConf, quicConf)
+		if err != nil {
+			return nil, fmt.Errorf(`failed to listen QUIC on existing UDP listener on %q: %w`, listenAddr, err)
+		}
+
+		conn, err = qListener.Accept(ctx)
+		if err != nil {
+			return nil, fmt.Errorf(`failed to accept incoming QUIC connection on %q: %w`, listenAddr, err)
+		}
+	} else {
+		conn, err = tr.Dial(ctx, peerUdpAddr, tlsConf, quicConf)
+		if err != nil {
+			return nil, fmt.Errorf(`failed to dial QUIC %q: %w`, peerAddr, err)
+		}
 	}
+
+	return conn, nil
 }

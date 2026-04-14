@@ -504,6 +504,9 @@ const (
 	// Yggdrasil connection.
 	// Addresses are formatted as: `[YGGDRASIL_IP]:PORT`.
 	ConnMethodType_CONN_METHOD_TYPE_YGGDRASIL ConnMethodType = 2
+	// NAT hole punching.
+	// Addresses are ignored; the method signifies willingness to attempt NAT hole punching.
+	ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH ConnMethodType = 3
 )
 
 // Enum value maps for ConnMethodType.
@@ -512,11 +515,13 @@ var (
 		0: "CONN_METHOD_TYPE_UNSPECIFIED",
 		1: "CONN_METHOD_TYPE_IP",
 		2: "CONN_METHOD_TYPE_YGGDRASIL",
+		3: "CONN_METHOD_TYPE_NAT_HOLEPUNCH",
 	}
 	ConnMethodType_value = map[string]int32{
-		"CONN_METHOD_TYPE_UNSPECIFIED": 0,
-		"CONN_METHOD_TYPE_IP":          1,
-		"CONN_METHOD_TYPE_YGGDRASIL":   2,
+		"CONN_METHOD_TYPE_UNSPECIFIED":   0,
+		"CONN_METHOD_TYPE_IP":            1,
+		"CONN_METHOD_TYPE_YGGDRASIL":     2,
+		"CONN_METHOD_TYPE_NAT_HOLEPUNCH": 3,
 	}
 )
 
@@ -3262,11 +3267,12 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"!AUTH_REJECTION_REASON_UNSPECIFIED\x10\x00\x12-\n" +
 	")AUTH_REJECTION_REASON_INVALID_CREDENTIALS\x10\x02\x12 \n" +
 	"\x1cAUTH_REJECTION_REASON_BANNED\x10\x03\x12+\n" +
-	"'AUTH_REJECTION_REASON_ALREADY_CONNECTED\x10\x04*k\n" +
+	"'AUTH_REJECTION_REASON_ALREADY_CONNECTED\x10\x04*\x8f\x01\n" +
 	"\x0eConnMethodType\x12 \n" +
 	"\x1cCONN_METHOD_TYPE_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13CONN_METHOD_TYPE_IP\x10\x01\x12\x1e\n" +
-	"\x1aCONN_METHOD_TYPE_YGGDRASIL\x10\x02*\xfb\x01\n" +
+	"\x1aCONN_METHOD_TYPE_YGGDRASIL\x10\x02\x12\"\n" +
+	"\x1eCONN_METHOD_TYPE_NAT_HOLEPUNCH\x10\x03*\xfb\x01\n" +
 	"\n" +
 	"ConnResult\x12\x1b\n" +
 	"\x17CONN_RESULT_UNSPECIFIED\x10\x00\x12\x12\n" +

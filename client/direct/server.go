@@ -35,25 +35,15 @@ type Server struct {
 	listener protocol.ProtoListener
 }
 
-// NewServer creates a new direct connect server.
-// It returns an error if a listener could not be created.
+// NewServerFromListener creates a new direct connect server using an existing listener.
 // Once created, it listens and handles incoming connections on its own.
-func NewServer(
+func NewServerFromListener(
 	logger *slog.Logger,
 	ctx context.Context,
 	m *Manager,
 	addrPort netip.AddrPort,
-	cert tls.Certificate,
+	listener protocol.ProtoListener,
 ) (*Server, error) {
-	listener, err := protocol.NewQuicProtoListener(addrPort.String(), &tls.Config{
-		MinVersion:   tls.VersionTLS13,
-		Certificates: []tls.Certificate{cert},
-		NextProtos:   []string{protocol.DirectAlpnProtoName},
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	childCtx, ctxCancel := context.WithCancel(ctx)
 
 	s := &Server{
@@ -92,6 +82,34 @@ func NewServer(
 	}()
 
 	return s, nil
+}
+
+// NewServer creates a new direct connect server.
+// It returns an error if a listener could not be created.
+// Once created, it listens and handles incoming connections on its own.
+func NewServer(
+	logger *slog.Logger,
+	ctx context.Context,
+	m *Manager,
+	addrPort netip.AddrPort,
+	cert tls.Certificate,
+) (*Server, error) {
+	listener, err := protocol.NewQuicProtoListener(addrPort.String(), &tls.Config{
+		MinVersion:   tls.VersionTLS13,
+		Certificates: []tls.Certificate{cert},
+		NextProtos:   []string{protocol.DirectAlpnProtoName},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return NewServerFromListener(
+		logger,
+		ctx,
+		m,
+		addrPort,
+		listener,
+	)
 }
 
 // Close closes the server.

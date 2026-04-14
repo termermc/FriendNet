@@ -90,6 +90,72 @@ func ToTyped[T proto.Message](msg *UntypedProtoMsg) *TypedProtoMsg[T] {
 	return NewTypedProtoMsg(msg.Type, casted)
 }
 
+// ProtoDialer is a dialer that can return protocol connections.
+type ProtoDialer interface {
+	io.Closer
+
+	// Dial connects to the specified address and returns a protocol connection if successful.
+	Dial(ctx context.Context, addr string) (ProtoConn, error)
+}
+
+// QuicProtoDialer is a ProtoDialer that uses QUIC.
+type QuicProtoDialer struct {
+	// The TLS config used to dial.
+	// Will never be nil.
+	tlsCfg *tls.Config
+
+	// The transport used to dial.
+	// Will never be nil.
+	tr *quic.Transport
+}
+
+var _ ProtoDialer = (*QuicProtoDialer)(nil)
+
+func (d *QuicProtoDialer) Close() error {
+	return d.tr.Close()
+}
+
+func (d *QuicProtoDialer) Dial(ctx context.Context, addr string) (ProtoConn, error) {
+	udpAddr, err := net.ResolveUDPAddr("udp", addr)
+	if err != nil {
+		return nil, fmt.Errorf(`failed to resolve address %q: %w`, addr, err)
+	}
+
+	conn, err := d.tr.Dial(ctx, udpAddr, d.tlsCfg, &quic.Config{
+		KeepAlivePeriod:    DefaultKeepAlivePeriod,
+		MaxIncomingStreams: DefaultMaxIncomingStreams,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ToProtoConn(conn), nil
+}
+
+// NewQuicProtoDialer creates a new QuicProtoDialer.
+// If tlsCfg is nil, the function will panic.
+// If transport is nil, a new transport will be created.
+func NewQuicProtoDialer(tlsCfg *tls.Config, transportOrNil *quic.Transport) (ProtoDialer, error) {
+	if tlsCfg == nil {
+		panic("called NewQuicProtoDialer with nil tlsCfg")
+	}
+
+	if transportOrNil == nil {
+		udpConn, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.IPv4zero, Port: 0})
+		if err != nil {
+			return nil, err
+		}
+
+		transportOrNil = &quic.Transport{
+			Conn: udpConn,
+		}
+	}
+
+	return &QuicProtoDialer{
+		tlsCfg: tlsCfg,
+		tr:     transportOrNil,
+	}, nil
+}
+
 // ProtoConn is a protocol connection.
 // You can send and receive bidi streams from it.
 type ProtoConn interface {
@@ -127,7 +193,9 @@ var _ ProtoConn = &ProtoConnImpl{}
 
 // ToProtoConn wraps a QUIC connection to provide protocol-specific methods.
 func ToProtoConn(conn *quic.Conn) ProtoConn {
-	return &ProtoConnImpl{conn}
+	return &ProtoConnImpl{
+		Inner: conn,
+	}
 }
 
 func (conn *ProtoConnImpl) RemoteAddr() net.Addr {
@@ -583,7 +651,27 @@ func (l *QuicProtoListener) Accept(ctx context.Context) (ProtoConn, error) {
 	return ToProtoConn(conn), nil
 }
 
-// NewQuicProtoListener creates a ProtoListener on the specified address and with the specified TLS config.
+// ToProtoListener converts a QUIC listener to a ProtoListener.
+func ToProtoListener(listener *quic.Listener) ProtoListener {
+	return &QuicProtoListener{
+		Listener: listener,
+	}
+}
+
+// NewQuicProtoListener creates a ProtoListener on the specified transport and TLS config.
+func NewQuicProtoListenerFromTransport(trans *quic.Transport, tlsCfg *tls.Config) (ProtoListener, error) {
+	listener, err := trans.Listen(tlsCfg, &quic.Config{
+		KeepAlivePeriod:    DefaultKeepAlivePeriod,
+		MaxIncomingStreams: DefaultMaxIncomingStreams,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return ToProtoListener(listener), nil
+}
+
+// NewQuicProtoListener creates a ProtoListener on the specified address and TLS config.
 func NewQuicProtoListener(listenAddr string, tlsCfg *tls.Config) (ProtoListener, error) {
 	addrPort, err := netip.ParseAddrPort(listenAddr)
 	if err != nil {
@@ -607,16 +695,8 @@ func NewQuicProtoListener(listenAddr string, tlsCfg *tls.Config) (ProtoListener,
 		return nil, err
 	}
 
-	trans := quic.Transport{Conn: udpConn}
-	listener, err := trans.Listen(tlsCfg, &quic.Config{
-		KeepAlivePeriod:    DefaultKeepAlivePeriod,
-		MaxIncomingStreams: DefaultMaxIncomingStreams,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &QuicProtoListener{listener}, nil
+	trans := &quic.Transport{Conn: udpConn}
+	return NewQuicProtoListenerFromTransport(trans, tlsCfg)
 }
 
 // IsErrorConnCloseOrCancel returns whether the specified error can broadly be considered a connection close or cancel error.
