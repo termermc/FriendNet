@@ -13,6 +13,16 @@ import (
 
 // TryTraverse attempts NAT traversal by sending UDP packets to a peer while listening or dialing.
 // If isServerSide is true, it will listen for an incoming connection, otherwise it will dial.
+// TODO Could I revert to the old design where they both listen and dial at the same time?
+// I could return a channel that can return up to 2 quic.Conn instances, closing the channel when all attempts have
+// finished, whether successfully or not. The caller could choose to handle the conns in a goroutine and manage its own
+// timeout for handling them.
+// This would be advantageous because some weird NATs allow incoming traffic. Still, I'm not sure how many cases that
+// will work for, because most system firewalls will stop this behavior from working anyway. I'm leaning toward keeping
+// things the way they are.
+// TODO Also, run a persistent QUIC listenener as a NAT direct server, and expose its quic.Transport so that it can be
+// used for discovery. This will simplify design, and prevent needing to spin up a new server for each hole punch
+// attempt.
 func TryTraverse(
 	ctx context.Context,
 	listenAddr string,
