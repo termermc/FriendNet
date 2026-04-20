@@ -203,6 +203,15 @@ export function makeBrowsePath(
 	return `/server/${serverUuid}/browse/${username}${escapePathSegments(normPath)}`
 }
 
+export function makeMdPreviewPath(
+	serverUuid: string,
+	username: string,
+	path: string,
+): string {
+	const { path: normPath } = normalizePath(path)
+	return `/server/${serverUuid}/md/${username}${escapePathSegments(normPath)}`
+}
+
 export function trimStrEllipsis(str: string, len: number): string {
 	if (str.length <= len) {
 		return str

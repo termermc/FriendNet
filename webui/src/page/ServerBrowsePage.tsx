@@ -4,16 +4,24 @@ import styles from './ServerBrowsePage.module.css'
 
 import { useFileServerUrl, useGlobalState, useRpcClient } from '../ctx'
 import { ConnectError } from '@connectrpc/connect'
-import { A, useLocation, useParams } from '@solidjs/router'
+import {
+	A,
+	useLocation,
+	useNavigate,
+	useParams,
+	useSearchParams,
+} from '@solidjs/router'
 import { FileMeta } from '../../pb/clientrpc/v1/rpc_pb'
 import {
 	makeBrowsePath,
 	makeFileUrl,
+	makeMdPreviewPath,
 	normalizePath,
 	trimStrEllipsis,
 } from '../util'
 import { FileTable } from '../FileTable'
 import { QueueButton } from '../QueueButton'
+import { getAutoOpenReadme } from '../uiPrefs'
 
 const Page: Component = () => {
 	const {
@@ -25,6 +33,8 @@ const Page: Component = () => {
 	const state = useGlobalState()
 	const client = useRpcClient()
 	const fsUrl = useFileServerUrl()
+	const navigate = useNavigate()
+	const [searchParams] = useSearchParams<{ noauto?: string }>()
 
 	const server = state.getServerByUuid(uuid)
 	if (!server) {
@@ -44,6 +54,9 @@ const Page: Component = () => {
 		try {
 			setLoading(true)
 
+			const shouldAutoOpen =
+				searchParams.noauto !== '1' && getAutoOpenReadme()
+
 			const stream = client.getDirFiles({
 				serverUuid: server.uuid,
 				username: username,
@@ -51,6 +64,23 @@ const Page: Component = () => {
 			})
 
 			for await (const msg of stream) {
+				if (shouldAutoOpen) {
+					const readme = msg.content.find(
+						(f) =>
+							!f.isDir &&
+							f.name.toLowerCase() === 'readme.md',
+					)
+					if (readme) {
+						const pth = path === '/' ? '' : path
+						const readmePath = pth + '/' + readme.name
+						navigate(
+							makeMdPreviewPath(uuid, username, readmePath),
+							{ replace: true },
+						)
+						return
+					}
+				}
+
 				const res = [...files(), ...msg.content]
 				res.sort((a, b) => {
 					if (a.isDir && !b.isDir) {
@@ -161,24 +191,42 @@ const Page: Component = () => {
 							filePath,
 						)
 
+						const lowerName = item.meta.name.toLowerCase()
+						const isMarkdown =
+							lowerName.endsWith('.md') ||
+							lowerName.endsWith('.markdown')
+
+						const actions = (
+							<>
+								<a
+									title="Open File"
+									href={nonDlUrl}
+									target="_blank"
+								>
+									🔗
+								</a>
+								<QueueButton
+									serverUuid={uuid}
+									peerUsername={username}
+									filePath={filePath}
+									title="Download File"
+								/>
+							</>
+						)
+
+						if (isMarkdown) {
+							return {
+								href: makeMdPreviewPath(
+									uuid,
+									username,
+									filePath,
+								),
+								actions,
+							}
+						}
+
 						return {
-							actions: (
-								<>
-									<a
-										title="Open File"
-										href={nonDlUrl}
-										target="_blank"
-									>
-										🔗
-									</a>
-									<QueueButton
-										serverUuid={uuid}
-										peerUsername={username}
-										filePath={filePath}
-										title="Download File"
-									/>
-								</>
-							),
+							actions,
 							onClick: () => {
 								state.previewFile(uuid, username, filePath)
 							},
