@@ -3,6 +3,7 @@ import { Component, createSignal, For, onMount, Show } from 'solid-js'
 import stylesCommon from '../common.module.css'
 import { ConnectError } from '@connectrpc/connect'
 import { useRpcClient } from '../ctx'
+import { getAutoOpenReadme, setAutoOpenReadme } from '../uiPrefs'
 
 const P2pSettings: Component = () => {
 	const client = useRpcClient()
@@ -543,6 +544,54 @@ const TransferSettings: Component = () => {
 	)
 }
 
+const BrowsingSettings: Component = () => {
+	const [autoOpenReadme, setAutoOpenReadmeSig] = createSignal(
+		getAutoOpenReadme(),
+	)
+
+	const onToggle = (e: Event) => {
+		const checked = (e.currentTarget as HTMLInputElement).checked
+		setAutoOpenReadmeSig(checked)
+		setAutoOpenReadme(checked)
+	}
+
+	return (
+		<div>
+			<h2>Browsing</h2>
+
+			<p>
+				These settings control how the share browser behaves. They are
+				saved in your browser and apply only to this client.
+			</p>
+
+			<br />
+
+			<form class={stylesCommon.form} onSubmit={(e) => e.preventDefault()}>
+				<table>
+					<tbody>
+						<tr>
+							<td>
+								<label for="setting-auto-open-readme">
+									Auto-open <code>README.md</code> when
+									entering a directory?
+								</label>
+							</td>
+							<td>
+								<input
+									id="setting-auto-open-readme"
+									type="checkbox"
+									checked={autoOpenReadme()}
+									onChange={onToggle}
+								/>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</form>
+		</div>
+	)
+}
+
 export const SettingsPage: Component = () => {
 	return (
 		<div
@@ -555,6 +604,7 @@ export const SettingsPage: Component = () => {
 
 			<P2pSettings />
 			<TransferSettings />
+			<BrowsingSettings />
 		</div>
 	)
 }

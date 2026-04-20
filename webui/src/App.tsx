@@ -13,6 +13,7 @@ import { ChangeServerPasswordPage } from './page/ChangeServerPasswordPage'
 import { SettingsPage } from './page/SettingsPage'
 import { ServerSearchPage } from './page/ServerSearchPage'
 import { ServerProfilePage } from './page/ServerProfilePage'
+import { ServerMdPreviewPage } from './page/ServerMdPreviewPage'
 import { UpdatePage } from './page/UpdatePage'
 import { TransfersPage } from './page/TransfersPage'
 
@@ -64,6 +65,11 @@ const App: Component = () => {
 		{
 			path: '/server/:uuid/profile/:username',
 			component: ServerProfilePage,
+		},
+
+		{
+			path: '/server/:uuid/md/:username/*path',
+			component: ServerMdPreviewPage,
 		},
 
 		{
