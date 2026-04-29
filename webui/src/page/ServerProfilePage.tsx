@@ -150,7 +150,7 @@ const Page: Component = () => {
 
         const resolved = new URL(path, indexUrl).pathname  
         const profileRootPath = new URL(profileRoot).pathname  
-        if (!resolved.startsWith(profileRootPath))
+        if (!resolved.startsWith(profileRootPath)) {
 					return (
 						<div>
 							<p>Profile contains invalid paths.</p>
