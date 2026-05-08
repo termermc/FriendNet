@@ -2,6 +2,13 @@
 
 package main
 
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strings"
+)
+
 func InfoBox(title string, content string) {
 	// Println title and content, then wait for enter to be pressed.
 	if title != "" {
