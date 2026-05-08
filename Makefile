@@ -74,6 +74,9 @@ client-linux-arm64-noui:
 client-darwin-arm64-noui:
 	cd client && CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o friendnet-client friendnet.org/client/cmd/client
 
+client-freebsd-amd64-noui:
+	cd client && CGO_ENABLED=0 GOOS=freebsd GOARCH=amd64 go build -o friendnet-client friendnet.org/client/cmd/client
+
 client-debs:
 	cd packaging && node index.ts deb
 
