@@ -5,9 +5,7 @@ File sharing for friends, like a mini-Soulseek. No port forwarding needed!
 
 [**Official Website**](https://friendnet.org/) / [**Screenshots**](https://friendnet.org/screenshots/)
 
-[**GitHub**](https://github.com/termermc/FriendNet)
-
-[**Forgejo Mirror**](https://git.termer.net/termer/FriendNet)
+[**GitHub**](https://github.com/termermc/FriendNet) / [**Forgejo Mirror**](https://git.termer.net/termer/FriendNet)
 
 # About
 
