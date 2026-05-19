@@ -13,7 +13,7 @@ architecture with a server and accounts, much like Soulseek.
 | *                           | FriendNet    | Retroshare                    |
 |-----------------------------|--------------|-------------------------------|
 | Who Stores Files?           | Users        | Users                         |
-| Sharing Model               | Peer-to-peer | Centralized                   |
+| Sharing Model               | Peer-to-peer | Peer-to-peer                  |
 | Self-Hosted?                | Yes          | Yes (no servers)              |
 | Users Need to Port Forward? | No           | Yes, or rely on NAT traversal |
 | Supported Platforms         | Desktop OSes | Desktop OSes                  |
