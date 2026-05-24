@@ -25,7 +25,9 @@
 		"@connectrpc/connect": "^2.1.1",
 		"@connectrpc/connect-web": "^2.1.1",
 		"@solidjs/router": "^0.15.4",
+		"dompurify": "^3.2.0",
 		"fuse.js": "^7.1.0",
+		"marked": "^13.0.0",
 		"solid-js": "^1.9.5"
 	}
 }
