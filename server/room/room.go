@@ -185,6 +185,7 @@ func (r *Room) Broadcast(typ pb.MsgType, msg proto.Message) {
 						"username", client.Username.String(),
 						"message_type", typ.String(),
 					)
+					return
 				}
 				time.Sleep(100 * time.Millisecond)
 				_ = bidi.Close()
