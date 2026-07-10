@@ -40,6 +40,8 @@ import (
 	"friendnet.org/updater"
 	"friendnet.org/webui"
 	"github.com/pkg/browser"
+	nfs "github.com/willscott/go-nfs"
+	nfshelper "github.com/willscott/go-nfs/helpers"
 	"golang.org/x/net/webdav"
 )
 
@@ -115,6 +117,7 @@ func main() {
 	var dataDir string
 	var webAddr string
 	var davAddr string
+	var nfsAddr string
 	var headless bool
 	var noBrowser bool
 	var noLock bool
@@ -127,6 +130,7 @@ func main() {
 	flag.StringVar(&dataDir, "datadir", "", "path to the client's data directory")
 	flag.StringVar(&webAddr, "webaddr", "https://127.0.0.1:20042", "web UI and RPC address")
 	flag.StringVar(&davAddr, "davaddr", "https://127.0.0.1:20043", "WebDAV server address")
+	flag.StringVar(&nfsAddr, "nfsaddr", "", "NFS server address (host:port); empty disables NFS")
 	flag.BoolVar(&noBrowser, "nobrowser", false, "do not open web UI in browser")
 	flag.BoolVar(&noLock, "nolock", false, "do not use a lock to prevent multiple instances of the client from running")
 	flag.BoolVar(&installCa, "installca", false, "if set, tries to install the client's root CA for HTTPS on the web UI")
@@ -467,6 +471,33 @@ func main() {
 		panic(fmt.Errorf(`failed to mount WebDAV handler: %w`, err))
 	}
 
+	// Optionally expose the same MultiFs over NFS. Disabled unless -nfsaddr is set.
+	var nfsListener net.Listener
+	if nfsAddr != "" {
+		nfsListener, err = net.Listen("tcp", nfsAddr)
+		if err != nil {
+			panic(fmt.Errorf(`failed to listen for NFS on %q: %w`, nfsAddr, err))
+		}
+
+		nfsHandler := nfshelper.NewCachingHandler(
+			nfshelper.NewNullAuthHandler(multifs.NewNfsWrapper(multiFs)),
+			1024,
+		)
+
+		go func() {
+			serveErr := nfs.Serve(nfsListener, nfsHandler)
+			if serveErr != nil && !errors.Is(serveErr, net.ErrClosed) {
+				logger.Error(`NFS server failed to serve`,
+					"err", serveErr,
+				)
+			}
+		}()
+
+		logger.Info(`NFS server listening`,
+			"addr", nfsListener.Addr().String(),
+		)
+	}
+
 	// Close client on SIGTERM.
 	var shutdownWg sync.WaitGroup
 	defer stop()
@@ -495,6 +526,11 @@ func main() {
 		doWithTimeout(1*time.Second, func(ctx context.Context) {
 			_ = webServer.Close()
 		})
+		if nfsListener != nil {
+			doWithTimeout(1*time.Second, func(_ context.Context) {
+				_ = nfsListener.Close()
+			})
+		}
 		doWithTimeout(1*time.Second, func(_ context.Context) {
 			_ = updateChecker.Close()
 		})
