@@ -4,6 +4,7 @@ managing-shares
 searching
 profiles
 updating
+cli-configuration
 webdav
 yggdrasil-support
 compiling
