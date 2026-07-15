@@ -93,6 +93,7 @@ enum MsgType {
     MSG_TYPE_BYE = 20;
 
     // [C2S] Advertises a connection method for clients to direct connect to the sender.
+    // The server may return CONN_RESULT_DID_NOT_TRY for IP addresses it refuses to connect to, such as LAN addresses.
     // Expected: Message MSG_TYPE_ADVERTISE_CONN_METHOD_RESULT.
     MSG_TYPE_ADVERTISE_CONN_METHOD = 21;
 
@@ -186,6 +187,30 @@ enum MsgType {
     // Multiple messages of this type can be sent in the same bidi until the sender closes it.
     // The receiver may close the bidi at any time.
     MSG_TYPE_DOWNLOAD_STATUS_UPDATE = 42;
+
+    // [C2S] Requests a list of STUN servers the client can use to discover its public IP and port.
+    // Expected: MSG_TYPE_STUN_SERVERS
+    MSG_TYPE_GET_STUN_SERVERS = 43;
+
+    // [S2C] A list of STUN servers a client can use to discover its public IP and port.
+    MSG_TYPE_STUN_SERVERS = 44;
+
+    // [C2C] Sent by a client to a peer to initiate NAT hole punching.
+    // It includes the initiator's public IP address and port.
+    // Expected: Either:
+    //  - Message MSG_TYPE_PUNCH_ACCEPT if the client accepted the hole punch request.
+    //  - Message MSG_TYPE_PUNCH_REJECT if the client rejected the hole punch request.
+    MSG_TYPE_PUNCH_OFFER = 45;
+
+    // [C2C] Used to confirm a NAT hole punching attempt.
+    // It includes the peer's IP and port. The IP must be in the same family (IPv4 or IPv6) as the IP
+    // in the MSG_TYPE_PUNCH_OFFER that it is replying to.
+    MSG_TYPE_PUNCH_ACCEPT = 46;
+
+    // [C2S, S2C] When C2S, used to reject a NAT hole punching attempt.
+    // When S2C, it is the  forwarded rejection reason from the target client.
+    // If S2C, the stream will be closed after being sent.
+    MSG_TYPE_PUNCH_REJECT = 47;
 }
 
 // Ping message.

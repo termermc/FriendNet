@@ -25,6 +25,8 @@ const SettingAdvertisePrivateIps = "direct_server_advertise_private_ips"
 const SettingDisablePublicIpDiscovery = "direct_server_disable_public_ip_discovery"
 const SettingDisableUPnP = "direct_server_disable_upnp"
 const SettingUpnpTimeoutMs = "direct_server_upnp_timeout_ms"
+const SettingEnableNatHolePunching = "direct_server_enable_nat_hole_punching"
+const SettingNatHolePunchingBindPort = "direct_server_nat_hole_punching_bind_port"
 
 const DefaultDirectPort = 20048
 const DefaultUpnpTimeout = 10 * time.Second
@@ -41,6 +43,8 @@ func ConfigFromSettings(ctx context.Context, store *storage.Storage) (*Config, e
 	var disablePublicIpDiscovery bool
 	var disableUpnp bool
 	var upnpTimeoutMs int64
+	var disableNatHolePunching bool
+	var natHolePunchingBindPort int64
 
 	if disable, err = store.GetSettingBoolOrPut(ctx, SettingDisable, false); err != nil {
 		return nil, err
@@ -75,6 +79,12 @@ func ConfigFromSettings(ctx context.Context, store *storage.Storage) (*Config, e
 	if upnpTimeoutMs, err = store.GetSettingIntOrPut(ctx, SettingUpnpTimeoutMs, int64(DefaultUpnpTimeout/time.Millisecond)); err != nil {
 		return nil, err
 	}
+	if disableNatHolePunching, err = store.GetSettingBoolOrPut(ctx, SettingEnableNatHolePunching, false); err != nil {
+		return nil, err
+	}
+	if natHolePunchingBindPort, err = store.GetSettingIntOrPut(ctx, SettingNatHolePunchingBindPort, 0); err != nil {
+		return nil, err
+	}
 
 	var addrs []string
 	if err = json.Unmarshal([]byte(addrsJson), &addrs); err != nil {
@@ -97,6 +107,8 @@ func ConfigFromSettings(ctx context.Context, store *storage.Storage) (*Config, e
 		DisablePublicIpDiscovery:   disablePublicIpDiscovery,
 		DisableUPnP:                disableUpnp,
 		UpnpTimeout:                time.Duration(upnpTimeoutMs) * time.Millisecond,
+		DisableNatHolePunching:     disableNatHolePunching,
+		NatHolePunchingBindPort:    uint16(natHolePunchingBindPort),
 	}, nil
 }
 
@@ -152,6 +164,15 @@ type Config struct {
 	// Defaults to 10 seconds.
 	// Has no effect if DisableUPnP is true.
 	UpnpTimeout time.Duration
+
+	// Whether to disable NAT hole punching.
+	// Defaults to false.
+	DisableNatHolePunching bool
+
+	// The UDP port to bind to for NAT hole punching.
+	// If 0, it will choose a random port.
+	// Defaults to 0.
+	NatHolePunchingBindPort uint16
 }
 
 // Validate validates a Config and returns its parsed IP-port values.

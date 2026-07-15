@@ -214,6 +214,10 @@ func (l LogicImpl) OnAdvertiseConnMethod(ctx context.Context, client *Client, bi
 		return bidi.WriteError(pb.ErrType_ERR_TYPE_INVALID_FIELDS, err.Error())
 	}
 
+	// TODO Return DID_NOT_TRY if it's a private address or loopback.
+	// TODO Make clients refuse to make direct connections to LAN addresses unless LAN connections are enabled in
+	// direct connection settings. Change the name to make it clear.
+
 	// Try to connect.
 	connRes := func() pb.ConnResult {
 		if !client.Room.connMethodSupport.IsSupported(ad.Type) {

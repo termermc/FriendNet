@@ -33,6 +33,9 @@ func IsMethodTypeKnown(typ pb.ConnMethodType) bool {
 // Instead, it will just return nil.
 // This behavior is to allow for clients on newer protocol versions to advertise new
 // method types that are unknown to the server's protocol.
+//
+// Important: This does not evaluate the safety of the address.
+// For example, an address may be a LAN IP, and can be used for address enumeration.
 func ValidateMethodAddress(typ pb.ConnMethodType, address string) error {
 	switch typ {
 	case pb.ConnMethodType_CONN_METHOD_TYPE_IP:
