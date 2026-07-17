@@ -54,7 +54,7 @@ func GenSelfSignedPem(
 	}
 
 	notBefore := time.Now().Add(-1 * time.Minute)
-	notAfter := notBefore.Add(365 * 24 * time.Hour)
+	notAfter := notBefore.Add(10 * 365 * 24 * time.Hour)
 
 	tpl := &x509.Certificate{
 		SerialNumber: serial,
@@ -64,7 +64,6 @@ func GenSelfSignedPem(
 		NotBefore: notBefore,
 		NotAfter:  notAfter,
 
-		// For TLS server use; adjust as needed.
 		KeyUsage:              x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,

@@ -3,6 +3,8 @@ package common
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"net"
+	"time"
 )
 
 // StrPtrOr dereferences a string pointer or returns a default value if it is nil.
@@ -27,4 +29,14 @@ func RandomB64UrlStr(byteLen int) string {
 	buf := make([]byte, byteLen)
 	_, _ = rand.Read(buf)
 	return base64.RawURLEncoding.EncodeToString(buf)
+}
+
+// TryTcpHost tries to connect to a TCP host.
+// It returns true if it succeeded, false if it was rejected or timed out.
+func TryTcpHost(host string, timeout time.Duration) bool {
+	conn, err := net.DialTimeout("tcp", host, timeout)
+	defer func() {
+		_ = conn.Close()
+	}()
+	return err == nil
 }

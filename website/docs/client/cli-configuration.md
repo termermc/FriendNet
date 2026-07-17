@@ -9,10 +9,10 @@ Usage of ./friendnet:
     	WebDAV server address (default "https://127.0.0.1:20043")
   -headless
     	run client in headless mode (RPC-only, no web UI, no locking, no GUI or browser functionality)
-  -installca
-    	if set, tries to install the client's root CA for HTTPS on the web UI
-  -nobrowser
-    	do not open web UI in browser
+  -nowebview
+        do not open a webview window
+  -openbrowser
+    	opens the web UI in the browser at startup
   -nolock
     	do not use a lock to prevent multiple instances of the client from running
   -pproffile string
@@ -21,8 +21,6 @@ Usage of ./friendnet:
     	if set, resets the bearer token for the RPC server
   -rmcerthost string
     	removes the specified host from the certificate store (like removing a host from SSH known_hosts)
-  -uninstallca
-    	if set, tries to uninstall the client's root CA
   -webaddr string
     	web UI and RPC address (default "https://127.0.0.1:20042")
 ```

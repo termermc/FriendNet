@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"database/sql"
@@ -8,6 +9,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"log/slog"
 	"net"
 	"net/http"
@@ -17,6 +19,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"runtime/pprof"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -31,10 +34,10 @@ import (
 	"friendnet.org/client/fsys"
 	"friendnet.org/client/fsys/multifs"
 	"friendnet.org/client/storage"
+	"friendnet.org/client/webview"
 	"friendnet.org/common"
 	"friendnet.org/common/machine"
 	"friendnet.org/common/webserver"
-	"friendnet.org/mkcert"
 	v1 "friendnet.org/protocol/pb/clientrpc/v1"
 	"friendnet.org/protocol/pb/clientrpc/v1/clientrpcv1connect"
 	"friendnet.org/updater"
@@ -48,6 +51,9 @@ const lockFilename = "client-lock.json"
 type LockData struct {
 	Ts      int64  `json:"ts"`
 	RpcAddr string `json:"rpc_addr"`
+
+	// May be empty.
+	WebViewAddr string `json:"webview_addr"`
 }
 
 type Locker struct {
@@ -74,24 +80,24 @@ func (l *Locker) CheckLock() *LockData {
 		return nil
 	}
 
-	// See if we can dial the RPC address in the lock.
-	conn, err := net.DialTimeout("tcp", rpcUrl.Host, 1*time.Second)
-	if err != nil {
+	// See if we can dial the addresses in the lock.
+	if !common.TryTcpHost(rpcUrl.Host, 1*time.Second) {
 		// Failed to dial address; this is probably a stale lock.
 		_ = os.Remove(filePath)
 		return nil
 	}
 
-	// We can dial the address. The client is truly locked.
-	_ = conn.Close()
 	return &data
 }
 
-func (l *Locker) Lock(rpcAddr string) error {
+// Lock creates a lock file.
+// webViewAddr can be empty for none.
+func (l *Locker) Lock(rpcAddr string, webViewAddr string) error {
 	filePath := filepath.Join(l.lockDir, lockFilename)
 	data := LockData{
-		Ts:      time.Now().UnixMilli(),
-		RpcAddr: rpcAddr,
+		Ts:          time.Now().UnixMilli(),
+		RpcAddr:     rpcAddr,
+		WebViewAddr: webViewAddr,
 	}
 	jsonData, err := json.Marshal(data)
 	if err != nil {
@@ -116,10 +122,9 @@ func main() {
 	var webAddr string
 	var davAddr string
 	var headless bool
-	var noBrowser bool
+	var noWebView bool
+	var openBrowser bool
 	var noLock bool
-	var installCa bool
-	var uninstallCa bool
 	var resetToken bool
 	var pprofFile string
 	var rmCertHost string
@@ -127,10 +132,9 @@ func main() {
 	flag.StringVar(&dataDir, "datadir", "", "path to the client's data directory")
 	flag.StringVar(&webAddr, "webaddr", "https://127.0.0.1:20042", "web UI and RPC address")
 	flag.StringVar(&davAddr, "davaddr", "https://127.0.0.1:20043", "WebDAV server address")
-	flag.BoolVar(&noBrowser, "nobrowser", false, "do not open web UI in browser")
+	flag.BoolVar(&noWebView, "nowebview", false, "do not open a webview window")
+	flag.BoolVar(&openBrowser, "openbrowser", false, "opens the web UI in the browser at startup")
 	flag.BoolVar(&noLock, "nolock", false, "do not use a lock to prevent multiple instances of the client from running")
-	flag.BoolVar(&installCa, "installca", false, "if set, tries to install the client's root CA for HTTPS on the web UI")
-	flag.BoolVar(&uninstallCa, "uninstallca", false, "if set, tries to uninstall the client's root CA")
 	flag.BoolVar(&resetToken, "resettoken", false, "if set, resets the bearer token for the RPC server")
 	flag.StringVar(&pprofFile, "pproffile", "", "write CPU profile data in the pprof format to this file, e.g. \"cpu.pprof\"")
 	flag.StringVar(&rmCertHost, "rmcerthost", "", "removes the specified host from the certificate store (like removing a host from SSH known_hosts)")
@@ -159,7 +163,8 @@ func main() {
 	}
 
 	if headless {
-		noBrowser = true
+		openBrowser = false
+		noWebView = true
 		noLock = true
 	}
 
@@ -225,27 +230,6 @@ func main() {
 	)
 	logger := slog.New(logHandler)
 
-	mc, err := mkcert.NewMkCert(dataDir)
-	if err != nil {
-		logger.Error(`failed to initialize mkcert`, "err", err)
-		os.Exit(1)
-	}
-
-	if installCa {
-		if err = mc.Install(); err != nil {
-			logger.Error(`failed to install client root CA`, "err", err)
-			os.Exit(1)
-		}
-		return
-	}
-	if uninstallCa {
-		if err = mc.Uninstall(); err != nil {
-			logger.Error(`failed to uninstall client root CA`, "err", err)
-			os.Exit(1)
-		}
-		return
-	}
-
 	// Get or set bearer token.
 	var rpcBearerToken string
 	const rpcTokenSetting = "rpc_bearer_token"
@@ -265,6 +249,19 @@ func main() {
 
 	webUrlWithCreds := strings.ReplaceAll(fmt.Sprintf("%s?token=%s", webUrl.String(), rpcBearerToken), "127.0.0.1", "localhost")
 
+	var webViewAddr string
+	if !noWebView {
+		// Let the OS choose an open port for us to use.
+		listener, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			panic(fmt.Errorf(`failed to listen on random port: %w`, err))
+		}
+		listenPort := listener.Addr().(*net.TCPAddr).Port
+		_ = listener.Close()
+
+		webViewAddr = "http://127.0.0.1:" + strconv.Itoa(listenPort)
+	}
+
 	if !noLock {
 		locker := &Locker{
 			lockDir: dataDir,
@@ -273,7 +270,7 @@ func main() {
 		if lockData != nil {
 			println("Client is already running")
 
-			if !noBrowser {
+			if openBrowser {
 				// Try to open web UI in browser.
 				_ = browser.OpenURL(webUrlWithCreds)
 			}
@@ -284,20 +281,11 @@ func main() {
 			return
 		}
 
-		err = locker.Lock(webAddr)
+		err = locker.Lock(webAddr, webViewAddr)
 		if err != nil {
 			panic(fmt.Errorf(`failed to lock client: %w`, err))
 		}
 		defer locker.Unlock()
-	}
-
-	if !headless && !mc.CheckPlatform() {
-		InfoBox("FriendNet Client", "It looks like this is your first time running the FriendNet client.\n\nThe web UI requires HTTPS and a custom certificate, so that will be installed now. If it is not installed, the web UI will not work in your browser.\n\nYou may be asked for your password a multiple times.\n\nYou may need to restart your browser afterward.")
-		if err = mc.Install(); err != nil {
-			logger.Error(`failed to install client root CA`, "err", err)
-			InfoBox("Error", "Failed to install FriendNet client root CA. Please try again or install it manually by running the client with the -installca option.\n\nError: "+err.Error())
-			os.Exit(1)
-		}
 	}
 
 	directCfg, err := direct.ConfigFromSettings(context.Background(), store)
@@ -338,10 +326,20 @@ func main() {
 	httpsCertPem, httpsKeyPem, err := store.GetClientHttpsCert(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			httpsCertPem, httpsKeyPem, err = mc.GenCert([]string{webUrl.Hostname(), "localhost", "127.0.0.1"})
+			httpsCert, err := common.GenSelfSignedPem(webUrl.Hostname(), true)
 			if err != nil {
 				panic(fmt.Errorf(`failed to generate HTTPS certificate: %w`, err))
 			}
+
+			privkeyPrefix := []byte("-----BEGIN PRIVATE KEY-----")
+			privKeyIdx := bytes.Index(httpsCert, privkeyPrefix)
+			if privKeyIdx == -1 {
+				panic(fmt.Errorf(`BUG: failed to find private key in HTTPS certificate`))
+			}
+
+			httpsCertPem = httpsCert[:privKeyIdx]
+			httpsKeyPem = httpsCert[privKeyIdx:]
+
 			err = store.SetClientHttpsCert(ctx, httpsCertPem, httpsKeyPem)
 			if err != nil {
 				panic(fmt.Errorf(`failed to store HTTPS certificate: %w`, err))
@@ -444,16 +442,29 @@ func main() {
 		panic(fmt.Errorf(`failed to create RPC server: %w`, err))
 	}
 
-	err = webServer.Mount(webAddr, "/content/", client.NewFileServer(logger, multi, rpcBearerToken))
-	if err != nil {
-		panic(fmt.Errorf(`failed to mount file proxy: %w`, err))
+	var webView *webview.WebView
+
+	// Set up web UI and RPC handler.
+	// It will listen on the configured or default address on HTTPS, and also on a random port to be used by the
+	// webview.
+	webAddrs := make([]string, 0, 2)
+	webAddrs = append(webAddrs, webAddr)
+	if webViewAddr != "" {
+		webAddrs = append(webAddrs, webViewAddr)
 	}
 
-	err = webServer.Mount(webAddr, "/", webui.Handler{})
-	if err != nil {
-		panic(fmt.Errorf(`failed to mount web UI: %w`, err))
+	for _, addr := range webAddrs {
+		err = webServer.Mount(addr, "/content/", client.NewFileServer(logger, multi, rpcBearerToken))
+		if err != nil {
+			panic(fmt.Errorf(`failed to mount file proxy: %w`, err))
+		}
+		err = webServer.Mount(addr, "/", webui.Handler{})
+		if err != nil {
+			panic(fmt.Errorf(`failed to mount web UI: %w`, err))
+		}
 	}
 
+	// Set up WebDAV handler.
 	metaCache := fsys.NewMetaCache(30*time.Second, 5*time.Minute)
 	multiFs := multifs.NewMultiFs(multi,
 		multifs.WithMetaCache(metaCache),
@@ -467,11 +478,17 @@ func main() {
 		panic(fmt.Errorf(`failed to mount WebDAV handler: %w`, err))
 	}
 
+	var webViewCloser io.Closer
+
 	// Close client on SIGTERM.
 	var shutdownWg sync.WaitGroup
 	defer stop()
 	shutdownWg.Go(func() {
 		<-ctx.Done()
+
+		if webViewCloser != nil {
+			_ = webViewCloser.Close()
+		}
 
 		// Send stop event to all subscribers.
 		eventBus.
@@ -512,7 +529,7 @@ func main() {
 		})
 	})
 
-	if !noBrowser {
+	if openBrowser {
 		// Try to open URL in browser.
 		_ = browser.OpenURL(webUrlWithCreds)
 	}
@@ -536,6 +553,23 @@ func main() {
 
 		stop()
 	}()
+
+	if webView != nil {
+		go func() {
+			// Wait until the HTTP address is available.
+			httpClient := http.DefaultClient
+			httpClient.Timeout = 100 * time.Millisecond
+			for {
+				_, err := httpClient.Get(webViewAddr)
+				if err == nil {
+					break
+				}
+				time.Sleep(100 * time.Millisecond)
+			}
+
+			webView.Run()
+		}()
+	}
 
 	shutdownWg.Wait()
 

@@ -2,7 +2,10 @@
   <configuration default="false" name="Client" type="GoApplicationRunConfiguration" factoryName="Go Application">
     <module name="FriendNet" />
     <working_directory value="$PROJECT_DIR$/client" />
-    <parameters value="-datadir . -nobrowser" />
+    <parameters value="-datadir . -webaddr https://127.0.0.1:20142 -davaddr https://127.0.0.1:20143" />
+    <envs>
+      <env name="DEBUG" value="1" />
+    </envs>
     <kind value="PACKAGE" />
     <package value="friendnet.org/client/cmd/client" />
     <directory value="$PROJECT_DIR$" />
