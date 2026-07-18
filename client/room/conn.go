@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/netip"
+	"strconv"
 	"sync"
 	"time"
 
@@ -15,6 +17,7 @@ import (
 	"friendnet.org/common/machine"
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
+	"github.com/ccding/go-stun/stun"
 	"github.com/quic-go/quic-go"
 	"google.golang.org/protobuf/proto"
 )
@@ -110,6 +113,14 @@ type Conn struct {
 	directGcInterval time.Duration
 
 	eventPublisher *event.Publisher
+}
+
+// stunResult represents a response from a STUN server
+type stunResult struct {
+	// Whether or not the server deems hole punching viable
+	viable bool
+
+	host stun.Host
 }
 
 // negotiateVersion negotiates the protocol version with the server.
@@ -271,6 +282,133 @@ func (c *Conn) Ping() (time.Duration, error) {
 	}
 
 	return time.Since(start), nil
+}
+
+func (c *Conn) queryStunServers(addresses []string) (*stunResult, error) {
+	var wg sync.WaitGroup
+	var responses []stunResult
+
+	// Query each STUN server and aggregate valid responses
+	for _, addr := range addresses {
+		wg.Go(func() {
+			// Don't query anything if client does not have a hole punch socket (HP'ing disabled)
+			holePunchSocket := c.directMgr.GetHolePunchSocket()
+			if holePunchSocket == nil {
+				c.logger.Debug("client does not have a hole punch socket")
+				return
+			}
+
+			r := make(chan stunResult)
+
+			ctx, cancel := context.WithCancelCause(context.Background())
+
+			c.logger.Debug("contacting", "addr", addr)
+
+			go func() {
+				defer cancel(nil)
+
+				stunClient := stun.NewClientWithConnection(holePunchSocket)
+				stunClient.SetServerAddr(addr)
+				stunClient.SetVerbose(true)
+
+				nat, host, err := stunClient.Discover()
+				if err != nil {
+					c.logger.Debug("failed to discover on server", "addr", addr, "err", err)
+
+					// STUN tests can fail
+				}
+
+				// But if we do not get an address back...
+				if host == nil {
+					cancel(fmt.Errorf("did not get an address back"))
+					return
+				}
+
+				c.logger.Debug("server returned host and nattype",
+					"addr", addr,
+					"host", host.IP(),
+					"port", strconv.FormatUint(uint64(host.Port()), 10),
+					"natType", nat.String(),
+				)
+
+				viableNat := true
+				switch nat {
+				case stun.NATBlocked:
+				case stun.NATSymmetric:
+				case stun.NATError:
+					viableNat = false
+				}
+
+				r <- stunResult{viable: viableNat, host: *host}
+			}()
+
+			select {
+			case res := <-r:
+				c.logger.Debug("STUN server responded", "addr", addr, "host", res.host.String())
+				responses = append(responses, res)
+			case <-time.After(common.StunResTimeoutSeconds * time.Second):
+				c.logger.Debug("STUN server timed out", "addr", addr)
+			case <-ctx.Done():
+				c.logger.Error("STUN server fail", "addr", addr, "err", ctx.Err())
+				return
+			}
+		})
+	}
+
+	wg.Wait()
+
+	if len(responses) == 0 {
+		return nil, fmt.Errorf("got zero results from STUN servers")
+	}
+
+	// Determine if responses reveal discontinuity
+	firstResponse := responses[0]
+
+	for _, resp := range responses[1:] {
+		if firstResponse.host != resp.host {
+			return nil, fmt.Errorf("STUN server response discontinuity found")
+		}
+	}
+
+	// NOTE: There will only ever be at most three servers being contacted.
+	//       That being said, there is a possibility that the first response
+	//       is incorrect. Please discuss this in review.
+	return &firstResponse, nil
+}
+
+// FetchHolePunchAddr queries STUN servers retrieved from the server for a single outgoing hole punch address to cache.
+// If successful in finding an outgoing address, it will add it to the connection method map
+func (c *Conn) FetchHolePunchAddr() (*netip.Addr, error) {
+	res, err := protocol.SendAndReceiveExpect[*pb.MsgStunServers](
+		c.serverConn,
+		pb.MsgType_MSG_TYPE_GET_STUN_SERVERS,
+		&pb.MsgGetStunServers{},
+		pb.MsgType_MSG_TYPE_STUN_SERVERS,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not acquire STUN server list from server")
+	}
+
+	if len(res.Payload.Addresses) == 0 {
+		return nil, fmt.Errorf("did not get any STUN server candidates back")
+	}
+
+	stunResult, err := c.queryStunServers(res.Payload.Addresses)
+	if err != nil {
+		return nil, err
+	}
+
+	if stunResult == nil {
+		return nil, fmt.Errorf("stunResult is nil")
+	}
+
+	if !stunResult.viable {
+		return nil, fmt.Errorf("STUN servers have determined that hole punching is not possible")
+	}
+
+	addr, err := netip.ParseAddr(stunResult.host.IP())
+
+	return &addr, err
 }
 
 // ChangeAccountPassword changes the password on the account the connection is using.

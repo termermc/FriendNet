@@ -8,3 +8,6 @@ const IssuesUrl = RepoUrl + "/issues"
 
 // NewIssueUrl is the URL for creating a new issue.
 const NewIssueUrl = IssuesUrl + "/new"
+
+// StunResTimeoutSeconds is the number of seconds a STUN resolution attempt will live before being timed out
+const StunResTimeoutSeconds = 3

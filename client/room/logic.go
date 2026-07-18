@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log/slog"
 
 	"friendnet.org/client/share"
 	"friendnet.org/common"
@@ -66,14 +67,16 @@ type Logic interface {
 
 // LogicImpl implements Logic.
 type LogicImpl struct {
+	logger      *slog.Logger
 	shares      *share.Manager
 	searchLimit int64
 }
 
 var _ Logic = (*LogicImpl)(nil)
 
-func NewLogicImpl(shares *share.Manager) *LogicImpl {
+func NewLogicImpl(logger *slog.Logger, shares *share.Manager) *LogicImpl {
 	return &LogicImpl{
+		logger:      logger,
 		shares:      shares,
 		searchLimit: 100,
 	}

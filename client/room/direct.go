@@ -256,6 +256,7 @@ func (c *Conn) runDirectAdsAndLoop() {
 	}
 
 	var publicIp netip.Addr
+	publicIpPunched := false
 
 	if !mgr.IsPublicIpDiscoveryDisabled() {
 		// Ask for public IP from the server and notify the manager of it.
@@ -288,6 +289,19 @@ func (c *Conn) runDirectAdsAndLoop() {
 
 			mgr.NotifyIpAvailable(publicIp)
 		}()
+	} else if !mgr.IsNatHolePunchingDisabled() {
+		var err error
+		pIp, err := c.FetchHolePunchAddr()
+		if err != nil {
+			c.logger.Error("hole punching address fetch failed",
+				"service", "room.Conn",
+				"err", err,
+			)
+		} else if pIp != nil {
+			publicIp = *pIp
+			publicIpPunched = true
+			mgr.NotifyIpAvailable(publicIp)
+		}
 	}
 
 	advertiseInBg := func(server *direct.Server) {
@@ -302,10 +316,16 @@ func (c *Conn) runDirectAdsAndLoop() {
 			// If so, try to advertise it.
 			// If we are listening on a private port, port forwarding might be enabled.
 			if publicIp.IsValid() {
-				methodsToAdvertise = append(methodsToAdvertise, c.mkAdConnMethod(
+				a := c.mkAdConnMethod(
 					publicIp,
 					netip.AddrPortFrom(publicIp, server.AddrPort.Port()),
-				))
+				)
+
+				if publicIpPunched {
+					a.Type = pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH
+				}
+
+				methodsToAdvertise = append(methodsToAdvertise, a)
 			}
 		}
 

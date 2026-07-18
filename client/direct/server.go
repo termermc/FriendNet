@@ -112,6 +112,42 @@ func NewServer(
 	)
 }
 
+func NewServerFromHolePunchSocket(
+	logger *slog.Logger,
+	ctx context.Context,
+	m *Manager,
+	cert tls.Certificate,
+) (*Server, error) {
+	if m.holePunchSocket == nil {
+		return nil, fmt.Errorf("cannot make server without hole punch socket")
+	}
+
+	holePunchAddr := m.holePunchSocket.LocalAddr()
+	holePunchAddrPort, err := netip.ParseAddrPort(holePunchAddr.String())
+	if err != nil {
+		return nil, err
+	}
+
+	transport := &quic.Transport{Conn: m.holePunchSocket}
+
+	listener, err := protocol.NewQuicProtoListenerFromTransport(transport, &tls.Config{
+		MinVersion:   tls.VersionTLS13,
+		Certificates: []tls.Certificate{cert},
+		NextProtos:   []string{protocol.DirectAlpnProtoName},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return NewServerFromListener(
+		logger,
+		ctx,
+		m,
+		holePunchAddrPort,
+		listener,
+	)
+}
+
 // Close closes the server.
 func (s *Server) Close() error {
 	select {

@@ -33,7 +33,7 @@ install-tools:
 	go install connectrpc.com/connect/cmd/protoc-gen-connect-go@v1.19.1
 
 pb:
-	cd protocol && buf lint && buf generate
+	cd protocol && npx buf lint && npx buf generate
 	cd webui && npx buf lint && npx buf generate
 	cd server-widget && npx buf lint && npx buf generate
 	cd adminui && npx buf lint && npx buf generate

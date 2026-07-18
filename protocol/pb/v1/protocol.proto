@@ -752,3 +752,12 @@ message MsgDownloadStatusUpdate {
     // The number does not imply that the download was fully sequential.
     uint64 bytes_downloaded = 3;
 }
+
+// See MSG_TYPE_GET_STUN_SERVERS
+message MsgGetStunServers {
+}
+
+// See MSG_TYPE_STUN_SERVERS
+message MsgStunServers {
+    repeated string addresses = 1;
+}

@@ -164,27 +164,25 @@ const (
 	// Multiple messages of this type can be sent in the same bidi until the sender closes it.
 	// The receiver may close the bidi at any time.
 	MsgType_MSG_TYPE_DOWNLOAD_STATUS_UPDATE MsgType = 42
-	// [C2S, S2C] Used in the initiation of the NAT hole punching process.
-	// When C2S, it requests a hole punch to the specified user.
-	// The server will then send S2C to the target user and relay the response.
+	// [C2S] Requests a list of STUN servers the client can use to discover its public IP and port.
+	// Expected: MSG_TYPE_STUN_SERVERS
+	MsgType_MSG_TYPE_GET_STUN_SERVERS MsgType = 43
+	// [S2C] A list of STUN servers a client can use to discover its public IP and port.
+	MsgType_MSG_TYPE_STUN_SERVERS MsgType = 44
+	// [C2C] Sent by a client to a peer to initiate NAT hole punching.
+	// It includes the initiator's public IP address and port.
 	// Expected: Either:
-	//   - If C2S: Message MSG_TYPE_PUNCH_ENDPOINT
-	//   - If C2S: Message MSG_TYPE_ERROR of ERR_TYPE_CLIENT_NOT_ONLINE if the target user is not online.
-	//   - If S2C: Message MSG_TYPE_PUNCH_ACCEPT if the client accepted the hole punch request.
-	//   - If S2C: Message MSG_TYPE_PUNCH_REJECT if the client rejected the hole punch request.
-	MsgType_MSG_TYPE_START_PUNCH MsgType = 43
-	// [C2S] Used to confirm a NAT hole punching attempt.
-	MsgType_MSG_TYPE_PUNCH_ACCEPT MsgType = 44
+	//   - Message MSG_TYPE_PUNCH_ACCEPT if the client accepted the hole punch request.
+	//   - Message MSG_TYPE_PUNCH_REJECT if the client rejected the hole punch request.
+	MsgType_MSG_TYPE_PUNCH_OFFER MsgType = 45
+	// [C2C] Used to confirm a NAT hole punching attempt.
+	// It includes the peer's IP and port. The IP must be in the same family (IPv4 or IPv6) as the IP
+	// in the MSG_TYPE_PUNCH_OFFER that it is replying to.
+	MsgType_MSG_TYPE_PUNCH_ACCEPT MsgType = 46
 	// [C2S, S2C] When C2S, used to reject a NAT hole punching attempt.
 	// When S2C, it is the  forwarded rejection reason from the target client.
 	// If S2C, the stream will be closed after being sent.
-	MsgType_MSG_TYPE_PUNCH_REJECT MsgType = 45
-	// [S2C] Sent by the server and used by clients to validate with its discovery endpoint.
-	// This is sent to both clients after the target accepted the attempt.
-	MsgType_MSG_TYPE_PUNCH_TOKEN MsgType = 46
-	// [S2C] Sent by the server to each client in a NAT hole punch session once both sides have reached
-	// out to the discovery address. It contains the other side's IP address and port.
-	MsgType_MSG_TYPE_PUNCH_ADDRESS MsgType = 47
+	MsgType_MSG_TYPE_PUNCH_REJECT MsgType = 47
 )
 
 // Enum value maps for MsgType.
@@ -233,11 +231,11 @@ var (
 		40: "MSG_TYPE_SEARCH_RESULT",
 		41: "MSG_TYPE_SEARCH_ROOM_RESULT",
 		42: "MSG_TYPE_DOWNLOAD_STATUS_UPDATE",
-		43: "MSG_TYPE_START_PUNCH",
-		44: "MSG_TYPE_PUNCH_ACCEPT",
-		45: "MSG_TYPE_PUNCH_REJECT",
-		46: "MSG_TYPE_PUNCH_TOKEN",
-		47: "MSG_TYPE_PUNCH_ADDRESS",
+		43: "MSG_TYPE_GET_STUN_SERVERS",
+		44: "MSG_TYPE_STUN_SERVERS",
+		45: "MSG_TYPE_PUNCH_OFFER",
+		46: "MSG_TYPE_PUNCH_ACCEPT",
+		47: "MSG_TYPE_PUNCH_REJECT",
 	}
 	MsgType_value = map[string]int32{
 		"MSG_TYPE_UNSPECIFIED":                        0,
@@ -283,11 +281,11 @@ var (
 		"MSG_TYPE_SEARCH_RESULT":                      40,
 		"MSG_TYPE_SEARCH_ROOM_RESULT":                 41,
 		"MSG_TYPE_DOWNLOAD_STATUS_UPDATE":             42,
-		"MSG_TYPE_START_PUNCH":                        43,
-		"MSG_TYPE_PUNCH_ACCEPT":                       44,
-		"MSG_TYPE_PUNCH_REJECT":                       45,
-		"MSG_TYPE_PUNCH_TOKEN":                        46,
-		"MSG_TYPE_PUNCH_ADDRESS":                      47,
+		"MSG_TYPE_GET_STUN_SERVERS":                   43,
+		"MSG_TYPE_STUN_SERVERS":                       44,
+		"MSG_TYPE_PUNCH_OFFER":                        45,
+		"MSG_TYPE_PUNCH_ACCEPT":                       46,
+		"MSG_TYPE_PUNCH_REJECT":                       47,
 	}
 )
 
@@ -3101,6 +3099,88 @@ func (x *MsgDownloadStatusUpdate) GetBytesDownloaded() uint64 {
 	return 0
 }
 
+// See MSG_TYPE_GET_STUN_SERVERS
+type MsgGetStunServers struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MsgGetStunServers) Reset() {
+	*x = MsgGetStunServers{}
+	mi := &file_pb_v1_protocol_proto_msgTypes[45]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MsgGetStunServers) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgGetStunServers) ProtoMessage() {}
+
+func (x *MsgGetStunServers) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_v1_protocol_proto_msgTypes[45]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MsgGetStunServers.ProtoReflect.Descriptor instead.
+func (*MsgGetStunServers) Descriptor() ([]byte, []int) {
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{45}
+}
+
+// See MSG_TYPE_STUN_SERVERS
+type MsgStunServers struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Addresses     []string               `protobuf:"bytes,1,rep,name=addresses,proto3" json:"addresses,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MsgStunServers) Reset() {
+	*x = MsgStunServers{}
+	mi := &file_pb_v1_protocol_proto_msgTypes[46]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MsgStunServers) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgStunServers) ProtoMessage() {}
+
+func (x *MsgStunServers) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_v1_protocol_proto_msgTypes[46]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MsgStunServers.ProtoReflect.Descriptor instead.
+func (*MsgStunServers) Descriptor() ([]byte, []int) {
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{46}
+}
+
+func (x *MsgStunServers) GetAddresses() []string {
+	if x != nil {
+		return x.Addresses
+	}
+	return nil
+}
+
 var File_pb_v1_protocol_proto protoreflect.FileDescriptor
 
 const file_pb_v1_protocol_proto_rawDesc = "" +
@@ -3229,7 +3309,10 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x17MsgDownloadStatusUpdate\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12-\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x15.pb.v1.DownloadStatusR\x06status\x12)\n" +
-	"\x10bytes_downloaded\x18\x03 \x01(\x04R\x0fbytesDownloaded*\xaf\v\n" +
+	"\x10bytes_downloaded\x18\x03 \x01(\x04R\x0fbytesDownloaded\"\x13\n" +
+	"\x11MsgGetStunServers\".\n" +
+	"\x0eMsgStunServers\x12\x1c\n" +
+	"\taddresses\x18\x01 \x03(\tR\taddresses*\xb3\v\n" +
 	"\aMsgType\x12\x18\n" +
 	"\x14MSG_TYPE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rMSG_TYPE_PING\x10\x01\x12\x11\n" +
@@ -3274,12 +3357,12 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x0fMSG_TYPE_SEARCH\x10'\x12\x1a\n" +
 	"\x16MSG_TYPE_SEARCH_RESULT\x10(\x12\x1f\n" +
 	"\x1bMSG_TYPE_SEARCH_ROOM_RESULT\x10)\x12#\n" +
-	"\x1fMSG_TYPE_DOWNLOAD_STATUS_UPDATE\x10*\x12\x18\n" +
-	"\x14MSG_TYPE_START_PUNCH\x10+\x12\x19\n" +
-	"\x15MSG_TYPE_PUNCH_ACCEPT\x10,\x12\x19\n" +
-	"\x15MSG_TYPE_PUNCH_REJECT\x10-\x12\x18\n" +
-	"\x14MSG_TYPE_PUNCH_TOKEN\x10.\x12\x1a\n" +
-	"\x16MSG_TYPE_PUNCH_ADDRESS\x10/*\x8b\x03\n" +
+	"\x1fMSG_TYPE_DOWNLOAD_STATUS_UPDATE\x10*\x12\x1d\n" +
+	"\x19MSG_TYPE_GET_STUN_SERVERS\x10+\x12\x19\n" +
+	"\x15MSG_TYPE_STUN_SERVERS\x10,\x12\x18\n" +
+	"\x14MSG_TYPE_PUNCH_OFFER\x10-\x12\x19\n" +
+	"\x15MSG_TYPE_PUNCH_ACCEPT\x10.\x12\x19\n" +
+	"\x15MSG_TYPE_PUNCH_REJECT\x10/*\x8b\x03\n" +
 	"\aErrType\x12\x18\n" +
 	"\x14ERR_TYPE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11ERR_TYPE_INTERNAL\x10\x01\x12\x1e\n" +
@@ -3347,7 +3430,7 @@ func file_pb_v1_protocol_proto_rawDescGZIP() []byte {
 }
 
 var file_pb_v1_protocol_proto_enumTypes = make([]protoimpl.EnumInfo, 8)
-var file_pb_v1_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 45)
+var file_pb_v1_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 47)
 var file_pb_v1_protocol_proto_goTypes = []any{
 	(MsgType)(0),                              // 0: pb.v1.MsgType
 	(ErrType)(0),                              // 1: pb.v1.ErrType
@@ -3402,6 +3485,8 @@ var file_pb_v1_protocol_proto_goTypes = []any{
 	(*MsgSearchResult)(nil),                   // 50: pb.v1.MsgSearchResult
 	(*MsgSearchRoomResult)(nil),               // 51: pb.v1.MsgSearchRoomResult
 	(*MsgDownloadStatusUpdate)(nil),           // 52: pb.v1.MsgDownloadStatusUpdate
+	(*MsgGetStunServers)(nil),                 // 53: pb.v1.MsgGetStunServers
+	(*MsgStunServers)(nil),                    // 54: pb.v1.MsgStunServers
 }
 var file_pb_v1_protocol_proto_depIdxs = []int32{
 	1,  // 0: pb.v1.MsgError.type:type_name -> pb.v1.ErrType
@@ -3443,7 +3528,7 @@ func file_pb_v1_protocol_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pb_v1_protocol_proto_rawDesc), len(file_pb_v1_protocol_proto_rawDesc)),
 			NumEnums:      8,
-			NumMessages:   45,
+			NumMessages:   47,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

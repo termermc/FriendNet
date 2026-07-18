@@ -11,6 +11,7 @@ import (
 	"friendnet.org/common/machine"
 	"friendnet.org/common/password"
 	"friendnet.org/protocol"
+	"friendnet.org/server/config"
 	"friendnet.org/server/lobby"
 	"friendnet.org/server/room"
 	"friendnet.org/server/storage"
@@ -47,6 +48,7 @@ func NewServer(
 	storage *storage.Storage,
 	connMethodSupport machine.ConnMethodSupport,
 	passReqs password.Requirements,
+	cfg *config.ServerConfig,
 ) (*Server, error) {
 	if storage == nil {
 		panic("storage cannot be nil")
@@ -60,7 +62,7 @@ func NewServer(
 		storage,
 		connMethodSupport,
 		passReqs,
-		room.NewLogicImpl(logger),
+		room.NewLogicImpl(logger, cfg),
 	)
 	if err != nil {
 		ctxCancel()

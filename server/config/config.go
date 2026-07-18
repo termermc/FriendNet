@@ -42,6 +42,9 @@ type ServerConfig struct {
 
 	// The configuration for the server's RPC service.
 	Rpc ServerRpcConfig `json:"rpc"`
+
+	// List of STUN servers to provide user
+	StunServers []string `json:"stun_servers"`
 }
 
 // Default is the default server configuration.
@@ -72,6 +75,9 @@ var Default = &ServerConfig{
 				CorsAllowAllOrigins: true,
 			},
 		},
+	},
+	StunServers: []string{
+		"stun.l.google.com:19302",
 	},
 }
 

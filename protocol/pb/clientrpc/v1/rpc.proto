@@ -347,6 +347,9 @@ message DirectSettings {
     // Defaults to 10 seconds.
     // Has no effect if disable_upnp is true.
     uint32 upnp_timeout_ms = 8;
+
+    // Whether to disable NAT hole punching
+    bool disable_nat_hole_punching = 9;
 }
 
 // TransferSettings are transfer (download and upload) settings for the client.

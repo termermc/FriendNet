@@ -20,6 +20,7 @@ const P2pSettings: Component = () => {
 		createSignal(false)
 	const [disableUpnp, setDisableUpnp] = createSignal(false)
 	const [upnpTimeoutMs, setUpnpTimeoutMs] = createSignal(10_000)
+	const [disableNatHolePunching, setDisableNatHolePunching] = createSignal(false)
 
 	const [error, setError] = createSignal('')
 	const [isSaving, setSaving] = createSignal(false)
@@ -46,6 +47,7 @@ const P2pSettings: Component = () => {
 					disablePublicIpDiscovery: disablePublicIpDiscovery(),
 					disableUpnp: disableUpnp(),
 					upnpTimeoutMs: upnpTimeoutMs(),
+					disableNatHolePunching: disableNatHolePunching(),
 				},
 			})
 
@@ -76,6 +78,7 @@ const P2pSettings: Component = () => {
 			setDisablePublicIpDiscovery(cfg.disablePublicIpDiscovery)
 			setDisableUpnp(cfg.disableUpnp)
 			setUpnpTimeoutMs(cfg.upnpTimeoutMs)
+			setDisableNatHolePunching(cfg.disableNatHolePunching)
 		} catch (err) {
 			console.error('failed to get direct connection settings:', err)
 			setError('Internal error, check console')
@@ -347,6 +350,31 @@ const P2pSettings: Component = () => {
 													)
 												}
 												value={upnpTimeoutMs()}
+											/>
+										</td>
+									</tr>
+
+									<tr>
+										<td>
+											<label
+												class={stylesCommon.help}
+												title="If checked, the client will not attempt UDP hole punching."
+												for="setting-disable-nat-hole-punching"
+											>
+												Disable NAT hole punching?
+											</label>
+										</td>
+										<td>
+											<input
+												type="checkbox"
+												id="setting-disable-nat-hole-punching"
+												placeholder=""
+												onChange={(e) =>
+													setDisableNatHolePunching(
+														e.currentTarget.checked,
+													)
+												}
+												checked={disableNatHolePunching()}
 											/>
 										</td>
 									</tr>

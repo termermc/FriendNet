@@ -132,6 +132,7 @@ func main() {
 		storageInst,
 		connMethodSupport,
 		passReqs,
+		cfg,
 	)
 	if err != nil {
 		logger.Error("failed to create server", "err", err)

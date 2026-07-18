@@ -46,6 +46,8 @@ type Manager struct {
 	cfgAddrPorts map[netip.AddrPort]struct{}
 	defaultPort  uint16
 
+	holePunchSocket *net.UDPConn
+
 	// All currently listening servers.
 	servers map[netip.AddrPort]*Server
 
@@ -71,6 +73,19 @@ func NewManager(
 		defaultPort = uint16(rand.IntN(65535-minPort) + minPort)
 	}
 
+	var holePunchSocket *net.UDPConn
+	if !cfg.DisableNatHolePunching {
+		var err error
+		port := cfg.NatHolePunchingBindPort
+		holePunchSocket, err = net.ListenUDP("udp", &net.UDPAddr{Port: int(port)})
+		if err != nil {
+			cancel()
+			return nil, fmt.Errorf("failed to listen on UDP port %d", port)
+		}
+
+		logger.Debug("created hole punch socket", "service", "direct.Manager")
+	}
+
 	m := &Manager{
 		logger: logger,
 
@@ -80,6 +95,8 @@ func NewManager(
 		cfg:          cfg,
 		cfgAddrPorts: addrPorts,
 		defaultPort:  defaultPort,
+
+		holePunchSocket: holePunchSocket,
 
 		servers:    make(map[netip.AddrPort]*Server),
 		partitions: make(map[string]*Partition),
@@ -197,6 +214,29 @@ func (m *Manager) startServers() {
 		cancel()
 	}
 
+	// Add a server on a hole punch socket if enabled
+	if !m.cfg.DisableNatHolePunching {
+		// Create single server from holepunch socket
+		server, err := NewServerFromHolePunchSocket(m.logger, m.ctx, m, m.cfg.Cert)
+		if err != nil {
+			m.logger.Warn("could not create direct server from hole punch socket",
+				"service", "direct.Manager",
+				"err", err,
+			)
+			return
+		}
+
+		// Add to map
+		m.mu.Lock()
+		m.servers[server.AddrPort] = server
+		for _, part := range m.partitions {
+			go part.notifyServerOpen(server)
+		}
+		m.mu.Unlock()
+
+		m.logger.Debug("created hole punch server", "service", "direct.Manager")
+	}
+
 	var probedIps []netip.Addr
 	if !m.cfg.DisableProbeIpsToAdvertise {
 		probedIps = common.GetUnicastIpsFromInterfaces(false, true)
@@ -219,8 +259,9 @@ func (m *Manager) startServers() {
 		listenAddrPorts = append(listenAddrPorts, addrPort)
 	}
 
-	// Create servers for each address.
 	servers := make([]*Server, 0, len(listenAddrPorts))
+
+	// Create servers for each address.
 	for _, addrPort := range listenAddrPorts {
 		server, err := NewServer(m.logger, m.ctx, m, addrPort, m.cfg.Cert)
 		if err != nil {
@@ -244,6 +285,8 @@ func (m *Manager) startServers() {
 		}
 	}
 	m.mu.Unlock()
+
+	m.logger.Debug("created servers from UPnP", "service", "direct.Manager")
 }
 
 // Close closes the manager and all the servers it manages.
@@ -277,6 +320,14 @@ func (m *Manager) IsPublicIpDiscoveryDisabled() bool {
 // AdvertisePrivateIps returns whether clients should advertise their private IPs to the server.
 func (m *Manager) AdvertisePrivateIps() bool {
 	return m.cfg.AdvertisePrivateIps
+}
+
+func (m *Manager) GetHolePunchSocket() *net.UDPConn {
+	return m.holePunchSocket
+}
+
+func (m *Manager) IsNatHolePunchingDisabled() bool {
+	return m.cfg.DisableNatHolePunching
 }
 
 // NotifyIpAvailable notifies the Manager that an IP address is available for use.

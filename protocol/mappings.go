@@ -92,6 +92,10 @@ func MsgTypeToEmptyMsg(typ pb.MsgType) proto.Message {
 		return &pb.MsgSearchResult{}
 	case pb.MsgType_MSG_TYPE_SEARCH_ROOM_RESULT:
 		return &pb.MsgSearchRoomResult{}
+	case pb.MsgType_MSG_TYPE_GET_STUN_SERVERS:
+		return &pb.MsgGetStunServers{}
+	case pb.MsgType_MSG_TYPE_STUN_SERVERS:
+		return &pb.MsgStunServers{}
 	default:
 		return nil
 	}

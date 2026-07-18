@@ -178,7 +178,7 @@ func (c *MultiClient) createServerInstance(record storage.ServerRecord) (*Server
 		return nil, err
 	}
 
-	logic := room.NewLogicImpl(shareMgr)
+	logic := room.NewLogicImpl(c.logger, shareMgr)
 
 	return &Server{
 		Uuid:      record.Uuid,

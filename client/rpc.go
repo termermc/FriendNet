@@ -628,6 +628,7 @@ func (s *RpcServer) GetDirectSettings(ctx context.Context, _ *v1.GetDirectSettin
 			DisablePublicIpDiscovery:   cfg.DisablePublicIpDiscovery,
 			DisableUpnp:                cfg.DisableUPnP,
 			UpnpTimeoutMs:              uint32(cfg.UpnpTimeout / time.Millisecond),
+			DisableNatHolePunching:     cfg.DisableNatHolePunching,
 		},
 	}, nil
 }
@@ -696,6 +697,10 @@ func (s *RpcServer) UpdateDirectSettings(ctx context.Context, request *v1.Update
 	}
 
 	if err = store.PutSettingInt(ctx, direct.SettingUpnpTimeoutMs, int64(cfg.UpnpTimeoutMs)); err != nil {
+		return nil, err
+	}
+
+	if err = store.PutSettingBool(ctx, direct.SettingDisableNatHolePunching, cfg.DisableNatHolePunching); err != nil {
 		return nil, err
 	}
 

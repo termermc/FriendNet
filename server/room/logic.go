@@ -12,6 +12,7 @@ import (
 	"friendnet.org/common/password"
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
+	"friendnet.org/server/config"
 )
 
 // Logic exposes handlers for incoming C2S messages.
@@ -118,10 +119,18 @@ type Logic interface {
 		bidi protocol.ProtoBidi,
 		msg *protocol.TypedProtoMsg[*pb.MsgSearch],
 	) error
+
+	OnGetStunServers(
+		ctx context.Context,
+		client *Client,
+		bidi protocol.ProtoBidi,
+		msg *protocol.TypedProtoMsg[*pb.MsgGetStunServers],
+	) error
 }
 
 type LogicImpl struct {
 	logger *slog.Logger
+	cfg    *config.ServerConfig
 
 	directConnTestTimeout time.Duration
 	searchTimeout         time.Duration
@@ -129,9 +138,10 @@ type LogicImpl struct {
 
 var _ Logic = (*LogicImpl)(nil)
 
-func NewLogicImpl(logger *slog.Logger) *LogicImpl {
+func NewLogicImpl(logger *slog.Logger, cfg *config.ServerConfig) *LogicImpl {
 	return &LogicImpl{
 		logger: logger,
+		cfg:    cfg,
 
 		directConnTestTimeout: 10 * time.Second,
 		searchTimeout:         1 * time.Minute,
@@ -468,6 +478,21 @@ recvLoop:
 				return err
 			}
 		}
+	}
+
+	return nil
+}
+
+func (l LogicImpl) OnGetStunServers(ctx context.Context, client *Client, bidi protocol.ProtoBidi, _ *protocol.TypedProtoMsg[*pb.MsgGetStunServers]) error {
+	var m = &pb.MsgStunServers{
+		Addresses: make([]string, len(l.cfg.StunServers)),
+	}
+
+	copy(m.Addresses, l.cfg.StunServers)
+
+	err := bidi.Write(pb.MsgType_MSG_TYPE_STUN_SERVERS, m)
+	if err != nil {
+		return err
 	}
 
 	return nil
