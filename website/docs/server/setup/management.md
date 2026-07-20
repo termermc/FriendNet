@@ -48,7 +48,7 @@ To enable it, you will need to add an RPC interface to your config JSON:
 
 ```json
 {
-	"address": "https://127.0.0.1:9999",
+	"addresses": ["https://127.0.0.1:9999"],
 	"allowed_methods": ["*"],
 	"bearer_token": "A_SECRET_LONG_RANDOM_STRING",
 	"enable_admin_ui": true

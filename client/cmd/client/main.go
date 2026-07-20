@@ -418,11 +418,20 @@ func main() {
 		webserver.WithHttpsSupport(httpsKeyPair),
 	)
 
+	// Set up web UI and RPC handler.
+	// It will listen on the configured or default address on HTTPS, and also on a random port to be used by the
+	// webview.
+	webAddrs := make([]string, 0, 2)
+	webAddrs = append(webAddrs, webAddr)
+	if webViewAddr != "" {
+		webAddrs = append(webAddrs, webViewAddr)
+	}
+
 	rpc, err := common.NewRpcServer(
 		logger,
 		webServer,
 		common.RpcServerConfig{
-			Address:             webAddr,
+			Addresses:           webAddrs,
 			AllowedMethods:      []string{"*"},
 			BearerToken:         rpcBearerToken,
 			CorsAllowAllOrigins: true,
@@ -443,15 +452,6 @@ func main() {
 	if err != nil {
 		_ = multi.Close()
 		panic(fmt.Errorf(`failed to create RPC server: %w`, err))
-	}
-
-	// Set up web UI and RPC handler.
-	// It will listen on the configured or default address on HTTPS, and also on a random port to be used by the
-	// webview.
-	webAddrs := make([]string, 0, 2)
-	webAddrs = append(webAddrs, webAddr)
-	if webViewAddr != "" {
-		webAddrs = append(webAddrs, webViewAddr)
 	}
 
 	for _, addr := range webAddrs {

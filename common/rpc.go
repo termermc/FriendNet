@@ -20,7 +20,7 @@ import (
 // RpcServerConfig is the configuration for a single RPC server instance.
 // Can be JSON (de)serialized.
 type RpcServerConfig struct {
-	// The address to bind to.
+	// The addresses to bind to.
 	// Must be in the format "PROTOCOL://HOST:PORT" (or without port for unix).
 	//
 	// Supported protocols:
@@ -36,6 +36,11 @@ type RpcServerConfig struct {
 	// The unix protocol will create a file with 0600 permission by default.
 	// To set the permission, set the "file_permission" field.
 	// Windows support for the unix protocol is not supported but may work.
+	Addresses []string `json:"addresses"`
+
+	// Single-address version of addresses.
+	// If both address and addresses are specified, this field will be appended to the addresses field.
+	// Deprecated.
 	Address string `json:"address"`
 
 	// The RPC methods that are allowed to be called on this interface.
@@ -266,41 +271,51 @@ func NewRpcServer[T io.Closer](
 		}),
 	)
 
-	err := webServer.Mount(
-		cfg.Address,
-		handlerPath,
-		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			defer func() {
-				if rec := recover(); rec != nil {
-					logger.Error("panic in RCP handler",
-						"service", "common.RpcServer",
-						"err", rec,
-						"stack", string(debug.Stack()),
-					)
+	addrs := make([]string, 0, len(cfg.Addresses)+1)
+	for _, addr := range cfg.Addresses {
+		addrs = append(addrs, addr)
+	}
+	if cfg.Address != "" {
+		addrs = append(addrs, cfg.Address)
+	}
+
+	for _, addr := range addrs {
+		err := webServer.Mount(
+			addr,
+			handlerPath,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				defer func() {
+					if rec := recover(); rec != nil {
+						logger.Error("panic in RCP handler",
+							"service", "common.RpcServer",
+							"err", rec,
+							"stack", string(debug.Stack()),
+						)
+					}
+				}()
+
+				if s.corsAllowAllOrigins {
+					origin := r.Header.Get("Origin")
+					if origin == "" {
+						origin = "*"
+					}
+					w.Header().Set("Access-Control-Allow-Origin", origin)
 				}
-			}()
 
-			if s.corsAllowAllOrigins {
-				origin := r.Header.Get("Origin")
-				if origin == "" {
-					origin = "*"
+				if r.Method == http.MethodOptions {
+					w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+					w.Header().Add("Access-Control-Allow-Headers", "*")
+					w.Header().Add("Access-Control-Allow-Headers", "Authorization, Content-Type, connect-protocol-version")
+					w.WriteHeader(http.StatusNoContent)
+					return
 				}
-				w.Header().Set("Access-Control-Allow-Origin", origin)
-			}
 
-			if r.Method == http.MethodOptions {
-				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-				w.Header().Add("Access-Control-Allow-Headers", "*")
-				w.Header().Add("Access-Control-Allow-Headers", "Authorization, Content-Type, connect-protocol-version")
-				w.WriteHeader(http.StatusNoContent)
-				return
-			}
-
-			handler.ServeHTTP(w, r)
-		}),
-	)
-	if err != nil {
-		return nil, fmt.Errorf(`failed to mount RPC handler on %q path %q: %w`, cfg.Address, handlerPath, err)
+				handler.ServeHTTP(w, r)
+			}),
+		)
+		if err != nil {
+			return nil, fmt.Errorf(`failed to mount RPC handler on %q path %q: %w`, cfg.Address, handlerPath, err)
+		}
 	}
 
 	return s, nil

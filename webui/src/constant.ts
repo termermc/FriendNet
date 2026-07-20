@@ -1,7 +1,7 @@
 /**
  * The application name.
  */
-export const AppName = 'FriendNet Web UI'
+export const AppName = 'FriendNet'
 
 /**
  * The magic path to the user's profile HTML.

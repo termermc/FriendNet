@@ -114,9 +114,6 @@ const webviewJs = `
 `
 
 func (w *WebView) wireUp(h glaze.WebView) error {
-	// TODO REMOVE THIS
-	return nil
-
 	h.Init(webviewJs)
 	return h.Bind("__locChanged", func(newUrl string) {
 		u, err := url.Parse(newUrl)
@@ -179,7 +176,7 @@ func (w *WebView) Open() error {
 	}
 
 	w.handle.SetTitle("FriendNet Client")
-	w.handle.SetSize(800, 600, glaze.HintNone)
+	w.handle.SetSize(960, 720, glaze.HintNone)
 	w.handle.SetHtml("<h1>Loading...</h1>")
 	if err = w.wireUp(w.handle); err != nil {
 		initErr <- fmt.Errorf(`failed to wire up webview: %w`, err)

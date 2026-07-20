@@ -50,12 +50,12 @@ It will look something like this:
 		"https_pem_path": "rpc.pem",
 		"interfaces": [
 			{
-				"address": "unix://friendnet-server.sock",
+				"addresses": ["unix://friendnet-server.sock"],
 				"allowed_methods": ["*"],
 				"cors_allow_all_origins": false
 			},
 			{
-				"address": "http://127.0.0.1:8080",
+				"addresses": ["http://127.0.0.1:8080"],
 				"allowed_methods": [
 					"GetRooms",
 					"GetRoomInfo",
@@ -88,7 +88,7 @@ To require an authorization token to access an endpoint, add a `bearer_token` pr
 
 ```json
 {
-	"address": "http://127.0.0.1:8080",
+	"addresses": ["http://127.0.0.1:8080"],
 	"allowed_methods": ["*"],
 	"bearer_token": "some-secure-random-token"
 }
