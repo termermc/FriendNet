@@ -45,6 +45,7 @@ server:
 	make adminui && cd server && CGO_ENABLED=0 go build -o friendnet-server friendnet.org/server/cmd/server
 
 server-noui:
+	mkdir -p adminui/dist/
 	cd server && CGO_ENABLED=0 go build -o friendnet-server friendnet.org/server/cmd/server
 
 server-linux-amd64-noui:
@@ -60,6 +61,7 @@ client:
 	make webui && cd client && CGO_ENABLED=0 go build -o friendnet-client friendnet.org/client/cmd/client
 
 client-noui:
+	mkdir -p webui/dist/
 	cd client && CGO_ENABLED=0 go build -o friendnet-client friendnet.org/client/cmd/client
 
 client-windows-amd64-noui:
