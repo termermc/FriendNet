@@ -9,7 +9,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io"
 	"log/slog"
 	"net"
 	"net/http"
@@ -249,6 +248,7 @@ func main() {
 
 	webUrlWithCreds := strings.ReplaceAll(fmt.Sprintf("%s?token=%s", webUrl.String(), rpcBearerToken), "127.0.0.1", "localhost")
 
+	var webView *webview.WebView
 	var webViewAddr string
 	if !noWebView {
 		// Let the OS choose an open port for us to use.
@@ -260,6 +260,9 @@ func main() {
 		_ = listener.Close()
 
 		webViewAddr = "http://127.0.0.1:" + strconv.Itoa(listenPort)
+		addrUrl, _ := url.Parse(webViewAddr)
+
+		webView = webview.New(logger, addrUrl, rpcBearerToken)
 	}
 
 	if !noLock {
@@ -442,8 +445,6 @@ func main() {
 		panic(fmt.Errorf(`failed to create RPC server: %w`, err))
 	}
 
-	var webView *webview.WebView
-
 	// Set up web UI and RPC handler.
 	// It will listen on the configured or default address on HTTPS, and also on a random port to be used by the
 	// webview.
@@ -478,16 +479,14 @@ func main() {
 		panic(fmt.Errorf(`failed to mount WebDAV handler: %w`, err))
 	}
 
-	var webViewCloser io.Closer
-
 	// Close client on SIGTERM.
 	var shutdownWg sync.WaitGroup
 	defer stop()
 	shutdownWg.Go(func() {
 		<-ctx.Done()
 
-		if webViewCloser != nil {
-			_ = webViewCloser.Close()
+		if webView != nil {
+			_ = webView.Close()
 		}
 
 		// Send stop event to all subscribers.
@@ -554,21 +553,52 @@ func main() {
 		stop()
 	}()
 
+	// TODO REMOVE THIS
+	//glz, err := glaze.New(true)
+	//if err != nil {
+	//	logger.Error(`failed to create glaze client`,
+	//		"err", err,
+	//	)
+	//	return
+	//}
+
 	if webView != nil {
-		go func() {
-			// Wait until the HTTP address is available.
-			httpClient := http.DefaultClient
-			httpClient.Timeout = 100 * time.Millisecond
-			for {
-				_, err := httpClient.Get(webViewAddr)
-				if err == nil {
-					break
-				}
-				time.Sleep(100 * time.Millisecond)
+		//go func() {
+		// Wait until the HTTP address is available.
+		addr, _ := url.Parse(webViewAddr)
+		for {
+			ok := common.TryTcpHost(addr.Host, 10*time.Second)
+			if ok {
+				break
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+
+		wvErr := webView.Open()
+		if wvErr != nil {
+			var wvEngine string
+			switch runtime.GOOS {
+			case "darwin":
+				wvEngine = "WKWebView"
+			case "linux":
+				wvEngine = "WebKitGTK (is it installed?)"
+			case "windows":
+				wvEngine = "WebView2 (is Windows up-to-date?)"
 			}
 
-			webView.Run()
-		}()
+			errMsg := "Failed to open web view: " + wvErr.Error() + "\n\n" +
+				"Your system may not have the components required to show a web view.\n" +
+				"Required component: " + wvEngine + "\n\n" +
+				"You can still navigate to the web UI in your browser: " + webUrlWithCreds + "\n" +
+				"A certificate error is normal due to using a self-signed certificate and can safely be accepted."
+
+			logger.Error(`failed to open webview`,
+				"err", wvErr,
+			)
+
+			InfoBox("FriendNet Web View Failed", errMsg)
+		}
+		//}()
 	}
 
 	shutdownWg.Wait()

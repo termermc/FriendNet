@@ -36,7 +36,9 @@ func RandomB64UrlStr(byteLen int) string {
 func TryTcpHost(host string, timeout time.Duration) bool {
 	conn, err := net.DialTimeout("tcp", host, timeout)
 	defer func() {
-		_ = conn.Close()
+		if conn != nil {
+			_ = conn.Close()
+		}
 	}()
 	return err == nil
 }
