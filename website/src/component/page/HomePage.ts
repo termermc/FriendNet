@@ -17,11 +17,7 @@ export const HomePage: Component<void, void> = () => {
 					<h1>FriendNet</h1>
 					<picture>
 						<source type="image/avif" srcset="/logo-wall.avif" />
-						<img
-							src="/logo-wall.png"
-							alt="Logo"
-							loading="lazy"
-						/>
+						<img src="/logo-wall.png" alt="Logo" loading="lazy" />
 					</picture>
 					<h2>is file sharing</h2>
 					<h1>for <span class="friends">friends</span></h1>
