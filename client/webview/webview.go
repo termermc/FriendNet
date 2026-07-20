@@ -24,6 +24,7 @@ type WebView struct {
 
 	lastUrl  *url.URL
 	rpcToken string
+	rpcUrl   string
 
 	isOpen bool
 	handle glaze.WebView
@@ -32,16 +33,19 @@ type WebView struct {
 // New creates a new WebView instance.
 // It does not actually create a web view window until WebView.Open is called, so errors relating to opening it should
 // be reported on the first Open call.
+// The rpcUrl argument can be empty to use the same origin as the RPC.
 func New(
 	logger *slog.Logger,
 	startUrl *url.URL,
 	rpcToken string,
+	rpcUrl string,
 ) *WebView {
 	return &WebView{
 		logger: logger.With("service", "webview.WebView"),
 
 		lastUrl:  startUrl,
 		rpcToken: rpcToken,
+		rpcUrl:   rpcUrl,
 	}
 }
 
@@ -77,8 +81,13 @@ func (w *WebView) IsOpen() bool {
 
 func (w *WebView) urlWithToken(u *url.URL) *url.URL {
 	res := *u
+
 	q := res.Query()
 	q.Set("token", w.rpcToken)
+	if w.rpcUrl != "" {
+		q.Set("rpc", w.rpcUrl)
+	}
+
 	res.RawQuery = q.Encode()
 	return &res
 }
@@ -176,7 +185,7 @@ func (w *WebView) Open() error {
 	}
 
 	w.handle.SetTitle("FriendNet Client")
-	w.handle.SetSize(960, 720, glaze.HintNone)
+	w.handle.SetSize(1280, 720, glaze.HintNone)
 	w.handle.SetHtml("<h1>Loading...</h1>")
 	if err = w.wireUp(w.handle); err != nil {
 		initErr <- fmt.Errorf(`failed to wire up webview: %w`, err)

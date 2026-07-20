@@ -260,9 +260,20 @@ func main() {
 		_ = listener.Close()
 
 		webViewAddr = "http://127.0.0.1:" + strconv.Itoa(listenPort)
-		addrUrl, _ := url.Parse(webViewAddr)
 
-		webView = webview.New(logger, addrUrl, rpcBearerToken)
+		var addrUrl *url.URL
+
+		// Use override, if any.
+		overrideAddr := os.Getenv("WEBVIEW_ADDR")
+		if common.IsDebugMode && overrideAddr != "" {
+			addrUrl, _ = url.Parse(overrideAddr)
+		}
+
+		if addrUrl == nil {
+			addrUrl, _ = url.Parse(webViewAddr)
+		}
+
+		webView = webview.New(logger, addrUrl, rpcBearerToken, webViewAddr)
 	}
 
 	if !noLock {

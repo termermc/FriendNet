@@ -4,8 +4,9 @@
     <working_directory value="$PROJECT_DIR$/client" />
     <parameters value="-datadir . -webaddr https://127.0.0.1:20142 -davaddr https://127.0.0.1:20143" />
     <envs>
-      <env name="DEBUG" value="1" />
       <env name="CGO_ENABLED" value="0" />
+      <env name="DEBUG" value="1" />
+      <env name="WEBVIEW_ADDR" value="http://localhost:5173" />
     </envs>
     <kind value="PACKAGE" />
     <package value="friendnet.org/client/cmd/client" />

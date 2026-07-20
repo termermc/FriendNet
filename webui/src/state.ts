@@ -410,12 +410,14 @@ export class LogManager {
 							this.#setLogCount(this.logCount() + 1)
 							this.#setLatestLog(msg)
 
-							// Log message to console.
-							console.log(
-								'[CLIENT]',
-								msg.message,
-								this.attrsToObject(msg.attrs),
-							)
+							if (!window.__isNative) {
+								// Log message to console.
+								console.log(
+									'[CLIENT]',
+									msg.message,
+									this.attrsToObject(msg.attrs),
+								)
+							}
 						}
 					}
 				}
@@ -627,12 +629,14 @@ export class EventManager {
 
 			try {
 				for await (const res of stream) {
-					console.log(
-						'[EVENT]',
-						Event_Type[res.event!.type],
-						res.event,
-						res.context,
-					)
+					if (!window.__isNative) {
+						console.log(
+							'[EVENT]',
+							Event_Type[res.event!.type],
+							res.event,
+							res.context,
+						)
+					}
 
 					const evt = res.event!
 

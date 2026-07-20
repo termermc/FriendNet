@@ -44,6 +44,14 @@ export const Layout: Component<LayoutProps> = (props) => {
 	return (
 		<div class={styles.container}>
 			<header>
+				<Show when={window.__isNative}>
+					<div class={styles.navButtons}>
+						<button title="Back" onClick={() => window.history.back()}>⤶</button>
+						<button title="Reload" onClick={() => window.location.reload()}>⭮</button>
+						<button title="Forward" onClick={() => window.history.forward()}>⤷</button>
+					</div>
+				</Show>
+
 				<span class={styles.headerTitle}>{AppName}</span>
 
 				<div class={styles.options}>

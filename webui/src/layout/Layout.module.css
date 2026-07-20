@@ -23,6 +23,24 @@
 	height: 2rem;
 	padding: 0.5rem;
 }
+
+.navButtons {
+    display: inline-block;
+
+    padding-right: 1rem;
+    margin-right: 1rem;
+    border-right: 0.1rem solid rgba(0, 0, 0, 0.25);
+}
+.navButtons button {
+    font-weight: bold;
+    font-size: 1rem;
+    width: 2rem;
+    height: 2rem;
+}
+.navButtons button:not(:last-child) {
+    margin-right: 0.5rem;
+}
+
 .headerTitle {
 	font-size: 1.5rem;
 	font-weight: bold;
