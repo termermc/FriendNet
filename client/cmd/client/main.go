@@ -312,7 +312,7 @@ func main() {
 	}
 
 	// Probe for connection method support.
-	connMethodSupport, err := machine.ProbeConnMethodSupport()
+	connMethodSupport, err := machine.ProbeConnMethodSupport(!directCfg.DisableNatHolePunching)
 	if err != nil {
 		logger.Warn("failed to probe for connection method support, support list will be incomplete",
 			"err", err,

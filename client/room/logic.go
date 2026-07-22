@@ -2,11 +2,14 @@ package room
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
 	"log/slog"
+	"net"
+	"time"
 
 	"friendnet.org/client/share"
 	"friendnet.org/common"
@@ -63,6 +66,11 @@ type Logic interface {
 	//
 	// C2C, S2C
 	OnSearch(ctx context.Context, room *Conn, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgSearch]) error
+
+	// OnPunchOffer handles an incoming hole punch offer
+	//
+	// C2C
+	OnPunchOffer(ctx context.Context, room *Conn, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgPunchOffer]) error
 }
 
 // LogicImpl implements Logic.
@@ -365,6 +373,79 @@ func (l *LogicImpl) OnSearch(ctx context.Context, _ *Conn, bidi protocol.ProtoBi
 			return fmt.Errorf("failed to send search result for %q: %w", query, err)
 		}
 	}
+
+	return nil
+}
+
+func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgPunchOffer]) error {
+	reject := func() error {
+		err := bidi.Write(pb.MsgType_MSG_TYPE_PUNCH_REJECT, &pb.MsgPunchReject{})
+		if err != nil {
+			if protocol.IsErrorConnCloseOrCancel(err) {
+				return nil
+			}
+
+			return fmt.Errorf("failed to send punch offer rejection: %w", err)
+		}
+
+		return nil
+	}
+
+	// Can't hole punch if it's disabled
+	if room.directMgr.IsNatHolePunchingDisabled() {
+		return reject()
+	}
+
+	// Can't use an invalid IP
+	if protocol.ValidateMethodAddress(pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH, msg.Payload.Address) != nil {
+		return reject()
+	}
+
+	// Fetch own IP
+	publicAddr, err := room.FetchHolePunchAddr()
+	if err != nil {
+		return reject()
+	}
+
+	err = bidi.Write(pb.MsgType_MSG_TYPE_PUNCH_ACCEPT, &pb.MsgPunchAccept{Address: publicAddr.String()})
+	if err != nil {
+		if protocol.IsErrorConnCloseOrCancel(err) {
+			return nil
+		}
+
+		return fmt.Errorf("failed to send punch offer rejection: %w", err)
+	}
+
+	// Begin sending things to the provided address through our hole punch socket
+	holePunchSocket := room.directMgr.GetHolePunchSocket()
+	if holePunchSocket == nil {
+		return reject()
+	}
+
+	sendAddr, err := net.ResolveUDPAddr("udp", msg.Payload.Address)
+	if err != nil {
+		l.logger.Error("could not resolve hole punch target address", "addr", msg.Payload.Address, "err", err)
+		return err
+	}
+
+	// Periodically send garbage over this socket and hope connection establishes
+	garbageCtx, cancelGarbage := context.WithCancel(ctx)
+	defer cancelGarbage()
+	go func() {
+		ticker := time.NewTicker(common.HolePunchTickMs * time.Millisecond)
+		defer ticker.Stop()
+
+		buffer := make([]byte, common.HolePunchGarbageLength)
+		for {
+			select {
+			case <-ticker.C:
+				_, _ = rand.Read(buffer)
+				holePunchSocket.WriteToUDP(buffer, sendAddr)
+			case <-garbageCtx.Done():
+				return
+			}
+		}
+	}()
 
 	return nil
 }

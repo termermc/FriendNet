@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"net"
 	"net/netip"
 	"slices"
 	"sync"
@@ -256,8 +257,6 @@ func (c *Conn) runDirectAdsAndLoop() {
 	}
 
 	var publicIp netip.Addr
-	publicIpPunched := false
-
 	if !mgr.IsPublicIpDiscoveryDisabled() {
 		// Ask for public IP from the server and notify the manager of it.
 		func() {
@@ -289,19 +288,6 @@ func (c *Conn) runDirectAdsAndLoop() {
 
 			mgr.NotifyIpAvailable(publicIp)
 		}()
-	} else if !mgr.IsNatHolePunchingDisabled() {
-		var err error
-		pIp, err := c.FetchHolePunchAddr()
-		if err != nil {
-			c.logger.Error("hole punching address fetch failed",
-				"service", "room.Conn",
-				"err", err,
-			)
-		} else if pIp != nil {
-			publicIp = *pIp
-			publicIpPunched = true
-			mgr.NotifyIpAvailable(publicIp)
-		}
 	}
 
 	advertiseInBg := func(server *direct.Server) {
@@ -321,12 +307,15 @@ func (c *Conn) runDirectAdsAndLoop() {
 					netip.AddrPortFrom(publicIp, server.AddrPort.Port()),
 				)
 
-				if publicIpPunched {
-					a.Type = pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH
-				}
-
 				methodsToAdvertise = append(methodsToAdvertise, a)
 			}
+		}
+
+		// Is hole punching enabled?
+		if !c.directMgr.IsNatHolePunchingDisabled() {
+			methodsToAdvertise = append(methodsToAdvertise, &pb.MsgAdvertiseConnMethod{
+				Type: pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH,
+			})
 		}
 
 		for _, method := range methodsToAdvertise {
@@ -601,15 +590,66 @@ func (c *Conn) directConnect(ctx context.Context, peer common.NormalizedUsername
 		return nil, 0, fmt.Errorf(`failed to get handshake token for peer %q: %w`, peer.String(), err)
 	}
 
-	conn, result, err := protocol.CreateDirectConnection(
-		ctx,
-		method.Type,
-		method.Address,
-		&pb.MsgDirectConnHandshake{
-			MethodId: method.Id,
-			Token:    tokenMsg.Payload.Token,
-		},
-	)
+	var conn protocol.ProtoConn
+	var result pb.ConnResult
+
+	// We need to get our own address to send C2C to our target before proceeding
+	if method.Type == pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH {
+		holePunchSocket := c.directMgr.GetHolePunchSocket()
+		if holePunchSocket == nil {
+			// Hole punching is probably disabled
+			return nil, 0, fmt.Errorf("tried to direct connect using the holepunch method, but the holepunch socket was nil; is holepunch disabled?")
+		}
+
+		ownAddr, err := c.FetchHolePunchAddr()
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to get address to hole punch: %w", err)
+		}
+
+		fmtAddr := fmt.Sprintf("%s:%d", ownAddr.Addr().String(), ownAddr.Port())
+
+		// Send C2C message beforehand
+		peerConn := c.GetVirtualC2cConn(peer, true)
+		punchAccept, err := protocol.SendAndReceiveExpect[*pb.MsgPunchAccept](
+			peerConn,
+			pb.MsgType_MSG_TYPE_PUNCH_OFFER,
+			&pb.MsgPunchOffer{Address: fmtAddr},
+			pb.MsgType_MSG_TYPE_PUNCH_ACCEPT,
+		)
+		// If err is not nil we assume it was a rejection and therefore fail
+		if err != nil {
+			return nil, 0, fmt.Errorf(`hole punch assumed to be rejected for peer %q: %w`, peer.String(), err)
+		}
+
+		udpAddr, err := net.ResolveUDPAddr("udp", punchAccept.Payload.Address)
+		if err != nil {
+			return nil, 0, fmt.Errorf(`failed to resolve public address sent by peer %q in punch attempt: %w`, peer.String(), err)
+		}
+
+		go protocol.SendNatHolepunchGarbage(ctx, holePunchSocket, udpAddr)
+
+		conn, result, err = protocol.CreateDirectConnectionWithSocket(
+			ctx,
+			pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH,
+			holePunchSocket,
+			punchAccept.Payload.Address,
+			&pb.MsgDirectConnHandshake{
+				MethodId: method.Id,
+				Token:    tokenMsg.Payload.Token,
+			},
+		)
+	} else {
+		conn, result, err = protocol.CreateDirectConnection(
+			ctx,
+			method.Type,
+			method.Address,
+			&pb.MsgDirectConnHandshake{
+				MethodId: method.Id,
+				Token:    tokenMsg.Payload.Token,
+			},
+		)
+	}
+
 	if err != nil {
 		return nil, result, err
 	}

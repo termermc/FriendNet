@@ -2,12 +2,14 @@ package protocol
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
 	"fmt"
 	"net"
 	"net/netip"
+	"time"
 
 	"friendnet.org/common"
 	pb "friendnet.org/protocol/pb/v1"
@@ -24,7 +26,8 @@ var ErrUnsupportedMethodType = errors.New("unsupported direct connection method 
 // Useful when paired with ErrUnknownMethodType.
 func IsMethodTypeKnown(typ pb.ConnMethodType) bool {
 	return typ == pb.ConnMethodType_CONN_METHOD_TYPE_IP ||
-		typ == pb.ConnMethodType_CONN_METHOD_TYPE_YGGDRASIL
+		typ == pb.ConnMethodType_CONN_METHOD_TYPE_YGGDRASIL ||
+		typ == pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH
 }
 
 // ValidateMethodAddress attempts to validate the address for the specified method type.
@@ -103,9 +106,35 @@ func (e DirectConnHandshakeError) IsKThxBye() bool {
 // If the server returns anything else, it will return a DirectConnHandshakeError.
 //
 // This function does not apply its own timeout; that should be done with the context passed in.
+//
+// For connections that must be hole-punched, the function will periodically send garbage over the hole punch socket
+// to the target (and vice-versa) until a QUIC connection is possible
 func CreateDirectConnection(
 	ctx context.Context,
 	methodType pb.ConnMethodType,
+	address string,
+	handshake *pb.MsgDirectConnHandshake,
+) (conn ProtoConn, result pb.ConnResult, err error) {
+	sock, err := net.ListenUDP("udp", &net.UDPAddr{})
+	if err != nil {
+		return nil, 0, fmt.Errorf(`failed to bind UDP socket: %w`, err)
+	}
+
+	return CreateDirectConnectionWithSocket(
+		ctx,
+		methodType,
+		sock,
+		address,
+		handshake,
+	)
+}
+
+// CreateDirectConnectionWithSocket is like CreateDirectConnection, but using an existing UDP socket instead of binding a new one.
+// It is the caller's responsibility to close the socket.
+func CreateDirectConnectionWithSocket(
+	ctx context.Context,
+	methodType pb.ConnMethodType,
+	sock net.PacketConn,
 	address string,
 	handshake *pb.MsgDirectConnHandshake,
 ) (conn ProtoConn, result pb.ConnResult, err error) {
@@ -140,8 +169,13 @@ func CreateDirectConnection(
 			},
 		}
 
+		udpAddr, err := net.ResolveUDPAddr("udp", address)
+		if err != nil {
+			return nil, err
+		}
+
 		var qConn *quic.Conn
-		qConn, err = quic.DialAddr(ctx, address, tlsCfg, &quic.Config{
+		qConn, err = quic.Dial(ctx, sock, udpAddr, tlsCfg, &quic.Config{
 			KeepAlivePeriod:    DefaultKeepAlivePeriod,
 			MaxIncomingStreams: DefaultMaxIncomingStreams,
 		})
@@ -240,4 +274,22 @@ func CreateDirectConnection(
 
 	result = pb.ConnResult_CONN_RESULT_OK
 	return
+}
+
+// SendNatHolepunchGarbage sends garbage to a target using a socket for NAT hole punching.
+// It runs (blocking) until its context is done.
+func SendNatHolepunchGarbage(ctx context.Context, senderSock *net.UDPConn, targetAddr *net.UDPAddr) {
+	ticker := time.NewTicker(common.HolePunchTickMs * time.Microsecond)
+	defer ticker.Stop()
+
+	buffer := make([]byte, common.HolePunchGarbageLength)
+	for {
+		select {
+		case <-ticker.C:
+			_, _ = rand.Read(buffer)
+			senderSock.WriteToUDP(buffer, targetAddr)
+		case <-ctx.Done():
+			return
+		}
+	}
 }

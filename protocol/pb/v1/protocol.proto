@@ -761,3 +761,17 @@ message MsgGetStunServers {
 message MsgStunServers {
     repeated string addresses = 1;
 }
+
+// See MSG_TYPE_PUNCH_OFFER
+message MsgPunchOffer {
+    string address = 1;
+}
+
+// See MSG_TYPE_PUNCH_ACCEPT
+message MsgPunchAccept {
+    string address = 1;
+}
+
+// See MSG_TYPE_PUNCH_REJECT
+message MsgPunchReject {
+}

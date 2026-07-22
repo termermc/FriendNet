@@ -96,10 +96,10 @@ run-rpcclient:
 	make rpcclient && cd server && ../rpcclient/friendnet-rpcclient
 
 server-docker:
-	docker build -t git.termer.net/termer/friendnet-server:latest -f server.Dockerfile .
+	docker build -t git.termer.net/ten/friendnet-server:latest -f server.Dockerfile .
 
 server-docker-publish:
-	make server-docker && docker push git.termer.net/termer/friendnet-server:latest
+	make server-docker && docker push git.termer.net/ten/friendnet-server:latest
 
 release-artifacts:
 	rm -rf /tmp/fn-release

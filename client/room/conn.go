@@ -309,7 +309,6 @@ func (c *Conn) queryStunServers(addresses []string) (*stunResult, error) {
 
 				stunClient := stun.NewClientWithConnection(holePunchSocket)
 				stunClient.SetServerAddr(addr)
-				stunClient.SetVerbose(true)
 
 				nat, host, err := stunClient.Discover()
 				if err != nil {
@@ -324,10 +323,11 @@ func (c *Conn) queryStunServers(addresses []string) (*stunResult, error) {
 					return
 				}
 
-				c.logger.Debug("server returned host and nattype",
+				c.logger.Debug("server returned host and NAT type",
 					"addr", addr,
 					"host", host.IP(),
 					"port", strconv.FormatUint(uint64(host.Port()), 10),
+					"ownport", holePunchSocket.LocalAddr().String(),
 					"natType", nat.String(),
 				)
 
@@ -361,24 +361,31 @@ func (c *Conn) queryStunServers(addresses []string) (*stunResult, error) {
 		return nil, fmt.Errorf("got zero results from STUN servers")
 	}
 
-	// Determine if responses reveal discontinuity
-	firstResponse := responses[0]
+	var result stunResult
+	freq := 0
+	results := make(map[stunResult]int)
 
-	for _, resp := range responses[1:] {
-		if firstResponse.host != resp.host {
-			return nil, fmt.Errorf("STUN server response discontinuity found")
+	// Get most popular response
+	for _, resp := range responses {
+		results[resp]++
+	}
+
+	for r, f := range results {
+		if f > freq {
+			freq = f
+			result = r
 		}
 	}
 
 	// NOTE: There will only ever be at most three servers being contacted.
 	//       That being said, there is a possibility that the first response
 	//       is incorrect. Please discuss this in review.
-	return &firstResponse, nil
+	return &result, nil
 }
 
 // FetchHolePunchAddr queries STUN servers retrieved from the server for a single outgoing hole punch address to cache.
 // If successful in finding an outgoing address, it will add it to the connection method map
-func (c *Conn) FetchHolePunchAddr() (*netip.Addr, error) {
+func (c *Conn) FetchHolePunchAddr() (*netip.AddrPort, error) {
 	res, err := protocol.SendAndReceiveExpect[*pb.MsgStunServers](
 		c.serverConn,
 		pb.MsgType_MSG_TYPE_GET_STUN_SERVERS,
@@ -402,11 +409,12 @@ func (c *Conn) FetchHolePunchAddr() (*netip.Addr, error) {
 		return nil, fmt.Errorf("stunResult is nil")
 	}
 
-	if !stunResult.viable {
-		return nil, fmt.Errorf("STUN servers have determined that hole punching is not possible")
-	}
+	// Not sure if stun.NATError should count as
+	// if !stunResult.viable {
+	// 	return nil, fmt.Errorf("STUN servers have determined that hole punching is not possible")
+	// }
 
-	addr, err := netip.ParseAddr(stunResult.host.IP())
+	addr, err := netip.ParseAddrPort(stunResult.host.String())
 
 	return &addr, err
 }
