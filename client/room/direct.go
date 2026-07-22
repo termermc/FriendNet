@@ -592,6 +592,7 @@ func (c *Conn) directConnect(ctx context.Context, peer common.NormalizedUsername
 
 	var conn protocol.ProtoConn
 	var result pb.ConnResult
+	var connErr error
 
 	// We need to get our own address to send C2C to our target before proceeding
 	if method.Type == pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH {
@@ -628,7 +629,7 @@ func (c *Conn) directConnect(ctx context.Context, peer common.NormalizedUsername
 
 		go protocol.SendNatHolepunchGarbage(ctx, holePunchSocket, udpAddr)
 
-		conn, result, err = protocol.CreateDirectConnectionWithSocket(
+		conn, result, connErr = protocol.CreateDirectConnectionWithSocket(
 			ctx,
 			pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH,
 			holePunchSocket,
@@ -639,7 +640,7 @@ func (c *Conn) directConnect(ctx context.Context, peer common.NormalizedUsername
 			},
 		)
 	} else {
-		conn, result, err = protocol.CreateDirectConnection(
+		conn, result, connErr = protocol.CreateDirectConnection(
 			ctx,
 			method.Type,
 			method.Address,
@@ -650,8 +651,8 @@ func (c *Conn) directConnect(ctx context.Context, peer common.NormalizedUsername
 		)
 	}
 
-	if err != nil {
-		return nil, result, err
+	if connErr != nil {
+		return nil, result, connErr
 	}
 
 	c.AdoptDirectConn(conn, peer)
