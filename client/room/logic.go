@@ -2,7 +2,6 @@ package room
 
 import (
 	"context"
-	"crypto/rand"
 	"errors"
 	"fmt"
 	"io"
@@ -429,23 +428,10 @@ func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi protocol.
 	}
 
 	// Periodically send garbage over this socket and hope connection establishes
-	garbageCtx, cancelGarbage := context.WithCancel(ctx)
-	defer cancelGarbage()
-	go func() {
-		ticker := time.NewTicker(common.HolePunchTickMs * time.Millisecond)
-		defer ticker.Stop()
 
-		buffer := make([]byte, common.HolePunchGarbageLength)
-		for {
-			select {
-			case <-ticker.C:
-				_, _ = rand.Read(buffer)
-				holePunchSocket.WriteToUDP(buffer, sendAddr)
-			case <-garbageCtx.Done():
-				return
-			}
-		}
-	}()
+	// TODO Ten second timeout until we have a reliable way to signal that it should stop sending garbage
+	garbageCtx, _ := context.WithDeadline(context.Background(), time.Now().Add(10*time.Second))
+	go protocol.SendNatHolepunchGarbage(garbageCtx, holePunchSocket, sendAddr)
 
 	return nil
 }

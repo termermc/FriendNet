@@ -279,6 +279,9 @@ func CreateDirectConnectionWithSocket(
 // SendNatHolepunchGarbage sends garbage to a target using a socket for NAT hole punching.
 // It runs (blocking) until its context is done.
 func SendNatHolepunchGarbage(ctx context.Context, senderSock *net.UDPConn, targetAddr *net.UDPAddr) {
+	// TODO REMOVE THIS
+	defer println("Stopped sending garbage to " + targetAddr.String())
+
 	ticker := time.NewTicker(common.HolePunchTickMs * time.Microsecond)
 	defer ticker.Stop()
 
