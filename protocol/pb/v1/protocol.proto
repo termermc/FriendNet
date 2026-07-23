@@ -774,4 +774,5 @@ message MsgPunchAccept {
 
 // See MSG_TYPE_PUNCH_REJECT
 message MsgPunchReject {
+    string message = 1;
 }

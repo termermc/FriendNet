@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/netip"
+	"sync"
 	"time"
 
 	"friendnet.org/protocol"
@@ -21,6 +23,8 @@ const handshakeTimeout = 10 * time.Second
 // It does not perform any authentication, it simply sends the connections along with
 // their handshake messages to the appropriate Partition.
 type Server struct {
+	mu sync.Mutex
+
 	logger *slog.Logger
 
 	ctx       context.Context
@@ -33,6 +37,8 @@ type Server struct {
 	AddrPort netip.AddrPort
 
 	listener protocol.ProtoListener
+
+	onConnChan chan struct{}
 }
 
 // NewServerFromListener creates a new direct connect server using an existing listener.
@@ -57,6 +63,8 @@ func NewServerFromListener(
 		AddrPort: addrPort,
 
 		listener: listener,
+
+		onConnChan: make(chan struct{}),
 	}
 
 	go func() {
@@ -112,23 +120,24 @@ func NewServer(
 	)
 }
 
-func NewServerFromHolePunchSocket(
+// NewServerFromSocket is like NewServer, but it uses an existing UDP socket instead of binding its own.
+func NewServerFromSocket(
 	logger *slog.Logger,
 	ctx context.Context,
 	m *Manager,
+	socket *net.UDPConn,
 	cert tls.Certificate,
 ) (*Server, error) {
-	if m.holePunchSocket == nil {
-		return nil, fmt.Errorf("cannot make server without hole punch socket")
+	if socket == nil {
+		return nil, fmt.Errorf("NewServerFromSocket called with nil socket")
 	}
 
-	holePunchAddr := m.holePunchSocket.LocalAddr()
-	holePunchAddrPort, err := netip.ParseAddrPort(holePunchAddr.String())
+	socketAddrPort, err := netip.ParseAddrPort(socket.LocalAddr().String())
 	if err != nil {
 		return nil, err
 	}
 
-	transport := &quic.Transport{Conn: m.holePunchSocket}
+	transport := &quic.Transport{Conn: socket}
 
 	listener, err := protocol.NewQuicProtoListenerFromTransport(transport, &tls.Config{
 		MinVersion:   tls.VersionTLS13,
@@ -143,7 +152,7 @@ func NewServerFromHolePunchSocket(
 		logger,
 		ctx,
 		m,
-		holePunchAddrPort,
+		socketAddrPort,
 		listener,
 	)
 }
@@ -165,6 +174,20 @@ func (s *Server) Close() error {
 	return nil
 }
 
+// OnConnection returns a channel that is closed when a connection is made.
+// It is not closed when the server closes. You should also select against OnClose.
+func (s *Server) OnConnection() <-chan struct{} {
+	s.mu.Lock()
+	ch := s.onConnChan
+	s.mu.Unlock()
+	return ch
+}
+
+// OnClose returns a channel that is closed when the server is closed.
+func (s *Server) OnClose() <-chan struct{} {
+	return s.ctx.Done()
+}
+
 // run runs the server accept loop.
 // It exits with nil if the server was closed, or an error if there was an error accepting a connection.
 func (s *Server) run() error {
@@ -183,6 +206,12 @@ func (s *Server) run() error {
 
 			return fmt.Errorf(`failed to accept direct connection: %w`, err)
 		}
+
+		// Notify channel of a new connection.
+		s.mu.Lock()
+		close(s.onConnChan)
+		s.onConnChan = make(chan struct{})
+		s.mu.Unlock()
 
 		// TODO REMOVE THIS
 		fmt.Printf("Got connection on server %s from %s\n", s.AddrPort.String(), conn.RemoteAddr().String())

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/netip"
-	"strconv"
 	"sync"
 	"time"
 
@@ -17,7 +17,7 @@ import (
 	"friendnet.org/common/machine"
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
-	"github.com/ccding/go-stun/stun"
+	"friendnet.org/stun"
 	"github.com/quic-go/quic-go"
 	"google.golang.org/protobuf/proto"
 )
@@ -121,14 +121,6 @@ type Conn struct {
 	cachedAddr CachedAddr
 
 	eventPublisher *event.Publisher
-}
-
-// stunResult represents a response from a STUN server
-type stunResult struct {
-	// Whether or not the server deems hole punching viable
-	viable bool
-
-	host stun.Host
 }
 
 // negotiateVersion negotiates the protocol version with the server.
@@ -292,21 +284,19 @@ func (c *Conn) Ping() (time.Duration, error) {
 	return time.Since(start), nil
 }
 
-func (c *Conn) queryStunServers(addresses []string) (*stunResult, error) {
+func (c *Conn) queryStunServers(socket *net.UDPConn, addresses []string) (*netip.AddrPort, error) {
+	// Don't query anything if client does not have a hole punch socket (HP'ing disabled)
+	if socket == nil {
+		return nil, fmt.Errorf("client does not have a hole punch socket")
+	}
+
 	var wg sync.WaitGroup
-	var responses []stunResult
+	var responses []netip.AddrPort
 
 	// Query each STUN server and aggregate valid responses
 	for _, addr := range addresses {
 		wg.Go(func() {
-			// Don't query anything if client does not have a hole punch socket (HP'ing disabled)
-			holePunchSocket := c.directMgr.GetHolePunchSocket()
-			if holePunchSocket == nil {
-				c.logger.Debug("client does not have a hole punch socket")
-				return
-			}
-
-			r := make(chan stunResult)
+			r := make(chan netip.AddrPort)
 
 			ctx, cancel := context.WithCancelCause(context.Background())
 
@@ -315,14 +305,10 @@ func (c *Conn) queryStunServers(addresses []string) (*stunResult, error) {
 			go func() {
 				defer cancel(nil)
 
-				stunClient := stun.NewClientWithConnection(holePunchSocket)
-				stunClient.SetServerAddr(addr)
-
-				nat, host, err := stunClient.Discover()
+				host, err := stun.GetPublicAddrPort(socket, addr)
 				if err != nil {
-					c.logger.Debug("failed to discover on server", "addr", addr, "err", err)
-
-					// STUN tests can fail
+					cancel(fmt.Errorf("failed to discover on server %s: %w", addr, err))
+					return
 				}
 
 				// But if we do not get an address back...
@@ -331,28 +317,17 @@ func (c *Conn) queryStunServers(addresses []string) (*stunResult, error) {
 					return
 				}
 
-				c.logger.Debug("server returned host and NAT type",
+				c.logger.Debug("server returned host",
 					"addr", addr,
-					"host", host.IP(),
-					"port", strconv.FormatUint(uint64(host.Port()), 10),
-					"ownport", holePunchSocket.LocalAddr().String(),
-					"natType", nat.String(),
+					"host", host.String(),
 				)
 
-				viableNat := true
-				switch nat {
-				case stun.NATBlocked:
-				case stun.NATSymmetric:
-				case stun.NATError:
-					viableNat = false
-				}
-
-				r <- stunResult{viable: viableNat, host: *host}
+				r <- *host
 			}()
 
 			select {
 			case res := <-r:
-				c.logger.Debug("STUN server responded", "addr", addr, "host", res.host.String())
+				c.logger.Debug("STUN server responded", "addr", addr, "host", res.String())
 				responses = append(responses, res)
 			case <-time.After(common.StunResTimeout):
 				c.logger.Debug("STUN server timed out", "addr", addr)
@@ -369,9 +344,9 @@ func (c *Conn) queryStunServers(addresses []string) (*stunResult, error) {
 		return nil, fmt.Errorf("got zero results from STUN servers")
 	}
 
-	var result stunResult
+	var result netip.AddrPort
 	freq := 0
-	results := make(map[stunResult]int)
+	results := make(map[netip.AddrPort]int)
 
 	// Get most popular response
 	for _, resp := range responses {
@@ -788,20 +763,9 @@ func (c *Conn) Search(query string) (protocol.Stream[*pb.MsgSearchRoomResult], e
 
 const holePunchAddrPortCacheTime = 5 * time.Minute
 
-// GetHolePunchAddrPort fetches the public IP and port for the hole punch socket.
+// GetHolePunchAddrPort fetches the public IP and port for a socket.
 // It briefly caches the result to avoid hitting STUN servers repeatedly.
-func (c *Conn) GetHolePunchAddrPort() (*netip.AddrPort, error) {
-	c.mu.RLock()
-
-	if time.Now().Before(c.cachedAddr.Expiry) {
-		c.mu.RUnlock()
-		return &c.cachedAddr.AddrPort, nil
-	}
-
-	// Upgrade lock to a write lock.
-	c.mu.RUnlock()
-	c.mu.Lock()
-
+func (c *Conn) GetHolePunchAddrPort(sock *net.UDPConn) (*netip.AddrPort, error) {
 	res, err := protocol.SendAndReceiveExpect[*pb.MsgStunServers](
 		c.serverConn,
 		pb.MsgType_MSG_TYPE_GET_STUN_SERVERS,
@@ -809,36 +773,17 @@ func (c *Conn) GetHolePunchAddrPort() (*netip.AddrPort, error) {
 		pb.MsgType_MSG_TYPE_STUN_SERVERS,
 	)
 	if err != nil {
-		c.mu.Unlock()
 		return nil, fmt.Errorf("could not acquire STUN server list from server")
 	}
 
-	if len(res.Payload.Addresses) == 0 {
-		c.mu.Unlock()
-		return nil, fmt.Errorf("did not get any STUN server candidates back")
-	}
-
-	stunResult, err := c.queryStunServers(res.Payload.Addresses)
+	stunResult, err := c.queryStunServers(sock, res.Payload.Addresses)
 	if err != nil {
-		c.mu.Unlock()
 		return nil, err
 	}
 
 	if stunResult == nil {
-		c.mu.Unlock()
 		return nil, fmt.Errorf("stunResult is nil")
 	}
 
-	// Not sure if stun.NATError should count as
-	// if !stunResult.viable {
-	// 	return nil, fmt.Errorf("STUN servers have determined that hole punching is not possible")
-	// }
-
-	addr, err := netip.ParseAddrPort(stunResult.host.String())
-
-	c.cachedAddr.AddrPort = addr
-	c.cachedAddr.Expiry = time.Now().Add(holePunchAddrPortCacheTime)
-
-	c.mu.Unlock()
-	return &c.cachedAddr.AddrPort, nil
+	return stunResult, nil
 }

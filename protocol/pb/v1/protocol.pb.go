@@ -3274,6 +3274,7 @@ func (x *MsgPunchAccept) GetAddress() string {
 // See MSG_TYPE_PUNCH_REJECT
 type MsgPunchReject struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3306,6 +3307,13 @@ func (x *MsgPunchReject) ProtoReflect() protoreflect.Message {
 // Deprecated: Use MsgPunchReject.ProtoReflect.Descriptor instead.
 func (*MsgPunchReject) Descriptor() ([]byte, []int) {
 	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{49}
+}
+
+func (x *MsgPunchReject) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
 }
 
 var File_pb_v1_protocol_proto protoreflect.FileDescriptor
@@ -3443,8 +3451,9 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\rMsgPunchOffer\x12\x18\n" +
 	"\aaddress\x18\x01 \x01(\tR\aaddress\"*\n" +
 	"\x0eMsgPunchAccept\x12\x18\n" +
-	"\aaddress\x18\x01 \x01(\tR\aaddress\"\x10\n" +
-	"\x0eMsgPunchReject*\xb3\v\n" +
+	"\aaddress\x18\x01 \x01(\tR\aaddress\"*\n" +
+	"\x0eMsgPunchReject\x12\x18\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage*\xb3\v\n" +
 	"\aMsgType\x12\x18\n" +
 	"\x14MSG_TYPE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rMSG_TYPE_PING\x10\x01\x12\x11\n" +

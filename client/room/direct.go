@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"net"
 	"net/netip"
 	"slices"
 	"sync"
@@ -608,13 +609,15 @@ func (c *Conn) directConnect(ctx context.Context, peer common.NormalizedUsername
 
 	// We need to get our own address to send C2C to our target before proceeding
 	if method.Type == pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH {
-		holePunchSocket := c.directMgr.GetHolePunchSocket()
-		if holePunchSocket == nil {
+		// TODO Bind socket here, do STUN, then give the socket to the partition and tell it to create a temporary direct.Server for us from it.
+		//
+		holePunchSocket, err := net.ListenUDP("udp", &net.UDPAddr{})
+		if err != nil {
 			// Hole punching is probably disabled
-			return nil, 0, fmt.Errorf("tried to direct connect using the holepunch method, but the holepunch socket was nil; is holepunch disabled?")
+			return nil, 0, fmt.Errorf("could not listen hole punch socket")
 		}
 
-		ownAddr, err := c.GetHolePunchAddrPort()
+		ownAddr, err := c.GetHolePunchAddrPort(holePunchSocket)
 		if err != nil {
 			return nil, 0, fmt.Errorf("failed to get address to hole punch: %w", err)
 		}

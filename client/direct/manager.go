@@ -46,8 +46,6 @@ type Manager struct {
 	cfgAddrPorts map[netip.AddrPort]struct{}
 	defaultPort  uint16
 
-	holePunchSocket *net.UDPConn
-
 	// All currently listening servers.
 	servers map[netip.AddrPort]*Server
 
@@ -73,23 +71,6 @@ func NewManager(
 		defaultPort = uint16(rand.IntN(65535-minPort) + minPort)
 	}
 
-	var holePunchSocket *net.UDPConn
-	if !cfg.DisableNatHolePunching {
-		var err error
-		port := cfg.NatHolePunchingBindPort
-		// TODO Make a separate socket for IPv6
-		holePunchSocket, err = net.ListenUDP("udp4", &net.UDPAddr{
-			IP:   net.IPv4zero,
-			Port: int(port),
-		})
-		if err != nil {
-			cancel()
-			return nil, fmt.Errorf("failed to listen on UDP port %d", port)
-		}
-
-		logger.Debug("created hole punch socket", "service", "direct.Manager")
-	}
-
 	m := &Manager{
 		logger: logger,
 
@@ -99,8 +80,6 @@ func NewManager(
 		cfg:          cfg,
 		cfgAddrPorts: addrPorts,
 		defaultPort:  defaultPort,
-
-		holePunchSocket: holePunchSocket,
 
 		servers:    make(map[netip.AddrPort]*Server),
 		partitions: make(map[string]*Partition),
@@ -218,32 +197,6 @@ func (m *Manager) startServers() {
 		cancel()
 	}
 
-	// Add a server on a hole punch socket if enabled
-	if !m.cfg.DisableNatHolePunching {
-		// Create single server from holepunch socket
-		server, err := NewServerFromHolePunchSocket(m.logger, m.ctx, m, m.cfg.Cert)
-		if err != nil {
-			m.logger.Warn("could not create direct server from hole punch socket",
-				"service", "direct.Manager",
-				"err", err,
-			)
-			return
-		}
-
-		// Add to map
-		m.mu.Lock()
-		m.servers[server.AddrPort] = server
-		for _, part := range m.partitions {
-			go part.notifyServerOpen(server)
-		}
-		m.mu.Unlock()
-
-		m.logger.Debug("created hole punch server",
-			"addr", server.AddrPort.String(),
-			"service", "direct.Manager",
-		)
-	}
-
 	var probedIps []netip.Addr
 	if !m.cfg.DisableProbeIpsToAdvertise {
 		probedIps = common.GetUnicastIpsFromInterfaces(false, true)
@@ -327,10 +280,6 @@ func (m *Manager) IsPublicIpDiscoveryDisabled() bool {
 // AdvertisePrivateIps returns whether clients should advertise their private IPs to the server.
 func (m *Manager) AdvertisePrivateIps() bool {
 	return m.cfg.AdvertisePrivateIps
-}
-
-func (m *Manager) GetHolePunchSocket() *net.UDPConn {
-	return m.holePunchSocket
 }
 
 func (m *Manager) IsNatHolePunchingDisabled() bool {
@@ -548,6 +497,9 @@ type Partition struct {
 	connChan        chan *IncomingDirectConn
 	serverOpenChan  chan *Server
 	serverCloseChan chan *Server
+
+	ownedServersMu sync.Mutex
+	ownedServers   map[netip.AddrPort]struct{}
 }
 
 // Close closes the partition and stops listening for incoming connections.
@@ -579,6 +531,25 @@ func (p *Partition) Close() error {
 		_ = conn.InternalError()
 	default:
 		break
+	}
+
+	// Clean up owned servers.
+	p.ownedServersMu.Lock()
+	defer p.ownedServersMu.Unlock()
+	if len(p.ownedServers) == 0 {
+		return nil
+	}
+
+	p.m.mu.Lock()
+	defer p.m.mu.Unlock()
+	for addrPort := range p.ownedServers {
+		srv, has := p.m.servers[addrPort]
+		if !has {
+			continue
+		}
+
+		_ = srv.Close()
+		delete(p.m.servers, addrPort)
 	}
 
 	return nil
@@ -654,4 +625,53 @@ func (p *Partition) WaitServerClose() (*Server, error) {
 	case server := <-p.serverCloseChan:
 		return server, nil
 	}
+}
+
+// CreateTemporaryServerFromSocket will create a temporary server from a socket.
+// The server will be closed when the partition closes.
+// The caller can close the returned Server whenever it wants.
+// Do not use the socket after passing it to this function.
+func (p *Partition) CreateTemporaryServerFromSocket(socket *net.UDPConn) (*Server, error) {
+	if socket == nil {
+		return nil, fmt.Errorf("socket cannot be nil")
+	}
+
+	// Clear deadlines on socket.
+	socket.SetReadDeadline(time.Time{})
+	socket.SetWriteDeadline(time.Time{})
+
+	srv, err := NewServerFromSocket(
+		p.m.logger,
+		p.m.ctx,
+		p.m,
+		socket,
+		p.m.cfg.Cert,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	addrPort := netip.MustParseAddrPort(socket.LocalAddr().String())
+
+	// Clean up if connection fails
+	go func() {
+		<-srv.ctx.Done()
+		p.ownedServersMu.Lock()
+		defer p.ownedServersMu.Unlock()
+		p.m.mu.Lock()
+		defer p.m.mu.Unlock()
+
+		delete(p.ownedServers, addrPort)
+		delete(p.m.servers, addrPort)
+	}()
+
+	p.ownedServersMu.Lock()
+	defer p.ownedServersMu.Unlock()
+	p.m.mu.Lock()
+	defer p.m.mu.Unlock()
+
+	p.ownedServers[addrPort] = struct{}{}
+	p.m.servers[addrPort] = srv
+
+	return srv, nil
 }

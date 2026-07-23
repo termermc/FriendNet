@@ -381,8 +381,8 @@ func (l *LogicImpl) OnSearch(ctx context.Context, _ *Conn, bidi protocol.ProtoBi
 }
 
 func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi C2cBidi, msg *protocol.TypedProtoMsg[*pb.MsgPunchOffer]) error {
-	reject := func() error {
-		err := bidi.Write(pb.MsgType_MSG_TYPE_PUNCH_REJECT, &pb.MsgPunchReject{})
+	reject := func(msg string) error {
+		err := bidi.Write(pb.MsgType_MSG_TYPE_PUNCH_REJECT, &pb.MsgPunchReject{Message: msg})
 		if err != nil {
 			if protocol.IsErrorConnCloseOrCancel(err) {
 				return nil
@@ -396,18 +396,27 @@ func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi C2cBidi, 
 
 	// Can't hole punch if it's disabled
 	if room.directMgr.IsNatHolePunchingDisabled() {
-		return reject()
+		return reject("hole punching is disabled")
 	}
 
 	// Can't use an invalid IP
 	if protocol.ValidateMethodAddress(pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH, msg.Payload.Address) != nil {
-		return reject()
+		return reject("IP is invalid")
 	}
 
-	// Fetch own IP
-	publicAddr, err := room.GetHolePunchAddrPort()
+	holePunchSocket, err := net.ListenUDP("udp", &net.UDPAddr{})
 	if err != nil {
-		return reject()
+		return reject("could not listen on socket")
+	}
+
+	publicAddr, err := room.GetHolePunchAddrPort(holePunchSocket)
+	if err != nil {
+		return reject("could not obtain own public address")
+	}
+
+	udpAddr, err := net.ResolveUDPAddr("udp", msg.Payload.Address)
+	if err != nil {
+		return reject("could not resolve provided address")
 	}
 
 	err = bidi.Write(pb.MsgType_MSG_TYPE_PUNCH_ACCEPT, &pb.MsgPunchAccept{Address: publicAddr.String()})
@@ -416,38 +425,46 @@ func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi C2cBidi, 
 			return nil
 		}
 
-		return fmt.Errorf("failed to send punch offer rejection: %w", err)
+		return fmt.Errorf("failed to send punch offer acceptance: %w", err)
 	}
 
-	// Begin sending things to the provided address through our hole punch socket
-	holePunchSocket := room.directMgr.GetHolePunchSocket()
-	if holePunchSocket == nil {
-		return reject()
-	}
-
-	udpAddr, err := net.ResolveUDPAddr("udp", msg.Payload.Address)
+	server, err := room.directPart.CreateTemporaryServerFromSocket(holePunchSocket)
 	if err != nil {
-		return reject()
+		return fmt.Errorf("failed to create server in partition: %w", err)
 	}
 
-	// TODO Figure out a better way to stop the dummy dialing.
-	garbageCtx, garbageCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	timeoutCtx, timeoutCancel := context.WithTimeout(context.Background(), room.directOutgoingTimeout)
 
-	// Try dialing for this peer. On success, disconnect
+	// Send garbage to the peer until we get a connection or we time out.
 	go func() {
-		defer garbageCancel()
-
 		garbage := make([]byte, 256+7)
 		copy(garbage[:7], []byte("garbage"))
 		ticker := time.NewTicker(100 * time.Millisecond)
 		for {
 			select {
-			case <-garbageCtx.Done():
+			case <-timeoutCtx.Done():
 				return
 			case <-ticker.C:
 				_, _ = rand.Read(garbage[:7])
 				holePunchSocket.WriteToUDP(garbage, udpAddr)
 			}
+		}
+	}()
+
+	// Close server within a timeout if we don't get a connection.
+	go func() {
+		defer timeoutCancel()
+
+		select {
+		case <-server.OnClose():
+			return
+		case <-server.OnConnection():
+			// TODO Somehow track the connection and make sure the server is closed when the direct connection closes.
+
+			return
+		case <-timeoutCtx.Done():
+			// We did not get a connection before the timeout; close the server.
+			_ = server.Close()
 		}
 	}()
 

@@ -1,4 +1,4 @@
-go 1.26.2
+go 1.26.5
 
 use (
 	./adminui
@@ -8,6 +8,7 @@ use (
 	./protocol
 	./rpcclient
 	./server
+	./stun
 	./updater
 	./upnp
 	./webui

@@ -181,20 +181,38 @@ type ProtoConn interface {
 	// SendAndReceiveAck is like SendAndReceive but expects an ACKNOWLEDGED message.
 	// Returns an UnexpectedMsgTypeError if the received type does not match the expected type.
 	SendAndReceiveAck(typ pb.MsgType, msg proto.Message) error
+
+	// Returns a channel that is closed when the connection is disconnected.
+	// It may not fire immediately, it may require a failed WaitForBidi to trigger.
+	OnDisconnect() <-chan struct{}
 }
 
 // ProtoConnImpl wraps a QUIC connection to provide protocol-specific methods.
 type ProtoConnImpl struct {
 	// The underlying QUIC connection.
 	Inner *quic.Conn
+
+	disConnChan chan struct{}
 }
 
 var _ ProtoConn = &ProtoConnImpl{}
+
+func (conn *ProtoConnImpl) checkErrIsClose(err error) {
+	if IsErrorConnClose(err) {
+		select {
+		case <-conn.disConnChan:
+		default:
+			close(conn.disConnChan)
+		}
+	}
+}
 
 // ToProtoConn wraps a QUIC connection to provide protocol-specific methods.
 func ToProtoConn(conn *quic.Conn) ProtoConn {
 	return &ProtoConnImpl{
 		Inner: conn,
+
+		disConnChan: make(chan struct{}),
 	}
 }
 
@@ -209,6 +227,8 @@ func (conn *ProtoConnImpl) CloseWithReason(reason string) error {
 func (conn *ProtoConnImpl) OpenBidiWithMsg(typ pb.MsgType, msg proto.Message) (bidi ProtoBidi, err error) {
 	stream, err := conn.Inner.OpenStream()
 	if err != nil {
+		conn.checkErrIsClose(err)
+
 		return ProtoBidi{}, fmt.Errorf(`failed to open bidi before writing message of type %s: %w`, typ.String(), err)
 	}
 
@@ -226,6 +246,8 @@ func (conn *ProtoConnImpl) OpenBidiWithMsg(typ pb.MsgType, msg proto.Message) (b
 func (conn *ProtoConnImpl) WaitForBidi(ctx context.Context) (ProtoBidi, error) {
 	stream, err := conn.Inner.AcceptStream(ctx)
 	if err != nil {
+		conn.checkErrIsClose(err)
+
 		return ProtoBidi{}, fmt.Errorf(`failed to accept stream in WaitForBidi: %w`, err)
 	}
 
@@ -258,6 +280,10 @@ func (conn *ProtoConnImpl) SendAndReceiveAck(typ pb.MsgType, msg proto.Message) 
 	}
 
 	return nil
+}
+
+func (conn *ProtoConnImpl) OnDisconnect() <-chan struct{} {
+	return conn.disConnChan
 }
 
 // SendAndReceiveExpect is like ProtoConn.SendAndReceive but also checks that the reply's type matches the expected type.
@@ -699,17 +725,29 @@ func NewQuicProtoListener(listenAddr string, tlsCfg *tls.Config) (ProtoListener,
 	return NewQuicProtoListenerFromTransport(trans, tlsCfg)
 }
 
+// IsErrorConnClose returns whether the specified error can broadly be considered a connection close.
+// This covers QUIC idle errors and application errors (which represent an abandoned connection and an intentionally closed connection, respectively).
+// IMPORTANT: It does NOT count quic.StreamError as a connection close error, as it signals that a *stream* was deliberately closed, not a connection.
+//
+// It also covers io.EOF.
+func IsErrorConnClose(err error) bool {
+	if _, ok := errors.AsType[*quic.IdleTimeoutError](err); ok {
+		return true
+	}
+	if _, ok := errors.AsType[*quic.ApplicationError](err); ok {
+		return true
+	}
+
+	return errors.Is(err, io.EOF)
+}
+
 // IsErrorConnCloseOrCancel returns whether the specified error can broadly be considered a connection close or cancel error.
 // This covers QUIC idle errors and application errors (which represent an abandoned connection and an intentionally closed connection, respectively).
 // IMPORTANT: It does NOT count quic.StreamError as a connection close error, as it signals that a *stream* was deliberately closed, not a connection.
 //
 // It also covers common context cancel and deadline errors, as well as io.EOF.
 func IsErrorConnCloseOrCancel(err error) bool {
-	var idleErr *quic.IdleTimeoutError
-	var appErr *quic.ApplicationError
 	return errors.Is(err, context.Canceled) ||
 		errors.Is(err, context.DeadlineExceeded) ||
-		errors.Is(err, io.EOF) ||
-		errors.As(err, &idleErr) ||
-		errors.As(err, &appErr)
+		IsErrorConnClose(err)
 }
