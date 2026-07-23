@@ -40,6 +40,11 @@ type Credentials struct {
 	Password string
 }
 
+type CachedAddr struct {
+	AddrPort netip.AddrPort
+	Expiry   time.Time
+}
+
 // Arbitrary size to prevent lockups on the incoming bidi channel.
 const incomingBidiChanSize = 64
 
@@ -111,6 +116,9 @@ type Conn struct {
 
 	// The interval at which direct connection-related caches are cleared.
 	directGcInterval time.Duration
+
+	// A connection's outward facing address
+	cachedAddr CachedAddr
 
 	eventPublisher *event.Publisher
 }
@@ -381,42 +389,6 @@ func (c *Conn) queryStunServers(addresses []string) (*stunResult, error) {
 	//       That being said, there is a possibility that the first response
 	//       is incorrect. Please discuss this in review.
 	return &result, nil
-}
-
-// FetchHolePunchAddr queries STUN servers retrieved from the server for a single outgoing hole punch address to cache.
-// If successful in finding an outgoing address, it will add it to the connection method map
-func (c *Conn) FetchHolePunchAddr() (*netip.AddrPort, error) {
-	res, err := protocol.SendAndReceiveExpect[*pb.MsgStunServers](
-		c.serverConn,
-		pb.MsgType_MSG_TYPE_GET_STUN_SERVERS,
-		&pb.MsgGetStunServers{},
-		pb.MsgType_MSG_TYPE_STUN_SERVERS,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("could not acquire STUN server list from server")
-	}
-
-	if len(res.Payload.Addresses) == 0 {
-		return nil, fmt.Errorf("did not get any STUN server candidates back")
-	}
-
-	stunResult, err := c.queryStunServers(res.Payload.Addresses)
-	if err != nil {
-		return nil, err
-	}
-
-	if stunResult == nil {
-		return nil, fmt.Errorf("stunResult is nil")
-	}
-
-	// Not sure if stun.NATError should count as
-	// if !stunResult.viable {
-	// 	return nil, fmt.Errorf("STUN servers have determined that hole punching is not possible")
-	// }
-
-	addr, err := netip.ParseAddrPort(stunResult.host.String())
-
-	return &addr, err
 }
 
 // ChangeAccountPassword changes the password on the account the connection is using.
@@ -812,4 +784,61 @@ func (c *Conn) Search(query string) (protocol.Stream[*pb.MsgSearchRoomResult], e
 			return msg.Payload
 		},
 	), nil
+}
+
+const holePunchAddrPortCacheTime = 5 * time.Minute
+
+// GetHolePunchAddrPort fetches the public IP and port for the hole punch socket.
+// It briefly caches the result to avoid hitting STUN servers repeatedly.
+func (c *Conn) GetHolePunchAddrPort() (*netip.AddrPort, error) {
+	c.mu.RLock()
+
+	if time.Now().Before(c.cachedAddr.Expiry) {
+		c.mu.RUnlock()
+		return &c.cachedAddr.AddrPort, nil
+	}
+
+	// Upgrade lock to a write lock.
+	c.mu.RUnlock()
+	c.mu.Lock()
+
+	res, err := protocol.SendAndReceiveExpect[*pb.MsgStunServers](
+		c.serverConn,
+		pb.MsgType_MSG_TYPE_GET_STUN_SERVERS,
+		&pb.MsgGetStunServers{},
+		pb.MsgType_MSG_TYPE_STUN_SERVERS,
+	)
+	if err != nil {
+		c.mu.Unlock()
+		return nil, fmt.Errorf("could not acquire STUN server list from server")
+	}
+
+	if len(res.Payload.Addresses) == 0 {
+		c.mu.Unlock()
+		return nil, fmt.Errorf("did not get any STUN server candidates back")
+	}
+
+	stunResult, err := c.queryStunServers(res.Payload.Addresses)
+	if err != nil {
+		c.mu.Unlock()
+		return nil, err
+	}
+
+	if stunResult == nil {
+		c.mu.Unlock()
+		return nil, fmt.Errorf("stunResult is nil")
+	}
+
+	// Not sure if stun.NATError should count as
+	// if !stunResult.viable {
+	// 	return nil, fmt.Errorf("STUN servers have determined that hole punching is not possible")
+	// }
+
+	addr, err := netip.ParseAddrPort(stunResult.host.String())
+
+	c.cachedAddr.AddrPort = addr
+	c.cachedAddr.Expiry = time.Now().Add(holePunchAddrPortCacheTime)
+
+	c.mu.Unlock()
+	return &c.cachedAddr.AddrPort, nil
 }

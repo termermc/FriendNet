@@ -401,7 +401,7 @@ func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi C2cBidi, 
 	}
 
 	// Fetch own IP
-	publicAddr, err := room.FetchHolePunchAddr()
+	publicAddr, err := room.GetHolePunchAddrPort()
 	if err != nil {
 		return reject()
 	}
