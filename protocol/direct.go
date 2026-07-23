@@ -181,6 +181,10 @@ func CreateDirectConnectionWithSocket(
 
 		qConn, err := TryDialBackoff(ctx, sock, udpAddr, tlsCfg, common.HolePunchConnBackoffMaxTimeout)
 		if err != nil {
+			if errors.Is(err, ctx.Err()) {
+				return nil, fmt.Errorf(`direct connect attempt timed out: %w`, err)
+			}
+
 			return nil, err
 		}
 
@@ -289,6 +293,8 @@ func TryDialBackoff(
 	tlsCfg *tls.Config,
 	maxTimeout time.Duration,
 ) (qConn *quic.Conn, err error) {
+	garbageTestMessage := []byte{0x0C, 0x0A, 0x0F, 0x0E, 0x0B, 0x0A, 0x0B, 0x0E}
+
 	var attemptNum = 0
 	var timeout time.Duration
 	for {
@@ -297,6 +303,10 @@ func TryDialBackoff(
 		// Every try, add 250ms until the timeout is 1s
 		if timeout < maxTimeout {
 			timeout += 250 * time.Millisecond
+		}
+
+		for range 10 {
+			_, _ = sock.WriteTo(garbageTestMessage, target)
 		}
 
 		dialCtx, dialCancel := context.WithDeadlineCause(ctx, time.Now().Add(timeout), errBackoffTryAgain)
