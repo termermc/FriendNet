@@ -793,7 +793,7 @@ collectErrs:
 				"service", "room.Conn",
 				"room", c.RoomName.String(),
 				"peer", peer.String(),
-				"remote_addr", success.method.Address,
+				"remote_addr", success.conn.RemoteAddr().String(),
 			)
 
 			return success.conn, success.result, nil
