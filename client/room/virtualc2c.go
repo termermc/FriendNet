@@ -51,6 +51,9 @@ func (c VirtualC2cConn) OpenBidiWithMsg(typ pb.MsgType, msg proto.Message) (bidi
 		return
 	}
 
+	// TODO REMOVE THIS
+	c.ServerConn.logger.Debug("sent c2c message", "type", typ.String())
+
 	return c.ServerConn.openC2cBidiWithMsg(c.Username, typ, msg, c.ForceProxy)
 }
 

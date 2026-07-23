@@ -176,7 +176,11 @@ func CreateDirectConnectionWithSocket(
 
 		tlsCfg := CreateDirectClientTlsConfig(hostname)
 
-		qConn, err := TryDialBackoff(ctx, sock, udpAddr, tlsCfg, common.HolePunchConnBackoffMaxTimeout)
+		var qConn *quic.Conn
+		qConn, err = quic.Dial(ctx, sock, udpAddr, tlsCfg, &quic.Config{
+			KeepAlivePeriod:    DefaultKeepAlivePeriod,
+			MaxIncomingStreams: DefaultMaxIncomingStreams,
+		})
 		if err != nil {
 			if errors.Is(err, ctx.Err()) {
 				return nil, fmt.Errorf(`direct connect attempt timed out: %w`, err)

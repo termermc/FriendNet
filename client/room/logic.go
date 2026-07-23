@@ -2,6 +2,7 @@ package room
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"io"
@@ -429,41 +430,24 @@ func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi C2cBidi, 
 		return reject()
 	}
 
-	hostname, _, err := net.SplitHostPort(msg.Payload.Address)
-	if err != nil {
-		return reject()
-	}
-
 	// TODO Figure out a better way to stop the dummy dialing.
-	dummyDialCtx, cancelDummyDial := context.WithTimeout(context.Background(), 10*time.Second)
+	garbageCtx, garbageCancel := context.WithTimeout(context.Background(), 10*time.Second)
 
 	// Try dialing for this peer. On success, disconnect
 	go func() {
-		defer cancelDummyDial()
+		defer garbageCancel()
 
-		dummyConn, err := protocol.TryDialBackoff(
-			dummyDialCtx,
-			holePunchSocket,
-			udpAddr,
-			protocol.CreateDirectClientTlsConfig(hostname),
-			common.StunResTimeout,
-		)
-		if dummyConn != nil {
-			l.logger.Debug("dummy connection succeeded",
-				"service", "room.LogicImpl",
-				"room", room.RoomName.String(),
-				"peer", bidi.Username.String(),
-				"err", err,
-			)
-			_ = dummyConn.CloseWithError(0, "")
-		}
-		if !errors.Is(err, dummyDialCtx.Err()) {
-			l.logger.Warn("dummy dialer failed with reason other than cancelation during hole punch",
-				"service", "room.LogicImpl",
-				"room", room.RoomName.String(),
-				"peer", bidi.Username.String(),
-				"err", err,
-			)
+		garbage := make([]byte, 256+7)
+		copy(garbage[:7], []byte("garbage"))
+		ticker := time.NewTicker(100 * time.Millisecond)
+		for {
+			select {
+			case <-garbageCtx.Done():
+				return
+			case <-ticker.C:
+				_, _ = rand.Read(garbage[:7])
+				holePunchSocket.WriteToUDP(garbage, udpAddr)
+			}
 		}
 	}()
 

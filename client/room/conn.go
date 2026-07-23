@@ -23,7 +23,7 @@ import (
 )
 
 // ServerPingInterval is the interval between pings sent to the server.
-const ServerPingInterval = 10 * time.Second
+const ServerPingInterval = 100 * time.Millisecond
 
 // ErrRoomConnClosed is returned when trying to interact with a closed room connection.
 var ErrRoomConnClosed = errors.New("room connection closed")
