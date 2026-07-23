@@ -126,9 +126,6 @@ func (e DirectConnHandshakeError) IsKThxBye() bool {
 // If the server returns anything else, it will return a DirectConnHandshakeError.
 //
 // This function does not apply its own timeout; that should be done with the context passed in.
-//
-// For connections that must be hole-punched, the function will periodically send garbage over the hole punch socket
-// to the target (and vice-versa) until a QUIC connection is possible
 func CreateDirectConnection(
 	ctx context.Context,
 	methodType pb.ConnMethodType,
@@ -293,8 +290,6 @@ func TryDialBackoff(
 	tlsCfg *tls.Config,
 	maxTimeout time.Duration,
 ) (qConn *quic.Conn, err error) {
-	garbageTestMessage := []byte{0x0C, 0x0A, 0x0F, 0x0E, 0x0B, 0x0A, 0x0B, 0x0E}
-
 	var attemptNum = 0
 	var timeout time.Duration
 	for {
@@ -303,10 +298,6 @@ func TryDialBackoff(
 		// Every try, add 250ms until the timeout is 1s
 		if timeout < maxTimeout {
 			timeout += 250 * time.Millisecond
-		}
-
-		for range 10 {
-			_, _ = sock.WriteTo(garbageTestMessage, target)
 		}
 
 		dialCtx, dialCancel := context.WithDeadlineCause(ctx, time.Now().Add(timeout), errBackoffTryAgain)

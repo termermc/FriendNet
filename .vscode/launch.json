@@ -9,7 +9,7 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/client"
+            "program": "${workspaceFolder}/client/cmd/client"
         }
 
     ]

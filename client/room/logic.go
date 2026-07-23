@@ -449,7 +449,7 @@ func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi C2cBidi, 
 			_ = dummyConn.CloseWithError(0, "")
 		}
 		if !errors.Is(err, dummyDialCtx.Err()) {
-			l.logger.Warn("dummy dailer failed with reason other than cancelation during hole punch",
+			l.logger.Warn("dummy dialer failed with reason other than cancelation during hole punch",
 				"service", "room.LogicImpl",
 				"room", room.RoomName.String(),
 				"peer", bidi.Username.String(),

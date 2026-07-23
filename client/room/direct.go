@@ -202,6 +202,9 @@ func (c *Conn) redeemDirectHandshakeToken(token string) (*pb.MsgRedeemConnHandsh
 	return msg.Payload, nil
 }
 
+// mkMethodId creates a unique method ID from an IP address.
+// The IP address should be the IP address the server is running on, to keep the ID consistent across reconnects.
+// For special methods like hole punch, it can be a magic IP.
 func (c *Conn) mkMethodId(addrPort netip.AddrPort) string {
 	addrStr := addrPort.String()
 	hasher := fnv.New64a()
@@ -211,7 +214,19 @@ func (c *Conn) mkMethodId(addrPort netip.AddrPort) string {
 	return c.directPart.CreateMethodId(b64)
 }
 
-// mkAdConnMethod returns a message that can be used to advertise a direct connection method.
+var holePunchMethodIdMagicIp = netip.MustParseAddrPort("0.0.0.0:0")
+
+// mkAdConnMethodForPunch returns a message that can be used to advertise the ability for NAT hole punching.
+func (c *Conn) mkAdConnMethodForPunch() *pb.MsgAdvertiseConnMethod {
+	return &pb.MsgAdvertiseConnMethod{
+		Id:       c.mkMethodId(holePunchMethodIdMagicIp),
+		Type:     pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH,
+		Address:  "",
+		Priority: 2,
+	}
+}
+
+// mkAdConnMethod returns a message that can be used to advertise an IP address direct connection method (normal IP or Yggdrasil).
 // publicIp will be ignored if invalid/empty.
 //
 // Priorities:
@@ -219,7 +234,7 @@ func (c *Conn) mkMethodId(addrPort netip.AddrPort) string {
 // 1 = default
 // 0 = private IP
 // -1 = Yggdrasil
-func (c *Conn) mkAdConnMethod(publicIp netip.Addr, addrPort netip.AddrPort) *pb.MsgAdvertiseConnMethod {
+func (c *Conn) mkAdConnMethodForIp(publicIp netip.Addr, addrPort netip.AddrPort) *pb.MsgAdvertiseConnMethod {
 	addr := addrPort.Addr()
 	isYggdrasil := common.YggdrasilPrefix.Contains(addr)
 
@@ -294,14 +309,14 @@ func (c *Conn) runDirectAdsAndLoop() {
 
 		if server.AddrPort.Addr().IsPrivate() {
 			if mgr.AdvertisePrivateIps() {
-				methodsToAdvertise = append(methodsToAdvertise, c.mkAdConnMethod(publicIp, server.AddrPort))
+				methodsToAdvertise = append(methodsToAdvertise, c.mkAdConnMethodForIp(publicIp, server.AddrPort))
 			}
 
 			// Did we get our public IP?
 			// If so, try to advertise it.
 			// If we are listening on a private port, port forwarding might be enabled.
 			if publicIp.IsValid() {
-				a := c.mkAdConnMethod(
+				a := c.mkAdConnMethodForIp(
 					publicIp,
 					netip.AddrPortFrom(publicIp, server.AddrPort.Port()),
 				)
@@ -312,9 +327,7 @@ func (c *Conn) runDirectAdsAndLoop() {
 
 		// Is hole punching enabled?
 		if !c.directMgr.IsNatHolePunchingDisabled() {
-			methodsToAdvertise = append(methodsToAdvertise, &pb.MsgAdvertiseConnMethod{
-				Type: pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH,
-			})
+			methodsToAdvertise = append(methodsToAdvertise, c.mkAdConnMethodForPunch())
 		}
 
 		for _, method := range methodsToAdvertise {

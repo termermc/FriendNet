@@ -168,15 +168,24 @@ func (s *Server) Close() error {
 // run runs the server accept loop.
 // It exits with nil if the server was closed, or an error if there was an error accepting a connection.
 func (s *Server) run() error {
+	// TODO REMOVE THIS
+	fmt.Printf("DIRECT SERVER LISTENING ON %s\n", s.AddrPort.String())
+
 	for {
 		conn, err := s.listener.Accept(s.ctx)
 		if err != nil {
+			// TODO REMOVE THIS
+			fmt.Printf("Failed to accept conn on server %s: %s\n", s.AddrPort.String(), err.Error())
+
 			if protocol.IsErrorConnCloseOrCancel(err) {
 				return nil
 			}
 
 			return fmt.Errorf(`failed to accept direct connection: %w`, err)
 		}
+
+		// TODO REMOVE THIS
+		fmt.Printf("Got connection on server %s from %s\n", s.AddrPort.String(), conn.RemoteAddr().String())
 
 		go s.connHandler(conn)
 	}
