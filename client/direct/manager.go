@@ -77,7 +77,11 @@ func NewManager(
 	if !cfg.DisableNatHolePunching {
 		var err error
 		port := cfg.NatHolePunchingBindPort
-		holePunchSocket, err = net.ListenUDP("udp", &net.UDPAddr{Port: int(port)})
+		// TODO Make a separate socket for IPv6
+		holePunchSocket, err = net.ListenUDP("udp4", &net.UDPAddr{
+			IP:   net.IPv4zero,
+			Port: int(port),
+		})
 		if err != nil {
 			cancel()
 			return nil, fmt.Errorf("failed to listen on UDP port %d", port)

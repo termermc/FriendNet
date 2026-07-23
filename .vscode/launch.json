@@ -5,11 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Client",
+            "name": "Launch Package",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/client/cmd/client/main.go"
-        },
+            "program": "${workspaceFolder}/client"
+        }
+
     ]
 }
