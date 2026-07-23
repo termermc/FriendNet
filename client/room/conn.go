@@ -346,7 +346,7 @@ func (c *Conn) queryStunServers(addresses []string) (*stunResult, error) {
 			case res := <-r:
 				c.logger.Debug("STUN server responded", "addr", addr, "host", res.host.String())
 				responses = append(responses, res)
-			case <-time.After(common.StunResTimeoutSeconds * time.Second):
+			case <-time.After(common.StunResTimeout):
 				c.logger.Debug("STUN server timed out", "addr", addr)
 			case <-ctx.Done():
 				c.logger.Error("STUN server fail", "addr", addr, "err", ctx.Err())

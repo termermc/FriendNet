@@ -90,7 +90,7 @@ loop:
 				case pb.MsgType_MSG_TYPE_SEARCH:
 					err = c.logic.OnSearch(c.Context, c, bidi.ProtoBidi, protocol.ToTyped[*pb.MsgSearch](rawMsg))
 				case pb.MsgType_MSG_TYPE_PUNCH_OFFER:
-					err = c.logic.OnPunchOffer(c.Context, c, bidi.ProtoBidi, protocol.ToTyped[*pb.MsgPunchOffer](rawMsg))
+					err = c.logic.OnPunchOffer(c.Context, c, bidi, protocol.ToTyped[*pb.MsgPunchOffer](rawMsg))
 				default:
 					err = bidi.WriteUnimplementedError(rawMsg.Type)
 				}

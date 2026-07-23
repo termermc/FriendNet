@@ -234,7 +234,10 @@ func (m *Manager) startServers() {
 		}
 		m.mu.Unlock()
 
-		m.logger.Debug("created hole punch server", "service", "direct.Manager")
+		m.logger.Debug("created hole punch server",
+			"addr", server.AddrPort.String(),
+			"service", "direct.Manager",
+		)
 	}
 
 	var probedIps []netip.Addr

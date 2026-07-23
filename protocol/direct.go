@@ -2,7 +2,6 @@ package protocol
 
 import (
 	"context"
-	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -59,6 +58,27 @@ func ValidateMethodAddress(typ pb.ConnMethodType, address string) error {
 	default:
 		// We do not know about this method type, so we cannot validate it.
 		return nil
+	}
+}
+
+// CreateDirectClientTlsConfig creates a new tls.Config to be used by a direct connection client.
+// The hostname should be the IP address of the peer's direct endpoint.
+func CreateDirectClientTlsConfig(hostname string) *tls.Config {
+	return &tls.Config{
+		MinVersion:         tls.VersionTLS13,
+		NextProtos:         []string{DirectAlpnProtoName},
+		ServerName:         hostname,
+		InsecureSkipVerify: true,
+		VerifyPeerCertificate: func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
+			if len(rawCerts) == 0 {
+				return ErrNoServerCerts
+			}
+
+			// Allow any certificate.
+			// Direct servers all use self-signed certs.
+			// Verification is done via tokens issued by the central server.
+			return nil
+		},
 	}
 }
 
@@ -152,35 +172,16 @@ func CreateDirectConnectionWithSocket(
 		hostname, _, _ := net.SplitHostPort(address)
 		hostname = common.NormalizeHostname(hostname)
 
-		tlsCfg := &tls.Config{
-			MinVersion:         tls.VersionTLS13,
-			NextProtos:         []string{DirectAlpnProtoName},
-			ServerName:         hostname,
-			InsecureSkipVerify: true,
-			VerifyPeerCertificate: func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
-				if len(rawCerts) == 0 {
-					return ErrNoServerCerts
-				}
-
-				// Allow any certificate.
-				// Direct servers all use self-signed certs.
-				// Verification is done via tokens issued by the central server.
-				return nil
-			},
-		}
-
 		udpAddr, err := net.ResolveUDPAddr("udp", address)
 		if err != nil {
 			return nil, err
 		}
 
-		var qConn *quic.Conn
-		qConn, err = quic.Dial(ctx, sock, udpAddr, tlsCfg, &quic.Config{
-			KeepAlivePeriod:    DefaultKeepAlivePeriod,
-			MaxIncomingStreams: DefaultMaxIncomingStreams,
-		})
+		tlsCfg := CreateDirectClientTlsConfig(hostname)
+
+		qConn, err := TryDialBackoff(ctx, sock, udpAddr, tlsCfg, common.HolePunchConnBackoffMaxTimeout)
 		if err != nil {
-			return nil, fmt.Errorf(`failed to dial QUIC %q for direct connection: %w`, address, err)
+			return nil, err
 		}
 
 		conn = ToProtoConn(qConn)
@@ -276,23 +277,48 @@ func CreateDirectConnectionWithSocket(
 	return
 }
 
-// SendNatHolepunchGarbage sends garbage to a target using a socket for NAT hole punching.
-// It runs (blocking) until its context is done.
-func SendNatHolepunchGarbage(ctx context.Context, senderSock *net.UDPConn, targetAddr *net.UDPAddr) {
-	// TODO REMOVE THIS
-	defer println("Stopped sending garbage to " + targetAddr.String())
+var errBackoffTryAgain = errors.New("try again")
 
-	ticker := time.NewTicker(common.HolePunchTickMs * time.Microsecond)
-	defer ticker.Stop()
-
-	buffer := make([]byte, common.HolePunchGarbageLength)
+// TryDialBackoff tries to use QUIC to dial an address. Every iteration its timeout is raised by 250ms, with a cap of maxTimeout.
+// If the connection succeeds during any attempt, the function returns. Otherwise, it will keep attempting unless a real network
+// error occurs, or if ctx is canceled.
+func TryDialBackoff(
+	ctx context.Context,
+	sock net.PacketConn,
+	target *net.UDPAddr,
+	tlsCfg *tls.Config,
+	maxTimeout time.Duration,
+) (qConn *quic.Conn, err error) {
+	var attemptNum = 0
+	var timeout time.Duration
 	for {
-		select {
-		case <-ticker.C:
-			_, _ = rand.Read(buffer)
-			senderSock.WriteToUDP(buffer, targetAddr)
-		case <-ctx.Done():
-			return
+		attemptNum++
+
+		// Every try, add 250ms until the timeout is 1s
+		if timeout < maxTimeout {
+			timeout += 250 * time.Millisecond
 		}
+
+		dialCtx, dialCancel := context.WithDeadlineCause(ctx, time.Now().Add(timeout), errBackoffTryAgain)
+		qConn, err = quic.Dial(dialCtx, sock, target, tlsCfg, &quic.Config{
+			KeepAlivePeriod:    DefaultKeepAlivePeriod,
+			MaxIncomingStreams: DefaultMaxIncomingStreams,
+		})
+		dialCancel()
+		if err != nil {
+			if errors.Is(err, errBackoffTryAgain) {
+				continue
+			}
+
+			break
+		}
+
+		// Successfully connected.
+		break
 	}
+	if err != nil {
+		return nil, fmt.Errorf(`failed to dial QUIC %q after %d attempts: %w`, target, attemptNum, err)
+	}
+
+	return qConn, nil
 }

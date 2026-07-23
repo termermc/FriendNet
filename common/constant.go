@@ -1,5 +1,7 @@
 package common
 
+import "time"
+
 // RepoUrl is the software's repository URL.
 const RepoUrl = "https://github.com/termermc/friendnet"
 
@@ -9,11 +11,9 @@ const IssuesUrl = RepoUrl + "/issues"
 // NewIssueUrl is the URL for creating a new issue.
 const NewIssueUrl = IssuesUrl + "/new"
 
-// StunResTimeoutSeconds is the number of seconds a STUN resolution attempt will live before being timed out
-const StunResTimeoutSeconds = 3
+// StunResTimeout is the time a STUN resolution attempt will live before being timed out
+const StunResTimeout = 3 * time.Second
 
-// HolePunchTickMs is the number of milliseconds between sending garbage to during NAT holepunching.
-const HolePunchTickMs = 100
+const HolePunchAttempts = 3
 
-// HolePunchGarbageLength is the packet size for garbage sent during a hole punch
-const HolePunchGarbageLength = 256
+const HolePunchConnBackoffMaxTimeout = 3 * time.Second

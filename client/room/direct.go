@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
-	"net"
 	"net/netip"
 	"slices"
 	"sync"
@@ -621,13 +620,6 @@ func (c *Conn) directConnect(ctx context.Context, peer common.NormalizedUsername
 		if err != nil {
 			return nil, 0, fmt.Errorf(`hole punch assumed to be rejected for peer %q: %w`, peer.String(), err)
 		}
-
-		udpAddr, err := net.ResolveUDPAddr("udp", punchAccept.Payload.Address)
-		if err != nil {
-			return nil, 0, fmt.Errorf(`failed to resolve public address sent by peer %q in punch attempt: %w`, peer.String(), err)
-		}
-
-		go protocol.SendNatHolepunchGarbage(ctx, holePunchSocket, udpAddr)
 
 		conn, result, connErr = protocol.CreateDirectConnectionWithSocket(
 			ctx,

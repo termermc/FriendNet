@@ -69,7 +69,7 @@ type Logic interface {
 	// OnPunchOffer handles an incoming hole punch offer
 	//
 	// C2C
-	OnPunchOffer(ctx context.Context, room *Conn, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgPunchOffer]) error
+	OnPunchOffer(ctx context.Context, room *Conn, bidi C2cBidi, msg *protocol.TypedProtoMsg[*pb.MsgPunchOffer]) error
 }
 
 // LogicImpl implements Logic.
@@ -376,7 +376,7 @@ func (l *LogicImpl) OnSearch(ctx context.Context, _ *Conn, bidi protocol.ProtoBi
 	return nil
 }
 
-func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgPunchOffer]) error {
+func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi C2cBidi, msg *protocol.TypedProtoMsg[*pb.MsgPunchOffer]) error {
 	reject := func() error {
 		err := bidi.Write(pb.MsgType_MSG_TYPE_PUNCH_REJECT, &pb.MsgPunchReject{})
 		if err != nil {
@@ -421,17 +421,42 @@ func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi protocol.
 		return reject()
 	}
 
-	sendAddr, err := net.ResolveUDPAddr("udp", msg.Payload.Address)
+	udpAddr, err := net.ResolveUDPAddr("udp", msg.Payload.Address)
 	if err != nil {
-		l.logger.Error("could not resolve hole punch target address", "addr", msg.Payload.Address, "err", err)
-		return err
+		return reject()
 	}
 
-	// Periodically send garbage over this socket and hope connection establishes
+	hostname, _, err := net.SplitHostPort(msg.Payload.Address)
+	if err != nil {
+		return reject()
+	}
 
-	// TODO Ten second timeout until we have a reliable way to signal that it should stop sending garbage
-	garbageCtx, _ := context.WithDeadline(context.Background(), time.Now().Add(10*time.Second))
-	go protocol.SendNatHolepunchGarbage(garbageCtx, holePunchSocket, sendAddr)
+	// TODO Figure out a better way to stop the dummy dialing.
+	dummyDialCtx, cancelDummyDial := context.WithTimeout(context.Background(), 10*time.Second)
+
+	// Try dialing for this peer. On success, disconnect
+	go func() {
+		defer cancelDummyDial()
+
+		dummyConn, err := protocol.TryDialBackoff(
+			dummyDialCtx,
+			holePunchSocket,
+			udpAddr,
+			protocol.CreateDirectClientTlsConfig(hostname),
+			common.StunResTimeout,
+		)
+		if dummyConn != nil {
+			dummyConn.CloseWithError(0, "")
+		}
+		if !errors.Is(err, dummyDialCtx.Err()) {
+			l.logger.Warn("dummy dailer failed with reason other than cancelation during hole punch",
+				"service", "room.LogicImpl",
+				"room", room.RoomName.String(),
+				"peer", bidi.Username.String(),
+				"err", err,
+			)
+		}
+	}()
 
 	return nil
 }
