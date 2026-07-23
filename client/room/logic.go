@@ -305,7 +305,10 @@ func (l *LogicImpl) OnConnectToMe(ctx context.Context, room *Conn, bidi C2cBidi,
 		})
 	}
 
-	_, result, err := room.tryConnectToPeer(ctx, bidi.Username)
+	timeoutCtx, ctxCancel := context.WithTimeout(ctx, room.directOutgoingTimeout)
+	defer ctxCancel()
+
+	_, result, err := room.tryConnectToPeer(timeoutCtx, bidi.Username)
 	if err != nil && result == pb.ConnResult_CONN_RESULT_INTERNAL_ERROR {
 		room.logger.Error("internal error while connecting to peer",
 			"service", "room.LogicImpl",
