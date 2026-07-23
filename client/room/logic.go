@@ -446,6 +446,12 @@ func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi C2cBidi, 
 			common.StunResTimeout,
 		)
 		if dummyConn != nil {
+			l.logger.Debug("dummy connection succeeded",
+				"service", "room.LogicImpl",
+				"room", room.RoomName.String(),
+				"peer", bidi.Username.String(),
+				"err", err,
+			)
 			_ = dummyConn.CloseWithError(0, "")
 		}
 		if !errors.Is(err, dummyDialCtx.Err()) {

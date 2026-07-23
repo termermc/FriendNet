@@ -643,6 +643,9 @@ func (c *Conn) openC2cBidiWithMsg(
 			if method.Type == pb.ConnMethodType_CONN_METHOD_TYPE_YGGDRASIL {
 				goto connectToMe
 			}
+			if method.Type == pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH {
+				goto connectToMe
+			}
 		}
 
 		c.logger.Warn("no suitable self method found, will not ask peer to connect to us",
