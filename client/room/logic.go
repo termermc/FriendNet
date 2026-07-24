@@ -442,7 +442,6 @@ func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi C2cBidi, 
 
 	// Send garbage to the peer until we get a connection or we time out.
 	go func() {
-		// Leave first byte empty so that the packets cannot be interpreted as QUIC.
 		garbage := make([]byte, 257)
 		ticker := time.NewTicker(100 * time.Millisecond)
 
