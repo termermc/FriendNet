@@ -399,11 +399,6 @@ func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi C2cBidi, 
 		return reject("hole punching is disabled")
 	}
 
-	// Can't use an invalid IP
-	if protocol.ValidateMethodAddress(pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH, msg.Payload.Address) != nil {
-		return reject("IP is invalid")
-	}
-
 	holePunchSocket, err := net.ListenUDP("udp", &net.UDPAddr{})
 	if err != nil {
 		return reject("could not listen on socket")
