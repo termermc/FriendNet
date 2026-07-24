@@ -12,6 +12,9 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// Channel that is never closed or written, to satisfy ProtoConn.OnDisconnect.
+var virtualC2cConnOnDiscChan = make(chan struct{})
+
 // VirtualC2cConn is a virtual connection to another client.
 // It is stateless and does not manage any direct or proxied connections.
 // It exists to implement protocol.ProtoConn.
@@ -25,6 +28,11 @@ type VirtualC2cConn struct {
 	// Whether to force proxying instead of using a direct connection.
 	// It may still fall back to proxying if no direct connection method is available.
 	ForceProxy bool
+}
+
+// OnDisconnect returns a channel that never closes for VirtualC2cConn.
+func (c VirtualC2cConn) OnDisconnect() <-chan struct{} {
+	return virtualC2cConnOnDiscChan
 }
 
 func (c VirtualC2cConn) lockCheck() error {
@@ -50,9 +58,6 @@ func (c VirtualC2cConn) OpenBidiWithMsg(typ pb.MsgType, msg proto.Message) (bidi
 	if err = c.lockCheck(); err != nil {
 		return
 	}
-
-	// TODO REMOVE THIS
-	c.ServerConn.logger.Debug("sent c2c message", "type", typ.String())
 
 	return c.ServerConn.openC2cBidiWithMsg(c.Username, typ, msg, c.ForceProxy)
 }
