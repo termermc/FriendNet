@@ -182,7 +182,7 @@ type ProtoConn interface {
 	// Returns an UnexpectedMsgTypeError if the received type does not match the expected type.
 	SendAndReceiveAck(typ pb.MsgType, msg proto.Message) error
 
-	// Returns a channel that is closed when the connection is disconnected.
+	// OnDisconnect returns a channel that is closed when the connection is disconnected.
 	// It may not fire immediately, it may require a failed WaitForBidi to trigger.
 	OnDisconnect() <-chan struct{}
 }
