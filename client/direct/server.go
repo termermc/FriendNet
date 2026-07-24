@@ -23,7 +23,7 @@ const handshakeTimeout = 10 * time.Second
 // It does not perform any authentication, it simply sends the connections along with
 // their handshake messages to the appropriate Partition.
 type Server struct {
-	mu sync.Mutex
+	mu sync.RWMutex
 
 	logger *slog.Logger
 
@@ -38,7 +38,7 @@ type Server struct {
 
 	listener protocol.ProtoListener
 
-	onConnChan chan struct{}
+	onConnHdlrs []func(conn protocol.ProtoConn)
 }
 
 // NewServerFromListener creates a new direct connect server using an existing listener.
@@ -63,8 +63,6 @@ func NewServerFromListener(
 		AddrPort: addrPort,
 
 		listener: listener,
-
-		onConnChan: make(chan struct{}),
 	}
 
 	go func() {
@@ -174,13 +172,12 @@ func (s *Server) Close() error {
 	return nil
 }
 
-// OnConnection returns a channel that is closed when a connection is made.
-// It is not closed when the server closes. You should also select against OnClose.
-func (s *Server) OnConnection() <-chan struct{} {
+// OnConnection registers a function to be run when a connection is made to the server.
+// The handlers are BLOCKING and should return quickly.
+func (s *Server) OnConnection(handler func(conn protocol.ProtoConn)) {
 	s.mu.Lock()
-	ch := s.onConnChan
+	s.onConnHdlrs = append(s.onConnHdlrs, handler)
 	s.mu.Unlock()
-	return ch
 }
 
 // OnClose returns a channel that is closed when the server is closed.
@@ -191,15 +188,9 @@ func (s *Server) OnClose() <-chan struct{} {
 // run runs the server accept loop.
 // It exits with nil if the server was closed, or an error if there was an error accepting a connection.
 func (s *Server) run() error {
-	// TODO REMOVE THIS
-	fmt.Printf("DIRECT SERVER LISTENING ON %s\n", s.AddrPort.String())
-
 	for {
 		conn, err := s.listener.Accept(s.ctx)
 		if err != nil {
-			// TODO REMOVE THIS
-			fmt.Printf("Failed to accept conn on server %s: %s\n", s.AddrPort.String(), err.Error())
-
 			if protocol.IsErrorConnCloseOrCancel(err) {
 				return nil
 			}
@@ -208,13 +199,11 @@ func (s *Server) run() error {
 		}
 
 		// Notify channel of a new connection.
-		s.mu.Lock()
-		close(s.onConnChan)
-		s.onConnChan = make(chan struct{})
-		s.mu.Unlock()
-
-		// TODO REMOVE THIS
-		fmt.Printf("Got connection on server %s from %s\n", s.AddrPort.String(), conn.RemoteAddr().String())
+		s.mu.RLock()
+		for _, hdlr := range s.onConnHdlrs {
+			hdlr(conn)
+		}
+		s.mu.RUnlock()
 
 		go s.connHandler(conn)
 	}

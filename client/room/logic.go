@@ -411,16 +411,19 @@ func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi C2cBidi, 
 
 	publicAddr, err := room.GetHolePunchAddrPort(holePunchSocket)
 	if err != nil {
+		_ = holePunchSocket.Close()
 		return reject("could not obtain own public address")
 	}
 
 	udpAddr, err := net.ResolveUDPAddr("udp", msg.Payload.Address)
 	if err != nil {
+		_ = holePunchSocket.Close()
 		return reject("could not resolve provided address")
 	}
 
 	err = bidi.Write(pb.MsgType_MSG_TYPE_PUNCH_ACCEPT, &pb.MsgPunchAccept{Address: publicAddr.String()})
 	if err != nil {
+		_ = holePunchSocket.Close()
 		if protocol.IsErrorConnCloseOrCancel(err) {
 			return nil
 		}
@@ -430,6 +433,7 @@ func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi C2cBidi, 
 
 	server, err := room.directPart.CreateTemporaryServerFromSocket(holePunchSocket)
 	if err != nil {
+		_ = holePunchSocket.Close()
 		return fmt.Errorf("failed to create server in partition: %w", err)
 	}
 
@@ -437,19 +441,30 @@ func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi C2cBidi, 
 
 	// Send garbage to the peer until we get a connection or we time out.
 	go func() {
-		garbage := make([]byte, 256+7)
-		copy(garbage[:7], []byte("garbage"))
+		// Leave first byte empty so that the packets cannot be interpreted as QUIC.
+		garbage := make([]byte, 256+7+1)
+		copy(garbage[1:8], "garbage")
 		ticker := time.NewTicker(100 * time.Millisecond)
 		for {
 			select {
 			case <-timeoutCtx.Done():
 				return
 			case <-ticker.C:
-				_, _ = rand.Read(garbage[:7])
-				holePunchSocket.WriteToUDP(garbage, udpAddr)
+				_, _ = rand.Read(garbage[8:])
+				_, _ = holePunchSocket.WriteToUDP(garbage, udpAddr)
 			}
 		}
 	}()
+
+	hasConnChan := make(chan struct{})
+	server.OnConnection(func(conn protocol.ProtoConn) {
+		close(hasConnChan)
+
+		// Since this is a temporary server meant for just a single connection, close the server when the direct
+		// connection closes.
+		<-conn.OnDisconnect()
+		_ = server.Close()
+	})
 
 	// Close server within a timeout if we don't get a connection.
 	go func() {
@@ -458,9 +473,8 @@ func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi C2cBidi, 
 		select {
 		case <-server.OnClose():
 			return
-		case <-server.OnConnection():
-			// TODO Somehow track the connection and make sure the server is closed when the direct connection closes.
-
+		case <-hasConnChan:
+			// Got a connection; let the server live.
 			return
 		case <-timeoutCtx.Done():
 			// We did not get a connection before the timeout; close the server.

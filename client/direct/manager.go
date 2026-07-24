@@ -637,8 +637,12 @@ func (p *Partition) CreateTemporaryServerFromSocket(socket *net.UDPConn) (*Serve
 	}
 
 	// Clear deadlines on socket.
-	socket.SetReadDeadline(time.Time{})
-	socket.SetWriteDeadline(time.Time{})
+	if err := socket.SetReadDeadline(time.Time{}); err != nil {
+		return nil, fmt.Errorf("failed to clear read deadline: %w", err)
+	}
+	if err := socket.SetWriteDeadline(time.Time{}); err != nil {
+		return nil, fmt.Errorf("failed to clear write deadline: %w", err)
+	}
 
 	srv, err := NewServerFromSocket(
 		p.m.logger,
@@ -656,6 +660,9 @@ func (p *Partition) CreateTemporaryServerFromSocket(socket *net.UDPConn) (*Serve
 	// Clean up if connection fails
 	go func() {
 		<-srv.ctx.Done()
+
+		_ = socket.Close()
+
 		p.ownedServersMu.Lock()
 		defer p.ownedServersMu.Unlock()
 		p.m.mu.Lock()
