@@ -274,7 +274,7 @@ func (s *Storage) AddKeywordToBlacklist(ctx context.Context, room common.Normali
 			return nil
 		}
 
-		_, err := s.Db.ExecContext(ctx, `insert into word_blocklist (room, word) values (?, ?)`, room, keyword)
+		_, err := s.Db.ExecContext(ctx, `insert into word_blocklist (room, word) values (?, ?)`, room.String(), keyword)
 		if err != nil {
 			return fmt.Errorf("failed to add keyword \"%s\" to blacklist for room %s: %w", keyword, room, err)
 		}
@@ -301,7 +301,7 @@ func (s *Storage) RemoveKeywordFromBlacklist(ctx context.Context, room common.No
 			return nil
 		}
 
-		_, err := s.Db.ExecContext(ctx, `delete from word_blocklist where room = ? and word = ?`, room, keyword)
+		_, err := s.Db.ExecContext(ctx, `delete from word_blocklist where room = ? and word = ?`, room.String(), keyword)
 		if err != nil {
 			return fmt.Errorf("failed to remove keyword \"%s\" from blacklist for room %s: %w", keyword, room, err)
 		}
