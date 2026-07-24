@@ -166,8 +166,6 @@ Examples:
 
 # NAT Hole Punching
 
-(This section is a WIP)
-
 FriendNet supports NAT hole punching (hereby referred to as "punching" for brevity) using the server to coordinate
 between peers. In non-NAT scenarios, clients will advertise their connection methods to the server, and other clients
 can query them. Clients that are willing to attempt punching use this system to advertise their willingness to perform
