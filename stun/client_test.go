@@ -1,25 +1,11 @@
 package stun
 
 import (
-	"net"
 	"testing"
-	"time"
 )
 
-func mkSock() *net.UDPConn {
-	sock, err := net.ListenUDP("udp", &net.UDPAddr{})
-	if err != nil {
-		panic(err)
-	}
-	err = sock.SetReadDeadline(time.Now().Add(5 * time.Second))
-	if err != nil {
-		panic(err)
-	}
-	return sock
-}
-
 func TestGetAddrPortForSocket(t *testing.T) {
-	sock := mkSock()
+	sock := mkSockWithDeadline()
 	defer func() {
 		_ = sock.Close()
 	}()
@@ -40,7 +26,7 @@ func TestRaceStunServers(t *testing.T) {
 		"stun.cloudflare.com:3478",
 	}
 
-	sock := mkSock()
+	sock := mkSockWithDeadline()
 	defer func() {
 		_ = sock.Close()
 	}()

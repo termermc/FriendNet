@@ -9,9 +9,6 @@ import (
 	"net/netip"
 )
 
-const stunBindingRequest uint16 = 0x0001
-const stunMagicCookie = 0x2112A442
-
 func buildStunBindingRequest(tid [12]byte) []byte {
 	b := make([]byte, 20)
 	binary.BigEndian.PutUint16(b[0:2], stunBindingRequest)
@@ -27,10 +24,11 @@ func randomTid() [12]byte {
 	return tid
 }
 
-func decodeAddrXORMapped(response []byte) (ip net.IP, port int, ok bool) {
+func decodeAddrXORMapped(response []byte) (ap netip.AddrPort, ok bool) {
 	if len(response) < 20 {
-		return nil, 0, false
+		return netip.AddrPort{}, false
 	}
+
 	cookie := binary.BigEndian.Uint32(response[4:8])
 
 	off := 20
@@ -39,32 +37,74 @@ func decodeAddrXORMapped(response []byte) (ip net.IP, port int, ok bool) {
 		attrLen := binary.BigEndian.Uint16(response[off+2 : off+4])
 		off += 4
 
+		// attributes are padded to 32-bit boundaries
 		aligned := (int(attrLen) + 3) &^ 3
 		if off+int(attrLen) > len(response) {
-			return nil, 0, false
+			return netip.AddrPort{}, false
+		}
+		if off+aligned > len(response) {
+			return netip.AddrPort{}, false
 		}
 
-		if attrType == 0x0020 && attrLen == 8 {
-			v := response[off : off+8]
-			family := v[1]
-			if family != 0x01 {
-				return nil, 0, false
+		// XOR-MAPPED-ADDRESS: STUN attribute type 0x0020
+		if attrType == attrXORMappedAddress {
+			switch attrLen {
+			case 8: // IPv4
+				// value: 1 byte reserved, 1 byte family(0x01), 2 bytes xport, 4 bytes xaddr
+				v := response[off : off+8]
+				if v[1] != 0x01 {
+					return netip.AddrPort{}, false
+				}
+
+				xport := binary.BigEndian.Uint16(v[2:4])
+				port := xport ^ uint16(cookie>>16)
+
+				xaddr := binary.BigEndian.Uint32(v[4:8])
+				ip4 := xaddr ^ cookie
+
+				addr := netip.AddrFrom4([4]byte{
+					byte(ip4 >> 24), byte(ip4 >> 16), byte(ip4 >> 8), byte(ip4),
+				})
+				return netip.AddrPortFrom(addr, port), true
+
+			case 20: // IPv6
+				// value: 1 byte reserved, 1 byte family(0x02), 2 bytes xport, 16 bytes xaddr
+				v := response[off : off+20]
+				if v[1] != 0x02 {
+					return netip.AddrPort{}, false
+				}
+
+				xport := binary.BigEndian.Uint16(v[2:4])
+				port := xport ^ uint16(cookie>>16)
+
+				// x-addr[0..15] XOR rules:
+				// - first 4 bytes XOR magic cookie
+				// - last 12 bytes XOR transaction-id
+				var xaddr [16]byte
+				copy(xaddr[:], v[4:20])
+
+				var addr [16]byte
+				// first 32 bits
+				addr[0] = xaddr[0] ^ byte(cookie>>24)
+				addr[1] = xaddr[1] ^ byte(cookie>>16)
+				addr[2] = xaddr[2] ^ byte(cookie>>8)
+				addr[3] = xaddr[3] ^ byte(cookie)
+
+				// last 96 bits XOR with transaction-id (bytes 8..19 of STUN header)
+				tid := response[8:20] // must exist since len>=20
+				for i := 0; i < 12; i++ {
+					addr[4+i] = xaddr[4+i] ^ tid[i]
+				}
+
+				parsed := netip.AddrFrom16(addr)
+				return netip.AddrPortFrom(parsed, port), true
 			}
-
-			xport := binary.BigEndian.Uint16(v[2:4])
-			port = int(xport ^ uint16(cookie>>16))
-
-			xaddr := binary.BigEndian.Uint32(v[4:8])
-			addrX := xaddr ^ (cookie & 0xffffffff)
-
-			ip = make(net.IP, 4)
-			binary.BigEndian.PutUint32(ip, addrX)
-			return ip, port, true
 		}
 
 		off += aligned
 	}
-	return nil, 0, false
+
+	return netip.AddrPort{}, false
 }
 
 func queryStun(conn *net.UDPConn, serverHostPort string) ([]byte, error) {
@@ -87,6 +127,9 @@ func queryStun(conn *net.UDPConn, serverHostPort string) ([]byte, error) {
 	return buf[:n], nil
 }
 
+// ErrBadServerResponse is returned when the STUN server returned an invalid response.
+var ErrBadServerResponse = errors.New("STUN server returned invalid response")
+
 // GetPublicAddrPort gets the public address and port reported by the STUN server.
 // This function does not set the socket read deadline.
 // The caller should set a read deadline to avoid blocking forever.
@@ -96,15 +139,9 @@ func GetPublicAddrPort(sock *net.UDPConn, stunServerAddr string) (addrPort netip
 		return addrPort, err
 	}
 
-	ip, port, ok := decodeAddrXORMapped(raw)
+	addrPort, ok := decodeAddrXORMapped(raw)
 	if !ok {
-		return addrPort, err
-	}
-
-	fmtAddr := fmt.Sprintf("%s:%d", ip.String(), port)
-	addrPort, err = netip.ParseAddrPort(fmtAddr)
-	if err != nil {
-		return addrPort, err
+		return addrPort, ErrBadServerResponse
 	}
 
 	return addrPort, nil
