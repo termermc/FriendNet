@@ -1,0 +1,176 @@
+.container {
+	padding: 1rem;
+	width: 100%;
+}
+
+.location {
+	min-height: 4rem;
+	border-bottom: 0.2rem solid rgba(0, 0, 0, 0.5);
+	margin-bottom: 1rem;
+}
+.segment {
+	display: inline-block;
+	margin: 0.25rem;
+	background-color: rgba(0, 0, 0, 0.25);
+	padding: 0.5rem;
+	font-weight: bold;
+	cursor: default;
+	text-decoration: none;
+}
+a.segment {
+	cursor: pointer;
+}
+
+.actions {
+	margin-bottom: 1rem;
+	text-align: right;
+}
+.closeButton {
+	cursor: pointer;
+	font-size: 0.9rem;
+}
+
+.body {
+	max-width: 50rem;
+	margin: 0 auto;
+	padding: 0 1rem;
+}
+
+.content {
+	line-height: 1.55;
+	word-break: break-word;
+}
+
+.content h1,
+.content h2,
+.content h3,
+.content h4,
+.content h5,
+.content h6 {
+	margin-top: 1.5rem;
+	margin-bottom: 0.5rem;
+	line-height: 1.2;
+}
+.content h1 {
+	font-size: 1.8rem;
+	border-bottom: 0.1rem solid rgba(255, 255, 255, 0.15);
+	padding-bottom: 0.3rem;
+}
+.content h2 {
+	font-size: 1.5rem;
+	border-bottom: 0.1rem solid rgba(255, 255, 255, 0.1);
+	padding-bottom: 0.2rem;
+}
+.content h3 {
+	font-size: 1.25rem;
+}
+.content h4 {
+	font-size: 1.1rem;
+}
+
+.content p {
+	margin: 0.75rem 0;
+}
+
+.content ul,
+.content ol {
+	padding-left: 1.5rem;
+	margin: 0.75rem 0;
+}
+.content li {
+	margin: 0.25rem 0;
+}
+
+.content blockquote {
+	margin: 0.75rem 0;
+	padding: 0.25rem 0.75rem;
+	border-left: 0.25rem solid rgba(255, 255, 255, 0.25);
+	color: rgba(255, 255, 255, 0.75);
+	font-style: italic;
+}
+
+.content code {
+	background-color: rgba(0, 0, 0, 0.35);
+	padding: 0.05rem 0.3rem;
+	border-radius: 0.2rem;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 0.9em;
+}
+.content pre {
+	background-color: rgba(0, 0, 0, 0.35);
+	padding: 0.75rem;
+	border-radius: 0.3rem;
+	overflow-x: auto;
+	margin: 0.75rem 0;
+}
+.content pre code {
+	background: none;
+	padding: 0;
+	font-size: 0.9em;
+}
+
+/* Syntax highlighting (e.g. Prism, highlight.js) can be layered on later
+   by targeting .content pre code. */
+
+.content table {
+	border-collapse: collapse;
+	margin: 0.75rem 0;
+	width: 100%;
+}
+.content th,
+.content td {
+	border: 0.05rem solid rgba(255, 255, 255, 0.2);
+	padding: 0.35rem 0.6rem;
+	text-align: left;
+}
+.content th {
+	background-color: rgba(0, 0, 0, 0.25);
+}
+
+.content a {
+	color: #6cb6ff;
+	text-decoration: underline;
+}
+.content a[data-blocked='true'] {
+	color: rgba(255, 255, 255, 0.5);
+	cursor: not-allowed;
+	text-decoration: line-through;
+}
+
+.content img {
+	max-width: 100%;
+	height: auto;
+	display: block;
+	margin: 0.5rem 0;
+}
+.content img[data-blocked='true'] {
+	display: none;
+}
+
+.content hr {
+	border: none;
+	border-top: 0.05rem solid rgba(255, 255, 255, 0.15);
+	margin: 1.5rem 0;
+}
+
+.raw {
+	white-space: pre-wrap;
+	word-break: break-word;
+	background-color: rgba(0, 0, 0, 0.35);
+	padding: 1rem;
+	border-radius: 0.3rem;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 0.9rem;
+}
+
+.footer {
+	margin-top: 2rem;
+	padding-top: 1rem;
+	border-top: 0.05rem solid rgba(255, 255, 255, 0.1);
+	text-align: right;
+	font-size: 0.9rem;
+	opacity: 0.7;
+}
+.footer a {
+	cursor: pointer;
+}
