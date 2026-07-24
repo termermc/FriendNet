@@ -173,7 +173,7 @@ func (s *Server) Close() error {
 }
 
 // OnConnection registers a function to be run when a connection is made to the server.
-// The handlers are BLOCKING and should return quickly.
+// The handler is run in its own goroutine.
 func (s *Server) OnConnection(handler func(conn protocol.ProtoConn)) {
 	s.mu.Lock()
 	s.onConnHdlrs = append(s.onConnHdlrs, handler)
@@ -201,7 +201,7 @@ func (s *Server) run() error {
 		// Notify channel of a new connection.
 		s.mu.RLock()
 		for _, hdlr := range s.onConnHdlrs {
-			hdlr(conn)
+			go hdlr(conn)
 		}
 		s.mu.RUnlock()
 
