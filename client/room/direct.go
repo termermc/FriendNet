@@ -305,7 +305,84 @@ func (c *Conn) runDirectAdsAndLoop() {
 		}()
 	}
 
-	advertiseInBg := func(server *direct.Server) {
+	advertiseInBg := func(ad *pb.MsgAdvertiseConnMethod) {
+		go func() {
+			defer func() {
+				if rec := recover(); rec != nil {
+					c.logger.Error("direct advertisement goroutine panicked",
+						"service", "room.Conn",
+						"room", c.RoomName.String(),
+						"addr", ad.Address,
+						"err", rec,
+					)
+				}
+			}()
+
+			msg, err := protocol.SendAndReceiveExpect[*pb.MsgAdvertiseConnMethodResult](
+				c.serverConn,
+				pb.MsgType_MSG_TYPE_ADVERTISE_CONN_METHOD,
+				ad,
+				pb.MsgType_MSG_TYPE_ADVERTISE_CONN_METHOD_RESULT,
+			)
+			if err != nil {
+				if protocol.IsErrorConnCloseOrCancel(err) {
+					return
+				}
+
+				c.logger.Error("failed to advertise direct connection method",
+					"service", "room.Conn",
+					"room", c.RoomName.String(),
+					"method_type", ad.Type.String(),
+					"address", ad.Address,
+					"priority", ad.Priority,
+					"err", err,
+				)
+				return
+			}
+
+			result := msg.Payload.TestResult
+			isOk := result == pb.ConnResult_CONN_RESULT_OK
+			if isOk {
+				c.logger.Info("server verified advertised address",
+					"service", "room.Conn",
+					"room", c.RoomName.String(),
+					"method_id", ad.Id,
+					"method_type", ad.Type.String(),
+					"address", ad.Address,
+					"priority", ad.Priority,
+				)
+			} else {
+				c.logger.Error("server said it could not connect to advertised address",
+					"service", "room.Conn",
+					"room", c.RoomName.String(),
+					"method_id", ad.Id,
+					"method_type", ad.Type.String(),
+					"address", ad.Address,
+					"priority", ad.Priority,
+					"result", result.String(),
+				)
+			}
+
+			c.mu.Lock()
+			defer c.mu.Unlock()
+
+			existing, hasExisting := c.directSelfMethods[ad.Id]
+			if hasExisting && existing.IsServerVerified {
+				// The existing one is already verified, do not replace it.
+				return
+			}
+
+			c.directSelfMethods[ad.Id] = &pb.ConnMethod{
+				Id:               ad.Id,
+				Type:             ad.Type,
+				Address:          ad.Address,
+				Priority:         ad.Priority,
+				IsServerVerified: isOk,
+			}
+		}()
+	}
+
+	advertiseServerInBg := func(server *direct.Server) {
 		methodsToAdvertise := make([]*pb.MsgAdvertiseConnMethod, 0, 2)
 
 		if server.AddrPort.Addr().IsPrivate() {
@@ -340,87 +417,19 @@ func (c *Conn) runDirectAdsAndLoop() {
 				continue
 			}
 
-			go func() {
-				defer func() {
-					if rec := recover(); rec != nil {
-						c.logger.Error("direct advertisement goroutine panicked",
-							"service", "room.Conn",
-							"room", c.RoomName.String(),
-							"addr", server.AddrPort.String(),
-							"err", rec,
-						)
-					}
-				}()
-
-				msg, err := protocol.SendAndReceiveExpect[*pb.MsgAdvertiseConnMethodResult](
-					c.serverConn,
-					pb.MsgType_MSG_TYPE_ADVERTISE_CONN_METHOD,
-					method,
-					pb.MsgType_MSG_TYPE_ADVERTISE_CONN_METHOD_RESULT,
-				)
-				if err != nil {
-					if protocol.IsErrorConnCloseOrCancel(err) {
-						return
-					}
-
-					c.logger.Error("failed to advertise direct connection method",
-						"service", "room.Conn",
-						"room", c.RoomName.String(),
-						"method_type", method.Type.String(),
-						"address", server.AddrPort.String(),
-						"priority", method.Priority,
-						"err", err,
-					)
-					return
-				}
-
-				result := msg.Payload.TestResult
-				isOk := result == pb.ConnResult_CONN_RESULT_OK
-				if isOk {
-					c.logger.Info("server verified advertised address",
-						"service", "room.Conn",
-						"room", c.RoomName.String(),
-						"method_id", method.Id,
-						"method_type", method.Type.String(),
-						"address", server.AddrPort.String(),
-						"priority", method.Priority,
-					)
-				} else {
-					c.logger.Error("server said it could not connect to advertised address",
-						"service", "room.Conn",
-						"room", c.RoomName.String(),
-						"method_id", method.Id,
-						"method_type", method.Type.String(),
-						"address", server.AddrPort.String(),
-						"priority", method.Priority,
-						"result", result.String(),
-					)
-				}
-
-				c.mu.Lock()
-				defer c.mu.Unlock()
-
-				existing, hasExisting := c.directSelfMethods[method.Id]
-				if hasExisting && existing.IsServerVerified {
-					// The existing one is already verified, do not replace it.
-					return
-				}
-
-				c.directSelfMethods[method.Id] = &pb.ConnMethod{
-					Id:               method.Id,
-					Type:             method.Type,
-					Address:          method.Address,
-					Priority:         method.Priority,
-					IsServerVerified: isOk,
-				}
-			}()
+			advertiseInBg(method)
 		}
 	}
 
 	// Advertise known servers.
 	servers := mgr.GetServers()
 	for _, server := range servers {
-		advertiseInBg(server)
+		advertiseServerInBg(server)
+	}
+
+	// Advertise NAT holepunching if enabled.
+	if !mgr.IsNatHolePunchingDisabled() {
+		advertiseInBg(c.mkAdConnMethodForPunch())
 	}
 
 	// Listen for new direct methods from partition.
@@ -431,7 +440,7 @@ func (c *Conn) runDirectAdsAndLoop() {
 				return
 			}
 
-			advertiseInBg(server)
+			advertiseServerInBg(server)
 		}
 	}()
 
