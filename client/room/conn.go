@@ -40,11 +40,6 @@ type Credentials struct {
 	Password string
 }
 
-type CachedAddr struct {
-	AddrPort netip.AddrPort
-	Expiry   time.Time
-}
-
 // Arbitrary size to prevent lockups on the incoming bidi channel.
 const incomingBidiChanSize = 64
 
@@ -116,9 +111,6 @@ type Conn struct {
 
 	// The interval at which direct connection-related caches are cleared.
 	directGcInterval time.Duration
-
-	// A connection's outward facing address
-	cachedAddr CachedAddr
 
 	eventPublisher *event.Publisher
 }
@@ -282,88 +274,6 @@ func (c *Conn) Ping() (time.Duration, error) {
 	}
 
 	return time.Since(start), nil
-}
-
-func (c *Conn) queryStunServers(socket *net.UDPConn, addresses []string) (*netip.AddrPort, error) {
-	// Don't query anything if client does not have a hole punch socket (HP'ing disabled)
-	if socket == nil {
-		return nil, fmt.Errorf("client does not have a hole punch socket")
-	}
-
-	var wg sync.WaitGroup
-	var responses []netip.AddrPort
-
-	// Query each STUN server and aggregate valid responses
-	for _, addr := range addresses {
-		wg.Go(func() {
-			r := make(chan netip.AddrPort)
-
-			ctx, cancel := context.WithCancelCause(context.Background())
-
-			c.logger.Debug("contacting", "addr", addr)
-
-			go func() {
-				defer cancel(nil)
-
-				host, err := stun.GetPublicAddrPort(socket, addr)
-				if err != nil {
-					cancel(fmt.Errorf("failed to discover on server %s: %w", addr, err))
-					return
-				}
-
-				// But if we do not get an address back...
-				if host == nil {
-					cancel(fmt.Errorf("did not get an address back"))
-					return
-				}
-
-				c.logger.Debug("server returned host",
-					"addr", addr,
-					"host", host.String(),
-				)
-
-				r <- *host
-			}()
-
-			select {
-			case res := <-r:
-				c.logger.Debug("STUN server responded", "addr", addr, "host", res.String())
-				responses = append(responses, res)
-			case <-time.After(common.StunResTimeout):
-				c.logger.Debug("STUN server timed out", "addr", addr)
-			case <-ctx.Done():
-				c.logger.Error("STUN server fail", "addr", addr, "err", ctx.Err())
-				return
-			}
-		})
-	}
-
-	wg.Wait()
-
-	if len(responses) == 0 {
-		return nil, fmt.Errorf("got zero results from STUN servers")
-	}
-
-	var result netip.AddrPort
-	freq := 0
-	results := make(map[netip.AddrPort]int)
-
-	// Get most popular response
-	for _, resp := range responses {
-		results[resp]++
-	}
-
-	for r, f := range results {
-		if f > freq {
-			freq = f
-			result = r
-		}
-	}
-
-	// NOTE: There will only ever be at most three servers being contacted.
-	//       That being said, there is a possibility that the first response
-	//       is incorrect. Please discuss this in review.
-	return &result, nil
 }
 
 // ChangeAccountPassword changes the password on the account the connection is using.
@@ -761,11 +671,9 @@ func (c *Conn) Search(query string) (protocol.Stream[*pb.MsgSearchRoomResult], e
 	), nil
 }
 
-const holePunchAddrPortCacheTime = 5 * time.Minute
-
-// GetHolePunchAddrPort fetches the public IP and port for a socket.
-// It briefly caches the result to avoid hitting STUN servers repeatedly.
-func (c *Conn) GetHolePunchAddrPort(sock *net.UDPConn) (*netip.AddrPort, error) {
+// GetAddrPortForSocket gets the public IP address and port for a socket based on STUN server(s) provided by the server.
+// It will modify the socket's read deadline, so the caller may want to reset it after calling this function.
+func (c *Conn) GetAddrPortForSocket(sock *net.UDPConn) (addrPort netip.AddrPort, err error) {
 	res, err := protocol.SendAndReceiveExpect[*pb.MsgStunServers](
 		c.serverConn,
 		pb.MsgType_MSG_TYPE_GET_STUN_SERVERS,
@@ -773,17 +681,30 @@ func (c *Conn) GetHolePunchAddrPort(sock *net.UDPConn) (*netip.AddrPort, error) 
 		pb.MsgType_MSG_TYPE_STUN_SERVERS,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("could not acquire STUN server list from server")
+		return addrPort, fmt.Errorf("could not acquire STUN server list from server: %w", err)
+	}
+	if len(res.Payload.Addresses) == 0 {
+		return addrPort, fmt.Errorf("server returned an empty STUN server list")
 	}
 
-	stunResult, err := c.queryStunServers(sock, res.Payload.Addresses)
-	if err != nil {
-		return nil, err
+	// Retry with escalating deadlines up to 1 second.
+	var timeout time.Duration
+	for timeout <= time.Second {
+		timeout += 250 * time.Millisecond
+
+		err = sock.SetReadDeadline(time.Now().Add(timeout))
+		if err != nil {
+			return addrPort, fmt.Errorf(`failed to set socket read deadline before racing STUN servers: %w`, err)
+		}
+
+		addrPort, err = stun.RaceStunServers(sock, res.Payload.Addresses)
+		if err != nil {
+			return addrPort, err
+		}
+
+		// Try again.
 	}
 
-	if stunResult == nil {
-		return nil, fmt.Errorf("stunResult is nil")
-	}
-
-	return stunResult, nil
+	// If we reached this point, err will be the last error.
+	return addrPort, err
 }

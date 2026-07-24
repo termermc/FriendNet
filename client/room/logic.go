@@ -409,7 +409,7 @@ func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi C2cBidi, 
 		return reject("could not listen on socket")
 	}
 
-	publicAddr, err := room.GetHolePunchAddrPort(holePunchSocket)
+	publicAddr, err := room.GetAddrPortForSocket(holePunchSocket)
 	if err != nil {
 		_ = holePunchSocket.Close()
 		return reject("could not obtain own public address")

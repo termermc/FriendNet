@@ -617,7 +617,7 @@ func (c *Conn) directConnect(ctx context.Context, peer common.NormalizedUsername
 			return nil, 0, fmt.Errorf("could not listen hole punch socket")
 		}
 
-		ownAddr, err := c.GetHolePunchAddrPort(holePunchSocket)
+		ownAddr, err := c.GetAddrPortForSocket(holePunchSocket)
 		if err != nil {
 			return nil, 0, fmt.Errorf("failed to get address to hole punch: %w", err)
 		}

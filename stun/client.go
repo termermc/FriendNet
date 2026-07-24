@@ -3,6 +3,7 @@ package stun
 import (
 	"crypto/rand"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net"
 	"net/netip"
@@ -88,22 +89,60 @@ func queryStun(conn *net.UDPConn, serverHostPort string) ([]byte, error) {
 
 // GetPublicAddrPort gets the public address and port reported by the STUN server.
 // This function does not set the socket read deadline.
-func GetPublicAddrPort(sock *net.UDPConn, stunServerAddr string) (*netip.AddrPort, error) {
+// The caller should set a read deadline to avoid blocking forever.
+func GetPublicAddrPort(sock *net.UDPConn, stunServerAddr string) (addrPort netip.AddrPort, err error) {
 	raw, err := queryStun(sock, stunServerAddr)
 	if err != nil {
-		return nil, err
+		return addrPort, err
 	}
 
 	ip, port, ok := decodeAddrXORMapped(raw)
 	if !ok {
-		return nil, err
+		return addrPort, err
 	}
 
 	fmtAddr := fmt.Sprintf("%s:%d", ip.String(), port)
-	addrPort, err := netip.ParseAddrPort(fmtAddr)
+	addrPort, err = netip.ParseAddrPort(fmtAddr)
 	if err != nil {
-		return nil, err
+		return addrPort, err
 	}
 
-	return &addrPort, nil
+	return addrPort, nil
+}
+
+var ErrNoServers = errors.New("no STUN servers")
+
+// RaceStunServers tries to queries STUN servers in parallel and returns the first successful response.
+// This function does not set the socket read deadline.
+// The caller should set a read deadline to avoid blocking forever or leaking goroutines that are blocked forever.
+func RaceStunServers(sock *net.UDPConn, stunServerAddrs []string) (addrPort netip.AddrPort, err error) {
+	if len(stunServerAddrs) == 0 {
+		return addrPort, ErrNoServers
+	}
+
+	type addrPortRes struct {
+		AddrPort netip.AddrPort
+		Err      error
+	}
+	resAddrs := make(chan addrPortRes, len(stunServerAddrs))
+
+	for _, addr := range stunServerAddrs {
+		go func(addr string) {
+			ap, apErr := GetPublicAddrPort(sock, addr)
+			resAddrs <- addrPortRes{AddrPort: ap, Err: apErr}
+		}(addr)
+	}
+
+	var errs []error
+	for i := 0; i < len(stunServerAddrs); i++ {
+		res := <-resAddrs
+		if res.Err != nil {
+			errs = append(errs, res.Err)
+			continue
+		}
+
+		return res.AddrPort, nil
+	}
+
+	return addrPort, fmt.Errorf(`failed to resolve any addresses from STUN servers: %w`, errors.Join(errs...))
 }
