@@ -684,7 +684,7 @@ func ToProtoListener(listener *quic.Listener) ProtoListener {
 	}
 }
 
-// NewQuicProtoListener creates a ProtoListener on the specified transport and TLS config.
+// NewQuicProtoListenerFromTransport creates a ProtoListener on the specified transport and TLS config.
 func NewQuicProtoListenerFromTransport(trans *quic.Transport, tlsCfg *tls.Config) (ProtoListener, error) {
 	listener, err := trans.Listen(tlsCfg, &quic.Config{
 		KeepAlivePeriod:    DefaultKeepAlivePeriod,
