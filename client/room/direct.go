@@ -305,7 +305,7 @@ func (c *Conn) runDirectAdsAndLoop() {
 		}()
 	}
 
-	advertiseInBg := func(ad *pb.MsgAdvertiseConnMethod) {
+	advertiseInBg := func(ad *pb.MsgAdvertiseConnMethod, ignoreDidNotTry bool) {
 		go func() {
 			defer func() {
 				if rec := recover(); rec != nil {
@@ -351,7 +351,7 @@ func (c *Conn) runDirectAdsAndLoop() {
 					"address", ad.Address,
 					"priority", ad.Priority,
 				)
-			} else {
+			} else if !ignoreDidNotTry || result != pb.ConnResult_CONN_RESULT_DID_NOT_TRY {
 				c.logger.Error("server said it could not connect to advertised address",
 					"service", "room.Conn",
 					"room", c.RoomName.String(),
@@ -403,11 +403,6 @@ func (c *Conn) runDirectAdsAndLoop() {
 			}
 		}
 
-		// Is hole punching enabled?
-		if !c.directMgr.IsNatHolePunchingDisabled() {
-			methodsToAdvertise = append(methodsToAdvertise, c.mkAdConnMethodForPunch())
-		}
-
 		for _, method := range methodsToAdvertise {
 			// Have we already advertised this method?
 			c.mu.RLock()
@@ -417,7 +412,7 @@ func (c *Conn) runDirectAdsAndLoop() {
 				continue
 			}
 
-			advertiseInBg(method)
+			advertiseInBg(method, false)
 		}
 	}
 
@@ -429,7 +424,7 @@ func (c *Conn) runDirectAdsAndLoop() {
 
 	// Advertise NAT holepunching if enabled.
 	if !mgr.IsNatHolePunchingDisabled() {
-		advertiseInBg(c.mkAdConnMethodForPunch())
+		advertiseInBg(c.mkAdConnMethodForPunch(), true)
 	}
 
 	// Listen for new direct methods from partition.

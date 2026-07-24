@@ -234,6 +234,13 @@ func (l LogicImpl) OnAdvertiseConnMethod(ctx context.Context, client *Client, bi
 			return pb.ConnResult_CONN_RESULT_METHOD_NOT_SUPPORTED
 		}
 
+		// The server cannot verify NAT holepunching.
+		// Theoretically, the protocol could be changed to support serverside holepunch testing, but that would require
+		// running a dummy direct server and NAT traversal from the server itself. The juice isn't worth the squeeze.
+		if ad.Type == pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH {
+			return pb.ConnResult_CONN_RESULT_DID_NOT_TRY
+		}
+
 		timeoutCtx, cancel := context.WithTimeout(ctx, l.directConnTestTimeout)
 		defer cancel()
 
