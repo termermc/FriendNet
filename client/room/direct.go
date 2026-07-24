@@ -618,8 +618,6 @@ func (c *Conn) directConnect(ctx context.Context, peer common.NormalizedUsername
 
 	// We need to get our own address to send C2C to our target before proceeding
 	if method.Type == pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH {
-		// TODO Bind socket here, do STUN, then give the socket to the partition and tell it to create a temporary direct.Server for us from it.
-		//
 		holePunchSocket, err := net.ListenUDP("udp", &net.UDPAddr{})
 		if err != nil {
 			// Hole punching is probably disabled
@@ -628,7 +626,14 @@ func (c *Conn) directConnect(ctx context.Context, peer common.NormalizedUsername
 
 		ownAddr, err := c.GetAddrPortForSocket(holePunchSocket)
 		if err != nil {
+			_ = holePunchSocket.Close()
 			return nil, 0, fmt.Errorf("failed to get address to hole punch: %w", err)
+		}
+
+		err = holePunchSocket.SetReadDeadline(time.Time{})
+		if err != nil {
+			_ = holePunchSocket.Close()
+			return nil, 0, fmt.Errorf("could not reset read deadline: %w", err)
 		}
 
 		fmtAddr := fmt.Sprintf("%s:%d", ownAddr.Addr().String(), ownAddr.Port())
@@ -643,6 +648,7 @@ func (c *Conn) directConnect(ctx context.Context, peer common.NormalizedUsername
 		)
 		// If err is not nil we assume it was a rejection and therefore fail
 		if err != nil {
+			_ = holePunchSocket.Close()
 			return nil, 0, fmt.Errorf(`hole punch assumed to be rejected for peer %q: %w`, peer.String(), err)
 		}
 
@@ -807,6 +813,25 @@ collectErrs:
 				"peer", peer.String(),
 				"remote_addr", success.conn.RemoteAddr().String(),
 			)
+
+			go func() {
+				start := time.Now()
+				for {
+					conn := success.conn
+					res, err := conn.SendAndReceive(pb.MsgType_MSG_TYPE_PING, &pb.MsgPing{})
+					if err != nil {
+						println("PING FAILED!!!! " + err.Error())
+						return
+					}
+					println("PING SUCCESS!!!! " + res.Type.String())
+					println("It has been " + time.Since(start).String() + " since the start")
+				}
+			}()
+
+			// TODO REMOVE THIS
+			println("WAITING FOR 2S!!!!")
+			time.Sleep(2 * time.Second)
+			println("DONE WAITING FOR 2S!!!!")
 
 			return success.conn, success.result, nil
 		case failure := <-failureChan:
