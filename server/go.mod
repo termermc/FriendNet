@@ -1,6 +1,6 @@
 module friendnet.org/server
 
-go 1.26.2
+go 1.26.5
 
 require (
 	connectrpc.com/connect v1.19.1
@@ -35,6 +35,7 @@ require (
 
 replace (
 	friendnet.org/adminui => ../adminui
+	friendnet.org/ahocorasick => ../ahocorasick
 	friendnet.org/common => ../common
 	friendnet.org/protocol => ../protocol
 	friendnet.org/rpcclient => ../rpcclient

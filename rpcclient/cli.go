@@ -154,6 +154,20 @@ func NewCli(client serverrpcv1connect.ServerRpcServiceClient, opts ...Opt) *Cli 
 				return cli.cmdUpdateAccountPassword(ctx, args)
 			},
 		},
+		{
+			Name:  "addblacklistedkeyword",
+			Usage: "addblacklistedkeyword <keyword> [room]",
+			Handler: func(ctx context.Context, cli *Cli, args []string) error {
+				return cli.cmdAddBlacklistedKeyword(ctx, args)
+			},
+		},
+		{
+			Name:  "removeblacklistedkeyword",
+			Usage: "removeblacklistedkeyword <keyword> [room]",
+			Handler: func(ctx context.Context, cli *Cli, args []string) error {
+				return cli.cmdRemoveBlacklistedKeyword(ctx, args)
+			},
+		},
 	}
 	return cli
 }
@@ -478,6 +492,56 @@ func (c *Cli) cmdUpdateAccountPassword(ctx context.Context, args []string) error
 	} else {
 		fmt.Printf("Updated password for %q in room %q.\n", args[1], args[0])
 	}
+	return nil
+}
+
+func (c *Cli) cmdAddBlacklistedKeyword(ctx context.Context, args []string) error {
+	if err := validateArgCount(args, 1, 2, "addblacklistedkeyword <keyword> [room]"); err != nil {
+		return err
+	}
+
+	var room *string
+	if len(args) == 2 {
+		room = &args[1]
+	}
+
+	_, err := c.client.AddBlacklistedKeyword(ctx, &v1.AddBlacklistedKeywordRequest{
+		Room:    room,
+		Keyword: args[0],
+	})
+
+	if err != nil {
+		return err
+	} else {
+		if room == nil {
+			fmt.Printf("Added blacklisted keyword \"%q\" serverwide.", args[0])
+		} else {
+			fmt.Printf("Added blacklisted keyword \"%q\" to room %q.", args[0], *room)
+		}
+	}
+
+	return nil
+}
+
+func (c *Cli) cmdRemoveBlacklistedKeyword(ctx context.Context, args []string) error {
+	if err := validateArgCount(args, 1, 2, "removeblacklistedkeyword <keyword> [room]"); err != nil {
+		return err
+	}
+
+	var room *string
+	if len(args) == 2 {
+		room = &args[1]
+	}
+
+	_, err := c.client.RemoveBlacklistedKeyword(ctx, &v1.RemoveBlacklistedKeywordRequest{
+		Room:    room,
+		Keyword: args[0],
+	})
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

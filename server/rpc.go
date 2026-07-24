@@ -88,6 +88,7 @@ func (s *RpcServer) getClient(r *room.Room, username string) (*room.Client, erro
 
 	return client, nil
 }
+
 func (s *RpcServer) getOrGenPass(pass string) (string, bool) {
 	if pass == "" {
 		var buf [12]byte
@@ -319,4 +320,50 @@ func (s *RpcServer) GetServerInfo(_ context.Context, _ *v1.GetServerInfoRequest)
 			RequiresBearerToken: s.iface.BearerToken != "",
 		},
 	}, nil
+}
+
+func (s *RpcServer) AddBlacklistedKeyword(_ context.Context, req *v1.AddBlacklistedKeywordRequest) (*v1.AddBlacklistedKeywordResponse, error) {
+	// Room scoped policy
+	if req.Room != nil {
+		room, err := s.getRoom(req.GetRoom())
+		if err != nil {
+			return nil, errRoomNotFound
+		}
+
+		err = room.Blacklist.Add([]string{req.GetKeyword()})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// Serverwide policy
+		err := s.s.RoomManager.GlobalBlacklist.Add([]string{req.GetKeyword()})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &v1.AddBlacklistedKeywordResponse{}, nil
+}
+
+func (s *RpcServer) RemoveBlacklistedKeyword(_ context.Context, req *v1.RemoveBlacklistedKeywordRequest) (*v1.RemoveBlacklistedKeywordResponse, error) {
+	// Room scoped policy
+	if req.Room != nil {
+		room, err := s.getRoom(req.GetRoom())
+		if err != nil {
+			return nil, errRoomNotFound
+		}
+
+		err = room.Blacklist.Remove([]string{req.GetKeyword()})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// Serverwide policy
+		err := s.s.RoomManager.GlobalBlacklist.Remove([]string{req.GetKeyword()})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &v1.RemoveBlacklistedKeywordResponse{}, nil
 }

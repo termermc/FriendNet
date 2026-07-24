@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
@@ -55,6 +56,7 @@ func NewStorage(path string) (*Storage, error) {
 
 	err = common.DoMigrations(db, []common.Migration{
 		&migration.M20260208InitialSchema{},
+		&migration.M20260723ServersideSearchBlocklist{},
 	})
 	if err != nil {
 		return nil, fmt.Errorf(`failed to apply server database migrations: %w`, err)
@@ -252,4 +254,92 @@ func (s *Storage) DeleteAccountByRoomAndUsername(
 		)
 	}
 	return nil
+}
+
+// AddKeywordToBlacklist adds a blacklist policy for a keyword to the persistent blacklist.
+// If the room is not specified or does not exist, the policy applies serverwide.
+// If the room does not exist or the keyword is empty, this is a no-op.
+func (s *Storage) AddKeywordToBlacklist(ctx context.Context, room common.NormalizedRoomName, keyword string) error {
+	if len(keyword) == 0 {
+		return nil
+	}
+
+	if room.IsZero() {
+		_, err := s.Db.ExecContext(ctx, `insert into word_blocklist (word) values (?)`, keyword)
+		if err != nil {
+			return fmt.Errorf("failed to add keyword \"%s\" to global blacklist: %w", keyword, err)
+		}
+	} else {
+		if _, has, _ := s.GetRoomByName(ctx, room); !has {
+			return nil
+		}
+
+		_, err := s.Db.ExecContext(ctx, `insert into word_blocklist (room, word) values (?, ?)`, room, keyword)
+		if err != nil {
+			return fmt.Errorf("failed to add keyword \"%s\" to blacklist for room %s: %w", keyword, room, err)
+		}
+	}
+
+	return nil
+}
+
+// RemoveKeywordFromBlacklist removes a blacklist policy for a keyword to the persistent blacklist.
+// If the room is not specified or does not exist and a serverwide policy for the term exists
+// If the keyword is empty, this is a no-op.
+func (s *Storage) RemoveKeywordFromBlacklist(ctx context.Context, room common.NormalizedRoomName, keyword string) error {
+	if len(keyword) == 0 {
+		return nil
+	}
+
+	if room.IsZero() {
+		_, err := s.Db.ExecContext(ctx, `delete from word_blocklist where word = ?`, keyword)
+		if err != nil {
+			return fmt.Errorf("failed to remove keyword \"%s\" from global blacklist: %w", keyword, err)
+		}
+	} else {
+		if _, has, _ := s.GetRoomByName(ctx, room); !has {
+			return nil
+		}
+
+		_, err := s.Db.ExecContext(ctx, `delete from word_blocklist where room = ? and word = ?`, room, keyword)
+		if err != nil {
+			return fmt.Errorf("failed to remove keyword \"%s\" from blacklist for room %s: %w", keyword, room, err)
+		}
+	}
+
+	return nil
+}
+
+// GetBlacklistedKeywordsForRoom will return a list of currently enforced blacklist policies for a given room.
+// If room is zero, it will return the global blacklist.
+// The string searching library necessitates returning a list of rune arrays.
+func (s *Storage) GetBlacklistedKeywordsForRoom(ctx context.Context, room common.NormalizedRoomName) ([][]rune, error) {
+	var keywords [][]rune
+	var rows *sql.Rows
+	var err error
+
+	if room.IsZero() {
+		rows, err = s.Db.QueryContext(ctx, `select word from word_blocklist where room is null`)
+	} else {
+		rows, err = s.Db.QueryContext(ctx, `select word from word_blocklist where room is ?`, room.String())
+	}
+	if err != nil {
+		return nil, fmt.Errorf(`failed to query rooms: %w`, err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var word []byte
+		if err := rows.Scan(&word); err != nil {
+			return keywords, err
+		}
+
+		keywords = append(keywords, bytes.Runes(word))
+	}
+
+	if err := rows.Err(); err != nil {
+		return keywords, err
+	}
+
+	return keywords, nil
 }

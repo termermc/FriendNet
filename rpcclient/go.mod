@@ -1,6 +1,6 @@
 module friendnet.org/rpcclient
 
-go 1.26.2
+go 1.26.5
 
 require (
 	connectrpc.com/connect v1.19.1

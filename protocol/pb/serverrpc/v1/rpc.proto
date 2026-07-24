@@ -152,6 +152,26 @@ message UpdateAccountPasswordResponse {
     optional string generated_password = 1;
 }
 
+message AddBlacklistedKeywordRequest {
+    // Room to enforce this policy. If null, then it is enforced serverwide.
+    optional string room = 1;
+
+    string keyword = 2;
+}
+message AddBlacklistedKeywordResponse {
+
+}
+
+message RemoveBlacklistedKeywordRequest {
+    // Room in which this policy is enforced. If null, it is assumed to be serverwide.
+    optional string room = 1;
+
+    string keyword = 2;
+}
+message RemoveBlacklistedKeywordResponse {
+
+}
+
 // ServerRpcService provides an RPC interface to a running FriendNet server.
 // It can query state and perform administrative tasks.
 //
@@ -207,4 +227,14 @@ service ServerRpcService {
     // Returns status code NOT_FOUND if no such room exists.
     // Returns status code NOT_FOUND if no such account exists.
     rpc UpdateAccountPassword(UpdateAccountPasswordRequest) returns (UpdateAccountPasswordResponse) {}
+
+    // AddBlacklistedKeyword adds a keyword that will be blacklist from search queries and filenames.
+    // If a room to enforce this policy is not specified then it is assumed to be a serverwide policy.
+    // Returns status code INVALID_ARGUMENT if the keyword is empty.
+    rpc AddBlacklistedKeyword(AddBlacklistedKeywordRequest) returns (AddBlacklistedKeywordResponse) {}
+
+    // RemoveBlacklistedKeyword removes a keyword blacklist policy from a given room.
+    // If a room to enforce this policy is not specified then it is assumed to be a serverwide policy.
+    // Returns status code INVALID_ARGUMENT if a policy could not be removed.
+    rpc RemoveBlacklistedKeyword(RemoveBlacklistedKeywordRequest) returns (RemoveBlacklistedKeywordResponse) {}
 }

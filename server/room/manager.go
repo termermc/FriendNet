@@ -23,6 +23,7 @@ type Manager struct {
 	mu       sync.RWMutex
 	isClosed bool
 
+	GlobalBlacklist   *Blacklist
 	storage           *storage.Storage
 	connMethodSupport machine.ConnMethodSupport
 	passReqs          password.Requirements
@@ -43,9 +44,15 @@ func NewManager(
 	passReqs password.Requirements,
 	logic Logic,
 ) (*Manager, error) {
+	blacklist, err := NewBlacklist(ctx, common.ZeroNormalizedRoomName, storage)
+	if err != nil {
+		return nil, fmt.Errorf("failed to init global keyword blacklist while creating room manager: %w", err)
+	}
+
 	m := &Manager{
 		logger: logger,
 
+		GlobalBlacklist:   blacklist,
 		storage:           storage,
 		connMethodSupport: connMethodSupport,
 		passReqs:          passReqs,
@@ -68,6 +75,7 @@ func NewManager(
 			passReqs,
 			room.Name,
 			logic,
+			m.GlobalBlacklist,
 		)
 	}
 
@@ -154,6 +162,7 @@ func (m *Manager) CreateRoom(ctx context.Context, name common.NormalizedRoomName
 		m.passReqs,
 		name,
 		m.logic,
+		m.GlobalBlacklist,
 	)
 
 	m.mu.Lock()

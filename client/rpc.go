@@ -749,9 +749,7 @@ func (s *RpcServer) StreamSearch(ctx context.Context, request *v1.StreamSearchRe
 			for {
 				next, nextErr := stream.ReadNext()
 				if nextErr != nil {
-					if protocol.IsErrorConnCloseOrCancel(nextErr) {
-						return nil
-					}
+					return nil
 				}
 
 				err = conn.Send(&v1.StreamSearchResponse{

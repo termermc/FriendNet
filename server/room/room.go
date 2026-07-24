@@ -42,6 +42,10 @@ type Room struct {
 	// The room's token manager.
 	TokenManager *TokenManager
 
+	// Keyword blacklists
+	GlobalBlacklist *Blacklist
+	Blacklist       *Blacklist
+
 	// The room's context.
 	// Canceled when it is closed.
 	Context   context.Context
@@ -62,8 +66,19 @@ func NewRoom(
 	passReqs pass.Requirements,
 	name common.NormalizedRoomName,
 	logic Logic,
+	globalBlacklist *Blacklist,
 ) *Room {
 	ctx, ctxCancel := context.WithCancel(context.Background())
+
+	blacklist, err := NewBlacklist(ctx, name, storage)
+	if err != nil {
+		if logger != nil {
+			logger.Error("could not create new room due to blacklist", "err", err)
+		}
+
+		ctxCancel()
+		return nil
+	}
 
 	return &Room{
 		logger: logger,
@@ -75,6 +90,9 @@ func NewRoom(
 		Name: name,
 
 		TokenManager: NewTokenManager(ctx, DefaultTokenValidDuration, DefaultTokenExpiredGcInterval),
+
+		Blacklist:       blacklist,
+		GlobalBlacklist: globalBlacklist,
 
 		Context:   ctx,
 		ctxCancel: ctxCancel,
@@ -164,6 +182,18 @@ func (r *Room) GetAllClients() []*Client {
 	}
 
 	return r.snapshotClientsNoLock()
+}
+
+// MatchToBlacklists will match a string against room-local and global keyword blacklists
+func (r *Room) MatchToBlacklists(haystack string) (bool, error) {
+	if r.GlobalBlacklist == nil || r.Blacklist == nil {
+		return false, fmt.Errorf("cannot access blacklists")
+	}
+
+	globalResult := r.GlobalBlacklist.Match(haystack)
+	localResult := r.Blacklist.Match(haystack)
+
+	return globalResult || localResult, nil
 }
 
 // Broadcast broadcasts a message to all clients in the room.
