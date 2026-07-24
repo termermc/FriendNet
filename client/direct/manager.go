@@ -400,6 +400,8 @@ func (m *Manager) CreatePartition(name string) (*Partition, error) {
 		connChan:        make(chan *IncomingDirectConn),
 		serverOpenChan:  make(chan *Server),
 		serverCloseChan: make(chan *Server),
+
+		ownedServers: make(map[netip.AddrPort]struct{}),
 	}
 	m.partitions[hash] = partition
 	return partition, nil
