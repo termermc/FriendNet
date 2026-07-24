@@ -828,11 +828,6 @@ collectErrs:
 				}
 			}()
 
-			// TODO REMOVE THIS
-			println("WAITING FOR 2S!!!!")
-			time.Sleep(2 * time.Second)
-			println("DONE WAITING FOR 2S!!!!")
-
 			return success.conn, success.result, nil
 		case failure := <-failureChan:
 			if failure.err == nil {
