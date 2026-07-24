@@ -814,20 +814,6 @@ collectErrs:
 				"remote_addr", success.conn.RemoteAddr().String(),
 			)
 
-			go func() {
-				start := time.Now()
-				for {
-					conn := success.conn
-					res, err := conn.SendAndReceive(pb.MsgType_MSG_TYPE_PING, &pb.MsgPing{})
-					if err != nil {
-						println("PING FAILED!!!! " + err.Error())
-						return
-					}
-					println("PING SUCCESS!!!! " + res.Type.String())
-					println("It has been " + time.Since(start).String() + " since the start")
-				}
-			}()
-
 			return success.conn, success.result, nil
 		case failure := <-failureChan:
 			if failure.err == nil {
