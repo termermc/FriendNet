@@ -66,6 +66,11 @@ func NewProtoMsgError(msg *pb.MsgError) ProtoMsgError {
 	}
 }
 
+// IsUnimplemented returns whether the error is ERR_TYPE_UNIMPLEMENTED.
+func (e ProtoMsgError) IsUnimplemented() bool {
+	return e.Msg.Type == pb.ErrType_ERR_TYPE_UNIMPLEMENTED
+}
+
 // CertMismatchError is returned when the server certificate changes for a host.
 type CertMismatchError struct {
 	Host string

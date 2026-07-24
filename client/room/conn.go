@@ -681,6 +681,10 @@ func (c *Conn) GetAddrPortForSocket(sock *net.UDPConn) (addrPort netip.AddrPort,
 		pb.MsgType_MSG_TYPE_STUN_SERVERS,
 	)
 	if err != nil {
+		if msgErr, ok := errors.AsType[protocol.ProtoMsgError](err); ok && msgErr.IsUnimplemented() {
+			return addrPort, fmt.Errorf("server does not support STUN, it needs to be upgraded")
+		}
+
 		return addrPort, fmt.Errorf("could not acquire STUN server list from server: %w", err)
 	}
 	if len(res.Payload.Addresses) == 0 {
