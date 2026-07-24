@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	pb "friendnet.org/protocol/pb/v1"
+	"google.golang.org/protobuf/proto"
 )
 
 var (
@@ -21,16 +22,24 @@ type UnexpectedMsgTypeError struct {
 
 	// The actual message type received.
 	Actual pb.MsgType
+
+	// The message payload.
+	Payload proto.Message
 }
 
 func (e UnexpectedMsgTypeError) Error() string {
 	return fmt.Sprintf("expected message type %s but got type %s", e.Expected.String(), e.Actual.String())
 }
 
-func NewUnexpectedMsgTypeError(expected pb.MsgType, actual pb.MsgType) UnexpectedMsgTypeError {
+func NewUnexpectedMsgTypeError(
+	expected pb.MsgType,
+	actual pb.MsgType,
+	payload proto.Message,
+) UnexpectedMsgTypeError {
 	return UnexpectedMsgTypeError{
 		Expected: expected,
 		Actual:   actual,
+		Payload:  payload,
 	}
 }
 

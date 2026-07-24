@@ -85,10 +85,11 @@ func (c VirtualC2cConn) SendAndReceiveAck(typ pb.MsgType, msg proto.Message) err
 	}
 
 	if reply.Type != pb.MsgType_MSG_TYPE_ACKNOWLEDGED {
-		return protocol.UnexpectedMsgTypeError{
-			Expected: pb.MsgType_MSG_TYPE_ACKNOWLEDGED,
-			Actual:   reply.Type,
-		}
+		return protocol.NewUnexpectedMsgTypeError(
+			pb.MsgType_MSG_TYPE_ACKNOWLEDGED,
+			reply.Type,
+			reply.Payload,
+		)
 	}
 
 	return nil

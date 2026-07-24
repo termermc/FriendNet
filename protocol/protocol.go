@@ -273,10 +273,11 @@ func (conn *ProtoConnImpl) SendAndReceiveAck(typ pb.MsgType, msg proto.Message) 
 	}
 
 	if reply.Type != pb.MsgType_MSG_TYPE_ACKNOWLEDGED {
-		return UnexpectedMsgTypeError{
-			Expected: pb.MsgType_MSG_TYPE_ACKNOWLEDGED,
-			Actual:   reply.Type,
-		}
+		return NewUnexpectedMsgTypeError(
+			pb.MsgType_MSG_TYPE_ACKNOWLEDGED,
+			reply.Type,
+			reply.Payload,
+		)
 	}
 
 	return nil
@@ -301,10 +302,11 @@ func SendAndReceiveExpect[T proto.Message](
 	}
 
 	if reply.Type != expectType {
-		return nil, UnexpectedMsgTypeError{
-			Expected: expectType,
-			Actual:   reply.Type,
-		}
+		return nil, NewUnexpectedMsgTypeError(
+			expectType,
+			reply.Type,
+			reply.Payload,
+		)
 	}
 
 	casted, ok := reply.Payload.(T)
@@ -455,7 +457,7 @@ func ReadExpect[T proto.Message](r *ProtoStreamReader, expectedType pb.MsgType) 
 	}
 
 	if msg.Type != expectedType {
-		return nil, NewUnexpectedMsgTypeError(expectedType, msg.Type)
+		return nil, NewUnexpectedMsgTypeError(expectedType, msg.Type, msg.Payload)
 	}
 
 	casted, ok := msg.Payload.(T)

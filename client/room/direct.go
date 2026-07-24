@@ -625,6 +625,13 @@ func (c *Conn) directConnect(ctx context.Context, peer common.NormalizedUsername
 			return nil, 0, fmt.Errorf("failed to get address to hole punch: %w", err)
 		}
 
+		c.logger.Debug("resolved own IP and port to send to peer for NAT hole punching",
+			"service", "room.Conn",
+			"room", c.RoomName.String(),
+			"own_addr", ownAddr.String(),
+			"peer", peer.String(),
+		)
+
 		err = holePunchSocket.SetReadDeadline(time.Time{})
 		if err != nil {
 			_ = holePunchSocket.Close()
@@ -633,7 +640,7 @@ func (c *Conn) directConnect(ctx context.Context, peer common.NormalizedUsername
 
 		fmtAddr := fmt.Sprintf("%s:%d", ownAddr.Addr().String(), ownAddr.Port())
 
-		// Send C2C message beforehand
+		// Send punch offer to peer.
 		peerConn := c.GetVirtualC2cConn(peer, true)
 		punchAccept, err := protocol.SendAndReceiveExpect[*pb.MsgPunchAccept](
 			peerConn,
@@ -641,11 +648,34 @@ func (c *Conn) directConnect(ctx context.Context, peer common.NormalizedUsername
 			&pb.MsgPunchOffer{Address: fmtAddr},
 			pb.MsgType_MSG_TYPE_PUNCH_ACCEPT,
 		)
-		// If err is not nil we assume it was a rejection and therefore fail
 		if err != nil {
 			_ = holePunchSocket.Close()
-			return nil, 0, fmt.Errorf(`hole punch assumed to be rejected for peer %q: %w`, peer.String(), err)
+
+			if typErr, ok := errors.AsType[protocol.UnexpectedMsgTypeError](err); ok {
+				if typErr.Actual != pb.MsgType_MSG_TYPE_PUNCH_REJECT {
+					return nil, 0, fmt.Errorf("peer %q sent unexpected message type for punch offer response: %s", typErr.Actual.String(), err)
+				}
+
+				payload := typErr.Payload.(*pb.MsgPunchReject)
+
+				return nil, 0, fmt.Errorf(`peer %q reject punch offer with message: %s`, peer.String(), payload.Message)
+			}
+
+			return nil, 0, fmt.Errorf(`failed to read response from peer %q for punch offer: %w`, peer.String(), err)
 		}
+
+		// Validate address.
+		_, parseErr := netip.ParseAddr(punchAccept.Payload.Address)
+		if parseErr != nil {
+			return nil, 0, fmt.Errorf(`peer %q accepted our punch offer but sent invalid address: %s`, peer.String(), punchAccept.Payload.Address)
+		}
+
+		c.logger.Debug("peer accepted punch offer",
+			"service", "room.Conn",
+			"room", c.RoomName.String(),
+			"peer", peer.String(),
+			"peer_addr", punchAccept.Payload.Address,
+		)
 
 		conn, result, connErr = protocol.CreateDirectConnectionWithSocket(
 			ctx,

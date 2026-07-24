@@ -135,7 +135,7 @@ func negotiateVersion(serverConn protocol.ProtoConn, clientVer *pb.ProtoVersion)
 			Message: common.StrPtrOr(payload.Message, ""),
 		}
 	default:
-		return nil, protocol.NewUnexpectedMsgTypeError(pb.MsgType_MSG_TYPE_VERSION_ACCEPTED, res.Type)
+		return nil, protocol.NewUnexpectedMsgTypeError(pb.MsgType_MSG_TYPE_VERSION_ACCEPTED, res.Type, res.Payload)
 	}
 }
 
@@ -160,7 +160,7 @@ func authenticate(serverConn protocol.ProtoConn, creds Credentials) error {
 			Message: common.StrPtrOr(payload.Message, ""),
 		}
 	default:
-		return protocol.NewUnexpectedMsgTypeError(pb.MsgType_MSG_TYPE_AUTH_ACCEPTED, res.Type)
+		return protocol.NewUnexpectedMsgTypeError(pb.MsgType_MSG_TYPE_AUTH_ACCEPTED, res.Type, res.Payload)
 	}
 }
 
