@@ -443,16 +443,16 @@ func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi C2cBidi, 
 	// Send garbage to the peer until we get a connection or we time out.
 	go func() {
 		// Leave first byte empty so that the packets cannot be interpreted as QUIC.
-		garbage := make([]byte, 256+7+1)
-		copy(garbage[1:8], "garbage")
+		garbage := make([]byte, 257)
 		ticker := time.NewTicker(100 * time.Millisecond)
+
 		for {
 			select {
 			case <-timeoutCtx.Done():
 				return
 			case <-ticker.C:
-				_, _ = rand.Read(garbage[8:])
-				_, _ = holePunchSocket.WriteToUDP(garbage, udpAddr)
+				_, _ = rand.Read(garbage)
+				_, _ = holePunchSocket.WriteToUDP(garbage[:garbage[256]], udpAddr)
 			}
 		}
 	}()
