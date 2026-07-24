@@ -583,10 +583,21 @@ func (c *Conn) incomingDirectConnHandler(incomingConn *direct.IncomingDirectConn
 		return
 	}
 
+	// Try to look up method to get its type.
+	var mtdType pb.ConnMethodType
+	c.mu.RLock()
+	mtd, ok := c.directSelfMethods[incomingConn.Handshake.MethodId]
+	c.mu.RUnlock()
+	if ok {
+		mtdType = mtd.Type
+	}
+
 	c.logger.Info("client made direct connection",
 		"room", c.RoomName.String(),
 		"username", username.String(),
 		"remote_addr", incomingConn.RemoteAddr().String(),
+		"method_id", incomingConn.Handshake.MethodId,
+		"method_type", mtdType.String(),
 	)
 }
 
@@ -837,6 +848,8 @@ collectErrs:
 				"room", c.RoomName.String(),
 				"peer", peer.String(),
 				"remote_addr", success.conn.RemoteAddr().String(),
+				"method_id", success.method.Id,
+				"method_type", success.method.Type.String(),
 			)
 
 			return success.conn, success.result, nil

@@ -95,6 +95,7 @@ type Conn struct {
 	directPeerMethods map[common.NormalizedUsername][]*pb.ConnMethod
 
 	// A map of direct connect methods for the client.
+	// The key is the method ID.
 	// They may be verified by the server, they may not.
 	directSelfMethods map[string]*pb.ConnMethod
 
