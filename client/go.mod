@@ -1,12 +1,13 @@
 module friendnet.org/client
 
-go 1.26.2
+go 1.26.5
 
 require (
 	connectrpc.com/connect v1.19.1
 	friendnet.org/common v0.0.0
 	friendnet.org/mkcert v0.0.0
 	friendnet.org/protocol v0.0.0
+	friendnet.org/stun v0.0.0
 	friendnet.org/updater v0.0.0
 	friendnet.org/upnp v0.0.0
 	friendnet.org/webui v0.0.0
