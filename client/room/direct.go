@@ -675,7 +675,7 @@ func (c *Conn) directConnect(ctx context.Context, peer common.NormalizedUsername
 		}
 
 		// Validate address.
-		_, parseErr := netip.ParseAddrPort(punchAccept.Payload.Address)
+		_, parseErr := net.ResolveUDPAddr("udp", punchAccept.Payload.Address)
 		if parseErr != nil {
 			return nil, 0, fmt.Errorf(`peer %q accepted our punch offer but sent invalid address: %s`, peer.String(), punchAccept.Payload.Address)
 		}
