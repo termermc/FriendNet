@@ -129,8 +129,9 @@ type Logic interface {
 }
 
 type LogicImpl struct {
-	logger *slog.Logger
-	cfg    *config.ServerConfig
+	logger    *slog.Logger
+	cfg       *config.ServerConfig
+	stunAddrs []string
 
 	directConnTestTimeout time.Duration
 	searchTimeout         time.Duration
@@ -138,10 +139,15 @@ type LogicImpl struct {
 
 var _ Logic = (*LogicImpl)(nil)
 
-func NewLogicImpl(logger *slog.Logger, cfg *config.ServerConfig) *LogicImpl {
+func NewLogicImpl(
+	logger *slog.Logger,
+	cfg *config.ServerConfig,
+	stunAddrs []string,
+) *LogicImpl {
 	return &LogicImpl{
-		logger: logger,
-		cfg:    cfg,
+		logger:    logger,
+		cfg:       cfg,
+		stunAddrs: stunAddrs,
 
 		directConnTestTimeout: 10 * time.Second,
 		searchTimeout:         1 * time.Minute,
@@ -492,10 +498,8 @@ recvLoop:
 
 func (l LogicImpl) OnGetStunServers(ctx context.Context, client *Client, bidi protocol.ProtoBidi, _ *protocol.TypedProtoMsg[*pb.MsgGetStunServers]) error {
 	var m = &pb.MsgStunServers{
-		Addresses: make([]string, len(l.cfg.StunServers)),
+		Addresses: l.stunAddrs,
 	}
-
-	copy(m.Addresses, l.cfg.StunServers)
 
 	err := bidi.Write(pb.MsgType_MSG_TYPE_STUN_SERVERS, m)
 	if err != nil {

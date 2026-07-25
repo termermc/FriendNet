@@ -262,7 +262,7 @@ func main() {
 
 	for _, listenAddr := range cfg.Listen {
 		go func() {
-			listenErr := srv.Listen(listenAddr, tlsCfg)
+			listenErr := srv.Listen(listenAddr, tlsCfg, true)
 			if listenErr != nil {
 				logger.Error("failed to listen",
 					"addr", listenAddr,

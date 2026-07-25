@@ -9,6 +9,7 @@ require (
 	friendnet.org/protocol v0.0.0
 	friendnet.org/rpcclient v0.0.0
 	friendnet.org/updater v0.0.0
+	friendnet.org/stun v0.0.0
 	github.com/quic-go/quic-go v0.59.0
 	github.com/termermc/go-mcf-password v1.0.0
 	golang.org/x/term v0.41.0
@@ -39,4 +40,5 @@ replace (
 	friendnet.org/protocol => ../protocol
 	friendnet.org/rpcclient => ../rpcclient
 	friendnet.org/updater => ../updater
+	friendnet.org/stun => ../stun
 )
