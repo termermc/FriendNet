@@ -6,6 +6,9 @@
 	"additionalProperties": false,
 	"required": ["listen", "db_path", "pem_path", "rpc"],
 	"properties": {
+		"$schema": {
+			"type": "string"
+		},
 		"listen": {
 			"type": "array",
 			"description": "The addresses to listen on. Each entry should be HOST:PORT. IPv6 addresses should be enclosed in square brackets (like \"[::1]:20038\").",
@@ -41,14 +44,30 @@
 		"ServerRpcConfig": {
 			"type": "object",
 			"additionalProperties": false,
+			"required": [
+				"https_pem_path",
+				"interfaces"
+			],
+			"properties": {
+				"https_pem_path": {
+					"type": "string",
+					"description": "The path to the full chain certificate to use for serving RPC endpoints over HTTPS."
+				},
+				"interfaces": {
+					"type": "array",
+					"items": {
+						"$ref": "#/$defs/ServerRpcInterface"
+					}
+				}
+			}
+		},
+		"ServerRpcInterface": {
+			"type": "object",
+			"additionalProperties": false,
 			"description": "Configuration for the server's RPC service (wrapper around one or more RpcServerConfig instances).",
 			"required": [
 				"address",
-				"allowed_methods",
-				"allowed_ips",
-				"bearer_token",
-				"cors_allow_all_origins",
-				"enable_admin_ui"
+				"allowed_methods"
 			],
 			"properties": {
 				"address": {
