@@ -83,6 +83,7 @@ func (c *Conn) AdoptDirectConn(conn protocol.ProtoConn, username common.Normaliz
 	c.mu.Unlock()
 
 	// Ping loop.
+	// Closes the connection if the Conn context is done.
 	go func() {
 		ticker := time.NewTicker(ServerPingInterval)
 		defer ticker.Stop()
@@ -90,6 +91,7 @@ func (c *Conn) AdoptDirectConn(conn protocol.ProtoConn, username common.Normaliz
 		for {
 			select {
 			case <-c.Context.Done():
+				_ = conn.CloseWithReason("goodbye")
 				return
 			case <-ticker.C:
 				_, pingErr := protocol.SendAndReceiveExpect[*pb.MsgPong](
