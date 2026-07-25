@@ -288,7 +288,7 @@ const P2pSettings: Component = () => {
 										<td>
 											<label
 												class={stylesCommon.help}
-												title="If checked, the client will not query servers for the client's public IP."
+												title="If checked, the client will not query the server for the client's public IP. Does not apply to NAT hole punching."
 												for="setting-disable-public-ip-discovery"
 											>
 												Disable public IP discovery?
@@ -358,7 +358,7 @@ const P2pSettings: Component = () => {
 										<td>
 											<label
 												class={stylesCommon.help}
-												title="If checked, the client will not attempt UDP hole punching."
+												title="If checked, the client will not attempt NAT hole punching. NAT hole punching involves discovering and exchanging your public IP address with peers you are connecting to, then mutually attempting a connection to each other."
 												for="setting-disable-nat-hole-punching"
 											>
 												Disable NAT hole punching?
