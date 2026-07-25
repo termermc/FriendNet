@@ -10,6 +10,7 @@ RUN mkdir -p protocol
 RUN mkdir -p adminui
 RUN mkdir -p server
 RUN mkdir -p rpcclient
+RUN mkdir -p stun
 
 COPY common/go.mod common
 COPY common/go.sum common
