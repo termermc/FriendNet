@@ -21,6 +21,8 @@ COPY server/go.mod server
 COPY server/go.sum server
 COPY rpcclient/go.mod rpcclient
 COPY rpcclient/go.sum rpcclient
+COPY stun/go.mod stun
+COPY stun/go.sum stun
 
 RUN cd server && go mod download
 RUN cd rpcclient && go mod download
@@ -32,6 +34,7 @@ COPY protocol protocol
 COPY adminui adminui
 COPY server server
 COPY rpcclient rpcclient
+COPY stun stun
 
 RUN make server
 RUN make rpcclient
