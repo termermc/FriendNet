@@ -401,7 +401,12 @@ func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi C2cBidi, 
 
 	holePunchSocket, err := net.ListenUDP("udp", &net.UDPAddr{})
 	if err != nil {
-		return reject("could not listen on socket")
+		l.logger.Error("could not listen on hole punch socket",
+			"service", "room.LogicImpl",
+			"room", room.RoomName.String(),
+			"err", err,
+		)
+		return reject("could not listen on hole punch socket")
 	}
 
 	publicAddr, err := room.GetAddrPortForSocket(holePunchSocket)

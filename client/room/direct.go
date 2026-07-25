@@ -626,8 +626,7 @@ func (c *Conn) directConnect(ctx context.Context, peer common.NormalizedUsername
 	if method.Type == pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH {
 		holePunchSocket, err := net.ListenUDP("udp", &net.UDPAddr{})
 		if err != nil {
-			// Hole punching is probably disabled
-			return nil, 0, fmt.Errorf("could not listen hole punch socket")
+			return nil, 0, fmt.Errorf("could not listen on hole punch socket: %w", err)
 		}
 
 		ownAddr, err := c.GetAddrPortForSocket(holePunchSocket)
