@@ -58,8 +58,7 @@ export const UpdatePage: Component = () => {
 						</pre>
 						<a href={state.latestUpdate()!.url} target="_blank">
 							[Download]
-						</a>
-						{' '}
+						</a>{' '}
 						<a href="https://friendnet.org/docs/client/updating/">
 							[Updating Guide]
 						</a>
