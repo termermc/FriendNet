@@ -37,14 +37,17 @@ type ServerConfig struct {
 	// A new self-signed certificate will be generated if it does not exist.
 	PemPath string `json:"pem_path"`
 
-	// If true, the server will periodically check for updates and log to the console if a new version is available.
+	// If true, the server will NOT periodically check for updates and log to the console if a new version is available.
 	DisableUpdateChecker bool `json:"disable_update_checker"`
+
+	// List of STUN servers to return to clients.
+	// Each entry should be HOST:PORT.
+	// IPv6 addresses should be enclosed in square brackets (like "[::1]:20038").
+	// If empty, the server will try to guess the address of its built-in STUN server.
+	StunServers []string `json:"stun_servers"`
 
 	// The configuration for the server's RPC service.
 	Rpc ServerRpcConfig `json:"rpc"`
-
-	// List of STUN servers to provide user
-	StunServers []string `json:"stun_servers"`
 }
 
 // Default is the default server configuration.
@@ -75,9 +78,6 @@ var Default = &ServerConfig{
 				CorsAllowAllOrigins: true,
 			},
 		},
-	},
-	StunServers: []string{
-		"stun.l.google.com:19302",
 	},
 }
 
