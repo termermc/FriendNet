@@ -24,8 +24,6 @@ import (
 	"github.com/quic-go/quic-go"
 )
 
-const configuringStunDocs = "https://friendnet.org/docs/server/configuring-stun/"
-
 // Server is a FriendNet server.
 //
 // A FriendNet server contains rooms, each one with its own accounts and isolated environment.
@@ -120,9 +118,9 @@ func NewServer(
 		}
 
 		if len(stunAddrs) == 0 {
-			logger.Warn("no STUN servers provided in server config, and the server's public IP could not be guessed! clients will not be able to use NAT hole punching on this server! see " + configuringStunDocs)
+			logger.Warn("no STUN servers provided in server config, and the server's public IP could not be guessed! clients will not be able to use NAT hole punching on this server! see " + common.CfgStunDocsUrl)
 		} else {
-			logger.Warn("no STUN servers provided in server config, using guessed public address(es)! see "+configuringStunDocs, "addrs", strings.Join(stunAddrs, ", "))
+			logger.Warn("no STUN servers provided in server config, using guessed public address(es)! see "+common.CfgStunDocsUrl, "addrs", strings.Join(stunAddrs, ", "))
 		}
 	} else {
 		stunAddrs = cfg.StunServers
