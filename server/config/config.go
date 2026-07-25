@@ -24,6 +24,9 @@ type ServerRpcConfig struct {
 
 // ServerConfig is the server configuration.
 type ServerConfig struct {
+	// JsonSchema is a placeholder field to hold the JSON schema URL for validation.
+	JsonSchema string `json:"$schema"`
+
 	// The addresses to listen on.
 	// Each entry should be HOST:PORT.
 	// IPv6 addresses should be enclosed in square brackets (like "[::1]:20038").
@@ -52,6 +55,8 @@ type ServerConfig struct {
 
 // Default is the default server configuration.
 var Default = &ServerConfig{
+	JsonSchema: "https://friendnet.org/schema/server-config.schema.json",
+
 	Listen: []string{
 		"0.0.0.0:20038",
 		"[::]:20038",
