@@ -28,7 +28,7 @@
 		},
 		"stun_servers": {
 			"type": "array",
-			"description": "List of STUN servers to return to clients. Each entry should be HOST:PORT. IPv6 addresses should be enclosed in square brackets (like \"[::1]:20038\"). If empty, the server will try to guess the address of its built-in STUN server.",
+			"description": "List of STUN servers to return to clients. In most cases, this should just contain the public address and port of your FriendNet server, because the server exposes a STUN server on the same port.\nEach entry should be HOST:PORT. IPv6 addresses should be enclosed in square brackets (like \"[::1]:20038\"). If empty, the server will try to guess the address of its built-in STUN server.\nExamples:\n - \"my.friendnet.server:20038\"\n - \"stun.l.google.com:19302\"",
 			"items": {
 				"type": "string"
 			}
@@ -42,7 +42,14 @@
 			"type": "object",
 			"additionalProperties": false,
 			"description": "Configuration for the server's RPC service (wrapper around one or more RpcServerConfig instances).",
-			"required": ["address", "allowed_methods", "allowed_ips", "bearer_token", "cors_allow_all_origins", "enable_admin_ui"],
+			"required": [
+				"address",
+				"allowed_methods",
+				"allowed_ips",
+				"bearer_token",
+				"cors_allow_all_origins",
+				"enable_admin_ui"
+			],
 			"properties": {
 				"address": {
 					"type": "string",
