@@ -11,3 +11,6 @@ const NewIssueUrl = IssuesUrl + "/new"
 
 // CfgStunDocsUrl is the URL for documentation about configuring STUN servers in the server.
 const CfgStunDocsUrl = "https://friendnet.org/docs/server/configuring-stun/"
+
+// ServerCfgJsonSchemaUrl is the URL for the JSON schema of the server configuration.
+const ServerCfgJsonSchemaUrl = "https://friendnet.org/schema/server-config.schema.json"

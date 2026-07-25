@@ -61,7 +61,7 @@ type ServerConfig struct {
 
 // Default is the default server configuration.
 var Default = &ServerConfig{
-	JsonSchema: "https://friendnet.org/schema/server-config.schema.json",
+	JsonSchema: common.ServerCfgJsonSchemaUrl,
 
 	Listen: []string{
 		"0.0.0.0:20038",
