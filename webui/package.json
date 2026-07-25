@@ -24,6 +24,7 @@
 		"@bufbuild/protobuf": "^2.11.0",
 		"@connectrpc/connect": "^2.1.1",
 		"@connectrpc/connect-web": "^2.1.1",
+		"@solid-primitives/scheduled": "^1.5.3",
 		"@solidjs/router": "^0.16.2",
 		"fuse.js": "^7.5.0",
 		"solid-js": "^1.9.14"

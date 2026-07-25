@@ -22,3 +22,8 @@ export const RpcTimeoutMs = 60_000
  * The HTML ID for the transfers option.
  */
 export const TransfersOptionId = 'transfers-option'
+
+/**
+ * The page size for the file table.
+ */
+export const FileTableMinPageSize = 250

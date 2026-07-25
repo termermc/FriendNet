@@ -1,4 +1,11 @@
-import { Component, createSignal, For, onMount, Show } from 'solid-js'
+import {
+	Component,
+	createMemo,
+	createSignal,
+	For,
+	onMount,
+	Show,
+} from 'solid-js'
 
 import styles from './ServerBrowsePage.module.css'
 
@@ -14,6 +21,7 @@ import {
 } from '../util'
 import { FileTable } from '../FileTable'
 import { QueueButton } from '../QueueButton'
+import { createScheduled, debounce } from '@solid-primitives/scheduled'
 
 const Page: Component = () => {
 	const {
@@ -77,6 +85,19 @@ const Page: Component = () => {
 		}
 	})
 
+	const tableUpdateScheduled = createScheduled((fn) => debounce(fn, 32))
+	const tableItems = createMemo(
+		(prev: { meta: FileMeta; data: undefined }[] = []) => {
+			const f = files()
+
+			if (tableUpdateScheduled()) {
+				return f.map((x) => ({ meta: x, data: undefined }))
+			}
+
+			return prev
+		},
+	)
+
 	return (
 		<div class={styles.container}>
 			<Show when={!error()}>
@@ -127,7 +148,7 @@ const Page: Component = () => {
 			<FileTable
 				isLoading={isLoading()}
 				error={error()}
-				items={files().map((x) => ({ meta: x, data: undefined }))}
+				items={tableItems()}
 				parentHref={
 					pathSegments.length !== 0
 						? makeBrowsePath(
