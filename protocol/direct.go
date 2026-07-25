@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
-	"time"
 
 	"friendnet.org/common"
 	pb "friendnet.org/protocol/pb/v1"
@@ -280,50 +279,4 @@ func CreateDirectConnectionWithSocket(
 
 	result = pb.ConnResult_CONN_RESULT_OK
 	return
-}
-
-var errBackoffTryAgain = errors.New("try again")
-
-// TryDialBackoff tries to use QUIC to dial an address. Every iteration its timeout is raised by 250ms, with a cap of maxTimeout.
-// If the connection succeeds during any attempt, the function returns. Otherwise, it will keep attempting unless a real network
-// error occurs, or if ctx is canceled.
-func TryDialBackoff(
-	ctx context.Context,
-	sock net.PacketConn,
-	target *net.UDPAddr,
-	tlsCfg *tls.Config,
-	maxTimeout time.Duration,
-) (qConn *quic.Conn, err error) {
-	var attemptNum = 0
-	var timeout time.Duration
-	for {
-		attemptNum++
-
-		// Every try, add 250ms until the timeout is 1s
-		if timeout < maxTimeout {
-			timeout += 250 * time.Millisecond
-		}
-
-		dialCtx, dialCancel := context.WithDeadlineCause(ctx, time.Now().Add(timeout), errBackoffTryAgain)
-		qConn, err = quic.Dial(dialCtx, sock, target, tlsCfg, &quic.Config{
-			KeepAlivePeriod:    DefaultKeepAlivePeriod,
-			MaxIncomingStreams: DefaultMaxIncomingStreams,
-		})
-		dialCancel()
-		if err != nil {
-			if errors.Is(err, errBackoffTryAgain) {
-				continue
-			}
-
-			break
-		}
-
-		// Successfully connected.
-		break
-	}
-	if err != nil {
-		return nil, fmt.Errorf(`failed to dial QUIC %q after %d attempts: %w`, target, attemptNum, err)
-	}
-
-	return qConn, nil
 }
