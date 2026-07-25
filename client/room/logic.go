@@ -427,20 +427,19 @@ func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi C2cBidi, 
 		return reject("could not resolve provided address")
 	}
 
+	server, err := room.directPart.CreateTemporaryServerFromSocket(holePunchSocket)
+	if err != nil {
+		return fmt.Errorf("failed to create server in partition: %w", err)
+	}
+
 	err = bidi.Write(pb.MsgType_MSG_TYPE_PUNCH_ACCEPT, &pb.MsgPunchAccept{Address: publicAddr.String()})
 	if err != nil {
-		_ = holePunchSocket.Close()
+		_ = server.Close()
 		if protocol.IsErrorConnCloseOrCancel(err) {
 			return nil
 		}
 
 		return fmt.Errorf("failed to send punch offer acceptance: %w", err)
-	}
-
-	server, err := room.directPart.CreateTemporaryServerFromSocket(holePunchSocket)
-	if err != nil {
-		_ = holePunchSocket.Close()
-		return fmt.Errorf("failed to create server in partition: %w", err)
 	}
 
 	timeoutCtx, timeoutCancel := context.WithTimeout(context.Background(), room.directOutgoingTimeout)
