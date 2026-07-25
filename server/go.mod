@@ -1,6 +1,6 @@
 module friendnet.org/server
 
-go 1.26.2
+go 1.26.5
 
 require (
 	connectrpc.com/connect v1.19.1
@@ -8,8 +8,8 @@ require (
 	friendnet.org/common v0.0.0
 	friendnet.org/protocol v0.0.0
 	friendnet.org/rpcclient v0.0.0
-	friendnet.org/updater v0.0.0
 	friendnet.org/stun v0.0.0
+	friendnet.org/updater v0.0.0
 	github.com/quic-go/quic-go v0.59.0
 	github.com/termermc/go-mcf-password v1.0.0
 	golang.org/x/term v0.41.0
@@ -39,6 +39,6 @@ replace (
 	friendnet.org/common => ../common
 	friendnet.org/protocol => ../protocol
 	friendnet.org/rpcclient => ../rpcclient
-	friendnet.org/updater => ../updater
 	friendnet.org/stun => ../stun
+	friendnet.org/updater => ../updater
 )
