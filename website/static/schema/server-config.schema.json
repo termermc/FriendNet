@@ -44,10 +44,7 @@
 		"ServerRpcConfig": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": [
-				"https_pem_path",
-				"interfaces"
-			],
+			"required": ["https_pem_path", "interfaces"],
 			"properties": {
 				"https_pem_path": {
 					"type": "string",
@@ -65,10 +62,7 @@
 			"type": "object",
 			"additionalProperties": false,
 			"description": "Configuration for the server's RPC service (wrapper around one or more RpcServerConfig instances).",
-			"required": [
-				"address",
-				"allowed_methods"
-			],
+			"required": ["address", "allowed_methods"],
 			"properties": {
 				"address": {
 					"type": "string",

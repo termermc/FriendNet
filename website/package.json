@@ -10,6 +10,7 @@
 	},
 	"dependencies": {
 		"marked": "^17.0.4",
+		"monaco-editor": "^0.56.0",
 		"wunphile": "^1.1.4"
 	},
 	"devDependencies": {

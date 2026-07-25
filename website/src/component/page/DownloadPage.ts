@@ -18,7 +18,7 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 	curUpdate,
 }) => {
 	const url = curUpdate.url
-	const [, releaseTag] = url.match(releasesUrlRegex)
+	const [, releaseTag] = url.match(releasesUrlRegex)!
 
 	let items: {
 		name: string

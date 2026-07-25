@@ -24,4 +24,9 @@ export default {
 	 */
 	moneroAddress:
 		'452fRbsyyTpPZDXUpu14ZCYCFyAxyiHeaiGPLKAjBaR7FJxztuTt7NjNFYwxKaCpQeWXKD9xNxtPYdaSqL375L599YVpa7w',
+
+	/**
+	 * The path to the server config JSON schema.
+	 */
+	serverConfigSchemaPath: '/schema/server-config.schema.json',
 }

@@ -53,7 +53,7 @@ type ServerConfig struct {
 	// Examples:
 	//  - "my.friendnet.server:20038"
 	//  - "stun.l.google.com:19302"
-	StunServers []string `json:"stun_servers"`
+	StunServers []string `json:"stun_servers,omitempty"`
 
 	// The configuration for the server's RPC service.
 	Rpc ServerRpcConfig `json:"rpc"`
