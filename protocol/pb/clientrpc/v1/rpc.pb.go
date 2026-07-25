@@ -1163,8 +1163,10 @@ type DirectSettings struct {
 	// Defaults to 10 seconds.
 	// Has no effect if disable_upnp is true.
 	UpnpTimeoutMs uint32 `protobuf:"varint,8,opt,name=upnp_timeout_ms,json=upnpTimeoutMs,proto3" json:"upnp_timeout_ms,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// Whether to disable NAT hole punching
+	DisableNatHolePunching bool `protobuf:"varint,9,opt,name=disable_nat_hole_punching,json=disableNatHolePunching,proto3" json:"disable_nat_hole_punching,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *DirectSettings) Reset() {
@@ -1251,6 +1253,13 @@ func (x *DirectSettings) GetUpnpTimeoutMs() uint32 {
 		return x.UpnpTimeoutMs
 	}
 	return 0
+}
+
+func (x *DirectSettings) GetDisableNatHolePunching() bool {
+	if x != nil {
+		return x.DisableNatHolePunching
+	}
+	return false
 }
 
 // TransferSettings are transfer (download and upload) settings for the client.
@@ -4800,7 +4809,7 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\bFileMeta\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x15\n" +
 	"\x06is_dir\x18\x02 \x01(\bR\x05isDir\x12\x12\n" +
-	"\x04size\x18\x03 \x01(\x04R\x04size\"\xed\x02\n" +
+	"\x04size\x18\x03 \x01(\x04R\x04size\"\xa8\x03\n" +
 	"\x0eDirectSettings\x12\x18\n" +
 	"\adisable\x18\x01 \x01(\bR\adisable\x12\x1c\n" +
 	"\taddresses\x18\x02 \x03(\tR\taddresses\x12!\n" +
@@ -4809,7 +4818,8 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\x15advertise_private_ips\x18\x05 \x01(\bR\x13advertisePrivateIps\x12=\n" +
 	"\x1bdisable_public_ip_discovery\x18\x06 \x01(\bR\x18disablePublicIpDiscovery\x12!\n" +
 	"\fdisable_upnp\x18\a \x01(\bR\vdisableUpnp\x12&\n" +
-	"\x0fupnp_timeout_ms\x18\b \x01(\rR\rupnpTimeoutMs\"\xb1\x01\n" +
+	"\x0fupnp_timeout_ms\x18\b \x01(\rR\rupnpTimeoutMs\x129\n" +
+	"\x19disable_nat_hole_punching\x18\t \x01(\bR\x16disableNatHolePunching\"\xb1\x01\n" +
 	"\x10TransferSettings\x121\n" +
 	"\x14download_concurrency\x18\x01 \x01(\rR\x13downloadConcurrency\x126\n" +
 	"\x17incomplete_download_dir\x18\x02 \x01(\tR\x15incompleteDownloadDir\x122\n" +

@@ -219,8 +219,9 @@ func (m *Manager) startServers() {
 		listenAddrPorts = append(listenAddrPorts, addrPort)
 	}
 
-	// Create servers for each address.
 	servers := make([]*Server, 0, len(listenAddrPorts))
+
+	// Create servers for each address.
 	for _, addrPort := range listenAddrPorts {
 		server, err := NewServer(m.logger, m.ctx, m, addrPort, m.cfg.Cert)
 		if err != nil {
@@ -277,6 +278,10 @@ func (m *Manager) IsPublicIpDiscoveryDisabled() bool {
 // AdvertisePrivateIps returns whether clients should advertise their private IPs to the server.
 func (m *Manager) AdvertisePrivateIps() bool {
 	return m.cfg.AdvertisePrivateIps
+}
+
+func (m *Manager) IsNatHolePunchingDisabled() bool {
+	return m.cfg.DisableNatHolePunching
 }
 
 // NotifyIpAvailable notifies the Manager that an IP address is available for use.
@@ -393,6 +398,8 @@ func (m *Manager) CreatePartition(name string) (*Partition, error) {
 		connChan:        make(chan *IncomingDirectConn),
 		serverOpenChan:  make(chan *Server),
 		serverCloseChan: make(chan *Server),
+
+		ownedServers: make(map[netip.AddrPort]struct{}),
 	}
 	m.partitions[hash] = partition
 	return partition, nil
@@ -490,6 +497,9 @@ type Partition struct {
 	connChan        chan *IncomingDirectConn
 	serverOpenChan  chan *Server
 	serverCloseChan chan *Server
+
+	ownedServersMu sync.Mutex
+	ownedServers   map[netip.AddrPort]struct{}
 }
 
 // Close closes the partition and stops listening for incoming connections.
@@ -521,6 +531,25 @@ func (p *Partition) Close() error {
 		_ = conn.InternalError()
 	default:
 		break
+	}
+
+	// Clean up owned servers.
+	p.ownedServersMu.Lock()
+	defer p.ownedServersMu.Unlock()
+	if len(p.ownedServers) == 0 {
+		return nil
+	}
+
+	p.m.mu.Lock()
+	defer p.m.mu.Unlock()
+	for addrPort := range p.ownedServers {
+		srv, has := p.m.servers[addrPort]
+		if !has {
+			continue
+		}
+
+		_ = srv.Close()
+		delete(p.m.servers, addrPort)
 	}
 
 	return nil
@@ -596,4 +625,60 @@ func (p *Partition) WaitServerClose() (*Server, error) {
 	case server := <-p.serverCloseChan:
 		return server, nil
 	}
+}
+
+// CreateTemporaryServerFromSocket will create a temporary server from a socket.
+// The server will be closed when the partition closes.
+// The caller can close the returned Server whenever it wants.
+// Do not use the socket after passing it to this function.
+func (p *Partition) CreateTemporaryServerFromSocket(socket *net.UDPConn) (*Server, error) {
+	if socket == nil {
+		return nil, fmt.Errorf("socket cannot be nil")
+	}
+
+	// Clear deadlines on socket.
+	if err := socket.SetReadDeadline(time.Time{}); err != nil {
+		return nil, fmt.Errorf("failed to clear read deadline: %w", err)
+	}
+	if err := socket.SetWriteDeadline(time.Time{}); err != nil {
+		return nil, fmt.Errorf("failed to clear write deadline: %w", err)
+	}
+
+	srv, err := NewServerFromSocket(
+		p.m.logger,
+		p.m.ctx,
+		p.m,
+		socket,
+		p.m.cfg.Cert,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	addrPort := netip.MustParseAddrPort(socket.LocalAddr().String())
+
+	// Clean up if connection fails
+	go func() {
+		<-srv.ctx.Done()
+
+		_ = socket.Close()
+
+		p.ownedServersMu.Lock()
+		defer p.ownedServersMu.Unlock()
+		p.m.mu.Lock()
+		defer p.m.mu.Unlock()
+
+		delete(p.ownedServers, addrPort)
+		delete(p.m.servers, addrPort)
+	}()
+
+	p.ownedServersMu.Lock()
+	defer p.ownedServersMu.Unlock()
+	p.m.mu.Lock()
+	defer p.m.mu.Unlock()
+
+	p.ownedServers[addrPort] = struct{}{}
+	p.m.servers[addrPort] = srv
+
+	return srv, nil
 }

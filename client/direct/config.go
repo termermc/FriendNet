@@ -25,7 +25,7 @@ const SettingAdvertisePrivateIps = "direct_server_advertise_private_ips"
 const SettingDisablePublicIpDiscovery = "direct_server_disable_public_ip_discovery"
 const SettingDisableUPnP = "direct_server_disable_upnp"
 const SettingUpnpTimeoutMs = "direct_server_upnp_timeout_ms"
-const SettingEnableNatHolePunching = "direct_server_enable_nat_hole_punching"
+const SettingDisableNatHolePunching = "direct_server_disable_nat_hole_punching"
 const SettingNatHolePunchingBindPort = "direct_server_nat_hole_punching_bind_port"
 
 const DefaultDirectPort = 20048
@@ -79,7 +79,7 @@ func ConfigFromSettings(ctx context.Context, store *storage.Storage) (*Config, e
 	if upnpTimeoutMs, err = store.GetSettingIntOrPut(ctx, SettingUpnpTimeoutMs, int64(DefaultUpnpTimeout/time.Millisecond)); err != nil {
 		return nil, err
 	}
-	if disableNatHolePunching, err = store.GetSettingBoolOrPut(ctx, SettingEnableNatHolePunching, false); err != nil {
+	if disableNatHolePunching, err = store.GetSettingBoolOrPut(ctx, SettingDisableNatHolePunching, false); err != nil {
 		return nil, err
 	}
 	if natHolePunchingBindPort, err = store.GetSettingIntOrPut(ctx, SettingNatHolePunchingBindPort, 0); err != nil {

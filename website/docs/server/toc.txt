@@ -2,3 +2,4 @@ setup
 rooms
 widget
 troubleshooting
+configuring-stun

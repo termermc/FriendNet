@@ -26,3 +26,11 @@ profile.cov
 # Editor/IDE
 # .idea/
 # .vscode/
+
+dist/
+*.db*
+server.json
+*.pem
+
+# TypeScript cache
+*.tsbuildinfo

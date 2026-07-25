@@ -13,3 +13,9 @@ const NewIssueUrl = IssuesUrl + "/new"
 
 // IsDebugMode is true if the software is running in debug mode.
 var IsDebugMode = os.Getenv("DEBUG") != "" && os.Getenv("DEBUG") != "0"
+
+// CfgStunDocsUrl is the URL for documentation about configuring STUN servers in the server.
+const CfgStunDocsUrl = "https://friendnet.org/docs/server/configuring-stun/"
+
+// ServerCfgJsonSchemaUrl is the URL for the JSON schema of the server configuration.
+const ServerCfgJsonSchemaUrl = "https://friendnet.org/schema/server-config.schema.json"

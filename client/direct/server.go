@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/netip"
+	"sync"
 	"time"
 
 	"friendnet.org/protocol"
@@ -21,6 +23,8 @@ const handshakeTimeout = 10 * time.Second
 // It does not perform any authentication, it simply sends the connections along with
 // their handshake messages to the appropriate Partition.
 type Server struct {
+	mu sync.RWMutex
+
 	logger *slog.Logger
 
 	ctx       context.Context
@@ -33,6 +37,8 @@ type Server struct {
 	AddrPort netip.AddrPort
 
 	listener protocol.ProtoListener
+
+	onConnHdlrs []func(conn protocol.ProtoConn)
 }
 
 // NewServerFromListener creates a new direct connect server using an existing listener.
@@ -112,6 +118,43 @@ func NewServer(
 	)
 }
 
+// NewServerFromSocket is like NewServer, but it uses an existing UDP socket instead of binding its own.
+func NewServerFromSocket(
+	logger *slog.Logger,
+	ctx context.Context,
+	m *Manager,
+	socket *net.UDPConn,
+	cert tls.Certificate,
+) (*Server, error) {
+	if socket == nil {
+		return nil, fmt.Errorf("NewServerFromSocket called with nil socket")
+	}
+
+	socketAddrPort, err := netip.ParseAddrPort(socket.LocalAddr().String())
+	if err != nil {
+		return nil, err
+	}
+
+	transport := &quic.Transport{Conn: socket}
+
+	listener, err := protocol.NewQuicProtoListenerFromTransport(transport, &tls.Config{
+		MinVersion:   tls.VersionTLS13,
+		Certificates: []tls.Certificate{cert},
+		NextProtos:   []string{protocol.DirectAlpnProtoName},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return NewServerFromListener(
+		logger,
+		ctx,
+		m,
+		socketAddrPort,
+		listener,
+	)
+}
+
 // Close closes the server.
 func (s *Server) Close() error {
 	select {
@@ -129,6 +172,19 @@ func (s *Server) Close() error {
 	return nil
 }
 
+// OnConnection registers a function to be run when a connection is made to the server.
+// The handler is run in its own goroutine.
+func (s *Server) OnConnection(handler func(conn protocol.ProtoConn)) {
+	s.mu.Lock()
+	s.onConnHdlrs = append(s.onConnHdlrs, handler)
+	s.mu.Unlock()
+}
+
+// OnClose returns a channel that is closed when the server is closed.
+func (s *Server) OnClose() <-chan struct{} {
+	return s.ctx.Done()
+}
+
 // run runs the server accept loop.
 // It exits with nil if the server was closed, or an error if there was an error accepting a connection.
 func (s *Server) run() error {
@@ -141,6 +197,13 @@ func (s *Server) run() error {
 
 			return fmt.Errorf(`failed to accept direct connection: %w`, err)
 		}
+
+		// Notify channel of a new connection.
+		s.mu.RLock()
+		for _, hdlr := range s.onConnHdlrs {
+			go hdlr(conn)
+		}
+		s.mu.RUnlock()
 
 		go s.connHandler(conn)
 	}
