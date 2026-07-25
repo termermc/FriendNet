@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"net/url"
 	"os"
 
@@ -44,9 +45,14 @@ type ServerConfig struct {
 	DisableUpdateChecker bool `json:"disable_update_checker"`
 
 	// List of STUN servers to return to clients.
+	// In most cases, this should just contain the public address and port of your FriendNet server, because the server
+	// exposes a STUN server on the same port.
 	// Each entry should be HOST:PORT.
 	// IPv6 addresses should be enclosed in square brackets (like "[::1]:20038").
 	// If empty, the server will try to guess the address of its built-in STUN server.
+	// Examples:
+	//  - "my.friendnet.server:20038"
+	//  - "stun.l.google.com:19302"
 	StunServers []string `json:"stun_servers"`
 
 	// The configuration for the server's RPC service.
@@ -127,6 +133,14 @@ func LoadOrCreate(path string) (*ServerConfig, error) {
 		_, err = url.Parse(iface.Address)
 		if err != nil {
 			return nil, fmt.Errorf(`interface address %q is not a valid URL: %w`, iface.Address, err)
+		}
+	}
+
+	// Ensure all STUN server addresses are valid.
+	for _, server := range cfg.StunServers {
+		_, _, err = net.SplitHostPort(server)
+		if err != nil {
+			return nil, fmt.Errorf(`STUN server address %q is not a valid HOST:PORT address: %w`, server, err)
 		}
 	}
 
