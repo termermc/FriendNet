@@ -22,8 +22,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// ServerPingInterval is the interval between pings sent to the server.
-const ServerPingInterval = 100 * time.Millisecond
+// ServerPingInterval is the interval between pings sent to the server (and direct connections).
+const ServerPingInterval = 10 * time.Second
 
 // ErrRoomConnClosed is returned when trying to interact with a closed room connection.
 var ErrRoomConnClosed = errors.New("room connection closed")
