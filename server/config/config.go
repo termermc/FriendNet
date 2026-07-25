@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"net/url"
 	"os"
 
@@ -24,6 +25,9 @@ type ServerRpcConfig struct {
 
 // ServerConfig is the server configuration.
 type ServerConfig struct {
+	// JsonSchema is a placeholder field to hold the JSON schema URL for validation.
+	JsonSchema string `json:"$schema"`
+
 	// The addresses to listen on.
 	// Each entry should be HOST:PORT.
 	// IPv6 addresses should be enclosed in square brackets (like "[::1]:20038").
@@ -37,8 +41,19 @@ type ServerConfig struct {
 	// A new self-signed certificate will be generated if it does not exist.
 	PemPath string `json:"pem_path"`
 
-	// If true, the server will periodically check for updates and log to the console if a new version is available.
+	// If true, the server will NOT periodically check for updates and log to the console if a new version is available.
 	DisableUpdateChecker bool `json:"disable_update_checker"`
+
+	// List of STUN servers to return to clients.
+	// In most cases, this should just contain the public address and port of your FriendNet server, because the server
+	// exposes a STUN server on the same port.
+	// Each entry should be HOST:PORT.
+	// IPv6 addresses should be enclosed in square brackets (like "[::1]:20038").
+	// If empty, the server will try to guess the address of its built-in STUN server.
+	// Examples:
+	//  - "my.friendnet.server:20038"
+	//  - "stun.l.google.com:19302"
+	StunServers []string `json:"stun_servers"`
 
 	// The configuration for the server's RPC service.
 	Rpc ServerRpcConfig `json:"rpc"`
@@ -46,6 +61,8 @@ type ServerConfig struct {
 
 // Default is the default server configuration.
 var Default = &ServerConfig{
+	JsonSchema: common.ServerCfgJsonSchemaUrl,
+
 	Listen: []string{
 		"0.0.0.0:20038",
 		"[::]:20038",
@@ -116,6 +133,14 @@ func LoadOrCreate(path string) (*ServerConfig, error) {
 		_, err = url.Parse(iface.Address)
 		if err != nil {
 			return nil, fmt.Errorf(`interface address %q is not a valid URL: %w`, iface.Address, err)
+		}
+	}
+
+	// Ensure all STUN server addresses are valid.
+	for _, server := range cfg.StunServers {
+		_, _, err = net.SplitHostPort(server)
+		if err != nil {
+			return nil, fmt.Errorf(`STUN server address %q is not a valid HOST:PORT address: %w`, server, err)
 		}
 	}
 

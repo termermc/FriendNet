@@ -2,10 +2,14 @@ package room
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
+	"log/slog"
+	"net"
+	"time"
 
 	"friendnet.org/client/share"
 	"friendnet.org/common"
@@ -62,18 +66,25 @@ type Logic interface {
 	//
 	// C2C, S2C
 	OnSearch(ctx context.Context, room *Conn, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgSearch]) error
+
+	// OnPunchOffer handles an incoming hole punch offer
+	//
+	// C2C
+	OnPunchOffer(ctx context.Context, room *Conn, bidi C2cBidi, msg *protocol.TypedProtoMsg[*pb.MsgPunchOffer]) error
 }
 
 // LogicImpl implements Logic.
 type LogicImpl struct {
+	logger      *slog.Logger
 	shares      *share.Manager
 	searchLimit int64
 }
 
 var _ Logic = (*LogicImpl)(nil)
 
-func NewLogicImpl(shares *share.Manager) *LogicImpl {
+func NewLogicImpl(logger *slog.Logger, shares *share.Manager) *LogicImpl {
 	return &LogicImpl{
+		logger:      logger,
 		shares:      shares,
 		searchLimit: 100,
 	}
@@ -295,7 +306,10 @@ func (l *LogicImpl) OnConnectToMe(ctx context.Context, room *Conn, bidi C2cBidi,
 		})
 	}
 
-	_, result, err := room.tryConnectToPeer(ctx, bidi.Username)
+	timeoutCtx, ctxCancel := context.WithTimeout(ctx, room.directOutgoingTimeout)
+	defer ctxCancel()
+
+	_, result, err := room.tryConnectToPeer(timeoutCtx, bidi.Username)
 	if err != nil && result == pb.ConnResult_CONN_RESULT_INTERNAL_ERROR {
 		room.logger.Error("internal error while connecting to peer",
 			"service", "room.LogicImpl",
@@ -362,6 +376,115 @@ func (l *LogicImpl) OnSearch(ctx context.Context, _ *Conn, bidi protocol.ProtoBi
 			return fmt.Errorf("failed to send search result for %q: %w", query, err)
 		}
 	}
+
+	return nil
+}
+
+func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi C2cBidi, msg *protocol.TypedProtoMsg[*pb.MsgPunchOffer]) error {
+	reject := func(msg string) error {
+		err := bidi.Write(pb.MsgType_MSG_TYPE_PUNCH_REJECT, &pb.MsgPunchReject{Message: msg})
+		if err != nil {
+			if protocol.IsErrorConnCloseOrCancel(err) {
+				return nil
+			}
+
+			return fmt.Errorf("failed to send punch offer rejection: %w", err)
+		}
+
+		return nil
+	}
+
+	// Can't hole punch if it's disabled
+	if room.directMgr.IsNatHolePunchingDisabled() {
+		return reject("hole punching is disabled")
+	}
+
+	holePunchSocket, err := net.ListenUDP("udp", &net.UDPAddr{})
+	if err != nil {
+		l.logger.Error("could not listen on hole punch socket",
+			"service", "room.LogicImpl",
+			"room", room.RoomName.String(),
+			"err", err,
+		)
+		return reject("could not listen on hole punch socket")
+	}
+
+	publicAddr, err := room.GetAddrPortForSocket(holePunchSocket)
+	if err != nil {
+		_ = holePunchSocket.Close()
+		return reject("could not obtain own public address")
+	}
+
+	err = holePunchSocket.SetReadDeadline(time.Time{})
+	if err != nil {
+		_ = holePunchSocket.Close()
+		return reject("could not reset read deadline")
+	}
+
+	udpAddr, err := net.ResolveUDPAddr("udp", msg.Payload.Address)
+	if err != nil {
+		_ = holePunchSocket.Close()
+		return reject("could not resolve provided address")
+	}
+
+	server, err := room.directPart.CreateTemporaryServerFromSocket(holePunchSocket)
+	if err != nil {
+		return fmt.Errorf("failed to create server in partition: %w", err)
+	}
+
+	err = bidi.Write(pb.MsgType_MSG_TYPE_PUNCH_ACCEPT, &pb.MsgPunchAccept{Address: publicAddr.String()})
+	if err != nil {
+		_ = server.Close()
+		if protocol.IsErrorConnCloseOrCancel(err) {
+			return nil
+		}
+
+		return fmt.Errorf("failed to send punch offer acceptance: %w", err)
+	}
+
+	timeoutCtx, timeoutCancel := context.WithTimeout(context.Background(), room.directOutgoingTimeout)
+
+	// Send garbage to the peer until we get a connection or we time out.
+	go func() {
+		garbage := make([]byte, 257)
+		ticker := time.NewTicker(100 * time.Millisecond)
+
+		for {
+			select {
+			case <-timeoutCtx.Done():
+				return
+			case <-ticker.C:
+				_, _ = rand.Read(garbage)
+				_, _ = holePunchSocket.WriteToUDP(garbage[:garbage[256]], udpAddr)
+			}
+		}
+	}()
+
+	hasConnChan := make(chan struct{})
+	server.OnConnection(func(conn protocol.ProtoConn) {
+		close(hasConnChan)
+
+		// Since this is a temporary server meant for just a single connection, close the server when the direct
+		// connection closes.
+		<-conn.OnDisconnect()
+		_ = server.Close()
+	})
+
+	// Close server within a timeout if we don't get a connection.
+	go func() {
+		defer timeoutCancel()
+
+		select {
+		case <-server.OnClose():
+			return
+		case <-hasConnChan:
+			// Got a connection; let the server live.
+			return
+		case <-timeoutCtx.Done():
+			// We did not get a connection before the timeout; close the server.
+			_ = server.Close()
+		}
+	}()
 
 	return nil
 }

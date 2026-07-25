@@ -18,7 +18,7 @@ func (s ConnMethodSupport) IsSupported(typ pb.ConnMethodType) bool {
 
 // ProbeConnMethodSupport probes the system for supported connection methods.
 // Even if an error is returned, the ConnMethodSupport can still be used.
-func ProbeConnMethodSupport() (ConnMethodSupport, error) {
+func ProbeConnMethodSupport(supportsNatHolePunch bool) (ConnMethodSupport, error) {
 	res := ConnMethodSupport{
 		types: make(map[pb.ConnMethodType]struct{}, 2),
 	}
@@ -30,6 +30,11 @@ func ProbeConnMethodSupport() (ConnMethodSupport, error) {
 		if common.YggdrasilPrefix.Contains(ip) {
 			res.types[pb.ConnMethodType_CONN_METHOD_TYPE_YGGDRASIL] = struct{}{}
 		}
+	}
+
+	// Add NAT hole punching method
+	if supportsNatHolePunch {
+		res.types[pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH] = struct{}{}
 	}
 
 	// In the future if any errors occur for probing new methods, add errors to

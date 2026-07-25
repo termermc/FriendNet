@@ -12,6 +12,7 @@ import (
 	"friendnet.org/common/password"
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
+	"friendnet.org/server/config"
 )
 
 // Logic exposes handlers for incoming C2S messages.
@@ -118,10 +119,19 @@ type Logic interface {
 		bidi protocol.ProtoBidi,
 		msg *protocol.TypedProtoMsg[*pb.MsgSearch],
 	) error
+
+	OnGetStunServers(
+		ctx context.Context,
+		client *Client,
+		bidi protocol.ProtoBidi,
+		msg *protocol.TypedProtoMsg[*pb.MsgGetStunServers],
+	) error
 }
 
 type LogicImpl struct {
-	logger *slog.Logger
+	logger    *slog.Logger
+	cfg       *config.ServerConfig
+	stunAddrs []string
 
 	directConnTestTimeout time.Duration
 	searchTimeout         time.Duration
@@ -129,9 +139,15 @@ type LogicImpl struct {
 
 var _ Logic = (*LogicImpl)(nil)
 
-func NewLogicImpl(logger *slog.Logger) *LogicImpl {
+func NewLogicImpl(
+	logger *slog.Logger,
+	cfg *config.ServerConfig,
+	stunAddrs []string,
+) *LogicImpl {
 	return &LogicImpl{
-		logger: logger,
+		logger:    logger,
+		cfg:       cfg,
+		stunAddrs: stunAddrs,
 
 		directConnTestTimeout: 10 * time.Second,
 		searchTimeout:         1 * time.Minute,
@@ -222,6 +238,13 @@ func (l LogicImpl) OnAdvertiseConnMethod(ctx context.Context, client *Client, bi
 	connRes := func() pb.ConnResult {
 		if !client.Room.connMethodSupport.IsSupported(ad.Type) {
 			return pb.ConnResult_CONN_RESULT_METHOD_NOT_SUPPORTED
+		}
+
+		// The server cannot verify NAT holepunching.
+		// Theoretically, the protocol could be changed to support serverside holepunch testing, but that would require
+		// running a dummy direct server and NAT traversal from the server itself. The juice isn't worth the squeeze.
+		if ad.Type == pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH {
+			return pb.ConnResult_CONN_RESULT_DID_NOT_TRY
 		}
 
 		timeoutCtx, cancel := context.WithTimeout(ctx, l.directConnTestTimeout)
@@ -468,6 +491,19 @@ recvLoop:
 				return err
 			}
 		}
+	}
+
+	return nil
+}
+
+func (l LogicImpl) OnGetStunServers(ctx context.Context, client *Client, bidi protocol.ProtoBidi, _ *protocol.TypedProtoMsg[*pb.MsgGetStunServers]) error {
+	var m = &pb.MsgStunServers{
+		Addresses: l.stunAddrs,
+	}
+
+	err := bidi.Write(pb.MsgType_MSG_TYPE_STUN_SERVERS, m)
+	if err != nil {
+		return err
 	}
 
 	return nil

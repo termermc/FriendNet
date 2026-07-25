@@ -24,7 +24,8 @@ var ErrUnsupportedMethodType = errors.New("unsupported direct connection method 
 // Useful when paired with ErrUnknownMethodType.
 func IsMethodTypeKnown(typ pb.ConnMethodType) bool {
 	return typ == pb.ConnMethodType_CONN_METHOD_TYPE_IP ||
-		typ == pb.ConnMethodType_CONN_METHOD_TYPE_YGGDRASIL
+		typ == pb.ConnMethodType_CONN_METHOD_TYPE_YGGDRASIL ||
+		typ == pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH
 }
 
 // ValidateMethodAddress attempts to validate the address for the specified method type.
@@ -56,6 +57,27 @@ func ValidateMethodAddress(typ pb.ConnMethodType, address string) error {
 	default:
 		// We do not know about this method type, so we cannot validate it.
 		return nil
+	}
+}
+
+// CreateDirectClientTlsConfig creates a new tls.Config to be used by a direct connection client.
+// The hostname should be the IP address of the peer's direct endpoint.
+func CreateDirectClientTlsConfig(hostname string) *tls.Config {
+	return &tls.Config{
+		MinVersion:         tls.VersionTLS13,
+		NextProtos:         []string{DirectAlpnProtoName},
+		ServerName:         hostname,
+		InsecureSkipVerify: true,
+		VerifyPeerCertificate: func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
+			if len(rawCerts) == 0 {
+				return ErrNoServerCerts
+			}
+
+			// Allow any certificate.
+			// Direct servers all use self-signed certs.
+			// Verification is done via tokens issued by the central server.
+			return nil
+		},
 	}
 }
 
@@ -109,6 +131,29 @@ func CreateDirectConnection(
 	address string,
 	handshake *pb.MsgDirectConnHandshake,
 ) (conn ProtoConn, result pb.ConnResult, err error) {
+	sock, err := net.ListenUDP("udp", &net.UDPAddr{})
+	if err != nil {
+		return nil, 0, fmt.Errorf(`failed to bind UDP socket: %w`, err)
+	}
+
+	return CreateDirectConnectionWithSocket(
+		ctx,
+		methodType,
+		sock,
+		address,
+		handshake,
+	)
+}
+
+// CreateDirectConnectionWithSocket is like CreateDirectConnection, but using an existing UDP socket instead of binding a new one.
+// It is the caller's responsibility to close the socket.
+func CreateDirectConnectionWithSocket(
+	ctx context.Context,
+	methodType pb.ConnMethodType,
+	sock net.PacketConn,
+	address string,
+	handshake *pb.MsgDirectConnHandshake,
+) (conn ProtoConn, result pb.ConnResult, err error) {
 	conn, err = func() (ProtoConn, error) {
 		if !IsMethodTypeKnown(methodType) {
 			return nil, ErrUnknownMethodType
@@ -123,30 +168,24 @@ func CreateDirectConnection(
 		hostname, _, _ := net.SplitHostPort(address)
 		hostname = common.NormalizeHostname(hostname)
 
-		tlsCfg := &tls.Config{
-			MinVersion:         tls.VersionTLS13,
-			NextProtos:         []string{DirectAlpnProtoName},
-			ServerName:         hostname,
-			InsecureSkipVerify: true,
-			VerifyPeerCertificate: func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
-				if len(rawCerts) == 0 {
-					return ErrNoServerCerts
-				}
-
-				// Allow any certificate.
-				// Direct servers all use self-signed certs.
-				// Verification is done via tokens issued by the central server.
-				return nil
-			},
+		udpAddr, err := net.ResolveUDPAddr("udp", address)
+		if err != nil {
+			return nil, err
 		}
 
+		tlsCfg := CreateDirectClientTlsConfig(hostname)
+
 		var qConn *quic.Conn
-		qConn, err = quic.DialAddr(ctx, address, tlsCfg, &quic.Config{
+		qConn, err = quic.Dial(ctx, sock, udpAddr, tlsCfg, &quic.Config{
 			KeepAlivePeriod:    DefaultKeepAlivePeriod,
 			MaxIncomingStreams: DefaultMaxIncomingStreams,
 		})
 		if err != nil {
-			return nil, fmt.Errorf(`failed to dial QUIC %q for direct connection: %w`, address, err)
+			if errors.Is(err, ctx.Err()) {
+				return nil, fmt.Errorf(`direct connect attempt timed out: %w`, err)
+			}
+
+			return nil, err
 		}
 
 		conn = ToProtoConn(qConn)

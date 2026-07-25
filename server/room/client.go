@@ -93,7 +93,8 @@ func (c *Client) msgHandler(bidi protocol.ProtoBidi, firstMsg *protocol.UntypedP
 		return c.logic.OnChangeAccountPassword(ctx, c, bidi, protocol.ToTyped[*pb.MsgChangeAccountPassword](firstMsg))
 	case pb.MsgType_MSG_TYPE_SEARCH:
 		return c.logic.OnSearch(ctx, c, bidi, protocol.ToTyped[*pb.MsgSearch](firstMsg))
-
+	case pb.MsgType_MSG_TYPE_GET_STUN_SERVERS:
+		return c.logic.OnGetStunServers(ctx, c, bidi, protocol.ToTyped[*pb.MsgGetStunServers](firstMsg))
 	default:
 		c.logger.Error("client sent unknown message type",
 			"service", "room.Client",

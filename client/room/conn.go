@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
+	"net/netip"
 	"sync"
 	"time"
 
@@ -15,11 +17,12 @@ import (
 	"friendnet.org/common/machine"
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
+	"friendnet.org/stun"
 	"github.com/quic-go/quic-go"
 	"google.golang.org/protobuf/proto"
 )
 
-// ServerPingInterval is the interval between pings sent to the server.
+// ServerPingInterval is the interval between pings sent to the server (and direct connections).
 const ServerPingInterval = 10 * time.Second
 
 // ErrRoomConnClosed is returned when trying to interact with a closed room connection.
@@ -92,6 +95,7 @@ type Conn struct {
 	directPeerMethods map[common.NormalizedUsername][]*pb.ConnMethod
 
 	// A map of direct connect methods for the client.
+	// The key is the method ID.
 	// They may be verified by the server, they may not.
 	directSelfMethods map[string]*pb.ConnMethod
 
@@ -132,7 +136,7 @@ func negotiateVersion(serverConn protocol.ProtoConn, clientVer *pb.ProtoVersion)
 			Message: common.StrPtrOr(payload.Message, ""),
 		}
 	default:
-		return nil, protocol.NewUnexpectedMsgTypeError(pb.MsgType_MSG_TYPE_VERSION_ACCEPTED, res.Type)
+		return nil, protocol.NewUnexpectedMsgTypeError(pb.MsgType_MSG_TYPE_VERSION_ACCEPTED, res.Type, res.Payload)
 	}
 }
 
@@ -157,7 +161,7 @@ func authenticate(serverConn protocol.ProtoConn, creds Credentials) error {
 			Message: common.StrPtrOr(payload.Message, ""),
 		}
 	default:
-		return protocol.NewUnexpectedMsgTypeError(pb.MsgType_MSG_TYPE_AUTH_ACCEPTED, res.Type)
+		return protocol.NewUnexpectedMsgTypeError(pb.MsgType_MSG_TYPE_AUTH_ACCEPTED, res.Type, res.Payload)
 	}
 }
 
@@ -497,6 +501,9 @@ func (c *Conn) openC2cBidiWithMsg(
 			if method.Type == pb.ConnMethodType_CONN_METHOD_TYPE_YGGDRASIL {
 				goto connectToMe
 			}
+			if method.Type == pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH {
+				goto connectToMe
+			}
 		}
 
 		c.logger.Warn("no suitable self method found, will not ask peer to connect to us",
@@ -663,4 +670,46 @@ func (c *Conn) Search(query string) (protocol.Stream[*pb.MsgSearchRoomResult], e
 			return msg.Payload
 		},
 	), nil
+}
+
+// GetAddrPortForSocket gets the public IP address and port for a socket based on STUN server(s) provided by the server.
+// It will modify the socket's read deadline, so the caller may want to reset it after calling this function.
+func (c *Conn) GetAddrPortForSocket(sock *net.UDPConn) (addrPort netip.AddrPort, err error) {
+	res, err := protocol.SendAndReceiveExpect[*pb.MsgStunServers](
+		c.serverConn,
+		pb.MsgType_MSG_TYPE_GET_STUN_SERVERS,
+		&pb.MsgGetStunServers{},
+		pb.MsgType_MSG_TYPE_STUN_SERVERS,
+	)
+	if err != nil {
+		if msgErr, ok := errors.AsType[protocol.ProtoMsgError](err); ok && msgErr.IsUnimplemented() {
+			return addrPort, fmt.Errorf("server does not support STUN, it needs to be upgraded")
+		}
+
+		return addrPort, fmt.Errorf("could not acquire STUN server list from server: %w", err)
+	}
+	if len(res.Payload.Addresses) == 0 {
+		return addrPort, fmt.Errorf("server returned an empty STUN server list")
+	}
+
+	// Retry with escalating deadlines up to 1 second.
+	var timeout time.Duration
+	for timeout <= time.Second {
+		timeout += 250 * time.Millisecond
+
+		err = sock.SetReadDeadline(time.Now().Add(timeout))
+		if err != nil {
+			return addrPort, fmt.Errorf(`failed to set socket read deadline before racing STUN servers: %w`, err)
+		}
+
+		addrPort, err = stun.RaceStunServers(sock, res.Payload.Addresses)
+		if err != nil {
+			return addrPort, err
+		}
+
+		// Try again.
+	}
+
+	// If we reached this point, err will be the last error.
+	return addrPort, err
 }
