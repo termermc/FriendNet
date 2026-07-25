@@ -245,8 +245,6 @@ func (m *Manager) startServers() {
 		}
 	}
 	m.mu.Unlock()
-
-	m.logger.Debug("created servers from UPnP", "service", "direct.Manager")
 }
 
 // Close closes the manager and all the servers it manages.
