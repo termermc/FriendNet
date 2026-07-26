@@ -153,6 +153,11 @@ var ErrNoServers = errors.New("no STUN servers")
 // This function does not set the socket read deadline.
 // The caller should set a read deadline to avoid blocking forever or leaking goroutines that are blocked forever.
 func RaceStunServers(sock *net.UDPConn, stunServerAddrs []string) (addrPort netip.AddrPort, err error) {
+	// TODO Does this actually work with multiple STUN servers properly?
+	// Verify that it works properly.
+	// Also, make a version that waits until a timeout or the first IPv4.
+	// It will fall back to IPv6 if there are no IPv4 addresses.
+
 	if len(stunServerAddrs) == 0 {
 		return addrPort, ErrNoServers
 	}

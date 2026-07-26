@@ -1,6 +1,7 @@
 package common
 
 import (
+	"errors"
 	"net"
 	"net/netip"
 	"strings"
@@ -69,4 +70,18 @@ func GetUnicastIpsFromInterfaces(allowLoopback bool, allowPrivate bool) []netip.
 	}
 
 	return addrs
+}
+
+func ResolveUdpAddrFromStr(addrStr string) (*net.UDPAddr, error) {
+	net.DefaultResolver.LookupIPAddr()
+	addr, err := net.ResolveUDPAddr("udp4", addrStr)
+	if err != nil {
+		if dnsErr, ok := errors.AsType[*net.DNSError](err); ok && dnsErr.IsNotFound {
+			// Try IPv6.
+		}
+
+		return nil, err
+	}
+
+	return addr, nil
 }
