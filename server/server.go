@@ -6,14 +6,22 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
+	"net/netip"
+	"strconv"
+	"strings"
 	"sync"
 
+	"friendnet.org/common"
 	"friendnet.org/common/machine"
 	"friendnet.org/common/password"
 	"friendnet.org/protocol"
+	"friendnet.org/server/config"
 	"friendnet.org/server/lobby"
 	"friendnet.org/server/room"
 	"friendnet.org/server/storage"
+	"friendnet.org/stun"
+	"github.com/quic-go/quic-go"
 )
 
 // Server is a FriendNet server.
@@ -29,9 +37,10 @@ type Server struct {
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 
-	logger  *slog.Logger
-	storage *storage.Storage
-	lobby   *lobby.Lobby
+	logger    *slog.Logger
+	storage   *storage.Storage
+	lobby     *lobby.Lobby
+	stunAddrs []string
 
 	// The server's room.Manager instance.
 	// Do not update or close it.
@@ -47,9 +56,74 @@ func NewServer(
 	storage *storage.Storage,
 	connMethodSupport machine.ConnMethodSupport,
 	passReqs password.Requirements,
+	cfg *config.ServerConfig,
 ) (*Server, error) {
 	if storage == nil {
 		panic("storage cannot be nil")
+	}
+
+	// Before doing anything, we need to figure out the server's STUN addresses.
+	var stunAddrs []string
+	if len(cfg.StunServers) == 0 {
+		// There are no configured STUN server addresses, so we'll try to guess one based on listen addresses.
+
+		stunAddrs = make([]string, 0, len(cfg.Listen))
+
+		wildcardPorts := make(map[uint16]struct{})
+		for _, addrStr := range cfg.Listen {
+			addrPort, err := netip.ParseAddrPort(addrStr)
+			if err != nil {
+				host, _, _ := net.SplitHostPort(addrStr)
+				if strings.ToLower(host) == "localhost" || strings.HasSuffix(host, ".localhost") {
+					// We know that localhost addresses aren't public lol
+					continue
+				}
+
+				// Not an IP, assume it's a hostname and add it to the list.
+				stunAddrs = append(stunAddrs, addrStr)
+				continue
+			}
+
+			addr := addrPort.Addr()
+
+			// Is this a wildcard address?
+			if addr.IsUnspecified() {
+				wildcardPorts[addrPort.Port()] = struct{}{}
+				continue
+			}
+
+			// Is this a normal IP address?
+			if !addr.IsPrivate() && !addr.IsLoopback() {
+				// Normal IP addresses can be used
+				stunAddrs = append(stunAddrs, addrStr)
+				continue
+			}
+		}
+
+		// If there are any wildcard ports, see if we can find a public IPv4 in the machine's interfaces.
+		if len(wildcardPorts) > 0 {
+			unicastIps := common.GetUnicastIpsFromInterfaces(false, false)
+			for _, ip := range unicastIps {
+				ip = ip.Unmap()
+
+				// For now, don't support IPv6.
+				if ip.Is6() {
+					continue
+				}
+
+				for port := range wildcardPorts {
+					stunAddrs = append(stunAddrs, ip.String()+":"+strconv.Itoa(int(port)))
+				}
+			}
+		}
+
+		if len(stunAddrs) == 0 {
+			logger.Warn("no STUN servers provided in server config, and the server's public IP could not be guessed! clients will not be able to use NAT hole punching on this server! see " + common.CfgStunDocsUrl)
+		} else {
+			logger.Warn("no STUN servers provided in server config, using guessed public address(es)! see "+common.CfgStunDocsUrl, "addrs", strings.Join(stunAddrs, ", "))
+		}
+	} else {
+		stunAddrs = cfg.StunServers
 	}
 
 	ctx, ctxCancel := context.WithCancel(context.Background())
@@ -60,7 +134,7 @@ func NewServer(
 		storage,
 		connMethodSupport,
 		passReqs,
-		room.NewLogicImpl(logger),
+		room.NewLogicImpl(logger, cfg, stunAddrs),
 	)
 	if err != nil {
 		ctxCancel()
@@ -79,9 +153,10 @@ func NewServer(
 		ctx:       ctx,
 		ctxCancel: ctxCancel,
 
-		logger:  logger,
-		storage: storage,
-		lobby:   l,
+		logger:    logger,
+		storage:   storage,
+		lobby:     l,
+		stunAddrs: stunAddrs,
 
 		RoomManager: roomMgr,
 	}
@@ -135,8 +210,76 @@ func (s *Server) ListenWith(listener protocol.ProtoListener) error {
 // IPv6 addresses must be enclosed in square brackets, e.g. "[::1]:20038".
 // This function can be called concurrently with other listeners to listen on multiple interfaces.
 // Returns nil when Server.Close is called.
-func (s *Server) Listen(address string, tlsCfg *tls.Config) error {
-	listener, err := protocol.NewQuicProtoListener(address, tlsCfg)
+// If runStun is true, the STUN server will be run on the same address and port.
+func (s *Server) Listen(address string, tlsCfg *tls.Config, runStun bool) error {
+	addrPort, err := netip.ParseAddrPort(address)
+	if err != nil {
+		return fmt.Errorf(`failed to parse listen address %q: %w`, address, err)
+	}
+
+	var udpConn *net.UDPConn
+	addr := addrPort.Addr()
+	if addr.Is6() {
+		udpConn, err = net.ListenUDP("udp6", &net.UDPAddr{
+			IP:   addr.AsSlice(),
+			Port: int(addrPort.Port()),
+		})
+	} else {
+		udpConn, err = net.ListenUDP("udp4", &net.UDPAddr{
+			IP:   addr.AsSlice(),
+			Port: int(addrPort.Port()),
+		})
+	}
+	if err != nil {
+		return err
+	}
+
+	trans := &quic.Transport{Conn: udpConn}
+
+	if runStun {
+		// Run STUN server in a goroutine.
+		stunCtx, stunCancel := context.WithCancel(s.ctx)
+		defer stunCancel()
+
+		go func() {
+			defer func() {
+				if rec := recover(); rec != nil {
+					s.logger.Error(
+						"STUN server panicked",
+						"service", "server.Server",
+						"addr", address,
+						"error", rec,
+					)
+				}
+			}()
+
+			stunErr := stun.RunServer(
+				stunCtx,
+				func(ctx context.Context, b []byte) (int, netip.AddrPort, error) {
+					n, src, readErr := trans.ReadNonQUICPacket(ctx, b)
+					if readErr != nil {
+						return 0, netip.AddrPort{}, readErr
+					}
+
+					return n, netip.MustParseAddrPort(src.String()), nil
+				},
+				udpConn.WriteToUDPAddrPort,
+			)
+			if stunErr != nil {
+				if protocol.IsErrorConnCloseOrCancel(stunErr) {
+					return
+				}
+
+				s.logger.Error("STUN server RunServer function returned an error",
+					"service", "server.Server",
+					"addr", address,
+					"error", stunErr,
+				)
+			}
+		}()
+	}
+
+	listener, err := protocol.NewQuicProtoListenerFromTransport(trans, tlsCfg)
 	if err != nil {
 		return fmt.Errorf("failed to create listener: %w", err)
 	}

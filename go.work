@@ -9,6 +9,7 @@ use (
 	./protocol
 	./rpcclient
 	./server
+	./stun
 	./updater
 	./upnp
 	./webui

@@ -1,4 +1,4 @@
-FROM docker.io/golang:1.26.5-alpine3.23 AS builder
+FROM docker.io/golang:1.26.5-alpine3.24 AS builder
 
 RUN apk add make nodejs npm
 
@@ -10,6 +10,7 @@ RUN mkdir -p protocol
 RUN mkdir -p adminui
 RUN mkdir -p server
 RUN mkdir -p rpcclient
+RUN mkdir -p stun
 
 COPY common/go.mod common
 COPY common/go.sum common
@@ -21,6 +22,8 @@ COPY server/go.mod server
 COPY server/go.sum server
 COPY rpcclient/go.mod rpcclient
 COPY rpcclient/go.sum rpcclient
+COPY stun/go.mod stun
+COPY stun/go.sum stun
 
 RUN cd server && go mod download
 RUN cd rpcclient && go mod download
@@ -32,6 +35,7 @@ COPY protocol protocol
 COPY adminui adminui
 COPY server server
 COPY rpcclient rpcclient
+COPY stun stun
 
 RUN make server
 RUN make rpcclient

@@ -19,6 +19,7 @@ import { NewsPage } from './src/component/page/NewsPage.ts'
 import { NewsHomePage } from './src/component/page/NewsHomePage.ts'
 import { DonatePage } from './src/component/page/DonatePage.ts'
 import { PublicServersPage } from './src/component/page/PublicServersPage.ts'
+import { ServerConfigValidator } from './src/component/page/ServerConfigValidator.ts'
 
 const ssg = new Wunphile(import.meta.url)
 
@@ -27,6 +28,7 @@ ssg.page('/index.html', HomePage)
 ssg.page('/screenshots/index.html', ScreenshotsPage)
 ssg.page('/donate/index.html', DonatePage)
 ssg.page('/publicservers/index.html', PublicServersPage)
+ssg.page('/server-config-validator/index.html', ServerConfigValidator)
 
 // Read current update info and mount download page.
 let curUpdate: UpdateInfo
@@ -42,6 +44,9 @@ ssg.page('/download/index.html', () => DownloadPage({ curUpdate }))
 
 // Mount static files.
 ssg.staticDir('/', './static')
+
+// Monaco editor package.
+ssg.staticDir('/js/lib/monaco-editor', './node_modules/monaco-editor/min')
 
 // Docs.
 const rootDocSection = await scanDirForDocHierarchy(

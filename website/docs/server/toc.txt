@@ -1,4 +1,6 @@
 setup
 rooms
 widget
+configuring-stun
 troubleshooting
+config-validator

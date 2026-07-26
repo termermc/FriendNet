@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"net"
 	"net/netip"
 	"slices"
 	"sync"
@@ -204,6 +205,9 @@ func (c *Conn) redeemDirectHandshakeToken(token string) (*pb.MsgRedeemConnHandsh
 	return msg.Payload, nil
 }
 
+// mkMethodId creates a unique method ID from an IP address.
+// The IP address should be the IP address the server is running on, to keep the ID consistent across reconnects.
+// For special methods like hole punch, it can be a magic IP.
 func (c *Conn) mkMethodId(addrPort netip.AddrPort) string {
 	addrStr := addrPort.String()
 	hasher := fnv.New64a()
@@ -213,7 +217,19 @@ func (c *Conn) mkMethodId(addrPort netip.AddrPort) string {
 	return c.directPart.CreateMethodId(b64)
 }
 
-// mkAdConnMethod returns a message that can be used to advertise a direct connection method.
+var holePunchMethodIdMagicIp = netip.MustParseAddrPort("0.0.0.0:0")
+
+// mkAdConnMethodForPunch returns a message that can be used to advertise the ability for NAT hole punching.
+func (c *Conn) mkAdConnMethodForPunch() *pb.MsgAdvertiseConnMethod {
+	return &pb.MsgAdvertiseConnMethod{
+		Id:       c.mkMethodId(holePunchMethodIdMagicIp),
+		Type:     pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH,
+		Address:  "",
+		Priority: 2,
+	}
+}
+
+// mkAdConnMethod returns a message that can be used to advertise an IP address direct connection method (normal IP or Yggdrasil).
 // publicIp will be ignored if invalid/empty.
 //
 // Priorities:
@@ -221,7 +237,7 @@ func (c *Conn) mkMethodId(addrPort netip.AddrPort) string {
 // 1 = default
 // 0 = private IP
 // -1 = Yggdrasil
-func (c *Conn) mkAdConnMethod(publicIp netip.Addr, addrPort netip.AddrPort) *pb.MsgAdvertiseConnMethod {
+func (c *Conn) mkAdConnMethodForIp(publicIp netip.Addr, addrPort netip.AddrPort) *pb.MsgAdvertiseConnMethod {
 	addr := addrPort.Addr()
 	isYggdrasil := common.YggdrasilPrefix.Contains(addr)
 
@@ -258,7 +274,6 @@ func (c *Conn) runDirectAdsAndLoop() {
 	}
 
 	var publicIp netip.Addr
-
 	if !mgr.IsPublicIpDiscoveryDisabled() {
 		// Ask for public IP from the server and notify the manager of it.
 		func() {
@@ -292,22 +307,101 @@ func (c *Conn) runDirectAdsAndLoop() {
 		}()
 	}
 
-	advertiseInBg := func(server *direct.Server) {
+	advertiseInBg := func(ad *pb.MsgAdvertiseConnMethod, ignoreDidNotTry bool) {
+		go func() {
+			defer func() {
+				if rec := recover(); rec != nil {
+					c.logger.Error("direct advertisement goroutine panicked",
+						"service", "room.Conn",
+						"room", c.RoomName.String(),
+						"addr", ad.Address,
+						"err", rec,
+					)
+				}
+			}()
+
+			msg, err := protocol.SendAndReceiveExpect[*pb.MsgAdvertiseConnMethodResult](
+				c.serverConn,
+				pb.MsgType_MSG_TYPE_ADVERTISE_CONN_METHOD,
+				ad,
+				pb.MsgType_MSG_TYPE_ADVERTISE_CONN_METHOD_RESULT,
+			)
+			if err != nil {
+				if protocol.IsErrorConnCloseOrCancel(err) {
+					return
+				}
+
+				c.logger.Error("failed to advertise direct connection method",
+					"service", "room.Conn",
+					"room", c.RoomName.String(),
+					"method_type", ad.Type.String(),
+					"address", ad.Address,
+					"priority", ad.Priority,
+					"err", err,
+				)
+				return
+			}
+
+			result := msg.Payload.TestResult
+			isOk := result == pb.ConnResult_CONN_RESULT_OK
+			if isOk {
+				c.logger.Info("server verified advertised address",
+					"service", "room.Conn",
+					"room", c.RoomName.String(),
+					"method_id", ad.Id,
+					"method_type", ad.Type.String(),
+					"address", ad.Address,
+					"priority", ad.Priority,
+				)
+			} else if !ignoreDidNotTry || result != pb.ConnResult_CONN_RESULT_DID_NOT_TRY {
+				c.logger.Error("server said it could not connect to advertised address",
+					"service", "room.Conn",
+					"room", c.RoomName.String(),
+					"method_id", ad.Id,
+					"method_type", ad.Type.String(),
+					"address", ad.Address,
+					"priority", ad.Priority,
+					"result", result.String(),
+				)
+			}
+
+			c.mu.Lock()
+			defer c.mu.Unlock()
+
+			existing, hasExisting := c.directSelfMethods[ad.Id]
+			if hasExisting && existing.IsServerVerified {
+				// The existing one is already verified, do not replace it.
+				return
+			}
+
+			c.directSelfMethods[ad.Id] = &pb.ConnMethod{
+				Id:               ad.Id,
+				Type:             ad.Type,
+				Address:          ad.Address,
+				Priority:         ad.Priority,
+				IsServerVerified: isOk,
+			}
+		}()
+	}
+
+	advertiseServerInBg := func(server *direct.Server) {
 		methodsToAdvertise := make([]*pb.MsgAdvertiseConnMethod, 0, 2)
 
 		if server.AddrPort.Addr().IsPrivate() {
 			if mgr.AdvertisePrivateIps() {
-				methodsToAdvertise = append(methodsToAdvertise, c.mkAdConnMethod(publicIp, server.AddrPort))
+				methodsToAdvertise = append(methodsToAdvertise, c.mkAdConnMethodForIp(publicIp, server.AddrPort))
 			}
 
 			// Did we get our public IP?
 			// If so, try to advertise it.
 			// If we are listening on a private port, port forwarding might be enabled.
 			if publicIp.IsValid() {
-				methodsToAdvertise = append(methodsToAdvertise, c.mkAdConnMethod(
+				a := c.mkAdConnMethodForIp(
 					publicIp,
 					netip.AddrPortFrom(publicIp, server.AddrPort.Port()),
-				))
+				)
+
+				methodsToAdvertise = append(methodsToAdvertise, a)
 			}
 		}
 
@@ -320,87 +414,19 @@ func (c *Conn) runDirectAdsAndLoop() {
 				continue
 			}
 
-			go func() {
-				defer func() {
-					if rec := recover(); rec != nil {
-						c.logger.Error("direct advertisement goroutine panicked",
-							"service", "room.Conn",
-							"room", c.RoomName.String(),
-							"addr", server.AddrPort.String(),
-							"err", rec,
-						)
-					}
-				}()
-
-				msg, err := protocol.SendAndReceiveExpect[*pb.MsgAdvertiseConnMethodResult](
-					c.serverConn,
-					pb.MsgType_MSG_TYPE_ADVERTISE_CONN_METHOD,
-					method,
-					pb.MsgType_MSG_TYPE_ADVERTISE_CONN_METHOD_RESULT,
-				)
-				if err != nil {
-					if protocol.IsErrorConnCloseOrCancel(err) {
-						return
-					}
-
-					c.logger.Error("failed to advertise direct connection method",
-						"service", "room.Conn",
-						"room", c.RoomName.String(),
-						"method_type", method.Type.String(),
-						"address", server.AddrPort.String(),
-						"priority", method.Priority,
-						"err", err,
-					)
-					return
-				}
-
-				result := msg.Payload.TestResult
-				isOk := result == pb.ConnResult_CONN_RESULT_OK
-				if isOk {
-					c.logger.Info("server verified advertised address",
-						"service", "room.Conn",
-						"room", c.RoomName.String(),
-						"method_id", method.Id,
-						"method_type", method.Type.String(),
-						"address", server.AddrPort.String(),
-						"priority", method.Priority,
-					)
-				} else {
-					c.logger.Error("server said it could not connect to advertised address",
-						"service", "room.Conn",
-						"room", c.RoomName.String(),
-						"method_id", method.Id,
-						"method_type", method.Type.String(),
-						"address", server.AddrPort.String(),
-						"priority", method.Priority,
-						"result", result.String(),
-					)
-				}
-
-				c.mu.Lock()
-				defer c.mu.Unlock()
-
-				existing, hasExisting := c.directSelfMethods[method.Id]
-				if hasExisting && existing.IsServerVerified {
-					// The existing one is already verified, do not replace it.
-					return
-				}
-
-				c.directSelfMethods[method.Id] = &pb.ConnMethod{
-					Id:               method.Id,
-					Type:             method.Type,
-					Address:          method.Address,
-					Priority:         method.Priority,
-					IsServerVerified: isOk,
-				}
-			}()
+			advertiseInBg(method, false)
 		}
 	}
 
 	// Advertise known servers.
 	servers := mgr.GetServers()
 	for _, server := range servers {
-		advertiseInBg(server)
+		advertiseServerInBg(server)
+	}
+
+	// Advertise NAT holepunching if enabled.
+	if !mgr.IsNatHolePunchingDisabled() {
+		advertiseInBg(c.mkAdConnMethodForPunch(), true)
 	}
 
 	// Listen for new direct methods from partition.
@@ -411,7 +437,7 @@ func (c *Conn) runDirectAdsAndLoop() {
 				return
 			}
 
-			advertiseInBg(server)
+			advertiseServerInBg(server)
 		}
 	}()
 
@@ -559,10 +585,21 @@ func (c *Conn) incomingDirectConnHandler(incomingConn *direct.IncomingDirectConn
 		return
 	}
 
+	// Try to look up method to get its type.
+	var mtdType pb.ConnMethodType
+	c.mu.RLock()
+	mtd, ok := c.directSelfMethods[incomingConn.Handshake.MethodId]
+	c.mu.RUnlock()
+	if ok {
+		mtdType = mtd.Type
+	}
+
 	c.logger.Info("client made direct connection",
 		"room", c.RoomName.String(),
 		"username", username.String(),
 		"remote_addr", incomingConn.RemoteAddr().String(),
+		"method_id", incomingConn.Handshake.MethodId,
+		"method_type", mtdType.String(),
 	)
 }
 
@@ -583,17 +620,99 @@ func (c *Conn) directConnect(ctx context.Context, peer common.NormalizedUsername
 		return nil, 0, fmt.Errorf(`failed to get handshake token for peer %q: %w`, peer.String(), err)
 	}
 
-	conn, result, err := protocol.CreateDirectConnection(
-		ctx,
-		method.Type,
-		method.Address,
-		&pb.MsgDirectConnHandshake{
-			MethodId: method.Id,
-			Token:    tokenMsg.Payload.Token,
-		},
-	)
-	if err != nil {
-		return nil, result, err
+	var conn protocol.ProtoConn
+	var result pb.ConnResult
+	var connErr error
+
+	// We need to get our own address to send C2C to our target before proceeding
+	if method.Type == pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH {
+		holePunchSocket, err := net.ListenUDP("udp", &net.UDPAddr{})
+		if err != nil {
+			return nil, 0, fmt.Errorf("could not listen on hole punch socket: %w", err)
+		}
+
+		ownAddr, err := c.GetAddrPortForSocket(holePunchSocket)
+		if err != nil {
+			_ = holePunchSocket.Close()
+			return nil, 0, fmt.Errorf("failed to get address to hole punch: %w", err)
+		}
+
+		c.logger.Debug("resolved own IP and port to send to peer for NAT hole punching",
+			"service", "room.Conn",
+			"room", c.RoomName.String(),
+			"own_addr", ownAddr.String(),
+			"peer", peer.String(),
+		)
+
+		err = holePunchSocket.SetReadDeadline(time.Time{})
+		if err != nil {
+			_ = holePunchSocket.Close()
+			return nil, 0, fmt.Errorf("could not reset read deadline: %w", err)
+		}
+
+		fmtAddr := fmt.Sprintf("%s:%d", ownAddr.Addr().String(), ownAddr.Port())
+
+		// Send punch offer to peer.
+		peerConn := c.GetVirtualC2cConn(peer, true)
+		punchAccept, err := protocol.SendAndReceiveExpect[*pb.MsgPunchAccept](
+			peerConn,
+			pb.MsgType_MSG_TYPE_PUNCH_OFFER,
+			&pb.MsgPunchOffer{Address: fmtAddr},
+			pb.MsgType_MSG_TYPE_PUNCH_ACCEPT,
+		)
+		if err != nil {
+			_ = holePunchSocket.Close()
+
+			if typErr, ok := errors.AsType[protocol.UnexpectedMsgTypeError](err); ok {
+				if typErr.Actual != pb.MsgType_MSG_TYPE_PUNCH_REJECT {
+					return nil, 0, fmt.Errorf("peer %q sent unexpected message type for punch offer response: %s", typErr.Actual.String(), err)
+				}
+
+				payload := typErr.Payload.(*pb.MsgPunchReject)
+
+				return nil, 0, fmt.Errorf(`peer %q reject punch offer with message: %s`, peer.String(), payload.Message)
+			}
+
+			return nil, 0, fmt.Errorf(`failed to read response from peer %q for punch offer: %w`, peer.String(), err)
+		}
+
+		// Validate address.
+		_, parseErr := net.ResolveUDPAddr("udp", punchAccept.Payload.Address)
+		if parseErr != nil {
+			return nil, 0, fmt.Errorf(`peer %q accepted our punch offer but sent invalid address: %s`, peer.String(), punchAccept.Payload.Address)
+		}
+
+		c.logger.Debug("peer accepted punch offer",
+			"service", "room.Conn",
+			"room", c.RoomName.String(),
+			"peer", peer.String(),
+			"peer_addr", punchAccept.Payload.Address,
+		)
+
+		conn, result, connErr = protocol.CreateDirectConnectionWithSocket(
+			ctx,
+			pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH,
+			holePunchSocket,
+			punchAccept.Payload.Address,
+			&pb.MsgDirectConnHandshake{
+				MethodId: method.Id,
+				Token:    tokenMsg.Payload.Token,
+			},
+		)
+	} else {
+		conn, result, connErr = protocol.CreateDirectConnection(
+			ctx,
+			method.Type,
+			method.Address,
+			&pb.MsgDirectConnHandshake{
+				MethodId: method.Id,
+				Token:    tokenMsg.Payload.Token,
+			},
+		)
+	}
+
+	if connErr != nil {
+		return nil, result, connErr
 	}
 
 	c.AdoptDirectConn(conn, peer)
@@ -729,7 +848,9 @@ collectErrs:
 				"service", "room.Conn",
 				"room", c.RoomName.String(),
 				"peer", peer.String(),
-				"remote_addr", success.method.Address,
+				"remote_addr", success.conn.RemoteAddr().String(),
+				"method_id", success.method.Id,
+				"method_type", success.method.Type.String(),
 			)
 
 			return success.conn, success.result, nil

@@ -3099,6 +3099,223 @@ func (x *MsgDownloadStatusUpdate) GetBytesDownloaded() uint64 {
 	return 0
 }
 
+// See MSG_TYPE_GET_STUN_SERVERS
+type MsgGetStunServers struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MsgGetStunServers) Reset() {
+	*x = MsgGetStunServers{}
+	mi := &file_pb_v1_protocol_proto_msgTypes[45]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MsgGetStunServers) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgGetStunServers) ProtoMessage() {}
+
+func (x *MsgGetStunServers) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_v1_protocol_proto_msgTypes[45]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MsgGetStunServers.ProtoReflect.Descriptor instead.
+func (*MsgGetStunServers) Descriptor() ([]byte, []int) {
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{45}
+}
+
+// See MSG_TYPE_STUN_SERVERS
+type MsgStunServers struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Addresses     []string               `protobuf:"bytes,1,rep,name=addresses,proto3" json:"addresses,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MsgStunServers) Reset() {
+	*x = MsgStunServers{}
+	mi := &file_pb_v1_protocol_proto_msgTypes[46]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MsgStunServers) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgStunServers) ProtoMessage() {}
+
+func (x *MsgStunServers) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_v1_protocol_proto_msgTypes[46]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MsgStunServers.ProtoReflect.Descriptor instead.
+func (*MsgStunServers) Descriptor() ([]byte, []int) {
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{46}
+}
+
+func (x *MsgStunServers) GetAddresses() []string {
+	if x != nil {
+		return x.Addresses
+	}
+	return nil
+}
+
+// See MSG_TYPE_PUNCH_OFFER
+type MsgPunchOffer struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Address       string                 `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MsgPunchOffer) Reset() {
+	*x = MsgPunchOffer{}
+	mi := &file_pb_v1_protocol_proto_msgTypes[47]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MsgPunchOffer) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgPunchOffer) ProtoMessage() {}
+
+func (x *MsgPunchOffer) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_v1_protocol_proto_msgTypes[47]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MsgPunchOffer.ProtoReflect.Descriptor instead.
+func (*MsgPunchOffer) Descriptor() ([]byte, []int) {
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{47}
+}
+
+func (x *MsgPunchOffer) GetAddress() string {
+	if x != nil {
+		return x.Address
+	}
+	return ""
+}
+
+// See MSG_TYPE_PUNCH_ACCEPT
+type MsgPunchAccept struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Address       string                 `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MsgPunchAccept) Reset() {
+	*x = MsgPunchAccept{}
+	mi := &file_pb_v1_protocol_proto_msgTypes[48]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MsgPunchAccept) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgPunchAccept) ProtoMessage() {}
+
+func (x *MsgPunchAccept) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_v1_protocol_proto_msgTypes[48]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MsgPunchAccept.ProtoReflect.Descriptor instead.
+func (*MsgPunchAccept) Descriptor() ([]byte, []int) {
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{48}
+}
+
+func (x *MsgPunchAccept) GetAddress() string {
+	if x != nil {
+		return x.Address
+	}
+	return ""
+}
+
+// See MSG_TYPE_PUNCH_REJECT
+type MsgPunchReject struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MsgPunchReject) Reset() {
+	*x = MsgPunchReject{}
+	mi := &file_pb_v1_protocol_proto_msgTypes[49]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MsgPunchReject) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgPunchReject) ProtoMessage() {}
+
+func (x *MsgPunchReject) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_v1_protocol_proto_msgTypes[49]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MsgPunchReject.ProtoReflect.Descriptor instead.
+func (*MsgPunchReject) Descriptor() ([]byte, []int) {
+	return file_pb_v1_protocol_proto_rawDescGZIP(), []int{49}
+}
+
+func (x *MsgPunchReject) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 var File_pb_v1_protocol_proto protoreflect.FileDescriptor
 
 const file_pb_v1_protocol_proto_rawDesc = "" +
@@ -3227,7 +3444,16 @@ const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\x17MsgDownloadStatusUpdate\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12-\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x15.pb.v1.DownloadStatusR\x06status\x12)\n" +
-	"\x10bytes_downloaded\x18\x03 \x01(\x04R\x0fbytesDownloaded*\xb3\v\n" +
+	"\x10bytes_downloaded\x18\x03 \x01(\x04R\x0fbytesDownloaded\"\x13\n" +
+	"\x11MsgGetStunServers\".\n" +
+	"\x0eMsgStunServers\x12\x1c\n" +
+	"\taddresses\x18\x01 \x03(\tR\taddresses\")\n" +
+	"\rMsgPunchOffer\x12\x18\n" +
+	"\aaddress\x18\x01 \x01(\tR\aaddress\"*\n" +
+	"\x0eMsgPunchAccept\x12\x18\n" +
+	"\aaddress\x18\x01 \x01(\tR\aaddress\"*\n" +
+	"\x0eMsgPunchReject\x12\x18\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage*\xb3\v\n" +
 	"\aMsgType\x12\x18\n" +
 	"\x14MSG_TYPE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rMSG_TYPE_PING\x10\x01\x12\x11\n" +
@@ -3345,7 +3571,7 @@ func file_pb_v1_protocol_proto_rawDescGZIP() []byte {
 }
 
 var file_pb_v1_protocol_proto_enumTypes = make([]protoimpl.EnumInfo, 8)
-var file_pb_v1_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 45)
+var file_pb_v1_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 50)
 var file_pb_v1_protocol_proto_goTypes = []any{
 	(MsgType)(0),                              // 0: pb.v1.MsgType
 	(ErrType)(0),                              // 1: pb.v1.ErrType
@@ -3400,6 +3626,11 @@ var file_pb_v1_protocol_proto_goTypes = []any{
 	(*MsgSearchResult)(nil),                   // 50: pb.v1.MsgSearchResult
 	(*MsgSearchRoomResult)(nil),               // 51: pb.v1.MsgSearchRoomResult
 	(*MsgDownloadStatusUpdate)(nil),           // 52: pb.v1.MsgDownloadStatusUpdate
+	(*MsgGetStunServers)(nil),                 // 53: pb.v1.MsgGetStunServers
+	(*MsgStunServers)(nil),                    // 54: pb.v1.MsgStunServers
+	(*MsgPunchOffer)(nil),                     // 55: pb.v1.MsgPunchOffer
+	(*MsgPunchAccept)(nil),                    // 56: pb.v1.MsgPunchAccept
+	(*MsgPunchReject)(nil),                    // 57: pb.v1.MsgPunchReject
 }
 var file_pb_v1_protocol_proto_depIdxs = []int32{
 	1,  // 0: pb.v1.MsgError.type:type_name -> pb.v1.ErrType
@@ -3441,7 +3672,7 @@ func file_pb_v1_protocol_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pb_v1_protocol_proto_rawDesc), len(file_pb_v1_protocol_proto_rawDesc)),
 			NumEnums:      8,
-			NumMessages:   45,
+			NumMessages:   50,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

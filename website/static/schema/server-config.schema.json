@@ -1,0 +1,102 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://friendnet.org/schema/server-config.schema.json",
+	"title": "ServerConfig",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["listen", "db_path", "pem_path", "rpc"],
+	"properties": {
+		"$schema": {
+			"type": "string"
+		},
+		"listen": {
+			"type": "array",
+			"description": "The addresses to listen on. Each entry should be HOST:PORT. IPv6 addresses should be enclosed in square brackets (like \"[::1]:20038\").",
+			"items": {
+				"type": "string",
+				"minLength": 1
+			}
+		},
+		"db_path": {
+			"type": "string",
+			"description": "The path (relative or absolute) to the SQLite database file. Will be created if it does not exist."
+		},
+		"pem_path": {
+			"type": "string",
+			"description": "The path (relative or absolute) to the TLS certificate file in PEM format. A new self-signed certificate will be generated if it does not exist."
+		},
+		"disable_update_checker": {
+			"type": "boolean",
+			"description": "If true, the server will NOT periodically check for updates and log to the console if a new version is available."
+		},
+		"stun_servers": {
+			"type": "array",
+			"description": "List of STUN servers to return to clients. In most cases, this should just contain the public address and port of your FriendNet server, because the server exposes a STUN server on the same port.\nEach entry should be HOST:PORT. IPv6 addresses should be enclosed in square brackets (like \"[::1]:20038\"). If empty, the server will try to guess the address of its built-in STUN server.\nExamples:\n - \"my.friendnet.server:20038\"\n - \"stun.l.google.com:19302\"",
+			"items": {
+				"type": "string"
+			}
+		},
+		"rpc": {
+			"$ref": "#/$defs/ServerRpcConfig"
+		}
+	},
+	"$defs": {
+		"ServerRpcConfig": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["https_pem_path", "interfaces"],
+			"properties": {
+				"https_pem_path": {
+					"type": "string",
+					"description": "The path to the full chain certificate to use for serving RPC endpoints over HTTPS."
+				},
+				"interfaces": {
+					"type": "array",
+					"items": {
+						"$ref": "#/$defs/ServerRpcInterface"
+					}
+				}
+			}
+		},
+		"ServerRpcInterface": {
+			"type": "object",
+			"additionalProperties": false,
+			"description": "Configuration for the server's RPC service (wrapper around one or more RpcServerConfig instances).",
+			"required": ["address", "allowed_methods"],
+			"properties": {
+				"address": {
+					"type": "string",
+					"description": "The address to bind to. Must be in the format \"PROTOCOL://HOST:PORT\" (or without port for unix). Supported protocols: http, https, unix. Examples: \"http://127.0.0.1:8080\", \"unix:///var/run/friendnet-server.sock\", \"unix://friendnet-server.sock\"."
+				},
+				"allowed_methods": {
+					"type": "array",
+					"description": "The RPC methods that are allowed to be called on this interface. Consult rpc.proto for the full list. An empty or null list will prevent any methods from being called. To explicitly allow all methods, include a single string with the value \"*\".",
+					"items": {
+						"type": "string",
+						"minLength": 1
+					}
+				},
+				"allowed_ips": {
+					"type": "array",
+					"description": "If not null or empty, only the specified IP addresses will be allowed to connect. Has no effect if the address protocol is unix.",
+					"items": {
+						"type": "string",
+						"minLength": 1
+					}
+				},
+				"bearer_token": {
+					"type": "string",
+					"description": "If not null or empty, the following HTTP bearer token will be required to access the RPC interface. Example: \"abc123\" requires header \"Authorization: Bearer abc123\"."
+				},
+				"cors_allow_all_origins": {
+					"type": "boolean",
+					"description": "If true, sets necessary CORS headers to allow cross-origin requests. You do not need this unless the RPC interface is accessed by web browsers."
+				},
+				"enable_admin_ui": {
+					"type": "boolean",
+					"description": "If true, the admin UI will be served on the interface. Only works in the server module, ignored everywhere else."
+				}
+			}
+		}
+	}
+}

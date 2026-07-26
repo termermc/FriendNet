@@ -56,7 +56,7 @@ export const NewsHomePage: Component<NewsHomePageProps, void> = ({
 								<div class="article-content">
 									${html(
 										marked.parse(
-											article.page.firstParagraph,
+											article.page.firstParagraph ?? '',
 											{ async: false },
 										),
 									)}

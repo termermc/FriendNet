@@ -20,6 +20,8 @@ const P2pSettings: Component = () => {
 		createSignal(false)
 	const [disableUpnp, setDisableUpnp] = createSignal(false)
 	const [upnpTimeoutMs, setUpnpTimeoutMs] = createSignal(10_000)
+	const [disableNatHolePunching, setDisableNatHolePunching] =
+		createSignal(false)
 
 	const [error, setError] = createSignal('')
 	const [isSaving, setSaving] = createSignal(false)
@@ -46,6 +48,7 @@ const P2pSettings: Component = () => {
 					disablePublicIpDiscovery: disablePublicIpDiscovery(),
 					disableUpnp: disableUpnp(),
 					upnpTimeoutMs: upnpTimeoutMs(),
+					disableNatHolePunching: disableNatHolePunching(),
 				},
 			})
 
@@ -76,6 +79,7 @@ const P2pSettings: Component = () => {
 			setDisablePublicIpDiscovery(cfg.disablePublicIpDiscovery)
 			setDisableUpnp(cfg.disableUpnp)
 			setUpnpTimeoutMs(cfg.upnpTimeoutMs)
+			setDisableNatHolePunching(cfg.disableNatHolePunching)
 		} catch (err) {
 			console.error('failed to get direct connection settings:', err)
 			setError('Internal error, check console')
@@ -264,6 +268,7 @@ const P2pSettings: Component = () => {
 												title="If checked, private IPs (like 192.168.x.x or 10.x.x.x) will be advertised for peers to connect to. This only makes sense to enable if you and other peers are on the same LAN or VPN."
 											>
 												Advertise private IPs?
+												<sup>🛈</sup>
 											</label>
 										</td>
 										<td>
@@ -285,10 +290,11 @@ const P2pSettings: Component = () => {
 										<td>
 											<label
 												class={stylesCommon.help}
-												title="If checked, the client will not query servers for the client's public IP."
+												title="If checked, the client will not query the server for the client's public IP. Does not apply to NAT hole punching."
 												for="setting-disable-public-ip-discovery"
 											>
 												Disable public IP discovery?
+												<sup>🛈</sup>
 											</label>
 										</td>
 										<td>
@@ -347,6 +353,32 @@ const P2pSettings: Component = () => {
 													)
 												}
 												value={upnpTimeoutMs()}
+											/>
+										</td>
+									</tr>
+
+									<tr>
+										<td>
+											<label
+												class={stylesCommon.help}
+												title="If checked, the client will not attempt NAT hole punching. NAT hole punching involves discovering and exchanging your public IP address with peers you are connecting to, then mutually attempting a connection to each other."
+												for="setting-disable-nat-hole-punching"
+											>
+												Disable NAT hole punching?
+												<sup>🛈</sup>
+											</label>
+										</td>
+										<td>
+											<input
+												type="checkbox"
+												id="setting-disable-nat-hole-punching"
+												placeholder=""
+												onChange={(e) =>
+													setDisableNatHolePunching(
+														e.currentTarget.checked,
+													)
+												}
+												checked={disableNatHolePunching()}
 											/>
 										</td>
 									</tr>
@@ -465,7 +497,7 @@ const TransferSettings: Component = () => {
 									<td>
 										<label
 											for="setting-trans-concurrency"
-											style="cursor:help"
+											class={stylesCommon.help}
 											title="The maximum number of downloads to run at once. If you have a slow network, you may want to set this to 1."
 										>
 											Download Concurrency<sup>🛈</sup>

@@ -25,10 +25,33 @@
 	width: 100%;
 }
 
+.sizeTd {
+	width: 7rem;
+}
+
 .actionsTd {
 	width: 5rem;
 }
 .actions {
 	text-align: right;
+	margin-right: 1rem;
+}
+
+.paginationSpacer {
+	margin-top: 3rem;
+}
+
+.pagination {
+	padding: 0.5rem;
+	position: fixed;
+	width: calc(100% - 24rem);
+	background-color: var(--panelColor);
+	border-bottom: 0.1rem solid rgba(0, 0, 0, 0.25);
+}
+.paginationPage input {
+	width: 3rem;
+}
+.paginationPage {
+	margin-left: 1rem;
 	margin-right: 1rem;
 }

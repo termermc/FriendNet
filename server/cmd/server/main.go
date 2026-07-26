@@ -113,7 +113,7 @@ func main() {
 	}()
 
 	// Probe for connection method support.
-	connMethodSupport, err := machine.ProbeConnMethodSupport()
+	connMethodSupport, err := machine.ProbeConnMethodSupport(true)
 	if err != nil {
 		logger.Warn("failed to probe for connection method support, support list will be incomplete",
 			"err", err,
@@ -132,6 +132,7 @@ func main() {
 		storageInst,
 		connMethodSupport,
 		passReqs,
+		cfg,
 	)
 	if err != nil {
 		logger.Error("failed to create server", "err", err)
@@ -261,7 +262,7 @@ func main() {
 
 	for _, listenAddr := range cfg.Listen {
 		go func() {
-			listenErr := srv.Listen(listenAddr, tlsCfg)
+			listenErr := srv.Listen(listenAddr, tlsCfg, true)
 			if listenErr != nil {
 				logger.Error("failed to listen",
 					"addr", listenAddr,
