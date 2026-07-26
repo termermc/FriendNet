@@ -5,6 +5,7 @@
       <option name="arch" value="amd64" />
     </buildTags>
   </component>
+  <component name="GoModuleSettings" enabled="true" />
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
