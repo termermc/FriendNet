@@ -28,6 +28,11 @@ Head over to the [download](https://friendnet.org/download/) page on the website
 
 Documentation can be found on the [website](https://friendnet.org/docs/).
 
+# License
+
+All code in this repository is under a FOSS license, but some components use different FOSS licenses than others; see
+[LICENSE.md](LICENSE.md).
+
 # Protocol
 
 See the [protocol](protocol) directory.
