@@ -168,6 +168,13 @@ func NewCli(client serverrpcv1connect.ServerRpcServiceClient, opts ...Opt) *Cli 
 				return cli.cmdRemoveBlacklistedKeyword(ctx, args)
 			},
 		},
+		{
+			Name:  "listblacklistedkeywords",
+			Usage: "listblacklistedkeywords [room]",
+			Handler: func(ctx context.Context, cli *Cli, args []string) error {
+				return cli.cmdListBlacklistedKeywords(ctx, args)
+			},
+		},
 	}
 	return cli
 }
@@ -541,6 +548,33 @@ func (c *Cli) cmdRemoveBlacklistedKeyword(ctx context.Context, args []string) er
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (c *Cli) cmdListBlacklistedKeywords(ctx context.Context, args []string) error {
+	if err := validateArgCount(args, 0, 1, "listblacklistedkeywords [room]"); err != nil {
+		return err
+	}
+
+	var room *string
+	if len(args) == 1 {
+		room = &args[0]
+	}
+
+	resp, err := c.client.ListBlacklistedKeywords(ctx, &v1.ListBlacklistedKeywordsRequest{
+		Room: room,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	for _, keyword := range resp.GetKeywords() {
+		fmt.Printf("%s, ", keyword)
+	}
+
+	fmt.Printf("\n")
 
 	return nil
 }

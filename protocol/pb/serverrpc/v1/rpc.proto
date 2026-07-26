@@ -172,6 +172,14 @@ message RemoveBlacklistedKeywordResponse {
 
 }
 
+message ListBlacklistedKeywordsRequest {
+    // If null, it is assumed to be for serverwide policies.
+    optional string room = 1;
+}
+message ListBlacklistedKeywordsResponse {
+    repeated string keywords = 1;
+}
+
 // ServerRpcService provides an RPC interface to a running FriendNet server.
 // It can query state and perform administrative tasks.
 //
@@ -237,4 +245,9 @@ service ServerRpcService {
     // If a room to enforce this policy is not specified then it is assumed to be a serverwide policy.
     // Returns status code INVALID_ARGUMENT if a policy could not be removed.
     rpc RemoveBlacklistedKeyword(RemoveBlacklistedKeywordRequest) returns (RemoveBlacklistedKeywordResponse) {}
+
+    // ListBlacklistedKeywords returns a list of currently blacklisted keywords for a room.
+    // If the room is not set, the list returned will contain only serverwide policies.
+    // Returns status code INVALID_ARGUMENT if the room does not exist.
+    rpc ListBlacklistedKeywords(ListBlacklistedKeywordsRequest) returns (ListBlacklistedKeywordsResponse) {}
 }

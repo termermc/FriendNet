@@ -367,3 +367,26 @@ func (s *RpcServer) RemoveBlacklistedKeyword(_ context.Context, req *v1.RemoveBl
 
 	return &v1.RemoveBlacklistedKeywordResponse{}, nil
 }
+
+func (s *RpcServer) ListBlacklistedKeywords(ctx context.Context, req *v1.ListBlacklistedKeywordsRequest) (*v1.ListBlacklistedKeywordsResponse, error) {
+	room, _ := common.NormalizeRoomName(req.GetRoom())
+	if !room.IsZero() {
+		if _, err := s.getRoom(req.GetRoom()); err != nil {
+			return nil, errRoomNotFound
+		}
+	}
+
+	keywords, err := s.s.storage.GetBlacklistedKeywordsForRoom(ctx, room)
+	if err != nil {
+		return nil, err
+	}
+
+	newKeywords := make([]string, len(keywords))
+	for _, keyword := range keywords {
+		newKeywords = append(newKeywords, string(keyword))
+	}
+
+	return &v1.ListBlacklistedKeywordsResponse{
+		Keywords: newKeywords,
+	}, nil
+}
