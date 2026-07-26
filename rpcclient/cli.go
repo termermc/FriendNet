@@ -571,10 +571,8 @@ func (c *Cli) cmdListBlacklistedKeywords(ctx context.Context, args []string) err
 	}
 
 	for _, keyword := range resp.GetKeywords() {
-		fmt.Printf("%s, ", keyword)
+		println(keyword)
 	}
-
-	fmt.Printf("\n")
 
 	return nil
 }
