@@ -16,7 +16,6 @@ import (
 	pb "friendnet.org/protocol/pb/v1"
 	"friendnet.org/server/blacklist"
 	"friendnet.org/server/storage"
-	anyascii "github.com/anyascii/go"
 	"github.com/quic-go/quic-go"
 	mcfpassword "github.com/termermc/go-mcf-password"
 	"google.golang.org/protobuf/proto"
@@ -188,24 +187,7 @@ func (r *Room) MatchToBlacklists(haystack string) bool {
 	lower := common.ToLowerUnicode(haystack)
 	runes := []rune(lower)
 
-	if r.GlobalBlacklist.Match(runes) || r.Blacklist.Match(runes) {
-		return true
-	}
-
-	// Didn't match, try AnyAscii version if applicable.
-	// We have to lower the AnyAscii output because hanzi and other chars can become uppercase in its output.
-	asciiVer := common.ToLowerUnicode(anyascii.Transliterate(haystack))
-	if asciiVer == lower {
-		return false
-	}
-
-	runes = []rune(asciiVer)
-	if r.GlobalBlacklist.Match(runes) || r.Blacklist.Match(runes) {
-		return true
-	}
-
-	// No funny words
-	return false
+	return r.GlobalBlacklist.Match(runes) || r.Blacklist.Match(runes)
 }
 
 // Broadcast broadcasts a message to all clients in the room.
