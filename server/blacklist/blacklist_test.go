@@ -55,3 +55,56 @@ func TestWholeAscii(t *testing.T) {
 		}
 	}
 }
+
+func TestWholeAsciiWithUnicode(t *testing.T) {
+	bl := mkBl()
+	err := bl.AddPolicies([]*pb.BlacklistPolicy{
+		{
+			Keyword: "blue",
+			Mode:    pb.BlacklistMatchMode_BLACKLIST_MATCH_MODE_WHOLE,
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	strs := []string{
+		"我的blue天",
+		"（blue）",
+	}
+
+	for _, str := range strs {
+		if !bl.Match([]rune(str)) {
+			t.Fatal("didn't match whole word in " + str)
+		}
+	}
+}
+
+func TestWholeUnicode(t *testing.T) {
+	bl := mkBl()
+	err := bl.AddPolicies([]*pb.BlacklistPolicy{
+		{
+			Keyword: "кот",
+			Mode:    pb.BlacklistMatchMode_BLACKLIST_MATCH_MODE_WHOLE,
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	strs := []string{
+		"(кот)",
+		"кот",
+		"（кот）",
+	}
+
+	for _, str := range strs {
+		if !bl.Match([]rune(str)) {
+			t.Fatal("didn't match whole word in " + str)
+		}
+	}
+
+	if bl.Match([]rune("котёл")) {
+		t.Fatal("кот should not have matched substring of котёл")
+	}
+}

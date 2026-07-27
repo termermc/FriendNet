@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	anyascii "github.com/anyascii/go"
 	"sync"
 
 	"friendnet.org/ahocorasick"
@@ -120,8 +121,9 @@ func (b *Blacklist) Remove(keywords []string) error {
 	return b.UpdateFromDb()
 }
 
-func isLowerRuneAsciiWord(r rune) bool {
-	return (r >= 'a' && r <= 'z') ||
+func isCharAsciiWord[R rune | byte](r R) bool {
+	return (r >= 'A' && r <= 'Z') ||
+		(r >= 'a' && r <= 'z') ||
 		(r >= '0' && r <= '9')
 }
 
@@ -140,28 +142,33 @@ func (b *Blacklist) Match(haystack []rune) bool {
 
 	// Check for whole words
 	for _, result := range results {
-		word := string(result.Word)
+		wordStr := string(result.Word)
 
-		if _, has := b.wholeWords[word]; has {
+		if _, has := b.wholeWords[wordStr]; has {
 			wordStart := result.Pos
-			wordEnd := wordStart + len(word) - 1
+			wordEnd := wordStart + len(result.Word) - 1
 
 			// termer 2026/07/27: It's not exactly foolproof, but the idea is this:
 			// If a char is ASCII and the next char is an ASCII word char, then it's a substring match.
 			// If a char is unicode and the next char is unicode, then it's a substring match.
 			// That would allow a string like "blue天" to match full word "blue".
 			// It would also allow 藍天 to NOT match full word "天".
-			// The known limitation here is that （天）(note the unicode full-width parentheses) would NOT match full word "天".
-			// I'm mostly worried about languages like Russian where this won't be an issue, but this theoretically could fail on
-			// some uses of CJK. In that case, you should probably just use a substring.
-			// Some of the above should be solved by using AnyAscii anyway.
+			// We also try to detect and convert unicode punctuation to their ASCII counterparts.
+			// Things still don't work great for languages without spaces like CJK; substring should be used for those.
 
 			if wordStart > 0 {
 				startChar := haystack[wordStart]
 				prevChar := haystack[wordStart-1]
 
-				if (startChar > 255 && prevChar > 255) || (startChar <= 255 && isLowerRuneAsciiWord(prevChar)) {
-					// Matched a substring
+				if startChar > 255 && prevChar > 255 {
+					// The previous unicode char could be punctuation; test if it is.
+					prevAscii := anyascii.TransliterateRune(prevChar)
+					if isCharAsciiWord(prevAscii[0]) {
+						// Matched a substring
+						continue
+					}
+				} else if startChar <= 255 && isCharAsciiWord(prevChar) {
+					// Matched a substring.
 					continue
 				}
 			}
@@ -170,8 +177,15 @@ func (b *Blacklist) Match(haystack []rune) bool {
 				endChar := haystack[wordEnd]
 				nextChar := haystack[wordEnd+1]
 
-				if (endChar > 255 && nextChar > 255) || (endChar <= 255 && isLowerRuneAsciiWord(nextChar)) {
-					// Matched a substring
+				if endChar > 255 && nextChar > 255 {
+					// The next unicode char could be punctuation; test if it is.
+					nextAscii := anyascii.TransliterateRune(nextChar)
+					if isCharAsciiWord(nextAscii[0]) {
+						// Matched a substring
+						continue
+					}
+				} else if endChar <= 255 && isCharAsciiWord(nextChar) {
+					// Matched a substring.
 					continue
 				}
 			}
