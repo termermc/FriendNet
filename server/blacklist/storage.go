@@ -109,7 +109,7 @@ type MemoryStorage struct {
 var _ PolicyStorage = MemoryStorage{}
 
 // NewMemoryStorage creates a new MemoryStorage.
-func NewMemoryStorage(storage *storage.Storage) MemoryStorage {
+func NewMemoryStorage() MemoryStorage {
 	return MemoryStorage{
 		policies: make(map[string]*pb.BlacklistPolicy),
 	}
