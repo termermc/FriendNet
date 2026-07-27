@@ -272,6 +272,9 @@ func (s *Storage) AddPoliciesToBlacklist(ctx context.Context, room common.Normal
 	var stmt *sql.Stmt
 	if room.IsZero() {
 		stmt, err = tx.PrepareContext(ctx, `insert into search_blacklist (match_mode, word) values (?, ?)`)
+		defer func() {
+			_ = stmt.Close()
+		}()
 
 		for _, policy := range policies {
 			if _, err := stmt.ExecContext(ctx, policy.GetMode(), policy.Keyword); err != nil {
@@ -280,6 +283,9 @@ func (s *Storage) AddPoliciesToBlacklist(ctx context.Context, room common.Normal
 		}
 	} else {
 		stmt, err = tx.PrepareContext(ctx, `insert into search_blacklist (room, match_mode, word) values (?, ?, ?)`)
+		defer func() {
+			_ = stmt.Close()
+		}()
 
 		for _, policy := range policies {
 			if _, err := stmt.ExecContext(ctx, room.String(), policy.GetMode(), policy.Keyword); err != nil {
@@ -306,6 +312,9 @@ func (s *Storage) RemovePoliciesFromBlacklist(ctx context.Context, room common.N
 	var stmt *sql.Stmt
 	if room.IsZero() {
 		stmt, err = tx.PrepareContext(ctx, `delete from search_blacklist where word = ?`)
+		defer func() {
+			_ = stmt.Close()
+		}()
 
 		for _, keyword := range keywords {
 			if _, err := stmt.ExecContext(ctx, keyword); err != nil {
@@ -314,6 +323,9 @@ func (s *Storage) RemovePoliciesFromBlacklist(ctx context.Context, room common.N
 		}
 	} else {
 		stmt, err = tx.PrepareContext(ctx, `delete from search_blacklist where room = ? and word = ?`)
+		defer func() {
+			_ = stmt.Close()
+		}()
 
 		for _, keyword := range keywords {
 			if _, err := stmt.ExecContext(ctx, room.String(), keyword); err != nil {
@@ -334,14 +346,16 @@ func (s *Storage) GetBlacklistPoliciesForRoom(ctx context.Context, room common.N
 	var err error
 
 	if room.IsZero() {
-		rows, err = s.Db.QueryContext(ctx, `select match_mode, word from search_blacklist where room is null`)
+		rows, err = s.Db.QueryContext(ctx, `select match_mode, word from search_blacklist where room is null order by created_ts`)
 	} else {
-		rows, err = s.Db.QueryContext(ctx, `select match_mode, word from search_blacklist where room = ?`, room.String())
+		rows, err = s.Db.QueryContext(ctx, `select match_mode, word from search_blacklist where room = ? order by created_ts`, room.String())
 	}
 	if err != nil {
 		return nil, fmt.Errorf(`failed to query rooms: %w`, err)
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	var matchMode serverrpcv1.BlacklistMatchMode
 	var word string
