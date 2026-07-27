@@ -14,6 +14,7 @@ import (
 	pass "friendnet.org/common/password"
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
+	"friendnet.org/server/blacklist"
 	"friendnet.org/server/storage"
 	anyascii "github.com/anyascii/go"
 	"github.com/quic-go/quic-go"
@@ -44,8 +45,8 @@ type Room struct {
 	TokenManager *TokenManager
 
 	// Keyword blacklists
-	GlobalBlacklist *Blacklist
-	Blacklist       *Blacklist
+	GlobalBlacklist *blacklist.Blacklist
+	Blacklist       *blacklist.Blacklist
 
 	// The room's context.
 	// Canceled when it is closed.
@@ -67,11 +68,11 @@ func NewRoom(
 	passReqs pass.Requirements,
 	name common.NormalizedRoomName,
 	logic Logic,
-	globalBlacklist *Blacklist,
+	globalBlacklist *blacklist.Blacklist,
 ) (*Room, error) {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
-	blacklist, err := NewBlacklist(ctx, name, storage)
+	bl, err := blacklist.New(ctx, blacklist.NewRoomStorage(storage, name))
 	if err != nil {
 		ctxCancel()
 		return nil, err
@@ -88,7 +89,7 @@ func NewRoom(
 
 		TokenManager: NewTokenManager(ctx, DefaultTokenValidDuration, DefaultTokenExpiredGcInterval),
 
-		Blacklist:       blacklist,
+		Blacklist:       bl,
 		GlobalBlacklist: globalBlacklist,
 
 		Context:   ctx,

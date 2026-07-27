@@ -3,6 +3,7 @@ package room
 import (
 	"context"
 	"fmt"
+	"friendnet.org/server/blacklist"
 	"log/slog"
 	"sync"
 
@@ -23,7 +24,7 @@ type Manager struct {
 	mu       sync.RWMutex
 	isClosed bool
 
-	GlobalBlacklist   *Blacklist
+	GlobalBlacklist   *blacklist.Blacklist
 	storage           *storage.Storage
 	connMethodSupport machine.ConnMethodSupport
 	passReqs          password.Requirements
@@ -44,7 +45,7 @@ func NewManager(
 	passReqs password.Requirements,
 	logic Logic,
 ) (*Manager, error) {
-	blacklist, err := NewBlacklist(ctx, common.ZeroNormalizedRoomName, storage)
+	bl, err := blacklist.New(ctx, blacklist.NewGlobalStorage(storage))
 	if err != nil {
 		return nil, fmt.Errorf("failed to init global keyword blacklist while creating room manager: %w", err)
 	}
@@ -52,7 +53,7 @@ func NewManager(
 	m := &Manager{
 		logger: logger,
 
-		GlobalBlacklist:   blacklist,
+		GlobalBlacklist:   bl,
 		storage:           storage,
 		connMethodSupport: connMethodSupport,
 		passReqs:          passReqs,

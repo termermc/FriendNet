@@ -1,4 +1,4 @@
-package room
+package blacklist
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 	"friendnet.org/ahocorasick"
 	"friendnet.org/common"
 	pb "friendnet.org/protocol/pb/serverrpc/v1"
-	"friendnet.org/server/storage"
 )
 
 // Blacklist stores blocked keywords.
@@ -20,16 +19,15 @@ type Blacklist struct {
 	mu sync.RWMutex
 
 	ctx     context.Context
-	room    common.NormalizedRoomName
-	storage *storage.Storage
+	storage PolicyStorage
 	machine *ahocorasick.Machine
 
 	wholeWords     map[string]struct{}
 	hasAnyKeywords bool
 }
 
-// If room is left empty, this will be treated as a global blacklist policy
-func NewBlacklist(ctx context.Context, room common.NormalizedRoomName, storage *storage.Storage) (*Blacklist, error) {
+// New creates a new blacklist.
+func New(ctx context.Context, storage PolicyStorage) (*Blacklist, error) {
 	if storage == nil {
 		return nil, fmt.Errorf("storage is nil")
 	}
@@ -38,7 +36,6 @@ func NewBlacklist(ctx context.Context, room common.NormalizedRoomName, storage *
 
 	blacklist := &Blacklist{
 		ctx:     ctx,
-		room:    room,
 		storage: storage,
 		machine: machine,
 
@@ -56,7 +53,7 @@ func NewBlacklist(ctx context.Context, room common.NormalizedRoomName, storage *
 
 // UpdateFromDb will update the string matching engine with all matching policies.
 func (b *Blacklist) UpdateFromDb() error {
-	policies, err := b.storage.GetBlacklistPoliciesForRoom(b.ctx, b.room)
+	policies, err := b.storage.GetPolicies(b.ctx)
 	if err != nil {
 		return fmt.Errorf("could not get blacklisted policies: %w", err)
 	}
@@ -105,7 +102,7 @@ func (b *Blacklist) AddPolicies(policies []*pb.BlacklistPolicy) error {
 		}
 	}
 
-	err := b.storage.AddPoliciesToBlacklist(b.ctx, b.room, policies)
+	err := b.storage.AddPolicies(b.ctx, policies)
 	if err != nil {
 		return err
 	}
@@ -115,7 +112,7 @@ func (b *Blacklist) AddPolicies(policies []*pb.BlacklistPolicy) error {
 
 // Remove will remove keywords from the database and then update the string matching engine.
 func (b *Blacklist) Remove(keywords []string) error {
-	err := b.storage.RemovePoliciesFromBlacklist(b.ctx, b.room, keywords)
+	err := b.storage.RemovePolicies(b.ctx, keywords)
 	if err != nil {
 		return err
 	}
