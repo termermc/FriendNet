@@ -4,16 +4,37 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"slices"
 	"strings"
 
 	"connectrpc.com/connect"
+	"friendnet.org/common"
 	v1 "friendnet.org/protocol/pb/serverrpc/v1"
 	"friendnet.org/protocol/pb/serverrpc/v1/serverrpcv1connect"
 	"github.com/chzyer/readline"
 )
+
+var matchModeToName = map[v1.BlacklistMatchMode]string{
+	v1.BlacklistMatchMode_BLACKLIST_MATCH_MODE_SUBSTRING: "substring",
+	v1.BlacklistMatchMode_BLACKLIST_MATCH_MODE_WHOLE:     "whole",
+}
+var nameToMatchMode = func() map[string]v1.BlacklistMatchMode {
+	res := make(map[string]v1.BlacklistMatchMode, len(matchModeToName))
+	for mode, name := range matchModeToName {
+		res[name] = mode
+	}
+	return res
+}()
+var matchModeNames = func() []string {
+	names := make([]string, 0, len(nameToMatchMode))
+	for _, name := range matchModeToName {
+		names = append(names, name)
+	}
+	return names
+}()
 
 // Opt is a function that configures a CLI.
 type Opt func(*Cli)
@@ -36,7 +57,7 @@ func WithWelcomeMsg(msg string) Opt {
 type Cmd struct {
 	Name    string
 	Usage   string
-	Handler func(ctx context.Context, cli *Cli, args []string) error
+	Handler func(ctx context.Context, cmd Cmd, args []string) error
 }
 
 // Cli is a command-line interface for the server RPC service.
@@ -64,116 +85,94 @@ func NewCli(client serverrpcv1connect.ServerRpcServiceClient, opts ...Opt) *Cli 
 
 	cli.commands = []Cmd{
 		{
-			Name:  "help",
-			Usage: "help [command]",
-			Handler: func(ctx context.Context, cli *Cli, args []string) error {
-				return cli.cmdHelp(ctx, args)
-			},
+			Name:    "help",
+			Usage:   "[command]",
+			Handler: cli.cmdHelp,
 		},
 		{
-			Name:  "exit",
-			Usage: "exit",
-			Handler: func(ctx context.Context, cli *Cli, args []string) error {
-				return cli.cmdExit(ctx, args)
-			},
+			Name:    "exit",
+			Usage:   "exit",
+			Handler: cli.cmdExit,
 		},
 		{
-			Name:  "getserverinfo",
-			Usage: "getserverinfo",
-			Handler: func(ctx context.Context, cli *Cli, args []string) error {
-				return cli.cmdGetServerInfo(ctx, args)
-			},
+			Name:    "getserverinfo",
+			Usage:   "",
+			Handler: cli.cmdGetServerInfo,
 		},
 		{
-			Name:  "getrooms",
-			Usage: "getrooms",
-			Handler: func(ctx context.Context, cli *Cli, args []string) error {
-				return cli.cmdGetRooms(ctx, args)
-			},
+			Name:    "getrooms",
+			Usage:   "",
+			Handler: cli.cmdGetRooms,
 		},
 		{
-			Name:  "getroominfo",
-			Usage: "getroominfo <room>",
-			Handler: func(ctx context.Context, cli *Cli, args []string) error {
-				return cli.cmdGetRoomInfo(ctx, args)
-			},
+			Name:    "getroominfo",
+			Usage:   "<room>",
+			Handler: cli.cmdGetRoomInfo,
 		},
 		{
-			Name:  "getonlineusers",
-			Usage: "getonlineusers <room>",
-			Handler: func(ctx context.Context, cli *Cli, args []string) error {
-				return cli.cmdGetOnlineUsers(ctx, args)
-			},
+			Name:    "getonlineusers",
+			Usage:   "<room>",
+			Handler: cli.cmdGetOnlineUsers,
 		},
 		{
-			Name:  "getonlineuserinfo",
-			Usage: "getonlineuserinfo <room> <username>",
-			Handler: func(ctx context.Context, cli *Cli, args []string) error {
-				return cli.cmdGetOnlineUserInfo(ctx, args)
-			},
+			Name:    "getonlineuserinfo",
+			Usage:   "<room> <username>",
+			Handler: cli.cmdGetOnlineUserInfo,
 		},
 		{
-			Name:  "getaccounts",
-			Usage: "getaccounts <room>",
-			Handler: func(ctx context.Context, cli *Cli, args []string) error {
-				return cli.cmdGetAccounts(ctx, args)
-			},
+			Name:    "getaccounts",
+			Usage:   "<room>",
+			Handler: cli.cmdGetAccounts,
 		},
 		{
-			Name:  "createroom",
-			Usage: "createroom <room>",
-			Handler: func(ctx context.Context, cli *Cli, args []string) error {
-				return cli.cmdCreateRoom(ctx, args)
-			},
+			Name:    "createroom",
+			Usage:   "<room>",
+			Handler: cli.cmdCreateRoom,
 		},
 		{
-			Name:  "deleteroom",
-			Usage: "deleteroom <room>",
-			Handler: func(ctx context.Context, cli *Cli, args []string) error {
-				return cli.cmdDeleteRoom(ctx, args)
-			},
+			Name:    "deleteroom",
+			Usage:   "<room>",
+			Handler: cli.cmdDeleteRoom,
 		},
 		{
-			Name:  "createaccount",
-			Usage: "createaccount <room> <username> [password]",
-			Handler: func(ctx context.Context, cli *Cli, args []string) error {
-				return cli.cmdCreateAccount(ctx, args)
-			},
+			Name:    "createaccount",
+			Usage:   "<room> <username> [password]",
+			Handler: cli.cmdCreateAccount,
 		},
 		{
-			Name:  "deleteaccount",
-			Usage: "deleteaccount <room> <username>",
-			Handler: func(ctx context.Context, cli *Cli, args []string) error {
-				return cli.cmdDeleteAccount(ctx, args)
-			},
+			Name:    "deleteaccount",
+			Usage:   "<room> <username>",
+			Handler: cli.cmdDeleteAccount,
 		},
 		{
-			Name:  "updateaccountpassword",
-			Usage: "updateaccountpassword <room> <username> [password]",
-			Handler: func(ctx context.Context, cli *Cli, args []string) error {
-				return cli.cmdUpdateAccountPassword(ctx, args)
-			},
+			Name:    "updateaccountpassword",
+			Usage:   "<room> <username> [password]",
+			Handler: cli.cmdUpdateAccountPassword,
 		},
 		{
-			Name:  "addblacklistedkeyword",
-			Usage: "addblacklistedkeyword <keyword> [room]",
-			Handler: func(ctx context.Context, cli *Cli, args []string) error {
-				return cli.cmdAddBlacklistedKeyword(ctx, args)
-			},
+			Name:    "addglobalblacklistpolicies",
+			Usage:   fmt.Sprintf("<%s> <keywords... (one or more)>", strings.Join(matchModeNames, "|")),
+			Handler: cli.cmdAddGlobalBlacklistPolicies,
 		},
 		{
-			Name:  "removeblacklistedkeyword",
-			Usage: "removeblacklistedkeyword <keyword> [room]",
-			Handler: func(ctx context.Context, cli *Cli, args []string) error {
-				return cli.cmdRemoveBlacklistedKeyword(ctx, args)
-			},
+			Name:    "addroomblacklistpolicies",
+			Usage:   fmt.Sprintf("<room> <%s> <keywords>", strings.Join(matchModeNames, "|")),
+			Handler: cli.cmdAddRoomBlacklistPolicies,
 		},
 		{
-			Name:  "listblacklistedkeywords",
-			Usage: "listblacklistedkeywords [room]",
-			Handler: func(ctx context.Context, cli *Cli, args []string) error {
-				return cli.cmdListBlacklistedKeywords(ctx, args)
-			},
+			Name:    "removeglobalblacklistpolicies",
+			Usage:   "removeglobalblacklistpolicies <keywords>",
+			Handler: cli.cmdRemoveGlobalBlacklistPolicies,
+		},
+		{
+			Name:    "removeroomblacklistpolicies",
+			Usage:   "<room> <keywords>",
+			Handler: cli.cmdRemoveRoomBlacklistPolicies,
+		},
+		{
+			Name:    "listblacklistpolicies",
+			Usage:   "[room]",
+			Handler: cli.cmdListBlacklistPolicies,
 		},
 	}
 	return cli
@@ -202,7 +201,7 @@ func (c *Cli) Do(cmdStr string) error {
 	name := parts[0]
 	for _, cmd := range c.commands {
 		if cmd.Name == name {
-			return cmd.Handler(c.mkCtx(), c, parts[1:])
+			return cmd.Handler(c.mkCtx(), cmd, parts[1:])
 		}
 	}
 
@@ -211,7 +210,7 @@ func (c *Cli) Do(cmdStr string) error {
 	return nil
 }
 
-func (c *Cli) cmdHelp(_ context.Context, args []string) error {
+func (c *Cli) cmdHelp(_ context.Context, _ Cmd, args []string) error {
 	if len(args) > 1 {
 		return fmt.Errorf("usage: help [command]")
 	}
@@ -240,11 +239,11 @@ func (c *Cli) cmdHelp(_ context.Context, args []string) error {
 	return nil
 }
 
-func (c *Cli) cmdExit(_ context.Context, _ []string) error {
+func (c *Cli) cmdExit(_ context.Context, _ Cmd, _ []string) error {
 	return errStop
 }
 
-func (c *Cli) cmdGetServerInfo(ctx context.Context, _ []string) error {
+func (c *Cli) cmdGetServerInfo(ctx context.Context, _ Cmd, _ []string) error {
 	resp, err := c.client.GetServerInfo(ctx, &v1.GetServerInfoRequest{})
 	if err != nil {
 		return err
@@ -265,8 +264,8 @@ func (c *Cli) cmdGetServerInfo(ctx context.Context, _ []string) error {
 	return nil
 }
 
-func (c *Cli) cmdGetRooms(ctx context.Context, args []string) error {
-	if err := validateArgCount(args, 0, 0, "getrooms"); err != nil {
+func (c *Cli) cmdGetRooms(ctx context.Context, cmd Cmd, args []string) error {
+	if err := validateArgCount(args, 0, 0, cmd); err != nil {
 		return err
 	}
 
@@ -289,8 +288,8 @@ func (c *Cli) cmdGetRooms(ctx context.Context, args []string) error {
 	return nil
 }
 
-func (c *Cli) cmdGetRoomInfo(ctx context.Context, args []string) error {
-	if err := validateArgCount(args, 1, 1, "getroominfo <room>"); err != nil {
+func (c *Cli) cmdGetRoomInfo(ctx context.Context, cmd Cmd, args []string) error {
+	if err := validateArgCount(args, 1, 1, cmd); err != nil {
 		return err
 	}
 
@@ -310,8 +309,8 @@ func (c *Cli) cmdGetRoomInfo(ctx context.Context, args []string) error {
 	return nil
 }
 
-func (c *Cli) cmdGetOnlineUsers(ctx context.Context, args []string) error {
-	if err := validateArgCount(args, 1, 1, "getonlineusers <room>"); err != nil {
+func (c *Cli) cmdGetOnlineUsers(ctx context.Context, cmd Cmd, args []string) error {
+	if err := validateArgCount(args, 1, 1, cmd); err != nil {
 		return err
 	}
 
@@ -342,8 +341,8 @@ func (c *Cli) cmdGetOnlineUsers(ctx context.Context, args []string) error {
 	return nil
 }
 
-func (c *Cli) cmdGetOnlineUserInfo(ctx context.Context, args []string) error {
-	if err := validateArgCount(args, 2, 2, "getonlineuserinfo <room> <username>"); err != nil {
+func (c *Cli) cmdGetOnlineUserInfo(ctx context.Context, cmd Cmd, args []string) error {
+	if err := validateArgCount(args, 2, 2, cmd); err != nil {
 		return err
 	}
 
@@ -364,8 +363,8 @@ func (c *Cli) cmdGetOnlineUserInfo(ctx context.Context, args []string) error {
 	return nil
 }
 
-func (c *Cli) cmdGetAccounts(ctx context.Context, args []string) error {
-	if err := validateArgCount(args, 1, 1, "getaccounts <room>"); err != nil {
+func (c *Cli) cmdGetAccounts(ctx context.Context, cmd Cmd, args []string) error {
+	if err := validateArgCount(args, 1, 1, cmd); err != nil {
 		return err
 	}
 
@@ -390,8 +389,8 @@ func (c *Cli) cmdGetAccounts(ctx context.Context, args []string) error {
 	return nil
 }
 
-func (c *Cli) cmdCreateRoom(ctx context.Context, args []string) error {
-	if err := validateArgCount(args, 1, 1, "createroom <room>"); err != nil {
+func (c *Cli) cmdCreateRoom(ctx context.Context, cmd Cmd, args []string) error {
+	if err := validateArgCount(args, 1, 1, cmd); err != nil {
 		return err
 	}
 
@@ -411,8 +410,8 @@ func (c *Cli) cmdCreateRoom(ctx context.Context, args []string) error {
 	return nil
 }
 
-func (c *Cli) cmdDeleteRoom(ctx context.Context, args []string) error {
-	if err := validateArgCount(args, 1, 1, "deleteroom <room>"); err != nil {
+func (c *Cli) cmdDeleteRoom(ctx context.Context, cmd Cmd, args []string) error {
+	if err := validateArgCount(args, 1, 1, cmd); err != nil {
 		return err
 	}
 
@@ -427,8 +426,8 @@ func (c *Cli) cmdDeleteRoom(ctx context.Context, args []string) error {
 	return nil
 }
 
-func (c *Cli) cmdCreateAccount(ctx context.Context, args []string) error {
-	if err := validateArgCount(args, 2, 3, "createaccount <room> <username> [password]"); err != nil {
+func (c *Cli) cmdCreateAccount(ctx context.Context, cmd Cmd, args []string) error {
+	if err := validateArgCount(args, 2, 3, cmd); err != nil {
 		return err
 	}
 
@@ -454,8 +453,8 @@ func (c *Cli) cmdCreateAccount(ctx context.Context, args []string) error {
 	return nil
 }
 
-func (c *Cli) cmdDeleteAccount(ctx context.Context, args []string) error {
-	if err := validateArgCount(args, 2, 2, "deleteaccount <room> <username>"); err != nil {
+func (c *Cli) cmdDeleteAccount(ctx context.Context, cmd Cmd, args []string) error {
+	if err := validateArgCount(args, 2, 2, cmd); err != nil {
 		return err
 	}
 
@@ -471,8 +470,8 @@ func (c *Cli) cmdDeleteAccount(ctx context.Context, args []string) error {
 	return nil
 }
 
-func (c *Cli) cmdUpdateAccountPassword(ctx context.Context, args []string) error {
-	if err := validateArgCount(args, 2, 3, "updateaccountpassword <room> <username> [password]"); err != nil {
+func (c *Cli) cmdUpdateAccountPassword(ctx context.Context, cmd Cmd, args []string) error {
+	if err := validateArgCount(args, 2, 3, cmd); err != nil {
 		return err
 	}
 
@@ -502,8 +501,41 @@ func (c *Cli) cmdUpdateAccountPassword(ctx context.Context, args []string) error
 	return nil
 }
 
-func (c *Cli) cmdAddBlacklistedKeyword(ctx context.Context, args []string) error {
-	if err := validateArgCount(args, 1, 2, "addblacklistedkeyword <keyword> [room]"); err != nil {
+const cmdBlacklistModeSubstring = "substring"
+const cmdBlacklistModeWhole = "whole"
+
+func (c *Cli) addBlacklistPolicies(ctx context.Context, room string, modeName string, keywords []string) error {
+	mode, ok := nameToMatchMode[modeName]
+	if !ok {
+		return fmt.Errorf("unknown match mode %q", modeName)
+	}
+
+	policiesEmpty := make([]v1.BlacklistPolicy, len(keywords))
+	policies := make([]*v1.BlacklistPolicy, len(keywords))
+	for i, keyword := range keywords {
+		policy := &policiesEmpty[i]
+		policy.Keyword = keyword
+		policy.Mode = mode
+		policies[i] = policy
+	}
+
+	_, err := c.client.AddBlacklistPolicies(ctx, &v1.AddBlacklistPoliciesRequest{
+		Room:     common.StrOrNil(room),
+		Policies: policies,
+	})
+	return err
+}
+
+func (c *Cli) cmdAddGlobalBlacklistPolicies(ctx context.Context, cmd Cmd, args []string) error {
+	if err := validateArgCount(args, 2, math.MaxInt64, cmd); err != nil {
+		return err
+	}
+
+	return c.addBlacklistPolicies(ctx, "", args[0], args[1:])
+}
+
+func (c *Cli) cmdRemoveGlobalBlacklistPolicies(ctx context.Context, cmd Cmd, args []string) error {
+	if err := validateArgCount(args, 1, math.MaxInt64, cmd); err != nil {
 		return err
 	}
 
@@ -512,26 +544,28 @@ func (c *Cli) cmdAddBlacklistedKeyword(ctx context.Context, args []string) error
 		room = &args[1]
 	}
 
-	_, err := c.client.AddBlacklistedKeyword(ctx, &v1.AddBlacklistedKeywordRequest{
-		Room:    room,
-		Keyword: args[0],
+	_, err := c.client.RemoveBlacklistPolicies(ctx, &v1.RemoveBlacklistPoliciesRequest{
+		Room:     room,
+		Policies: args,
 	})
 
 	if err != nil {
 		return err
-	} else {
-		if room == nil {
-			fmt.Printf("Added blacklisted keyword \"%q\" serverwide.", args[0])
-		} else {
-			fmt.Printf("Added blacklisted keyword \"%q\" to room %q.", args[0], *room)
-		}
 	}
 
 	return nil
 }
 
-func (c *Cli) cmdRemoveBlacklistedKeyword(ctx context.Context, args []string) error {
-	if err := validateArgCount(args, 1, 2, "removeblacklistedkeyword <keyword> [room]"); err != nil {
+func (c *Cli) cmdAddRoomBlacklistPolicies(ctx context.Context, cmd Cmd, args []string) error {
+	if err := validateArgCount(args, 3, math.MaxInt64, cmd); err != nil {
+		return err
+	}
+
+	return c.addBlacklistPolicies(ctx, args[0], args[1], args[2:])
+}
+
+func (c *Cli) cmdRemoveRoomBlacklistPolicies(ctx context.Context, cmd Cmd, args []string) error {
+	if err := validateArgCount(args, 1, 2, cmd); err != nil {
 		return err
 	}
 
@@ -540,9 +574,9 @@ func (c *Cli) cmdRemoveBlacklistedKeyword(ctx context.Context, args []string) er
 		room = &args[1]
 	}
 
-	_, err := c.client.RemoveBlacklistedKeyword(ctx, &v1.RemoveBlacklistedKeywordRequest{
-		Room:    room,
-		Keyword: args[0],
+	_, err := c.client.RemoveBlacklistPolicies(ctx, &v1.RemoveBlacklistPoliciesRequest{
+		Room:     room,
+		Policies: args,
 	})
 
 	if err != nil {
@@ -552,8 +586,8 @@ func (c *Cli) cmdRemoveBlacklistedKeyword(ctx context.Context, args []string) er
 	return nil
 }
 
-func (c *Cli) cmdListBlacklistedKeywords(ctx context.Context, args []string) error {
-	if err := validateArgCount(args, 0, 1, "listblacklistedkeywords [room]"); err != nil {
+func (c *Cli) cmdListBlacklistPolicies(ctx context.Context, cmd Cmd, args []string) error {
+	if err := validateArgCount(args, 0, 1, cmd); err != nil {
 		return err
 	}
 
@@ -562,28 +596,38 @@ func (c *Cli) cmdListBlacklistedKeywords(ctx context.Context, args []string) err
 		room = &args[0]
 	}
 
-	resp, err := c.client.ListBlacklistedKeywords(ctx, &v1.ListBlacklistedKeywordsRequest{
+	resp, err := c.client.ListBlacklistPolicies(ctx, &v1.ListBlacklistPoliciesRequest{
 		Room: room,
 	})
-
 	if err != nil {
 		return err
 	}
 
-	for _, keyword := range resp.GetKeywords() {
-		println(keyword)
+	for _, policy := range resp.Policies {
+		name, has := matchModeToName[policy.Mode]
+		if !has {
+			name = "unknown"
+		}
+
+		println(name + " " + policy.Keyword)
 	}
 
 	return nil
 }
 
-func validateArgCount(args []string, min int, max int, usage string) error {
-	if len(args) < min {
-		return fmt.Errorf("usage: %s", usage)
+func cmdUsageMsg(cmd Cmd) string {
+	if cmd.Usage == "" {
+		return "usage: " + cmd.Name
 	}
-	if max >= 0 && len(args) > max {
-		return fmt.Errorf("usage: %s", usage)
+
+	return "usage: " + cmd.Name + " " + cmd.Usage
+}
+
+func validateArgCount(args []string, min int, max int, cmd Cmd) error {
+	if len(args) < min || (max >= 0 && len(args) > max) {
+		return errors.New(cmdUsageMsg(cmd))
 	}
+
 	return nil
 }
 

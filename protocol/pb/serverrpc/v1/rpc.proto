@@ -152,32 +152,55 @@ message UpdateAccountPasswordResponse {
     optional string generated_password = 1;
 }
 
-message AddBlacklistedKeywordRequest {
+// BlacklistMatchMode are the possible modes for matching a word in a blacklist.
+enum BlacklistMatchMode {
+    BLACKLIST_MATCH_MODE_UNSPECIFIED = 0;
+
+    // Matches any substring of the word.
+    BLACKLIST_MATCH_MODE_SUBSTRING = 1;
+
+    // Matches only whole words that match.
+    BLACKLIST_MATCH_MODE_WHOLE = 2;
+}
+
+// BlacklistPolicy is a word and the policy for how it will be enforced in a blacklist.
+message BlacklistPolicy {
+    // The keyword.
+    string keyword = 1;
+
+    // How the keyword will be matched.
+    BlacklistMatchMode mode = 2;
+}
+
+message AddBlacklistPoliciesRequest {
     // Room to enforce this policy. If null, then it is enforced serverwide.
     optional string room = 1;
 
-    string keyword = 2;
+    // The policies to add.
+    repeated BlacklistPolicy policies = 2;
 }
-message AddBlacklistedKeywordResponse {
+message AddBlacklistPoliciesResponse {
 
 }
 
-message RemoveBlacklistedKeywordRequest {
+message RemoveBlacklistPoliciesRequest {
     // Room in which this policy is enforced. If null, it is assumed to be serverwide.
     optional string room = 1;
 
-    string keyword = 2;
+    // The policies to remove (identified by their keywords).
+    repeated string policies = 2;
 }
-message RemoveBlacklistedKeywordResponse {
+message RemoveBlacklistPoliciesResponse {
 
 }
 
-message ListBlacklistedKeywordsRequest {
-    // If null, it is assumed to be for serverwide policies.
+message ListBlacklistPoliciesRequest {
+    // If null, it will return only global policies.
     optional string room = 1;
 }
-message ListBlacklistedKeywordsResponse {
-    repeated string keywords = 1;
+message ListBlacklistPoliciesResponse {
+    // The policies.
+    repeated BlacklistPolicy policies = 1;
 }
 
 // ServerRpcService provides an RPC interface to a running FriendNet server.
@@ -236,18 +259,17 @@ service ServerRpcService {
     // Returns status code NOT_FOUND if no such account exists.
     rpc UpdateAccountPassword(UpdateAccountPasswordRequest) returns (UpdateAccountPasswordResponse) {}
 
-    // AddBlacklistedKeyword adds a keyword that will be blacklist from search queries and filenames.
-    // If a room to enforce this policy is not specified then it is assumed to be a serverwide policy.
-    // Returns status code INVALID_ARGUMENT if the keyword is empty.
-    rpc AddBlacklistedKeyword(AddBlacklistedKeywordRequest) returns (AddBlacklistedKeywordResponse) {}
+    // AddBlacklistPolicies adds one or more keywords that will be blacklisted from search queries and filenames.
+    // If a room to enforce this policy is not specified then they are assumed to be serverwide.
+    // Returns status code INVALID_ARGUMENT if the keyword is empty or invalid for the specified match mode.
+    rpc AddBlacklistPolicies(AddBlacklistPoliciesRequest) returns (AddBlacklistPoliciesResponse) {}
 
-    // RemoveBlacklistedKeyword removes a keyword blacklist policy from a given room.
-    // If a room to enforce this policy is not specified then it is assumed to be a serverwide policy.
-    // Returns status code INVALID_ARGUMENT if a policy could not be removed.
-    rpc RemoveBlacklistedKeyword(RemoveBlacklistedKeywordRequest) returns (RemoveBlacklistedKeywordResponse) {}
+    // RemoveBlacklistPolicies removes one or more keyword policies from the blacklists.
+    // If a room to enforce this policy is not specified then they are assumed to be serverwide.
+    rpc RemoveBlacklistPolicies(RemoveBlacklistPoliciesRequest) returns (RemoveBlacklistPoliciesResponse) {}
 
-    // ListBlacklistedKeywords returns a list of currently blacklisted keywords for a room.
+    // ListBlacklistPolicies returns a list of currently blacklisted keywords for a room.
     // If the room is not set, the list returned will contain only serverwide policies.
-    // Returns status code INVALID_ARGUMENT if the room does not exist.
-    rpc ListBlacklistedKeywords(ListBlacklistedKeywordsRequest) returns (ListBlacklistedKeywordsResponse) {}
+    // Returns status code NOT_FOUND if the room does not exist.
+    rpc ListBlacklistPolicies(ListBlacklistPoliciesRequest) returns (ListBlacklistPoliciesResponse) {}
 }

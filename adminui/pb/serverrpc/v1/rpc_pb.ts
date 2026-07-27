@@ -2,15 +2,15 @@
 // @generated from file pb/serverrpc/v1/rpc.proto (package pb.serverrpc.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file pb/serverrpc/v1/rpc.proto.
  */
 export const file_pb_serverrpc_v1_rpc: GenFile = /*@__PURE__*/
-  fileDesc("ChlwYi9zZXJ2ZXJycGMvdjEvcnBjLnByb3RvEg9wYi5zZXJ2ZXJycGMudjEiMwoIUm9vbUluZm8SDAoEbmFtZRgBIAEoCRIZChFvbmxpbmVfdXNlcl9jb3VudBgCIAEoDSIiCg5PbmxpbmVVc2VySW5mbxIQCgh1c2VybmFtZRgBIAEoCSIfCgtBY2NvdW50SW5mbxIQCgh1c2VybmFtZRgBIAEoCSIWChRHZXRTZXJ2ZXJJbmZvUmVxdWVzdCKgAQoVR2V0U2VydmVySW5mb1Jlc3BvbnNlEg8KB3ZlcnNpb24YASABKAkSNwoDcnBjGAIgASgLMioucGIuc2VydmVycnBjLnYxLkdldFNlcnZlckluZm9SZXNwb25zZS5ScGMaPQoDUnBjEhcKD2FsbG93ZWRfbWV0aG9kcxgBIAMoCRIdChVyZXF1aXJlc19iZWFyZXJfdG9rZW4YAiABKAgiEQoPR2V0Um9vbXNSZXF1ZXN0IjwKEEdldFJvb21zUmVzcG9uc2USKAoFcm9vbXMYASADKAsyGS5wYi5zZXJ2ZXJycGMudjEuUm9vbUluZm8iIgoSR2V0Um9vbUluZm9SZXF1ZXN0EgwKBG5hbWUYASABKAkiPgoTR2V0Um9vbUluZm9SZXNwb25zZRInCgRyb29tGAEgASgLMhkucGIuc2VydmVycnBjLnYxLlJvb21JbmZvIiUKFUdldE9ubGluZVVzZXJzUmVxdWVzdBIMCgRyb29tGAEgASgJIkgKFkdldE9ubGluZVVzZXJzUmVzcG9uc2USLgoFdXNlcnMYASADKAsyHy5wYi5zZXJ2ZXJycGMudjEuT25saW5lVXNlckluZm8iOgoYR2V0T25saW5lVXNlckluZm9SZXF1ZXN0EgwKBHJvb20YASABKAkSEAoIdXNlcm5hbWUYAiABKAkiSgoZR2V0T25saW5lVXNlckluZm9SZXNwb25zZRItCgR1c2VyGAEgASgLMh8ucGIuc2VydmVycnBjLnYxLk9ubGluZVVzZXJJbmZvIiIKEkdldEFjY291bnRzUmVxdWVzdBIMCgRyb29tGAEgASgJIkUKE0dldEFjY291bnRzUmVzcG9uc2USLgoIYWNjb3VudHMYASADKAsyHC5wYi5zZXJ2ZXJycGMudjEuQWNjb3VudEluZm8iIQoRQ3JlYXRlUm9vbVJlcXVlc3QSDAoEbmFtZRgBIAEoCSI9ChJDcmVhdGVSb29tUmVzcG9uc2USJwoEcm9vbRgBIAEoCzIZLnBiLnNlcnZlcnJwYy52MS5Sb29tSW5mbyIhChFEZWxldGVSb29tUmVxdWVzdBIMCgRuYW1lGAEgASgJIhQKEkRlbGV0ZVJvb21SZXNwb25zZSJIChRDcmVhdGVBY2NvdW50UmVxdWVzdBIMCgRyb29tGAEgASgJEhAKCHVzZXJuYW1lGAIgASgJEhAKCHBhc3N3b3JkGAMgASgJIn4KFUNyZWF0ZUFjY291bnRSZXNwb25zZRItCgdhY2NvdW50GAEgASgLMhwucGIuc2VydmVycnBjLnYxLkFjY291bnRJbmZvEh8KEmdlbmVyYXRlZF9wYXNzd29yZBgCIAEoCUgAiAEBQhUKE19nZW5lcmF0ZWRfcGFzc3dvcmQiNgoURGVsZXRlQWNjb3VudFJlcXVlc3QSDAoEcm9vbRgBIAEoCRIQCgh1c2VybmFtZRgCIAEoCSIXChVEZWxldGVBY2NvdW50UmVzcG9uc2UiUAocVXBkYXRlQWNjb3VudFBhc3N3b3JkUmVxdWVzdBIMCgRyb29tGAEgASgJEhAKCHVzZXJuYW1lGAIgASgJEhAKCHBhc3N3b3JkGAMgASgJIlcKHVVwZGF0ZUFjY291bnRQYXNzd29yZFJlc3BvbnNlEh8KEmdlbmVyYXRlZF9wYXNzd29yZBgBIAEoCUgAiAEBQhUKE19nZW5lcmF0ZWRfcGFzc3dvcmQiSwocQWRkQmxhY2tsaXN0ZWRLZXl3b3JkUmVxdWVzdBIRCgRyb29tGAEgASgJSACIAQESDwoHa2V5d29yZBgCIAEoCUIHCgVfcm9vbSIfCh1BZGRCbGFja2xpc3RlZEtleXdvcmRSZXNwb25zZSJOCh9SZW1vdmVCbGFja2xpc3RlZEtleXdvcmRSZXF1ZXN0EhEKBHJvb20YASABKAlIAIgBARIPCgdrZXl3b3JkGAIgASgJQgcKBV9yb29tIiIKIFJlbW92ZUJsYWNrbGlzdGVkS2V5d29yZFJlc3BvbnNlIjwKHkxpc3RCbGFja2xpc3RlZEtleXdvcmRzUmVxdWVzdBIRCgRyb29tGAEgASgJSACIAQFCBwoFX3Jvb20iMwofTGlzdEJsYWNrbGlzdGVkS2V5d29yZHNSZXNwb25zZRIQCghrZXl3b3JkcxgBIAMoCTLCCwoQU2VydmVyUnBjU2VydmljZRJgCg1HZXRTZXJ2ZXJJbmZvEiUucGIuc2VydmVycnBjLnYxLkdldFNlcnZlckluZm9SZXF1ZXN0GiYucGIuc2VydmVycnBjLnYxLkdldFNlcnZlckluZm9SZXNwb25zZSIAElEKCEdldFJvb21zEiAucGIuc2VydmVycnBjLnYxLkdldFJvb21zUmVxdWVzdBohLnBiLnNlcnZlcnJwYy52MS5HZXRSb29tc1Jlc3BvbnNlIgASWgoLR2V0Um9vbUluZm8SIy5wYi5zZXJ2ZXJycGMudjEuR2V0Um9vbUluZm9SZXF1ZXN0GiQucGIuc2VydmVycnBjLnYxLkdldFJvb21JbmZvUmVzcG9uc2UiABJlCg5HZXRPbmxpbmVVc2VycxImLnBiLnNlcnZlcnJwYy52MS5HZXRPbmxpbmVVc2Vyc1JlcXVlc3QaJy5wYi5zZXJ2ZXJycGMudjEuR2V0T25saW5lVXNlcnNSZXNwb25zZSIAMAESbAoRR2V0T25saW5lVXNlckluZm8SKS5wYi5zZXJ2ZXJycGMudjEuR2V0T25saW5lVXNlckluZm9SZXF1ZXN0GioucGIuc2VydmVycnBjLnYxLkdldE9ubGluZVVzZXJJbmZvUmVzcG9uc2UiABJaCgtHZXRBY2NvdW50cxIjLnBiLnNlcnZlcnJwYy52MS5HZXRBY2NvdW50c1JlcXVlc3QaJC5wYi5zZXJ2ZXJycGMudjEuR2V0QWNjb3VudHNSZXNwb25zZSIAElcKCkNyZWF0ZVJvb20SIi5wYi5zZXJ2ZXJycGMudjEuQ3JlYXRlUm9vbVJlcXVlc3QaIy5wYi5zZXJ2ZXJycGMudjEuQ3JlYXRlUm9vbVJlc3BvbnNlIgASVwoKRGVsZXRlUm9vbRIiLnBiLnNlcnZlcnJwYy52MS5EZWxldGVSb29tUmVxdWVzdBojLnBiLnNlcnZlcnJwYy52MS5EZWxldGVSb29tUmVzcG9uc2UiABJgCg1DcmVhdGVBY2NvdW50EiUucGIuc2VydmVycnBjLnYxLkNyZWF0ZUFjY291bnRSZXF1ZXN0GiYucGIuc2VydmVycnBjLnYxLkNyZWF0ZUFjY291bnRSZXNwb25zZSIAEmAKDURlbGV0ZUFjY291bnQSJS5wYi5zZXJ2ZXJycGMudjEuRGVsZXRlQWNjb3VudFJlcXVlc3QaJi5wYi5zZXJ2ZXJycGMudjEuRGVsZXRlQWNjb3VudFJlc3BvbnNlIgASeAoVVXBkYXRlQWNjb3VudFBhc3N3b3JkEi0ucGIuc2VydmVycnBjLnYxLlVwZGF0ZUFjY291bnRQYXNzd29yZFJlcXVlc3QaLi5wYi5zZXJ2ZXJycGMudjEuVXBkYXRlQWNjb3VudFBhc3N3b3JkUmVzcG9uc2UiABJ4ChVBZGRCbGFja2xpc3RlZEtleXdvcmQSLS5wYi5zZXJ2ZXJycGMudjEuQWRkQmxhY2tsaXN0ZWRLZXl3b3JkUmVxdWVzdBouLnBiLnNlcnZlcnJwYy52MS5BZGRCbGFja2xpc3RlZEtleXdvcmRSZXNwb25zZSIAEoEBChhSZW1vdmVCbGFja2xpc3RlZEtleXdvcmQSMC5wYi5zZXJ2ZXJycGMudjEuUmVtb3ZlQmxhY2tsaXN0ZWRLZXl3b3JkUmVxdWVzdBoxLnBiLnNlcnZlcnJwYy52MS5SZW1vdmVCbGFja2xpc3RlZEtleXdvcmRSZXNwb25zZSIAEn4KF0xpc3RCbGFja2xpc3RlZEtleXdvcmRzEi8ucGIuc2VydmVycnBjLnYxLkxpc3RCbGFja2xpc3RlZEtleXdvcmRzUmVxdWVzdBowLnBiLnNlcnZlcnJwYy52MS5MaXN0QmxhY2tsaXN0ZWRLZXl3b3Jkc1Jlc3BvbnNlIgBCIlogZnJpZW5kbmV0Lm9yZy9wcm90b2NvbC9zZXJ2ZXJycGNiBnByb3RvMw");
+  fileDesc("ChlwYi9zZXJ2ZXJycGMvdjEvcnBjLnByb3RvEg9wYi5zZXJ2ZXJycGMudjEiMwoIUm9vbUluZm8SDAoEbmFtZRgBIAEoCRIZChFvbmxpbmVfdXNlcl9jb3VudBgCIAEoDSIiCg5PbmxpbmVVc2VySW5mbxIQCgh1c2VybmFtZRgBIAEoCSIfCgtBY2NvdW50SW5mbxIQCgh1c2VybmFtZRgBIAEoCSIWChRHZXRTZXJ2ZXJJbmZvUmVxdWVzdCKgAQoVR2V0U2VydmVySW5mb1Jlc3BvbnNlEg8KB3ZlcnNpb24YASABKAkSNwoDcnBjGAIgASgLMioucGIuc2VydmVycnBjLnYxLkdldFNlcnZlckluZm9SZXNwb25zZS5ScGMaPQoDUnBjEhcKD2FsbG93ZWRfbWV0aG9kcxgBIAMoCRIdChVyZXF1aXJlc19iZWFyZXJfdG9rZW4YAiABKAgiEQoPR2V0Um9vbXNSZXF1ZXN0IjwKEEdldFJvb21zUmVzcG9uc2USKAoFcm9vbXMYASADKAsyGS5wYi5zZXJ2ZXJycGMudjEuUm9vbUluZm8iIgoSR2V0Um9vbUluZm9SZXF1ZXN0EgwKBG5hbWUYASABKAkiPgoTR2V0Um9vbUluZm9SZXNwb25zZRInCgRyb29tGAEgASgLMhkucGIuc2VydmVycnBjLnYxLlJvb21JbmZvIiUKFUdldE9ubGluZVVzZXJzUmVxdWVzdBIMCgRyb29tGAEgASgJIkgKFkdldE9ubGluZVVzZXJzUmVzcG9uc2USLgoFdXNlcnMYASADKAsyHy5wYi5zZXJ2ZXJycGMudjEuT25saW5lVXNlckluZm8iOgoYR2V0T25saW5lVXNlckluZm9SZXF1ZXN0EgwKBHJvb20YASABKAkSEAoIdXNlcm5hbWUYAiABKAkiSgoZR2V0T25saW5lVXNlckluZm9SZXNwb25zZRItCgR1c2VyGAEgASgLMh8ucGIuc2VydmVycnBjLnYxLk9ubGluZVVzZXJJbmZvIiIKEkdldEFjY291bnRzUmVxdWVzdBIMCgRyb29tGAEgASgJIkUKE0dldEFjY291bnRzUmVzcG9uc2USLgoIYWNjb3VudHMYASADKAsyHC5wYi5zZXJ2ZXJycGMudjEuQWNjb3VudEluZm8iIQoRQ3JlYXRlUm9vbVJlcXVlc3QSDAoEbmFtZRgBIAEoCSI9ChJDcmVhdGVSb29tUmVzcG9uc2USJwoEcm9vbRgBIAEoCzIZLnBiLnNlcnZlcnJwYy52MS5Sb29tSW5mbyIhChFEZWxldGVSb29tUmVxdWVzdBIMCgRuYW1lGAEgASgJIhQKEkRlbGV0ZVJvb21SZXNwb25zZSJIChRDcmVhdGVBY2NvdW50UmVxdWVzdBIMCgRyb29tGAEgASgJEhAKCHVzZXJuYW1lGAIgASgJEhAKCHBhc3N3b3JkGAMgASgJIn4KFUNyZWF0ZUFjY291bnRSZXNwb25zZRItCgdhY2NvdW50GAEgASgLMhwucGIuc2VydmVycnBjLnYxLkFjY291bnRJbmZvEh8KEmdlbmVyYXRlZF9wYXNzd29yZBgCIAEoCUgAiAEBQhUKE19nZW5lcmF0ZWRfcGFzc3dvcmQiNgoURGVsZXRlQWNjb3VudFJlcXVlc3QSDAoEcm9vbRgBIAEoCRIQCgh1c2VybmFtZRgCIAEoCSIXChVEZWxldGVBY2NvdW50UmVzcG9uc2UiUAocVXBkYXRlQWNjb3VudFBhc3N3b3JkUmVxdWVzdBIMCgRyb29tGAEgASgJEhAKCHVzZXJuYW1lGAIgASgJEhAKCHBhc3N3b3JkGAMgASgJIlcKHVVwZGF0ZUFjY291bnRQYXNzd29yZFJlc3BvbnNlEh8KEmdlbmVyYXRlZF9wYXNzd29yZBgBIAEoCUgAiAEBQhUKE19nZW5lcmF0ZWRfcGFzc3dvcmQiVQoPQmxhY2tsaXN0UG9saWN5Eg8KB2tleXdvcmQYASABKAkSMQoEbW9kZRgCIAEoDjIjLnBiLnNlcnZlcnJwYy52MS5CbGFja2xpc3RNYXRjaE1vZGUibQobQWRkQmxhY2tsaXN0UG9saWNpZXNSZXF1ZXN0EhEKBHJvb20YASABKAlIAIgBARIyCghwb2xpY2llcxgCIAMoCzIgLnBiLnNlcnZlcnJwYy52MS5CbGFja2xpc3RQb2xpY3lCBwoFX3Jvb20iHgocQWRkQmxhY2tsaXN0UG9saWNpZXNSZXNwb25zZSJOCh5SZW1vdmVCbGFja2xpc3RQb2xpY2llc1JlcXVlc3QSEQoEcm9vbRgBIAEoCUgAiAEBEhAKCHBvbGljaWVzGAIgAygJQgcKBV9yb29tIiEKH1JlbW92ZUJsYWNrbGlzdFBvbGljaWVzUmVzcG9uc2UiOgocTGlzdEJsYWNrbGlzdFBvbGljaWVzUmVxdWVzdBIRCgRyb29tGAEgASgJSACIAQFCBwoFX3Jvb20iUwodTGlzdEJsYWNrbGlzdFBvbGljaWVzUmVzcG9uc2USMgoIcG9saWNpZXMYASADKAsyIC5wYi5zZXJ2ZXJycGMudjEuQmxhY2tsaXN0UG9saWN5Kn4KEkJsYWNrbGlzdE1hdGNoTW9kZRIkCiBCTEFDS0xJU1RfTUFUQ0hfTU9ERV9VTlNQRUNJRklFRBAAEiIKHkJMQUNLTElTVF9NQVRDSF9NT0RFX1NVQlNUUklORxABEh4KGkJMQUNLTElTVF9NQVRDSF9NT0RFX1dIT0xFEAIytQsKEFNlcnZlclJwY1NlcnZpY2USYAoNR2V0U2VydmVySW5mbxIlLnBiLnNlcnZlcnJwYy52MS5HZXRTZXJ2ZXJJbmZvUmVxdWVzdBomLnBiLnNlcnZlcnJwYy52MS5HZXRTZXJ2ZXJJbmZvUmVzcG9uc2UiABJRCghHZXRSb29tcxIgLnBiLnNlcnZlcnJwYy52MS5HZXRSb29tc1JlcXVlc3QaIS5wYi5zZXJ2ZXJycGMudjEuR2V0Um9vbXNSZXNwb25zZSIAEloKC0dldFJvb21JbmZvEiMucGIuc2VydmVycnBjLnYxLkdldFJvb21JbmZvUmVxdWVzdBokLnBiLnNlcnZlcnJwYy52MS5HZXRSb29tSW5mb1Jlc3BvbnNlIgASZQoOR2V0T25saW5lVXNlcnMSJi5wYi5zZXJ2ZXJycGMudjEuR2V0T25saW5lVXNlcnNSZXF1ZXN0GicucGIuc2VydmVycnBjLnYxLkdldE9ubGluZVVzZXJzUmVzcG9uc2UiADABEmwKEUdldE9ubGluZVVzZXJJbmZvEikucGIuc2VydmVycnBjLnYxLkdldE9ubGluZVVzZXJJbmZvUmVxdWVzdBoqLnBiLnNlcnZlcnJwYy52MS5HZXRPbmxpbmVVc2VySW5mb1Jlc3BvbnNlIgASWgoLR2V0QWNjb3VudHMSIy5wYi5zZXJ2ZXJycGMudjEuR2V0QWNjb3VudHNSZXF1ZXN0GiQucGIuc2VydmVycnBjLnYxLkdldEFjY291bnRzUmVzcG9uc2UiABJXCgpDcmVhdGVSb29tEiIucGIuc2VydmVycnBjLnYxLkNyZWF0ZVJvb21SZXF1ZXN0GiMucGIuc2VydmVycnBjLnYxLkNyZWF0ZVJvb21SZXNwb25zZSIAElcKCkRlbGV0ZVJvb20SIi5wYi5zZXJ2ZXJycGMudjEuRGVsZXRlUm9vbVJlcXVlc3QaIy5wYi5zZXJ2ZXJycGMudjEuRGVsZXRlUm9vbVJlc3BvbnNlIgASYAoNQ3JlYXRlQWNjb3VudBIlLnBiLnNlcnZlcnJwYy52MS5DcmVhdGVBY2NvdW50UmVxdWVzdBomLnBiLnNlcnZlcnJwYy52MS5DcmVhdGVBY2NvdW50UmVzcG9uc2UiABJgCg1EZWxldGVBY2NvdW50EiUucGIuc2VydmVycnBjLnYxLkRlbGV0ZUFjY291bnRSZXF1ZXN0GiYucGIuc2VydmVycnBjLnYxLkRlbGV0ZUFjY291bnRSZXNwb25zZSIAEngKFVVwZGF0ZUFjY291bnRQYXNzd29yZBItLnBiLnNlcnZlcnJwYy52MS5VcGRhdGVBY2NvdW50UGFzc3dvcmRSZXF1ZXN0Gi4ucGIuc2VydmVycnBjLnYxLlVwZGF0ZUFjY291bnRQYXNzd29yZFJlc3BvbnNlIgASdQoUQWRkQmxhY2tsaXN0UG9saWNpZXMSLC5wYi5zZXJ2ZXJycGMudjEuQWRkQmxhY2tsaXN0UG9saWNpZXNSZXF1ZXN0Gi0ucGIuc2VydmVycnBjLnYxLkFkZEJsYWNrbGlzdFBvbGljaWVzUmVzcG9uc2UiABJ+ChdSZW1vdmVCbGFja2xpc3RQb2xpY2llcxIvLnBiLnNlcnZlcnJwYy52MS5SZW1vdmVCbGFja2xpc3RQb2xpY2llc1JlcXVlc3QaMC5wYi5zZXJ2ZXJycGMudjEuUmVtb3ZlQmxhY2tsaXN0UG9saWNpZXNSZXNwb25zZSIAEngKFUxpc3RCbGFja2xpc3RQb2xpY2llcxItLnBiLnNlcnZlcnJwYy52MS5MaXN0QmxhY2tsaXN0UG9saWNpZXNSZXF1ZXN0Gi4ucGIuc2VydmVycnBjLnYxLkxpc3RCbGFja2xpc3RQb2xpY2llc1Jlc3BvbnNlIgBCIlogZnJpZW5kbmV0Lm9yZy9wcm90b2NvbC9zZXJ2ZXJycGNiBnByb3RvMw");
 
 /**
  * RoomInfo is information about a room.
@@ -558,9 +558,37 @@ export const UpdateAccountPasswordResponseSchema: GenMessage<UpdateAccountPasswo
   messageDesc(file_pb_serverrpc_v1_rpc, 24);
 
 /**
- * @generated from message pb.serverrpc.v1.AddBlacklistedKeywordRequest
+ * BlacklistPolicy is a word and the policy for how it will be enforced in a blacklist.
+ *
+ * @generated from message pb.serverrpc.v1.BlacklistPolicy
  */
-export type AddBlacklistedKeywordRequest = Message<"pb.serverrpc.v1.AddBlacklistedKeywordRequest"> & {
+export type BlacklistPolicy = Message<"pb.serverrpc.v1.BlacklistPolicy"> & {
+  /**
+   * The keyword.
+   *
+   * @generated from field: string keyword = 1;
+   */
+  keyword: string;
+
+  /**
+   * How the keyword will be matched.
+   *
+   * @generated from field: pb.serverrpc.v1.BlacklistMatchMode mode = 2;
+   */
+  mode: BlacklistMatchMode;
+};
+
+/**
+ * Describes the message pb.serverrpc.v1.BlacklistPolicy.
+ * Use `create(BlacklistPolicySchema)` to create a new message.
+ */
+export const BlacklistPolicySchema: GenMessage<BlacklistPolicy> = /*@__PURE__*/
+  messageDesc(file_pb_serverrpc_v1_rpc, 25);
+
+/**
+ * @generated from message pb.serverrpc.v1.AddBlacklistPoliciesRequest
+ */
+export type AddBlacklistPoliciesRequest = Message<"pb.serverrpc.v1.AddBlacklistPoliciesRequest"> & {
   /**
    * Room to enforce this policy. If null, then it is enforced serverwide.
    *
@@ -569,35 +597,37 @@ export type AddBlacklistedKeywordRequest = Message<"pb.serverrpc.v1.AddBlacklist
   room?: string;
 
   /**
-   * @generated from field: string keyword = 2;
+   * The policies to add.
+   *
+   * @generated from field: repeated pb.serverrpc.v1.BlacklistPolicy policies = 2;
    */
-  keyword: string;
+  policies: BlacklistPolicy[];
 };
 
 /**
- * Describes the message pb.serverrpc.v1.AddBlacklistedKeywordRequest.
- * Use `create(AddBlacklistedKeywordRequestSchema)` to create a new message.
+ * Describes the message pb.serverrpc.v1.AddBlacklistPoliciesRequest.
+ * Use `create(AddBlacklistPoliciesRequestSchema)` to create a new message.
  */
-export const AddBlacklistedKeywordRequestSchema: GenMessage<AddBlacklistedKeywordRequest> = /*@__PURE__*/
-  messageDesc(file_pb_serverrpc_v1_rpc, 25);
-
-/**
- * @generated from message pb.serverrpc.v1.AddBlacklistedKeywordResponse
- */
-export type AddBlacklistedKeywordResponse = Message<"pb.serverrpc.v1.AddBlacklistedKeywordResponse"> & {
-};
-
-/**
- * Describes the message pb.serverrpc.v1.AddBlacklistedKeywordResponse.
- * Use `create(AddBlacklistedKeywordResponseSchema)` to create a new message.
- */
-export const AddBlacklistedKeywordResponseSchema: GenMessage<AddBlacklistedKeywordResponse> = /*@__PURE__*/
+export const AddBlacklistPoliciesRequestSchema: GenMessage<AddBlacklistPoliciesRequest> = /*@__PURE__*/
   messageDesc(file_pb_serverrpc_v1_rpc, 26);
 
 /**
- * @generated from message pb.serverrpc.v1.RemoveBlacklistedKeywordRequest
+ * @generated from message pb.serverrpc.v1.AddBlacklistPoliciesResponse
  */
-export type RemoveBlacklistedKeywordRequest = Message<"pb.serverrpc.v1.RemoveBlacklistedKeywordRequest"> & {
+export type AddBlacklistPoliciesResponse = Message<"pb.serverrpc.v1.AddBlacklistPoliciesResponse"> & {
+};
+
+/**
+ * Describes the message pb.serverrpc.v1.AddBlacklistPoliciesResponse.
+ * Use `create(AddBlacklistPoliciesResponseSchema)` to create a new message.
+ */
+export const AddBlacklistPoliciesResponseSchema: GenMessage<AddBlacklistPoliciesResponse> = /*@__PURE__*/
+  messageDesc(file_pb_serverrpc_v1_rpc, 27);
+
+/**
+ * @generated from message pb.serverrpc.v1.RemoveBlacklistPoliciesRequest
+ */
+export type RemoveBlacklistPoliciesRequest = Message<"pb.serverrpc.v1.RemoveBlacklistPoliciesRequest"> & {
   /**
    * Room in which this policy is enforced. If null, it is assumed to be serverwide.
    *
@@ -606,37 +636,39 @@ export type RemoveBlacklistedKeywordRequest = Message<"pb.serverrpc.v1.RemoveBla
   room?: string;
 
   /**
-   * @generated from field: string keyword = 2;
+   * The policies to remove (identified by their keywords).
+   *
+   * @generated from field: repeated string policies = 2;
    */
-  keyword: string;
+  policies: string[];
 };
 
 /**
- * Describes the message pb.serverrpc.v1.RemoveBlacklistedKeywordRequest.
- * Use `create(RemoveBlacklistedKeywordRequestSchema)` to create a new message.
+ * Describes the message pb.serverrpc.v1.RemoveBlacklistPoliciesRequest.
+ * Use `create(RemoveBlacklistPoliciesRequestSchema)` to create a new message.
  */
-export const RemoveBlacklistedKeywordRequestSchema: GenMessage<RemoveBlacklistedKeywordRequest> = /*@__PURE__*/
-  messageDesc(file_pb_serverrpc_v1_rpc, 27);
-
-/**
- * @generated from message pb.serverrpc.v1.RemoveBlacklistedKeywordResponse
- */
-export type RemoveBlacklistedKeywordResponse = Message<"pb.serverrpc.v1.RemoveBlacklistedKeywordResponse"> & {
-};
-
-/**
- * Describes the message pb.serverrpc.v1.RemoveBlacklistedKeywordResponse.
- * Use `create(RemoveBlacklistedKeywordResponseSchema)` to create a new message.
- */
-export const RemoveBlacklistedKeywordResponseSchema: GenMessage<RemoveBlacklistedKeywordResponse> = /*@__PURE__*/
+export const RemoveBlacklistPoliciesRequestSchema: GenMessage<RemoveBlacklistPoliciesRequest> = /*@__PURE__*/
   messageDesc(file_pb_serverrpc_v1_rpc, 28);
 
 /**
- * @generated from message pb.serverrpc.v1.ListBlacklistedKeywordsRequest
+ * @generated from message pb.serverrpc.v1.RemoveBlacklistPoliciesResponse
  */
-export type ListBlacklistedKeywordsRequest = Message<"pb.serverrpc.v1.ListBlacklistedKeywordsRequest"> & {
+export type RemoveBlacklistPoliciesResponse = Message<"pb.serverrpc.v1.RemoveBlacklistPoliciesResponse"> & {
+};
+
+/**
+ * Describes the message pb.serverrpc.v1.RemoveBlacklistPoliciesResponse.
+ * Use `create(RemoveBlacklistPoliciesResponseSchema)` to create a new message.
+ */
+export const RemoveBlacklistPoliciesResponseSchema: GenMessage<RemoveBlacklistPoliciesResponse> = /*@__PURE__*/
+  messageDesc(file_pb_serverrpc_v1_rpc, 29);
+
+/**
+ * @generated from message pb.serverrpc.v1.ListBlacklistPoliciesRequest
+ */
+export type ListBlacklistPoliciesRequest = Message<"pb.serverrpc.v1.ListBlacklistPoliciesRequest"> & {
   /**
-   * If null, it is assumed to be for serverwide policies.
+   * If null, it will return only global policies.
    *
    * @generated from field: optional string room = 1;
    */
@@ -644,28 +676,62 @@ export type ListBlacklistedKeywordsRequest = Message<"pb.serverrpc.v1.ListBlackl
 };
 
 /**
- * Describes the message pb.serverrpc.v1.ListBlacklistedKeywordsRequest.
- * Use `create(ListBlacklistedKeywordsRequestSchema)` to create a new message.
+ * Describes the message pb.serverrpc.v1.ListBlacklistPoliciesRequest.
+ * Use `create(ListBlacklistPoliciesRequestSchema)` to create a new message.
  */
-export const ListBlacklistedKeywordsRequestSchema: GenMessage<ListBlacklistedKeywordsRequest> = /*@__PURE__*/
-  messageDesc(file_pb_serverrpc_v1_rpc, 29);
+export const ListBlacklistPoliciesRequestSchema: GenMessage<ListBlacklistPoliciesRequest> = /*@__PURE__*/
+  messageDesc(file_pb_serverrpc_v1_rpc, 30);
 
 /**
- * @generated from message pb.serverrpc.v1.ListBlacklistedKeywordsResponse
+ * @generated from message pb.serverrpc.v1.ListBlacklistPoliciesResponse
  */
-export type ListBlacklistedKeywordsResponse = Message<"pb.serverrpc.v1.ListBlacklistedKeywordsResponse"> & {
+export type ListBlacklistPoliciesResponse = Message<"pb.serverrpc.v1.ListBlacklistPoliciesResponse"> & {
   /**
-   * @generated from field: repeated string keywords = 1;
+   * The policies.
+   *
+   * @generated from field: repeated pb.serverrpc.v1.BlacklistPolicy policies = 1;
    */
-  keywords: string[];
+  policies: BlacklistPolicy[];
 };
 
 /**
- * Describes the message pb.serverrpc.v1.ListBlacklistedKeywordsResponse.
- * Use `create(ListBlacklistedKeywordsResponseSchema)` to create a new message.
+ * Describes the message pb.serverrpc.v1.ListBlacklistPoliciesResponse.
+ * Use `create(ListBlacklistPoliciesResponseSchema)` to create a new message.
  */
-export const ListBlacklistedKeywordsResponseSchema: GenMessage<ListBlacklistedKeywordsResponse> = /*@__PURE__*/
-  messageDesc(file_pb_serverrpc_v1_rpc, 30);
+export const ListBlacklistPoliciesResponseSchema: GenMessage<ListBlacklistPoliciesResponse> = /*@__PURE__*/
+  messageDesc(file_pb_serverrpc_v1_rpc, 31);
+
+/**
+ * BlacklistMatchMode are the possible modes for matching a word in a blacklist.
+ *
+ * @generated from enum pb.serverrpc.v1.BlacklistMatchMode
+ */
+export enum BlacklistMatchMode {
+  /**
+   * @generated from enum value: BLACKLIST_MATCH_MODE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * Matches any substring of the word.
+   *
+   * @generated from enum value: BLACKLIST_MATCH_MODE_SUBSTRING = 1;
+   */
+  SUBSTRING = 1,
+
+  /**
+   * Matches only whole words that match.
+   *
+   * @generated from enum value: BLACKLIST_MATCH_MODE_WHOLE = 2;
+   */
+  WHOLE = 2,
+}
+
+/**
+ * Describes the enum pb.serverrpc.v1.BlacklistMatchMode.
+ */
+export const BlacklistMatchModeSchema: GenEnum<BlacklistMatchMode> = /*@__PURE__*/
+  enumDesc(file_pb_serverrpc_v1_rpc, 0);
 
 /**
  * ServerRpcService provides an RPC interface to a running FriendNet server.
@@ -805,40 +871,39 @@ export const ServerRpcService: GenService<{
     output: typeof UpdateAccountPasswordResponseSchema;
   },
   /**
-   * AddBlacklistedKeyword adds a keyword that will be blacklist from search queries and filenames.
-   * If a room to enforce this policy is not specified then it is assumed to be a serverwide policy.
-   * Returns status code INVALID_ARGUMENT if the keyword is empty.
+   * AddBlacklistPolicies adds one or more keywords that will be blacklisted from search queries and filenames.
+   * If a room to enforce this policy is not specified then they are assumed to be serverwide.
+   * Returns status code INVALID_ARGUMENT if the keyword is empty or invalid for the specified match mode.
    *
-   * @generated from rpc pb.serverrpc.v1.ServerRpcService.AddBlacklistedKeyword
+   * @generated from rpc pb.serverrpc.v1.ServerRpcService.AddBlacklistPolicies
    */
-  addBlacklistedKeyword: {
+  addBlacklistPolicies: {
     methodKind: "unary";
-    input: typeof AddBlacklistedKeywordRequestSchema;
-    output: typeof AddBlacklistedKeywordResponseSchema;
+    input: typeof AddBlacklistPoliciesRequestSchema;
+    output: typeof AddBlacklistPoliciesResponseSchema;
   },
   /**
-   * RemoveBlacklistedKeyword removes a keyword blacklist policy from a given room.
-   * If a room to enforce this policy is not specified then it is assumed to be a serverwide policy.
-   * Returns status code INVALID_ARGUMENT if a policy could not be removed.
+   * RemoveBlacklistPolicies removes one or more keyword policies from the blacklists.
+   * If a room to enforce this policy is not specified then they are assumed to be serverwide.
    *
-   * @generated from rpc pb.serverrpc.v1.ServerRpcService.RemoveBlacklistedKeyword
+   * @generated from rpc pb.serverrpc.v1.ServerRpcService.RemoveBlacklistPolicies
    */
-  removeBlacklistedKeyword: {
+  removeBlacklistPolicies: {
     methodKind: "unary";
-    input: typeof RemoveBlacklistedKeywordRequestSchema;
-    output: typeof RemoveBlacklistedKeywordResponseSchema;
+    input: typeof RemoveBlacklistPoliciesRequestSchema;
+    output: typeof RemoveBlacklistPoliciesResponseSchema;
   },
   /**
-   * ListBlacklistedKeywords returns a list of currently blacklisted keywords for a room.
+   * ListBlacklistPolicies returns a list of currently blacklisted keywords for a room.
    * If the room is not set, the list returned will contain only serverwide policies.
-   * Returns status code INVALID_ARGUMENT if the room does not exist.
+   * Returns status code NOT_FOUND if the room does not exist.
    *
-   * @generated from rpc pb.serverrpc.v1.ServerRpcService.ListBlacklistedKeywords
+   * @generated from rpc pb.serverrpc.v1.ServerRpcService.ListBlacklistPolicies
    */
-  listBlacklistedKeywords: {
+  listBlacklistPolicies: {
     methodKind: "unary";
-    input: typeof ListBlacklistedKeywordsRequestSchema;
-    output: typeof ListBlacklistedKeywordsResponseSchema;
+    input: typeof ListBlacklistPoliciesRequestSchema;
+    output: typeof ListBlacklistPoliciesResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_pb_serverrpc_v1_rpc, 0);

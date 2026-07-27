@@ -1,0 +1,51 @@
+{
+  "name": "@bufbuild/protoc-gen-es",
+  "version": "2.12.1",
+  "license": "Apache-2.0",
+  "description": "Protocol Buffers code generator for ECMAScript",
+  "keywords": [
+    "protobuf",
+    "schema",
+    "typescript",
+    "ecmascript",
+    "protoc-plugin"
+  ],
+  "homepage": "https://protobufes.com/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bufbuild/protobuf-es.git",
+    "directory": "packages/protoc-gen-es"
+  },
+  "bin": {
+    "protoc-gen-es": "bin/protoc-gen-es"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "prebuild": "rm -rf ./dist/cjs/*",
+    "build": "../../node_modules/typescript/bin/tsc --project tsconfig.json --outDir ./dist/cjs",
+    "bootstrap": "protoc --es_out=src/gen --es_opt=target=ts,import_extension=js --proto_path proto proto/minimal-validate.proto",
+    "postbootstrap": "license-header src/gen",
+    "format": "biome format --write",
+    "license-header": "license-header",
+    "lint": "biome lint --error-on-warnings"
+  },
+  "preferUnplugged": true,
+  "dependencies": {
+    "@bufbuild/protobuf": "2.12.1",
+    "@bufbuild/protoplugin": "2.12.1"
+  },
+  "devDependencies": {
+    "upstream-protobuf": "*"
+  },
+  "peerDependencies": {
+    "@bufbuild/protobuf": "2.12.1"
+  },
+  "peerDependenciesMeta": {
+    "@bufbuild/protobuf": {
+      "optional": true
+    }
+  },
+  "files": ["dist/**", "bin/**"]
+}

@@ -15,6 +15,7 @@ import (
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
 	"friendnet.org/server/storage"
+	anyascii "github.com/anyascii/go"
 	"github.com/quic-go/quic-go"
 	mcfpassword "github.com/termermc/go-mcf-password"
 	"google.golang.org/protobuf/proto"
@@ -184,16 +185,29 @@ func (r *Room) GetAllClients() []*Client {
 	return r.snapshotClientsNoLock()
 }
 
-// MatchToBlacklists will match a string against room-local and global keyword blacklists
-func (r *Room) MatchToBlacklists(haystack string) (bool, error) {
-	if r.GlobalBlacklist == nil || r.Blacklist == nil {
-		return false, fmt.Errorf("cannot access blacklists")
+// MatchToBlacklists will match a string against room-local and global keyword blacklists.
+// It processes the string in multiple ways to improve matching.
+func (r *Room) MatchToBlacklists(haystack string) bool {
+	lower := common.ToLowerUnicode(haystack)
+	runes := []rune(lower)
+
+	if r.GlobalBlacklist.Match(runes) || r.Blacklist.Match(runes) {
+		return true
 	}
 
-	globalResult := r.GlobalBlacklist.Match(haystack)
-	localResult := r.Blacklist.Match(haystack)
+	// Didn't match, try AnyAscii version if applicable.
+	asciiVer := anyascii.Transliterate(lower)
+	if asciiVer == lower {
+		return false
+	}
 
-	return globalResult || localResult, nil
+	runes = []rune(asciiVer)
+	if r.GlobalBlacklist.Match(runes) || r.Blacklist.Match(runes) {
+		return true
+	}
+
+	// No funny words
+	return false
 }
 
 // Broadcast broadcasts a message to all clients in the room.

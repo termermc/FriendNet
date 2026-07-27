@@ -415,15 +415,6 @@ func (l LogicImpl) OnSearch(ctx context.Context, client *Client, bidi protocol.P
 		return bidi.WriteError(pb.ErrType_ERR_TYPE_INVALID_FIELDS, "query cannot be empty")
 	}
 
-	matches, err := client.Room.MatchToBlacklists(msg.Payload.Query)
-	if err != nil {
-		return bidi.WriteError(pb.ErrType_ERR_TYPE_INVALID_FIELDS, "keyword filter error")
-	}
-
-	if matches {
-		return bidi.WriteError(pb.ErrType_ERR_TYPE_INVALID_FIELDS, "query contains blacklisted keywords")
-	}
-
 	clients := client.Room.GetAllClients()
 
 	resChan := make(chan *pb.MsgSearchRoomResult, 100)
@@ -474,6 +465,14 @@ func (l LogicImpl) OnSearch(ctx context.Context, client *Client, bidi protocol.P
 							"error", nextErr,
 						)
 						return
+					}
+
+					filterStr := next.DirectoryPath + "/" + next.File.Name
+					matches := c.Room.MatchToBlacklists(filterStr)
+
+					// This path+file matched the blacklist
+					if matches {
+						continue
 					}
 
 					select {

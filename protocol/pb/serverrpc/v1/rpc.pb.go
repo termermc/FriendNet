@@ -21,6 +21,58 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// BlacklistMatchMode are the possible modes for matching a word in a blacklist.
+type BlacklistMatchMode int32
+
+const (
+	BlacklistMatchMode_BLACKLIST_MATCH_MODE_UNSPECIFIED BlacklistMatchMode = 0
+	// Matches any substring of the word.
+	BlacklistMatchMode_BLACKLIST_MATCH_MODE_SUBSTRING BlacklistMatchMode = 1
+	// Matches only whole words that match.
+	BlacklistMatchMode_BLACKLIST_MATCH_MODE_WHOLE BlacklistMatchMode = 2
+)
+
+// Enum value maps for BlacklistMatchMode.
+var (
+	BlacklistMatchMode_name = map[int32]string{
+		0: "BLACKLIST_MATCH_MODE_UNSPECIFIED",
+		1: "BLACKLIST_MATCH_MODE_SUBSTRING",
+		2: "BLACKLIST_MATCH_MODE_WHOLE",
+	}
+	BlacklistMatchMode_value = map[string]int32{
+		"BLACKLIST_MATCH_MODE_UNSPECIFIED": 0,
+		"BLACKLIST_MATCH_MODE_SUBSTRING":   1,
+		"BLACKLIST_MATCH_MODE_WHOLE":       2,
+	}
+)
+
+func (x BlacklistMatchMode) Enum() *BlacklistMatchMode {
+	p := new(BlacklistMatchMode)
+	*p = x
+	return p
+}
+
+func (x BlacklistMatchMode) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (BlacklistMatchMode) Descriptor() protoreflect.EnumDescriptor {
+	return file_pb_serverrpc_v1_rpc_proto_enumTypes[0].Descriptor()
+}
+
+func (BlacklistMatchMode) Type() protoreflect.EnumType {
+	return &file_pb_serverrpc_v1_rpc_proto_enumTypes[0]
+}
+
+func (x BlacklistMatchMode) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use BlacklistMatchMode.Descriptor instead.
+func (BlacklistMatchMode) EnumDescriptor() ([]byte, []int) {
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{0}
+}
+
 // RoomInfo is information about a room.
 type RoomInfo struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -1193,29 +1245,31 @@ func (x *UpdateAccountPasswordResponse) GetGeneratedPassword() string {
 	return ""
 }
 
-type AddBlacklistedKeywordRequest struct {
+// BlacklistPolicy is a word and the policy for how it will be enforced in a blacklist.
+type BlacklistPolicy struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Room to enforce this policy. If null, then it is enforced serverwide.
-	Room          *string `protobuf:"bytes,1,opt,name=room,proto3,oneof" json:"room,omitempty"`
-	Keyword       string  `protobuf:"bytes,2,opt,name=keyword,proto3" json:"keyword,omitempty"`
+	// The keyword.
+	Keyword string `protobuf:"bytes,1,opt,name=keyword,proto3" json:"keyword,omitempty"`
+	// How the keyword will be matched.
+	Mode          BlacklistMatchMode `protobuf:"varint,2,opt,name=mode,proto3,enum=pb.serverrpc.v1.BlacklistMatchMode" json:"mode,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *AddBlacklistedKeywordRequest) Reset() {
-	*x = AddBlacklistedKeywordRequest{}
+func (x *BlacklistPolicy) Reset() {
+	*x = BlacklistPolicy{}
 	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AddBlacklistedKeywordRequest) String() string {
+func (x *BlacklistPolicy) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AddBlacklistedKeywordRequest) ProtoMessage() {}
+func (*BlacklistPolicy) ProtoMessage() {}
 
-func (x *AddBlacklistedKeywordRequest) ProtoReflect() protoreflect.Message {
+func (x *BlacklistPolicy) ProtoReflect() protoreflect.Message {
 	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1227,45 +1281,49 @@ func (x *AddBlacklistedKeywordRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AddBlacklistedKeywordRequest.ProtoReflect.Descriptor instead.
-func (*AddBlacklistedKeywordRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use BlacklistPolicy.ProtoReflect.Descriptor instead.
+func (*BlacklistPolicy) Descriptor() ([]byte, []int) {
 	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{25}
 }
 
-func (x *AddBlacklistedKeywordRequest) GetRoom() string {
-	if x != nil && x.Room != nil {
-		return *x.Room
-	}
-	return ""
-}
-
-func (x *AddBlacklistedKeywordRequest) GetKeyword() string {
+func (x *BlacklistPolicy) GetKeyword() string {
 	if x != nil {
 		return x.Keyword
 	}
 	return ""
 }
 
-type AddBlacklistedKeywordResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
+func (x *BlacklistPolicy) GetMode() BlacklistMatchMode {
+	if x != nil {
+		return x.Mode
+	}
+	return BlacklistMatchMode_BLACKLIST_MATCH_MODE_UNSPECIFIED
+}
+
+type AddBlacklistPoliciesRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Room to enforce this policy. If null, then it is enforced serverwide.
+	Room *string `protobuf:"bytes,1,opt,name=room,proto3,oneof" json:"room,omitempty"`
+	// The policies to add.
+	Policies      []*BlacklistPolicy `protobuf:"bytes,2,rep,name=policies,proto3" json:"policies,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *AddBlacklistedKeywordResponse) Reset() {
-	*x = AddBlacklistedKeywordResponse{}
+func (x *AddBlacklistPoliciesRequest) Reset() {
+	*x = AddBlacklistPoliciesRequest{}
 	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AddBlacklistedKeywordResponse) String() string {
+func (x *AddBlacklistPoliciesRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AddBlacklistedKeywordResponse) ProtoMessage() {}
+func (*AddBlacklistPoliciesRequest) ProtoMessage() {}
 
-func (x *AddBlacklistedKeywordResponse) ProtoReflect() protoreflect.Message {
+func (x *AddBlacklistPoliciesRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1277,34 +1335,45 @@ func (x *AddBlacklistedKeywordResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AddBlacklistedKeywordResponse.ProtoReflect.Descriptor instead.
-func (*AddBlacklistedKeywordResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use AddBlacklistPoliciesRequest.ProtoReflect.Descriptor instead.
+func (*AddBlacklistPoliciesRequest) Descriptor() ([]byte, []int) {
 	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{26}
 }
 
-type RemoveBlacklistedKeywordRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Room in which this policy is enforced. If null, it is assumed to be serverwide.
-	Room          *string `protobuf:"bytes,1,opt,name=room,proto3,oneof" json:"room,omitempty"`
-	Keyword       string  `protobuf:"bytes,2,opt,name=keyword,proto3" json:"keyword,omitempty"`
+func (x *AddBlacklistPoliciesRequest) GetRoom() string {
+	if x != nil && x.Room != nil {
+		return *x.Room
+	}
+	return ""
+}
+
+func (x *AddBlacklistPoliciesRequest) GetPolicies() []*BlacklistPolicy {
+	if x != nil {
+		return x.Policies
+	}
+	return nil
+}
+
+type AddBlacklistPoliciesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *RemoveBlacklistedKeywordRequest) Reset() {
-	*x = RemoveBlacklistedKeywordRequest{}
+func (x *AddBlacklistPoliciesResponse) Reset() {
+	*x = AddBlacklistPoliciesResponse{}
 	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RemoveBlacklistedKeywordRequest) String() string {
+func (x *AddBlacklistPoliciesResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RemoveBlacklistedKeywordRequest) ProtoMessage() {}
+func (*AddBlacklistPoliciesResponse) ProtoMessage() {}
 
-func (x *RemoveBlacklistedKeywordRequest) ProtoReflect() protoreflect.Message {
+func (x *AddBlacklistPoliciesResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1316,45 +1385,35 @@ func (x *RemoveBlacklistedKeywordRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RemoveBlacklistedKeywordRequest.ProtoReflect.Descriptor instead.
-func (*RemoveBlacklistedKeywordRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use AddBlacklistPoliciesResponse.ProtoReflect.Descriptor instead.
+func (*AddBlacklistPoliciesResponse) Descriptor() ([]byte, []int) {
 	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{27}
 }
 
-func (x *RemoveBlacklistedKeywordRequest) GetRoom() string {
-	if x != nil && x.Room != nil {
-		return *x.Room
-	}
-	return ""
-}
-
-func (x *RemoveBlacklistedKeywordRequest) GetKeyword() string {
-	if x != nil {
-		return x.Keyword
-	}
-	return ""
-}
-
-type RemoveBlacklistedKeywordResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
+type RemoveBlacklistPoliciesRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Room in which this policy is enforced. If null, it is assumed to be serverwide.
+	Room *string `protobuf:"bytes,1,opt,name=room,proto3,oneof" json:"room,omitempty"`
+	// The policies to remove (identified by their keywords).
+	Policies      []string `protobuf:"bytes,2,rep,name=policies,proto3" json:"policies,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *RemoveBlacklistedKeywordResponse) Reset() {
-	*x = RemoveBlacklistedKeywordResponse{}
+func (x *RemoveBlacklistPoliciesRequest) Reset() {
+	*x = RemoveBlacklistPoliciesRequest{}
 	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RemoveBlacklistedKeywordResponse) String() string {
+func (x *RemoveBlacklistPoliciesRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RemoveBlacklistedKeywordResponse) ProtoMessage() {}
+func (*RemoveBlacklistPoliciesRequest) ProtoMessage() {}
 
-func (x *RemoveBlacklistedKeywordResponse) ProtoReflect() protoreflect.Message {
+func (x *RemoveBlacklistPoliciesRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1366,34 +1425,84 @@ func (x *RemoveBlacklistedKeywordResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RemoveBlacklistedKeywordResponse.ProtoReflect.Descriptor instead.
-func (*RemoveBlacklistedKeywordResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use RemoveBlacklistPoliciesRequest.ProtoReflect.Descriptor instead.
+func (*RemoveBlacklistPoliciesRequest) Descriptor() ([]byte, []int) {
 	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{28}
 }
 
-type ListBlacklistedKeywordsRequest struct {
+func (x *RemoveBlacklistPoliciesRequest) GetRoom() string {
+	if x != nil && x.Room != nil {
+		return *x.Room
+	}
+	return ""
+}
+
+func (x *RemoveBlacklistPoliciesRequest) GetPolicies() []string {
+	if x != nil {
+		return x.Policies
+	}
+	return nil
+}
+
+type RemoveBlacklistPoliciesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RemoveBlacklistPoliciesResponse) Reset() {
+	*x = RemoveBlacklistPoliciesResponse{}
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RemoveBlacklistPoliciesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoveBlacklistPoliciesResponse) ProtoMessage() {}
+
+func (x *RemoveBlacklistPoliciesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoveBlacklistPoliciesResponse.ProtoReflect.Descriptor instead.
+func (*RemoveBlacklistPoliciesResponse) Descriptor() ([]byte, []int) {
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{29}
+}
+
+type ListBlacklistPoliciesRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// If null, it is assumed to be for serverwide policies.
+	// If null, it will return only global policies.
 	Room          *string `protobuf:"bytes,1,opt,name=room,proto3,oneof" json:"room,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListBlacklistedKeywordsRequest) Reset() {
-	*x = ListBlacklistedKeywordsRequest{}
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[29]
+func (x *ListBlacklistPoliciesRequest) Reset() {
+	*x = ListBlacklistPoliciesRequest{}
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListBlacklistedKeywordsRequest) String() string {
+func (x *ListBlacklistPoliciesRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListBlacklistedKeywordsRequest) ProtoMessage() {}
+func (*ListBlacklistPoliciesRequest) ProtoMessage() {}
 
-func (x *ListBlacklistedKeywordsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[29]
+func (x *ListBlacklistPoliciesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1404,40 +1513,41 @@ func (x *ListBlacklistedKeywordsRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListBlacklistedKeywordsRequest.ProtoReflect.Descriptor instead.
-func (*ListBlacklistedKeywordsRequest) Descriptor() ([]byte, []int) {
-	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{29}
+// Deprecated: Use ListBlacklistPoliciesRequest.ProtoReflect.Descriptor instead.
+func (*ListBlacklistPoliciesRequest) Descriptor() ([]byte, []int) {
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{30}
 }
 
-func (x *ListBlacklistedKeywordsRequest) GetRoom() string {
+func (x *ListBlacklistPoliciesRequest) GetRoom() string {
 	if x != nil && x.Room != nil {
 		return *x.Room
 	}
 	return ""
 }
 
-type ListBlacklistedKeywordsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Keywords      []string               `protobuf:"bytes,1,rep,name=keywords,proto3" json:"keywords,omitempty"`
+type ListBlacklistPoliciesResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The policies.
+	Policies      []*BlacklistPolicy `protobuf:"bytes,1,rep,name=policies,proto3" json:"policies,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListBlacklistedKeywordsResponse) Reset() {
-	*x = ListBlacklistedKeywordsResponse{}
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[30]
+func (x *ListBlacklistPoliciesResponse) Reset() {
+	*x = ListBlacklistPoliciesResponse{}
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListBlacklistedKeywordsResponse) String() string {
+func (x *ListBlacklistPoliciesResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListBlacklistedKeywordsResponse) ProtoMessage() {}
+func (*ListBlacklistPoliciesResponse) ProtoMessage() {}
 
-func (x *ListBlacklistedKeywordsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[30]
+func (x *ListBlacklistPoliciesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1448,14 +1558,14 @@ func (x *ListBlacklistedKeywordsResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListBlacklistedKeywordsResponse.ProtoReflect.Descriptor instead.
-func (*ListBlacklistedKeywordsResponse) Descriptor() ([]byte, []int) {
-	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{30}
+// Deprecated: Use ListBlacklistPoliciesResponse.ProtoReflect.Descriptor instead.
+func (*ListBlacklistPoliciesResponse) Descriptor() ([]byte, []int) {
+	return file_pb_serverrpc_v1_rpc_proto_rawDescGZIP(), []int{31}
 }
 
-func (x *ListBlacklistedKeywordsResponse) GetKeywords() []string {
+func (x *ListBlacklistPoliciesResponse) GetPolicies() []*BlacklistPolicy {
 	if x != nil {
-		return x.Keywords
+		return x.Policies
 	}
 	return nil
 }
@@ -1473,7 +1583,7 @@ type GetServerInfoResponse_Rpc struct {
 
 func (x *GetServerInfoResponse_Rpc) Reset() {
 	*x = GetServerInfoResponse_Rpc{}
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[31]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1485,7 +1595,7 @@ func (x *GetServerInfoResponse_Rpc) String() string {
 func (*GetServerInfoResponse_Rpc) ProtoMessage() {}
 
 func (x *GetServerInfoResponse_Rpc) ProtoReflect() protoreflect.Message {
-	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[31]
+	mi := &file_pb_serverrpc_v1_rpc_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1579,22 +1689,29 @@ const file_pb_serverrpc_v1_rpc_proto_rawDesc = "" +
 	"\bpassword\x18\x03 \x01(\tR\bpassword\"j\n" +
 	"\x1dUpdateAccountPasswordResponse\x122\n" +
 	"\x12generated_password\x18\x01 \x01(\tH\x00R\x11generatedPassword\x88\x01\x01B\x15\n" +
-	"\x13_generated_password\"Z\n" +
-	"\x1cAddBlacklistedKeywordRequest\x12\x17\n" +
-	"\x04room\x18\x01 \x01(\tH\x00R\x04room\x88\x01\x01\x12\x18\n" +
-	"\akeyword\x18\x02 \x01(\tR\akeywordB\a\n" +
-	"\x05_room\"\x1f\n" +
-	"\x1dAddBlacklistedKeywordResponse\"]\n" +
-	"\x1fRemoveBlacklistedKeywordRequest\x12\x17\n" +
-	"\x04room\x18\x01 \x01(\tH\x00R\x04room\x88\x01\x01\x12\x18\n" +
-	"\akeyword\x18\x02 \x01(\tR\akeywordB\a\n" +
-	"\x05_room\"\"\n" +
-	" RemoveBlacklistedKeywordResponse\"B\n" +
-	"\x1eListBlacklistedKeywordsRequest\x12\x17\n" +
+	"\x13_generated_password\"d\n" +
+	"\x0fBlacklistPolicy\x12\x18\n" +
+	"\akeyword\x18\x01 \x01(\tR\akeyword\x127\n" +
+	"\x04mode\x18\x02 \x01(\x0e2#.pb.serverrpc.v1.BlacklistMatchModeR\x04mode\"}\n" +
+	"\x1bAddBlacklistPoliciesRequest\x12\x17\n" +
+	"\x04room\x18\x01 \x01(\tH\x00R\x04room\x88\x01\x01\x12<\n" +
+	"\bpolicies\x18\x02 \x03(\v2 .pb.serverrpc.v1.BlacklistPolicyR\bpoliciesB\a\n" +
+	"\x05_room\"\x1e\n" +
+	"\x1cAddBlacklistPoliciesResponse\"^\n" +
+	"\x1eRemoveBlacklistPoliciesRequest\x12\x17\n" +
+	"\x04room\x18\x01 \x01(\tH\x00R\x04room\x88\x01\x01\x12\x1a\n" +
+	"\bpolicies\x18\x02 \x03(\tR\bpoliciesB\a\n" +
+	"\x05_room\"!\n" +
+	"\x1fRemoveBlacklistPoliciesResponse\"@\n" +
+	"\x1cListBlacklistPoliciesRequest\x12\x17\n" +
 	"\x04room\x18\x01 \x01(\tH\x00R\x04room\x88\x01\x01B\a\n" +
-	"\x05_room\"=\n" +
-	"\x1fListBlacklistedKeywordsResponse\x12\x1a\n" +
-	"\bkeywords\x18\x01 \x03(\tR\bkeywords2\xc2\v\n" +
+	"\x05_room\"]\n" +
+	"\x1dListBlacklistPoliciesResponse\x12<\n" +
+	"\bpolicies\x18\x01 \x03(\v2 .pb.serverrpc.v1.BlacklistPolicyR\bpolicies*~\n" +
+	"\x12BlacklistMatchMode\x12$\n" +
+	" BLACKLIST_MATCH_MODE_UNSPECIFIED\x10\x00\x12\"\n" +
+	"\x1eBLACKLIST_MATCH_MODE_SUBSTRING\x10\x01\x12\x1e\n" +
+	"\x1aBLACKLIST_MATCH_MODE_WHOLE\x10\x022\xb5\v\n" +
 	"\x10ServerRpcService\x12`\n" +
 	"\rGetServerInfo\x12%.pb.serverrpc.v1.GetServerInfoRequest\x1a&.pb.serverrpc.v1.GetServerInfoResponse\"\x00\x12Q\n" +
 	"\bGetRooms\x12 .pb.serverrpc.v1.GetRoomsRequest\x1a!.pb.serverrpc.v1.GetRoomsResponse\"\x00\x12Z\n" +
@@ -1608,10 +1725,10 @@ const file_pb_serverrpc_v1_rpc_proto_rawDesc = "" +
 	"DeleteRoom\x12\".pb.serverrpc.v1.DeleteRoomRequest\x1a#.pb.serverrpc.v1.DeleteRoomResponse\"\x00\x12`\n" +
 	"\rCreateAccount\x12%.pb.serverrpc.v1.CreateAccountRequest\x1a&.pb.serverrpc.v1.CreateAccountResponse\"\x00\x12`\n" +
 	"\rDeleteAccount\x12%.pb.serverrpc.v1.DeleteAccountRequest\x1a&.pb.serverrpc.v1.DeleteAccountResponse\"\x00\x12x\n" +
-	"\x15UpdateAccountPassword\x12-.pb.serverrpc.v1.UpdateAccountPasswordRequest\x1a..pb.serverrpc.v1.UpdateAccountPasswordResponse\"\x00\x12x\n" +
-	"\x15AddBlacklistedKeyword\x12-.pb.serverrpc.v1.AddBlacklistedKeywordRequest\x1a..pb.serverrpc.v1.AddBlacklistedKeywordResponse\"\x00\x12\x81\x01\n" +
-	"\x18RemoveBlacklistedKeyword\x120.pb.serverrpc.v1.RemoveBlacklistedKeywordRequest\x1a1.pb.serverrpc.v1.RemoveBlacklistedKeywordResponse\"\x00\x12~\n" +
-	"\x17ListBlacklistedKeywords\x12/.pb.serverrpc.v1.ListBlacklistedKeywordsRequest\x1a0.pb.serverrpc.v1.ListBlacklistedKeywordsResponse\"\x00B\xb1\x01\n" +
+	"\x15UpdateAccountPassword\x12-.pb.serverrpc.v1.UpdateAccountPasswordRequest\x1a..pb.serverrpc.v1.UpdateAccountPasswordResponse\"\x00\x12u\n" +
+	"\x14AddBlacklistPolicies\x12,.pb.serverrpc.v1.AddBlacklistPoliciesRequest\x1a-.pb.serverrpc.v1.AddBlacklistPoliciesResponse\"\x00\x12~\n" +
+	"\x17RemoveBlacklistPolicies\x12/.pb.serverrpc.v1.RemoveBlacklistPoliciesRequest\x1a0.pb.serverrpc.v1.RemoveBlacklistPoliciesResponse\"\x00\x12x\n" +
+	"\x15ListBlacklistPolicies\x12-.pb.serverrpc.v1.ListBlacklistPoliciesRequest\x1a..pb.serverrpc.v1.ListBlacklistPoliciesResponse\"\x00B\xb1\x01\n" +
 	"\x13com.pb.serverrpc.v1B\bRpcProtoP\x01Z2friendnet.org/protocol/pb/serverrpc/v1;serverrpcv1\xa2\x02\x03PSX\xaa\x02\x0fPb.Serverrpc.V1\xca\x02\x0fPb\\Serverrpc\\V1\xe2\x02\x1bPb\\Serverrpc\\V1\\GPBMetadata\xea\x02\x11Pb::Serverrpc::V1b\x06proto3"
 
 var (
@@ -1626,83 +1743,89 @@ func file_pb_serverrpc_v1_rpc_proto_rawDescGZIP() []byte {
 	return file_pb_serverrpc_v1_rpc_proto_rawDescData
 }
 
-var file_pb_serverrpc_v1_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
+var file_pb_serverrpc_v1_rpc_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_pb_serverrpc_v1_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
 var file_pb_serverrpc_v1_rpc_proto_goTypes = []any{
-	(*RoomInfo)(nil),                         // 0: pb.serverrpc.v1.RoomInfo
-	(*OnlineUserInfo)(nil),                   // 1: pb.serverrpc.v1.OnlineUserInfo
-	(*AccountInfo)(nil),                      // 2: pb.serverrpc.v1.AccountInfo
-	(*GetServerInfoRequest)(nil),             // 3: pb.serverrpc.v1.GetServerInfoRequest
-	(*GetServerInfoResponse)(nil),            // 4: pb.serverrpc.v1.GetServerInfoResponse
-	(*GetRoomsRequest)(nil),                  // 5: pb.serverrpc.v1.GetRoomsRequest
-	(*GetRoomsResponse)(nil),                 // 6: pb.serverrpc.v1.GetRoomsResponse
-	(*GetRoomInfoRequest)(nil),               // 7: pb.serverrpc.v1.GetRoomInfoRequest
-	(*GetRoomInfoResponse)(nil),              // 8: pb.serverrpc.v1.GetRoomInfoResponse
-	(*GetOnlineUsersRequest)(nil),            // 9: pb.serverrpc.v1.GetOnlineUsersRequest
-	(*GetOnlineUsersResponse)(nil),           // 10: pb.serverrpc.v1.GetOnlineUsersResponse
-	(*GetOnlineUserInfoRequest)(nil),         // 11: pb.serverrpc.v1.GetOnlineUserInfoRequest
-	(*GetOnlineUserInfoResponse)(nil),        // 12: pb.serverrpc.v1.GetOnlineUserInfoResponse
-	(*GetAccountsRequest)(nil),               // 13: pb.serverrpc.v1.GetAccountsRequest
-	(*GetAccountsResponse)(nil),              // 14: pb.serverrpc.v1.GetAccountsResponse
-	(*CreateRoomRequest)(nil),                // 15: pb.serverrpc.v1.CreateRoomRequest
-	(*CreateRoomResponse)(nil),               // 16: pb.serverrpc.v1.CreateRoomResponse
-	(*DeleteRoomRequest)(nil),                // 17: pb.serverrpc.v1.DeleteRoomRequest
-	(*DeleteRoomResponse)(nil),               // 18: pb.serverrpc.v1.DeleteRoomResponse
-	(*CreateAccountRequest)(nil),             // 19: pb.serverrpc.v1.CreateAccountRequest
-	(*CreateAccountResponse)(nil),            // 20: pb.serverrpc.v1.CreateAccountResponse
-	(*DeleteAccountRequest)(nil),             // 21: pb.serverrpc.v1.DeleteAccountRequest
-	(*DeleteAccountResponse)(nil),            // 22: pb.serverrpc.v1.DeleteAccountResponse
-	(*UpdateAccountPasswordRequest)(nil),     // 23: pb.serverrpc.v1.UpdateAccountPasswordRequest
-	(*UpdateAccountPasswordResponse)(nil),    // 24: pb.serverrpc.v1.UpdateAccountPasswordResponse
-	(*AddBlacklistedKeywordRequest)(nil),     // 25: pb.serverrpc.v1.AddBlacklistedKeywordRequest
-	(*AddBlacklistedKeywordResponse)(nil),    // 26: pb.serverrpc.v1.AddBlacklistedKeywordResponse
-	(*RemoveBlacklistedKeywordRequest)(nil),  // 27: pb.serverrpc.v1.RemoveBlacklistedKeywordRequest
-	(*RemoveBlacklistedKeywordResponse)(nil), // 28: pb.serverrpc.v1.RemoveBlacklistedKeywordResponse
-	(*ListBlacklistedKeywordsRequest)(nil),   // 29: pb.serverrpc.v1.ListBlacklistedKeywordsRequest
-	(*ListBlacklistedKeywordsResponse)(nil),  // 30: pb.serverrpc.v1.ListBlacklistedKeywordsResponse
-	(*GetServerInfoResponse_Rpc)(nil),        // 31: pb.serverrpc.v1.GetServerInfoResponse.Rpc
+	(BlacklistMatchMode)(0),                 // 0: pb.serverrpc.v1.BlacklistMatchMode
+	(*RoomInfo)(nil),                        // 1: pb.serverrpc.v1.RoomInfo
+	(*OnlineUserInfo)(nil),                  // 2: pb.serverrpc.v1.OnlineUserInfo
+	(*AccountInfo)(nil),                     // 3: pb.serverrpc.v1.AccountInfo
+	(*GetServerInfoRequest)(nil),            // 4: pb.serverrpc.v1.GetServerInfoRequest
+	(*GetServerInfoResponse)(nil),           // 5: pb.serverrpc.v1.GetServerInfoResponse
+	(*GetRoomsRequest)(nil),                 // 6: pb.serverrpc.v1.GetRoomsRequest
+	(*GetRoomsResponse)(nil),                // 7: pb.serverrpc.v1.GetRoomsResponse
+	(*GetRoomInfoRequest)(nil),              // 8: pb.serverrpc.v1.GetRoomInfoRequest
+	(*GetRoomInfoResponse)(nil),             // 9: pb.serverrpc.v1.GetRoomInfoResponse
+	(*GetOnlineUsersRequest)(nil),           // 10: pb.serverrpc.v1.GetOnlineUsersRequest
+	(*GetOnlineUsersResponse)(nil),          // 11: pb.serverrpc.v1.GetOnlineUsersResponse
+	(*GetOnlineUserInfoRequest)(nil),        // 12: pb.serverrpc.v1.GetOnlineUserInfoRequest
+	(*GetOnlineUserInfoResponse)(nil),       // 13: pb.serverrpc.v1.GetOnlineUserInfoResponse
+	(*GetAccountsRequest)(nil),              // 14: pb.serverrpc.v1.GetAccountsRequest
+	(*GetAccountsResponse)(nil),             // 15: pb.serverrpc.v1.GetAccountsResponse
+	(*CreateRoomRequest)(nil),               // 16: pb.serverrpc.v1.CreateRoomRequest
+	(*CreateRoomResponse)(nil),              // 17: pb.serverrpc.v1.CreateRoomResponse
+	(*DeleteRoomRequest)(nil),               // 18: pb.serverrpc.v1.DeleteRoomRequest
+	(*DeleteRoomResponse)(nil),              // 19: pb.serverrpc.v1.DeleteRoomResponse
+	(*CreateAccountRequest)(nil),            // 20: pb.serverrpc.v1.CreateAccountRequest
+	(*CreateAccountResponse)(nil),           // 21: pb.serverrpc.v1.CreateAccountResponse
+	(*DeleteAccountRequest)(nil),            // 22: pb.serverrpc.v1.DeleteAccountRequest
+	(*DeleteAccountResponse)(nil),           // 23: pb.serverrpc.v1.DeleteAccountResponse
+	(*UpdateAccountPasswordRequest)(nil),    // 24: pb.serverrpc.v1.UpdateAccountPasswordRequest
+	(*UpdateAccountPasswordResponse)(nil),   // 25: pb.serverrpc.v1.UpdateAccountPasswordResponse
+	(*BlacklistPolicy)(nil),                 // 26: pb.serverrpc.v1.BlacklistPolicy
+	(*AddBlacklistPoliciesRequest)(nil),     // 27: pb.serverrpc.v1.AddBlacklistPoliciesRequest
+	(*AddBlacklistPoliciesResponse)(nil),    // 28: pb.serverrpc.v1.AddBlacklistPoliciesResponse
+	(*RemoveBlacklistPoliciesRequest)(nil),  // 29: pb.serverrpc.v1.RemoveBlacklistPoliciesRequest
+	(*RemoveBlacklistPoliciesResponse)(nil), // 30: pb.serverrpc.v1.RemoveBlacklistPoliciesResponse
+	(*ListBlacklistPoliciesRequest)(nil),    // 31: pb.serverrpc.v1.ListBlacklistPoliciesRequest
+	(*ListBlacklistPoliciesResponse)(nil),   // 32: pb.serverrpc.v1.ListBlacklistPoliciesResponse
+	(*GetServerInfoResponse_Rpc)(nil),       // 33: pb.serverrpc.v1.GetServerInfoResponse.Rpc
 }
 var file_pb_serverrpc_v1_rpc_proto_depIdxs = []int32{
-	31, // 0: pb.serverrpc.v1.GetServerInfoResponse.rpc:type_name -> pb.serverrpc.v1.GetServerInfoResponse.Rpc
-	0,  // 1: pb.serverrpc.v1.GetRoomsResponse.rooms:type_name -> pb.serverrpc.v1.RoomInfo
-	0,  // 2: pb.serverrpc.v1.GetRoomInfoResponse.room:type_name -> pb.serverrpc.v1.RoomInfo
-	1,  // 3: pb.serverrpc.v1.GetOnlineUsersResponse.users:type_name -> pb.serverrpc.v1.OnlineUserInfo
-	1,  // 4: pb.serverrpc.v1.GetOnlineUserInfoResponse.user:type_name -> pb.serverrpc.v1.OnlineUserInfo
-	2,  // 5: pb.serverrpc.v1.GetAccountsResponse.accounts:type_name -> pb.serverrpc.v1.AccountInfo
-	0,  // 6: pb.serverrpc.v1.CreateRoomResponse.room:type_name -> pb.serverrpc.v1.RoomInfo
-	2,  // 7: pb.serverrpc.v1.CreateAccountResponse.account:type_name -> pb.serverrpc.v1.AccountInfo
-	3,  // 8: pb.serverrpc.v1.ServerRpcService.GetServerInfo:input_type -> pb.serverrpc.v1.GetServerInfoRequest
-	5,  // 9: pb.serverrpc.v1.ServerRpcService.GetRooms:input_type -> pb.serverrpc.v1.GetRoomsRequest
-	7,  // 10: pb.serverrpc.v1.ServerRpcService.GetRoomInfo:input_type -> pb.serverrpc.v1.GetRoomInfoRequest
-	9,  // 11: pb.serverrpc.v1.ServerRpcService.GetOnlineUsers:input_type -> pb.serverrpc.v1.GetOnlineUsersRequest
-	11, // 12: pb.serverrpc.v1.ServerRpcService.GetOnlineUserInfo:input_type -> pb.serverrpc.v1.GetOnlineUserInfoRequest
-	13, // 13: pb.serverrpc.v1.ServerRpcService.GetAccounts:input_type -> pb.serverrpc.v1.GetAccountsRequest
-	15, // 14: pb.serverrpc.v1.ServerRpcService.CreateRoom:input_type -> pb.serverrpc.v1.CreateRoomRequest
-	17, // 15: pb.serverrpc.v1.ServerRpcService.DeleteRoom:input_type -> pb.serverrpc.v1.DeleteRoomRequest
-	19, // 16: pb.serverrpc.v1.ServerRpcService.CreateAccount:input_type -> pb.serverrpc.v1.CreateAccountRequest
-	21, // 17: pb.serverrpc.v1.ServerRpcService.DeleteAccount:input_type -> pb.serverrpc.v1.DeleteAccountRequest
-	23, // 18: pb.serverrpc.v1.ServerRpcService.UpdateAccountPassword:input_type -> pb.serverrpc.v1.UpdateAccountPasswordRequest
-	25, // 19: pb.serverrpc.v1.ServerRpcService.AddBlacklistedKeyword:input_type -> pb.serverrpc.v1.AddBlacklistedKeywordRequest
-	27, // 20: pb.serverrpc.v1.ServerRpcService.RemoveBlacklistedKeyword:input_type -> pb.serverrpc.v1.RemoveBlacklistedKeywordRequest
-	29, // 21: pb.serverrpc.v1.ServerRpcService.ListBlacklistedKeywords:input_type -> pb.serverrpc.v1.ListBlacklistedKeywordsRequest
-	4,  // 22: pb.serverrpc.v1.ServerRpcService.GetServerInfo:output_type -> pb.serverrpc.v1.GetServerInfoResponse
-	6,  // 23: pb.serverrpc.v1.ServerRpcService.GetRooms:output_type -> pb.serverrpc.v1.GetRoomsResponse
-	8,  // 24: pb.serverrpc.v1.ServerRpcService.GetRoomInfo:output_type -> pb.serverrpc.v1.GetRoomInfoResponse
-	10, // 25: pb.serverrpc.v1.ServerRpcService.GetOnlineUsers:output_type -> pb.serverrpc.v1.GetOnlineUsersResponse
-	12, // 26: pb.serverrpc.v1.ServerRpcService.GetOnlineUserInfo:output_type -> pb.serverrpc.v1.GetOnlineUserInfoResponse
-	14, // 27: pb.serverrpc.v1.ServerRpcService.GetAccounts:output_type -> pb.serverrpc.v1.GetAccountsResponse
-	16, // 28: pb.serverrpc.v1.ServerRpcService.CreateRoom:output_type -> pb.serverrpc.v1.CreateRoomResponse
-	18, // 29: pb.serverrpc.v1.ServerRpcService.DeleteRoom:output_type -> pb.serverrpc.v1.DeleteRoomResponse
-	20, // 30: pb.serverrpc.v1.ServerRpcService.CreateAccount:output_type -> pb.serverrpc.v1.CreateAccountResponse
-	22, // 31: pb.serverrpc.v1.ServerRpcService.DeleteAccount:output_type -> pb.serverrpc.v1.DeleteAccountResponse
-	24, // 32: pb.serverrpc.v1.ServerRpcService.UpdateAccountPassword:output_type -> pb.serverrpc.v1.UpdateAccountPasswordResponse
-	26, // 33: pb.serverrpc.v1.ServerRpcService.AddBlacklistedKeyword:output_type -> pb.serverrpc.v1.AddBlacklistedKeywordResponse
-	28, // 34: pb.serverrpc.v1.ServerRpcService.RemoveBlacklistedKeyword:output_type -> pb.serverrpc.v1.RemoveBlacklistedKeywordResponse
-	30, // 35: pb.serverrpc.v1.ServerRpcService.ListBlacklistedKeywords:output_type -> pb.serverrpc.v1.ListBlacklistedKeywordsResponse
-	22, // [22:36] is the sub-list for method output_type
-	8,  // [8:22] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	33, // 0: pb.serverrpc.v1.GetServerInfoResponse.rpc:type_name -> pb.serverrpc.v1.GetServerInfoResponse.Rpc
+	1,  // 1: pb.serverrpc.v1.GetRoomsResponse.rooms:type_name -> pb.serverrpc.v1.RoomInfo
+	1,  // 2: pb.serverrpc.v1.GetRoomInfoResponse.room:type_name -> pb.serverrpc.v1.RoomInfo
+	2,  // 3: pb.serverrpc.v1.GetOnlineUsersResponse.users:type_name -> pb.serverrpc.v1.OnlineUserInfo
+	2,  // 4: pb.serverrpc.v1.GetOnlineUserInfoResponse.user:type_name -> pb.serverrpc.v1.OnlineUserInfo
+	3,  // 5: pb.serverrpc.v1.GetAccountsResponse.accounts:type_name -> pb.serverrpc.v1.AccountInfo
+	1,  // 6: pb.serverrpc.v1.CreateRoomResponse.room:type_name -> pb.serverrpc.v1.RoomInfo
+	3,  // 7: pb.serverrpc.v1.CreateAccountResponse.account:type_name -> pb.serverrpc.v1.AccountInfo
+	0,  // 8: pb.serverrpc.v1.BlacklistPolicy.mode:type_name -> pb.serverrpc.v1.BlacklistMatchMode
+	26, // 9: pb.serverrpc.v1.AddBlacklistPoliciesRequest.policies:type_name -> pb.serverrpc.v1.BlacklistPolicy
+	26, // 10: pb.serverrpc.v1.ListBlacklistPoliciesResponse.policies:type_name -> pb.serverrpc.v1.BlacklistPolicy
+	4,  // 11: pb.serverrpc.v1.ServerRpcService.GetServerInfo:input_type -> pb.serverrpc.v1.GetServerInfoRequest
+	6,  // 12: pb.serverrpc.v1.ServerRpcService.GetRooms:input_type -> pb.serverrpc.v1.GetRoomsRequest
+	8,  // 13: pb.serverrpc.v1.ServerRpcService.GetRoomInfo:input_type -> pb.serverrpc.v1.GetRoomInfoRequest
+	10, // 14: pb.serverrpc.v1.ServerRpcService.GetOnlineUsers:input_type -> pb.serverrpc.v1.GetOnlineUsersRequest
+	12, // 15: pb.serverrpc.v1.ServerRpcService.GetOnlineUserInfo:input_type -> pb.serverrpc.v1.GetOnlineUserInfoRequest
+	14, // 16: pb.serverrpc.v1.ServerRpcService.GetAccounts:input_type -> pb.serverrpc.v1.GetAccountsRequest
+	16, // 17: pb.serverrpc.v1.ServerRpcService.CreateRoom:input_type -> pb.serverrpc.v1.CreateRoomRequest
+	18, // 18: pb.serverrpc.v1.ServerRpcService.DeleteRoom:input_type -> pb.serverrpc.v1.DeleteRoomRequest
+	20, // 19: pb.serverrpc.v1.ServerRpcService.CreateAccount:input_type -> pb.serverrpc.v1.CreateAccountRequest
+	22, // 20: pb.serverrpc.v1.ServerRpcService.DeleteAccount:input_type -> pb.serverrpc.v1.DeleteAccountRequest
+	24, // 21: pb.serverrpc.v1.ServerRpcService.UpdateAccountPassword:input_type -> pb.serverrpc.v1.UpdateAccountPasswordRequest
+	27, // 22: pb.serverrpc.v1.ServerRpcService.AddBlacklistPolicies:input_type -> pb.serverrpc.v1.AddBlacklistPoliciesRequest
+	29, // 23: pb.serverrpc.v1.ServerRpcService.RemoveBlacklistPolicies:input_type -> pb.serverrpc.v1.RemoveBlacklistPoliciesRequest
+	31, // 24: pb.serverrpc.v1.ServerRpcService.ListBlacklistPolicies:input_type -> pb.serverrpc.v1.ListBlacklistPoliciesRequest
+	5,  // 25: pb.serverrpc.v1.ServerRpcService.GetServerInfo:output_type -> pb.serverrpc.v1.GetServerInfoResponse
+	7,  // 26: pb.serverrpc.v1.ServerRpcService.GetRooms:output_type -> pb.serverrpc.v1.GetRoomsResponse
+	9,  // 27: pb.serverrpc.v1.ServerRpcService.GetRoomInfo:output_type -> pb.serverrpc.v1.GetRoomInfoResponse
+	11, // 28: pb.serverrpc.v1.ServerRpcService.GetOnlineUsers:output_type -> pb.serverrpc.v1.GetOnlineUsersResponse
+	13, // 29: pb.serverrpc.v1.ServerRpcService.GetOnlineUserInfo:output_type -> pb.serverrpc.v1.GetOnlineUserInfoResponse
+	15, // 30: pb.serverrpc.v1.ServerRpcService.GetAccounts:output_type -> pb.serverrpc.v1.GetAccountsResponse
+	17, // 31: pb.serverrpc.v1.ServerRpcService.CreateRoom:output_type -> pb.serverrpc.v1.CreateRoomResponse
+	19, // 32: pb.serverrpc.v1.ServerRpcService.DeleteRoom:output_type -> pb.serverrpc.v1.DeleteRoomResponse
+	21, // 33: pb.serverrpc.v1.ServerRpcService.CreateAccount:output_type -> pb.serverrpc.v1.CreateAccountResponse
+	23, // 34: pb.serverrpc.v1.ServerRpcService.DeleteAccount:output_type -> pb.serverrpc.v1.DeleteAccountResponse
+	25, // 35: pb.serverrpc.v1.ServerRpcService.UpdateAccountPassword:output_type -> pb.serverrpc.v1.UpdateAccountPasswordResponse
+	28, // 36: pb.serverrpc.v1.ServerRpcService.AddBlacklistPolicies:output_type -> pb.serverrpc.v1.AddBlacklistPoliciesResponse
+	30, // 37: pb.serverrpc.v1.ServerRpcService.RemoveBlacklistPolicies:output_type -> pb.serverrpc.v1.RemoveBlacklistPoliciesResponse
+	32, // 38: pb.serverrpc.v1.ServerRpcService.ListBlacklistPolicies:output_type -> pb.serverrpc.v1.ListBlacklistPoliciesResponse
+	25, // [25:39] is the sub-list for method output_type
+	11, // [11:25] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_pb_serverrpc_v1_rpc_proto_init() }
@@ -1712,21 +1835,22 @@ func file_pb_serverrpc_v1_rpc_proto_init() {
 	}
 	file_pb_serverrpc_v1_rpc_proto_msgTypes[20].OneofWrappers = []any{}
 	file_pb_serverrpc_v1_rpc_proto_msgTypes[24].OneofWrappers = []any{}
-	file_pb_serverrpc_v1_rpc_proto_msgTypes[25].OneofWrappers = []any{}
-	file_pb_serverrpc_v1_rpc_proto_msgTypes[27].OneofWrappers = []any{}
-	file_pb_serverrpc_v1_rpc_proto_msgTypes[29].OneofWrappers = []any{}
+	file_pb_serverrpc_v1_rpc_proto_msgTypes[26].OneofWrappers = []any{}
+	file_pb_serverrpc_v1_rpc_proto_msgTypes[28].OneofWrappers = []any{}
+	file_pb_serverrpc_v1_rpc_proto_msgTypes[30].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pb_serverrpc_v1_rpc_proto_rawDesc), len(file_pb_serverrpc_v1_rpc_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   32,
+			NumEnums:      1,
+			NumMessages:   33,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_pb_serverrpc_v1_rpc_proto_goTypes,
 		DependencyIndexes: file_pb_serverrpc_v1_rpc_proto_depIdxs,
+		EnumInfos:         file_pb_serverrpc_v1_rpc_proto_enumTypes,
 		MessageInfos:      file_pb_serverrpc_v1_rpc_proto_msgTypes,
 	}.Build()
 	File_pb_serverrpc_v1_rpc_proto = out.File

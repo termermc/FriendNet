@@ -23,6 +23,7 @@ var errRoomExists = connect.NewError(connect.CodeAlreadyExists, errors.New("room
 var errAccountExists = connect.NewError(connect.CodeAlreadyExists, errors.New("account already exists"))
 var errInvalidRoomName = connect.NewError(connect.CodeInvalidArgument, errors.New("invalid room name"))
 var errInvalidUsername = connect.NewError(connect.CodeInvalidArgument, errors.New("invalid username"))
+var errEmptyPolicyKeyword = connect.NewError(connect.CodeInvalidArgument, room.ErrEmptyKeyword)
 
 type RpcServer struct {
 	s     *Server
@@ -322,7 +323,41 @@ func (s *RpcServer) GetServerInfo(_ context.Context, _ *v1.GetServerInfoRequest)
 	}, nil
 }
 
-func (s *RpcServer) AddBlacklistedKeyword(_ context.Context, req *v1.AddBlacklistedKeywordRequest) (*v1.AddBlacklistedKeywordResponse, error) {
+func (s *RpcServer) AddBlacklistPolicies(_ context.Context, req *v1.AddBlacklistPoliciesRequest) (*v1.AddBlacklistPoliciesResponse, error) {
+	// Room scoped policy
+	if req.Room != nil {
+		r, err := s.getRoom(req.GetRoom())
+		if err != nil {
+			return nil, errRoomNotFound
+		}
+
+		// For substring and whole word, lowercase the keyword.
+		for _, policy := range req.Policies {
+			if policy.Mode == v1.BlacklistMatchMode_BLACKLIST_MATCH_MODE_SUBSTRING || policy.Mode == v1.BlacklistMatchMode_BLACKLIST_MATCH_MODE_WHOLE {
+				policy.Keyword = common.ToLowerUnicode(policy.Keyword)
+			}
+		}
+
+		err = r.Blacklist.AddPolicies(req.Policies)
+		if err != nil {
+			if errors.Is(err, room.ErrEmptyKeyword) {
+				return nil, errEmptyPolicyKeyword
+			}
+
+			return nil, err
+		}
+	} else {
+		// Serverwide policy
+		err := s.s.RoomManager.GlobalBlacklist.AddPolicies(req.Policies)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &v1.AddBlacklistPoliciesResponse{}, nil
+}
+
+func (s *RpcServer) RemoveBlacklistPolicies(_ context.Context, req *v1.RemoveBlacklistPoliciesRequest) (*v1.RemoveBlacklistPoliciesResponse, error) {
 	// Room scoped policy
 	if req.Room != nil {
 		room, err := s.getRoom(req.GetRoom())
@@ -330,45 +365,22 @@ func (s *RpcServer) AddBlacklistedKeyword(_ context.Context, req *v1.AddBlacklis
 			return nil, errRoomNotFound
 		}
 
-		err = room.Blacklist.Add([]string{req.GetKeyword()})
+		err = room.Blacklist.Remove(req.Policies)
 		if err != nil {
 			return nil, err
 		}
 	} else {
 		// Serverwide policy
-		err := s.s.RoomManager.GlobalBlacklist.Add([]string{req.GetKeyword()})
+		err := s.s.RoomManager.GlobalBlacklist.Remove(req.Policies)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return &v1.AddBlacklistedKeywordResponse{}, nil
+	return &v1.RemoveBlacklistPoliciesResponse{}, nil
 }
 
-func (s *RpcServer) RemoveBlacklistedKeyword(_ context.Context, req *v1.RemoveBlacklistedKeywordRequest) (*v1.RemoveBlacklistedKeywordResponse, error) {
-	// Room scoped policy
-	if req.Room != nil {
-		room, err := s.getRoom(req.GetRoom())
-		if err != nil {
-			return nil, errRoomNotFound
-		}
-
-		err = room.Blacklist.Remove([]string{req.GetKeyword()})
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		// Serverwide policy
-		err := s.s.RoomManager.GlobalBlacklist.Remove([]string{req.GetKeyword()})
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return &v1.RemoveBlacklistedKeywordResponse{}, nil
-}
-
-func (s *RpcServer) ListBlacklistedKeywords(ctx context.Context, req *v1.ListBlacklistedKeywordsRequest) (*v1.ListBlacklistedKeywordsResponse, error) {
+func (s *RpcServer) ListBlacklistPolicies(ctx context.Context, req *v1.ListBlacklistPoliciesRequest) (*v1.ListBlacklistPoliciesResponse, error) {
 	room, _ := common.NormalizeRoomName(req.GetRoom())
 	if !room.IsZero() {
 		if _, err := s.getRoom(req.GetRoom()); err != nil {
@@ -376,17 +388,12 @@ func (s *RpcServer) ListBlacklistedKeywords(ctx context.Context, req *v1.ListBla
 		}
 	}
 
-	keywords, err := s.s.storage.GetBlacklistedKeywordsForRoom(ctx, room)
+	policies, err := s.s.storage.GetBlacklistPoliciesForRoom(ctx, room)
 	if err != nil {
 		return nil, err
 	}
 
-	newKeywords := make([]string, len(keywords))
-	for _, keyword := range keywords {
-		newKeywords = append(newKeywords, string(keyword))
-	}
-
-	return &v1.ListBlacklistedKeywordsResponse{
-		Keywords: newKeywords,
+	return &v1.ListBlacklistPoliciesResponse{
+		Policies: policies,
 	}, nil
 }

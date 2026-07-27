@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
@@ -9,6 +8,7 @@ import (
 	"strings"
 
 	"friendnet.org/common"
+	serverrpcv1 "friendnet.org/protocol/pb/serverrpc/v1"
 	"friendnet.org/server/storage/migration"
 	_ "modernc.org/sqlite"
 )
@@ -56,7 +56,7 @@ func NewStorage(path string) (*Storage, error) {
 
 	err = common.DoMigrations(db, []common.Migration{
 		&migration.M20260208InitialSchema{},
-		&migration.M20260723ServersideSearchBlocklist{},
+		&migration.M20260723SearchBlacklist{},
 	})
 	if err != nil {
 		return nil, fmt.Errorf(`failed to apply server database migrations: %w`, err)
@@ -256,90 +256,109 @@ func (s *Storage) DeleteAccountByRoomAndUsername(
 	return nil
 }
 
-// AddKeywordToBlacklist adds a blacklist policy for a keyword to the persistent blacklist.
-// If the room is not specified or does not exist, the policy applies serverwide.
-// If the room does not exist or the keyword is empty, this is a no-op.
-func (s *Storage) AddKeywordToBlacklist(ctx context.Context, room common.NormalizedRoomName, keyword string) error {
-	if len(keyword) == 0 {
+// AddPoliciesToBlacklist adds blacklist policies for keywords to the persistent blacklist.
+// Assumes the room is either zero or exists (must be verified by the caller).
+// If the room is not specified, the policy is added to the global blacklist.
+func (s *Storage) AddPoliciesToBlacklist(ctx context.Context, room common.NormalizedRoomName, policies []*serverrpcv1.BlacklistPolicy) error {
+	if len(policies) == 0 {
 		return nil
 	}
 
+	tx, err := s.Db.Begin()
+	if err != nil {
+		return err
+	}
+
+	var stmt *sql.Stmt
 	if room.IsZero() {
-		_, err := s.Db.ExecContext(ctx, `insert into word_blocklist (word) values (?)`, keyword)
-		if err != nil {
-			return fmt.Errorf("failed to add keyword \"%s\" to global blacklist: %w", keyword, err)
+		stmt, err = tx.PrepareContext(ctx, `insert into search_blacklist (match_mode, word) values (?, ?)`)
+
+		for _, policy := range policies {
+			if _, err := stmt.ExecContext(ctx, policy.GetMode(), policy.Keyword); err != nil {
+				return err
+			}
 		}
 	} else {
-		if _, has, _ := s.GetRoomByName(ctx, room); !has {
-			return nil
-		}
+		stmt, err = tx.PrepareContext(ctx, `insert into search_blacklist (room, match_mode, word) values (?, ?, ?)`)
 
-		_, err := s.Db.ExecContext(ctx, `insert into word_blocklist (room, word) values (?, ?)`, room.String(), keyword)
-		if err != nil {
-			return fmt.Errorf("failed to add keyword \"%s\" to blacklist for room %s: %w", keyword, room, err)
+		for _, policy := range policies {
+			if _, err := stmt.ExecContext(ctx, room.String(), policy.GetMode(), policy.Keyword); err != nil {
+				return err
+			}
 		}
 	}
 
-	return nil
+	return tx.Commit()
 }
 
-// RemoveKeywordFromBlacklist removes a blacklist policy for a keyword to the persistent blacklist.
-// If the room is not specified or does not exist and a serverwide policy for the term exists
-// If the keyword is empty, this is a no-op.
-func (s *Storage) RemoveKeywordFromBlacklist(ctx context.Context, room common.NormalizedRoomName, keyword string) error {
-	if len(keyword) == 0 {
+// RemovePoliciesFromBlacklist removes keywords from the persistent blacklist.
+// If room is zero, the keywords are removed from the global blacklist.
+func (s *Storage) RemovePoliciesFromBlacklist(ctx context.Context, room common.NormalizedRoomName, keywords []string) error {
+	if len(keywords) == 0 {
 		return nil
 	}
 
+	tx, err := s.Db.Begin()
+	if err != nil {
+		return err
+	}
+
+	var stmt *sql.Stmt
 	if room.IsZero() {
-		_, err := s.Db.ExecContext(ctx, `delete from word_blocklist where word = ?`, keyword)
-		if err != nil {
-			return fmt.Errorf("failed to remove keyword \"%s\" from global blacklist: %w", keyword, err)
+		stmt, err = tx.PrepareContext(ctx, `delete from search_blacklist where word = ?`)
+
+		for _, keyword := range keywords {
+			if _, err := stmt.ExecContext(ctx, keyword); err != nil {
+				return err
+			}
 		}
 	} else {
-		if _, has, _ := s.GetRoomByName(ctx, room); !has {
-			return nil
-		}
+		stmt, err = tx.PrepareContext(ctx, `delete from search_blacklist where room = ? and word = ?`)
 
-		_, err := s.Db.ExecContext(ctx, `delete from word_blocklist where room = ? and word = ?`, room.String(), keyword)
-		if err != nil {
-			return fmt.Errorf("failed to remove keyword \"%s\" from blacklist for room %s: %w", keyword, room, err)
+		for _, keyword := range keywords {
+			if _, err := stmt.ExecContext(ctx, room.String(), keyword); err != nil {
+				return err
+			}
 		}
 	}
 
-	return nil
+	return tx.Commit()
 }
 
-// GetBlacklistedKeywordsForRoom will return a list of currently enforced blacklist policies for a given room.
+// GetBlacklistPoliciesForRoom will return a list of currently enforced blacklist policies for a given room.
 // If room is zero, it will return the global blacklist.
 // The string searching library necessitates returning a list of rune arrays.
-func (s *Storage) GetBlacklistedKeywordsForRoom(ctx context.Context, room common.NormalizedRoomName) ([][]rune, error) {
-	var keywords [][]rune
+func (s *Storage) GetBlacklistPoliciesForRoom(ctx context.Context, room common.NormalizedRoomName) ([]*serverrpcv1.BlacklistPolicy, error) {
+	var policies []*serverrpcv1.BlacklistPolicy
 	var rows *sql.Rows
 	var err error
 
 	if room.IsZero() {
-		rows, err = s.Db.QueryContext(ctx, `select word from word_blocklist where room is null`)
+		rows, err = s.Db.QueryContext(ctx, `select match_mode, word from search_blacklist where room is null`)
 	} else {
-		rows, err = s.Db.QueryContext(ctx, `select word from word_blocklist where room is ?`, room.String())
+		rows, err = s.Db.QueryContext(ctx, `select match_mode, word from search_blacklist where room is ?`, room.String())
 	}
 	if err != nil {
 		return nil, fmt.Errorf(`failed to query rooms: %w`, err)
 	}
 	defer rows.Close()
 
+	var match_mode serverrpcv1.BlacklistMatchMode
+	var word string
 	for rows.Next() {
-		var word []byte
-		if err := rows.Scan(&word); err != nil {
-			return keywords, err
+		if err := rows.Scan(&match_mode, &word); err != nil {
+			return policies, err
 		}
 
-		keywords = append(keywords, bytes.Runes(word))
+		policies = append(policies, &serverrpcv1.BlacklistPolicy{
+			Keyword: word,
+			Mode:    match_mode,
+		})
 	}
 
 	if err := rows.Err(); err != nil {
-		return keywords, err
+		return policies, err
 	}
 
-	return keywords, nil
+	return policies, nil
 }
