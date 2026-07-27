@@ -336,23 +336,23 @@ func (s *Storage) GetBlacklistPoliciesForRoom(ctx context.Context, room common.N
 	if room.IsZero() {
 		rows, err = s.Db.QueryContext(ctx, `select match_mode, word from search_blacklist where room is null`)
 	} else {
-		rows, err = s.Db.QueryContext(ctx, `select match_mode, word from search_blacklist where room is ?`, room.String())
+		rows, err = s.Db.QueryContext(ctx, `select match_mode, word from search_blacklist where room = ?`, room.String())
 	}
 	if err != nil {
 		return nil, fmt.Errorf(`failed to query rooms: %w`, err)
 	}
 	defer rows.Close()
 
-	var match_mode serverrpcv1.BlacklistMatchMode
+	var matchMode serverrpcv1.BlacklistMatchMode
 	var word string
 	for rows.Next() {
-		if err := rows.Scan(&match_mode, &word); err != nil {
-			return policies, err
+		if err := rows.Scan(&matchMode, &word); err != nil {
+			return nil, err
 		}
 
 		policies = append(policies, &serverrpcv1.BlacklistPolicy{
 			Keyword: word,
-			Mode:    match_mode,
+			Mode:    matchMode,
 		})
 	}
 

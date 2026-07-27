@@ -123,6 +123,11 @@ func (b *Blacklist) Remove(keywords []string) error {
 	return b.UpdateFromDb()
 }
 
+func isLowerRuneAsciiWord(r rune) bool {
+	return (r >= 'a' && r <= 'z') ||
+		(r >= '0' && r <= '9')
+}
+
 // Match runs a multi-pattern search on a given string and returns true if there is a match of any kind.
 // Haystack should be in lowercase.
 func (b *Blacklist) Match(haystack []rune) bool {
@@ -139,19 +144,43 @@ func (b *Blacklist) Match(haystack []rune) bool {
 	// Check for whole words
 	for _, result := range results {
 		word := string(result.Word)
+
 		if _, has := b.wholeWords[word]; has {
-			wordEnd := result.Pos + len(word)
-			if wordEnd > len(haystack) || wordEnd < 0 {
-				continue
+			wordStart := result.Pos
+			wordEnd := wordStart + len(word) - 1
+
+			// termer 2026/07/27: It's not exactly foolproof, but the idea is this:
+			// If a char is ASCII and the next char is an ASCII word char, then it's a substring match.
+			// If a char is unicode and the next char is unicode, then it's a substring match.
+			// That would allow a string like "blue天" to match full word "blue".
+			// It would also allow 藍天 to NOT match full word "天".
+			// The known limitation here is that （天）(note the unicode full-width parentheses) would NOT match full word "天".
+			// I'm mostly worried about languages like Russian where this won't be an issue, but this theoretically could fail on
+			// some uses of CJK. In that case, you should probably just use a substring.
+			// Some of the above should be solved by using AnyAscii anyway.
+
+			if wordStart > 0 {
+				startChar := haystack[wordStart]
+				prevChar := haystack[wordStart-1]
+
+				if (startChar > 255 && prevChar > 255) || (startChar <= 255 && isLowerRuneAsciiWord(prevChar)) {
+					// Matched a substring
+					continue
+				}
 			}
 
-			// If end of word token a-z0-9 + unicode then it is a delimiter and we consider it a match
-			wordEndChar := haystack[wordEnd]
-			// Checking if the rune is more than 255 tells us whether it's unicode
-			if (wordEndChar >= 'a' && wordEndChar <= 'z') || (wordEndChar >= '0' && wordEndChar <= '9') || wordEndChar > 255 {
-				matched = true
-				break
+			if wordEnd < len(haystack)-1 {
+				endChar := haystack[wordEnd]
+				nextChar := haystack[wordEnd+1]
+
+				if (endChar > 255 && nextChar > 255) || (endChar <= 255 && isLowerRuneAsciiWord(nextChar)) {
+					// Matched a substring
+					continue
+				}
 			}
+
+			matched = true
+			break
 		} else {
 			matched = true
 			break

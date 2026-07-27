@@ -68,7 +68,7 @@ func NewManager(
 		return nil, fmt.Errorf(`failed to get all rooms while creating new room manager: %w`, err)
 	}
 	for _, room := range rooms {
-		m.rooms[room.Name.String()] = NewRoom(
+		newRoom, err := NewRoom(
 			logger,
 			storage,
 			connMethodSupport,
@@ -77,6 +77,11 @@ func NewManager(
 			logic,
 			m.GlobalBlacklist,
 		)
+		if err != nil {
+			return nil, err
+		}
+
+		m.rooms[room.Name.String()] = newRoom
 	}
 
 	return m, nil
@@ -155,7 +160,7 @@ func (m *Manager) CreateRoom(ctx context.Context, name common.NormalizedRoomName
 	}
 
 	// Create room instance and add it to manager.
-	room := NewRoom(
+	room, err := NewRoom(
 		m.logger,
 		m.storage,
 		m.connMethodSupport,
@@ -164,6 +169,9 @@ func (m *Manager) CreateRoom(ctx context.Context, name common.NormalizedRoomName
 		m.logic,
 		m.GlobalBlacklist,
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	m.mu.Lock()
 	m.rooms[name.String()] = room

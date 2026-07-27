@@ -68,17 +68,13 @@ func NewRoom(
 	name common.NormalizedRoomName,
 	logic Logic,
 	globalBlacklist *Blacklist,
-) *Room {
+) (*Room, error) {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
 	blacklist, err := NewBlacklist(ctx, name, storage)
 	if err != nil {
-		if logger != nil {
-			logger.Error("could not create new room due to blacklist", "err", err)
-		}
-
 		ctxCancel()
-		return nil
+		return nil, err
 	}
 
 	return &Room{
@@ -101,7 +97,7 @@ func NewRoom(
 		logic: logic,
 
 		clients: make(map[string]*Client),
-	}
+	}, nil
 }
 
 func (r *Room) snapshotClientsNoLock() []*Client {
@@ -196,7 +192,8 @@ func (r *Room) MatchToBlacklists(haystack string) bool {
 	}
 
 	// Didn't match, try AnyAscii version if applicable.
-	asciiVer := anyascii.Transliterate(lower)
+	// We have to lower the AnyAscii output because hanzi and other chars can become uppercase in its output.
+	asciiVer := common.ToLowerUnicode(anyascii.Transliterate(haystack))
 	if asciiVer == lower {
 		return false
 	}
