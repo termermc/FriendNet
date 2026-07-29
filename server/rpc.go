@@ -11,6 +11,7 @@ import (
 	"friendnet.org/common/password"
 	v1 "friendnet.org/protocol/pb/serverrpc/v1"
 	"friendnet.org/protocol/pb/serverrpc/v1/serverrpcv1connect"
+	"friendnet.org/server/blacklist"
 	"friendnet.org/server/room"
 	"friendnet.org/server/storage"
 	"friendnet.org/updater"
@@ -23,7 +24,7 @@ var errRoomExists = connect.NewError(connect.CodeAlreadyExists, errors.New("room
 var errAccountExists = connect.NewError(connect.CodeAlreadyExists, errors.New("account already exists"))
 var errInvalidRoomName = connect.NewError(connect.CodeInvalidArgument, errors.New("invalid room name"))
 var errInvalidUsername = connect.NewError(connect.CodeInvalidArgument, errors.New("invalid username"))
-var errEmptyPolicyKeyword = connect.NewError(connect.CodeInvalidArgument, room.ErrEmptyKeyword)
+var errEmptyPolicyKeyword = connect.NewError(connect.CodeInvalidArgument, blacklist.ErrEmptyKeyword)
 
 type RpcServer struct {
 	s     *Server
@@ -340,7 +341,7 @@ func (s *RpcServer) AddBlacklistPolicies(_ context.Context, req *v1.AddBlacklist
 
 		err = r.Blacklist.AddPolicies(req.Policies)
 		if err != nil {
-			if errors.Is(err, room.ErrEmptyKeyword) {
+			if errors.Is(err, blacklist.ErrEmptyKeyword) {
 				return nil, errEmptyPolicyKeyword
 			}
 
@@ -381,14 +382,14 @@ func (s *RpcServer) RemoveBlacklistPolicies(_ context.Context, req *v1.RemoveBla
 }
 
 func (s *RpcServer) ListBlacklistPolicies(ctx context.Context, req *v1.ListBlacklistPoliciesRequest) (*v1.ListBlacklistPoliciesResponse, error) {
-	room, _ := common.NormalizeRoomName(req.GetRoom())
-	if !room.IsZero() {
+	r, _ := common.NormalizeRoomName(req.GetRoom())
+	if !r.IsZero() {
 		if _, err := s.getRoom(req.GetRoom()); err != nil {
 			return nil, errRoomNotFound
 		}
 	}
 
-	policies, err := s.s.storage.GetBlacklistPoliciesForRoom(ctx, room)
+	policies, err := s.s.storage.GetBlacklistPoliciesForRoom(ctx, r)
 	if err != nil {
 		return nil, err
 	}

@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	anyascii "github.com/anyascii/go"
+	"regexp"
 	"sync"
+
+	anyascii "github.com/anyascii/go"
 
 	"friendnet.org/ahocorasick"
 	"friendnet.org/common"
@@ -25,6 +27,7 @@ type Blacklist struct {
 
 	wholeWords     map[string]struct{}
 	hasAnyKeywords bool
+	regexes        []*regexp.Regexp
 }
 
 // New creates a new blacklist.
@@ -69,20 +72,34 @@ func (b *Blacklist) UpdateFromDb() error {
 		return nil
 	}
 
-	keywords := make([][]rune, 0, len(policies))
+	trieKeywords := make([][]rune, 0, len(policies))
 	clear(b.wholeWords)
+	clear(b.regexes)
 
 	for _, policy := range policies {
-		keyword := common.ToLowerUnicode(policy.Keyword)
+		switch policy.Mode {
+		case pb.BlacklistMatchMode_BLACKLIST_MATCH_MODE_WHOLE:
+			kw := common.ToLowerUnicode(policy.Keyword)
+			trieKeywords = append(trieKeywords, []rune(kw))
+			b.wholeWords[kw] = struct{}{}
+		case pb.BlacklistMatchMode_BLACKLIST_MATCH_MODE_SUBSTRING:
+			trieKeywords = append(trieKeywords, []rune(common.ToLowerUnicode(policy.Keyword)))
+		case pb.BlacklistMatchMode_BLACKLIST_MATCH_MODE_REGEX:
+			regex, err := regexp.Compile(policy.Keyword)
+			if err != nil {
+				return fmt.Errorf(`encountered invalid regex %q when loading blacklist policies: %w`,
+					policy.Keyword,
+					err,
+				)
+			}
 
-		keywords = append(keywords, []rune(keyword))
-
-		if policy.Mode == pb.BlacklistMatchMode_BLACKLIST_MATCH_MODE_WHOLE {
-			b.wholeWords[keyword] = struct{}{}
+			b.regexes = append(b.regexes, regex)
+		default:
+			return fmt.Errorf(`encountered unknown match mode %d when loading blacklist policies`, policy.Mode)
 		}
 	}
 
-	err = b.machine.Build(keywords)
+	err = b.machine.Build(trieKeywords)
 	if err != nil {
 		return err
 	}
@@ -96,6 +113,7 @@ func (b *Blacklist) UpdateFromDb() error {
 var ErrEmptyKeyword = errors.New("tried to add blacklist policy with empty keyword")
 
 // AddPolicies will add blacklist policies to the database and then update the string matching engine.
+// It does not validate policies other than making sure that their keywords aren't empty.
 func (b *Blacklist) AddPolicies(policies []*pb.BlacklistPolicy) error {
 	for _, policy := range policies {
 		if policy.Keyword == "" {
@@ -128,8 +146,8 @@ func isCharAsciiWord[R rune | byte](r R) bool {
 }
 
 // Match runs a multi-pattern search on a given string and returns true if there is a match of any kind.
-// Haystack should be in lowercase.
-func (b *Blacklist) Match(haystack []rune) bool {
+// Haystack (both the []rune version and the string version) should be in lowercase.
+func (b *Blacklist) Match(haystackRunes []rune, haystackStr string) bool {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -137,13 +155,14 @@ func (b *Blacklist) Match(haystack []rune) bool {
 		return false
 	}
 
-	matched := false
-	results := b.machine.MultiPatternSearch(haystack, true)
+	// Try words first.
+	results := b.machine.MultiPatternSearch(haystackRunes, true)
 
-	// Check for whole words
 	for _, result := range results {
 		wordStr := string(result.Word)
 
+		// Got a match.
+		// If this keyword should only match whole words, use that logic instead.
 		if _, has := b.wholeWords[wordStr]; has {
 			wordStart := result.Pos
 			wordEnd := wordStart + len(result.Word) - 1
@@ -157,8 +176,8 @@ func (b *Blacklist) Match(haystack []rune) bool {
 			// Things still don't work great for languages without spaces like CJK; substring should be used for those.
 
 			if wordStart > 0 {
-				startChar := haystack[wordStart]
-				prevChar := haystack[wordStart-1]
+				startChar := haystackRunes[wordStart]
+				prevChar := haystackRunes[wordStart-1]
 
 				if startChar > 255 && prevChar > 255 {
 					// The previous unicode char could be punctuation; test if it is.
@@ -173,9 +192,9 @@ func (b *Blacklist) Match(haystack []rune) bool {
 				}
 			}
 
-			if wordEnd < len(haystack)-1 {
-				endChar := haystack[wordEnd]
-				nextChar := haystack[wordEnd+1]
+			if wordEnd < len(haystackRunes)-1 {
+				endChar := haystackRunes[wordEnd]
+				nextChar := haystackRunes[wordEnd+1]
 
 				if endChar > 255 && nextChar > 255 {
 					// The next unicode char could be punctuation; test if it is.
@@ -190,13 +209,18 @@ func (b *Blacklist) Match(haystack []rune) bool {
 				}
 			}
 
-			matched = true
-			break
-		} else {
-			matched = true
-			break
+			return true
+		}
+
+		return true
+	}
+
+	// No words matched, try regex.
+	for _, regex := range b.regexes {
+		if regex.MatchString(haystackStr) {
+			return true
 		}
 	}
 
-	return matched
+	return false
 }

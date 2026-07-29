@@ -161,6 +161,9 @@ enum BlacklistMatchMode {
 
     // Matches only whole words that match.
     BLACKLIST_MATCH_MODE_WHOLE = 2;
+
+    // Matches terms with regex.
+    BLACKLIST_MATCH_MODE_REGEX = 3;
 }
 
 // BlacklistPolicy is a word and the policy for how it will be enforced in a blacklist.

@@ -30,6 +30,8 @@ const (
 	BlacklistMatchMode_BLACKLIST_MATCH_MODE_SUBSTRING BlacklistMatchMode = 1
 	// Matches only whole words that match.
 	BlacklistMatchMode_BLACKLIST_MATCH_MODE_WHOLE BlacklistMatchMode = 2
+	// Matches terms with regex.
+	BlacklistMatchMode_BLACKLIST_MATCH_MODE_REGEX BlacklistMatchMode = 3
 )
 
 // Enum value maps for BlacklistMatchMode.
@@ -38,11 +40,13 @@ var (
 		0: "BLACKLIST_MATCH_MODE_UNSPECIFIED",
 		1: "BLACKLIST_MATCH_MODE_SUBSTRING",
 		2: "BLACKLIST_MATCH_MODE_WHOLE",
+		3: "BLACKLIST_MATCH_MODE_REGEX",
 	}
 	BlacklistMatchMode_value = map[string]int32{
 		"BLACKLIST_MATCH_MODE_UNSPECIFIED": 0,
 		"BLACKLIST_MATCH_MODE_SUBSTRING":   1,
 		"BLACKLIST_MATCH_MODE_WHOLE":       2,
+		"BLACKLIST_MATCH_MODE_REGEX":       3,
 	}
 )
 
@@ -1707,11 +1711,12 @@ const file_pb_serverrpc_v1_rpc_proto_rawDesc = "" +
 	"\x04room\x18\x01 \x01(\tH\x00R\x04room\x88\x01\x01B\a\n" +
 	"\x05_room\"]\n" +
 	"\x1dListBlacklistPoliciesResponse\x12<\n" +
-	"\bpolicies\x18\x01 \x03(\v2 .pb.serverrpc.v1.BlacklistPolicyR\bpolicies*~\n" +
+	"\bpolicies\x18\x01 \x03(\v2 .pb.serverrpc.v1.BlacklistPolicyR\bpolicies*\x9e\x01\n" +
 	"\x12BlacklistMatchMode\x12$\n" +
 	" BLACKLIST_MATCH_MODE_UNSPECIFIED\x10\x00\x12\"\n" +
 	"\x1eBLACKLIST_MATCH_MODE_SUBSTRING\x10\x01\x12\x1e\n" +
-	"\x1aBLACKLIST_MATCH_MODE_WHOLE\x10\x022\xb5\v\n" +
+	"\x1aBLACKLIST_MATCH_MODE_WHOLE\x10\x02\x12\x1e\n" +
+	"\x1aBLACKLIST_MATCH_MODE_REGEX\x10\x032\xb5\v\n" +
 	"\x10ServerRpcService\x12`\n" +
 	"\rGetServerInfo\x12%.pb.serverrpc.v1.GetServerInfoRequest\x1a&.pb.serverrpc.v1.GetServerInfoResponse\"\x00\x12Q\n" +
 	"\bGetRooms\x12 .pb.serverrpc.v1.GetRoomsRequest\x1a!.pb.serverrpc.v1.GetRoomsResponse\"\x00\x12Z\n" +
