@@ -38,10 +38,10 @@ const App: Component = () => {
 		{
 			path: '/transfers',
 			component: TransfersPage,
-    },
-    {
-      path: '/search',
-      component: SearchPage,
+		},
+		{
+			path: '/search',
+			component: SearchPage,
 		},
 		{
 			path: '/createserver',

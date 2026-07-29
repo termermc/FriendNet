@@ -230,7 +230,9 @@ const ServerEntry: Component<{ server: Server }> = (props) => {
 						</tbody>
 					</table>
 
-					<A href={`/search?server=${encodeURIComponent(props.server.uuid)}`}>
+					<A
+						href={`/search?server=${encodeURIComponent(props.server.uuid)}`}
+					>
 						🔎 Search
 					</A>
 					<br />
