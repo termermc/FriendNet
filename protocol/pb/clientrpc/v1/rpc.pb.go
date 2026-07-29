@@ -3523,8 +3523,8 @@ func (*IndexShareResponse) Descriptor() ([]byte, []int) {
 
 type StreamSearchRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The associated server's UUID.
-	ServerUuid string `protobuf:"bytes,1,opt,name=server_uuid,json=serverUuid,proto3" json:"server_uuid,omitempty"`
+	// The associated server's UUID, or none to search all connected servers.
+	ServerUuid *string `protobuf:"bytes,1,opt,name=server_uuid,json=serverUuid,proto3,oneof" json:"server_uuid,omitempty"`
 	// The username of the client to search, or omit to search all clients.
 	Username *string `protobuf:"bytes,2,opt,name=username,proto3,oneof" json:"username,omitempty"`
 	// The search query.
@@ -3564,8 +3564,8 @@ func (*StreamSearchRequest) Descriptor() ([]byte, []int) {
 }
 
 func (x *StreamSearchRequest) GetServerUuid() string {
-	if x != nil {
-		return x.ServerUuid
+	if x != nil && x.ServerUuid != nil {
+		return *x.ServerUuid
 	}
 	return ""
 }
@@ -3588,12 +3588,14 @@ type StreamSearchResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The username of the client the result came from.
 	Username string `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	// Server of origin's UUID.
+	ServerUuid string `protobuf:"bytes,2,opt,name=server_uuid,json=serverUuid,proto3" json:"server_uuid,omitempty"`
 	// The file's containing directory path.
-	DirectoryPath string `protobuf:"bytes,2,opt,name=directory_path,json=directoryPath,proto3" json:"directory_path,omitempty"`
+	DirectoryPath string `protobuf:"bytes,3,opt,name=directory_path,json=directoryPath,proto3" json:"directory_path,omitempty"`
 	// The file that was found.
-	File *FileMeta `protobuf:"bytes,3,opt,name=file,proto3" json:"file,omitempty"`
+	File *FileMeta `protobuf:"bytes,4,opt,name=file,proto3" json:"file,omitempty"`
 	// A snippet of text highlighting matched terms.
-	Snippet       string `protobuf:"bytes,4,opt,name=snippet,proto3" json:"snippet,omitempty"`
+	Snippet       string `protobuf:"bytes,5,opt,name=snippet,proto3" json:"snippet,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3631,6 +3633,13 @@ func (*StreamSearchResponse) Descriptor() ([]byte, []int) {
 func (x *StreamSearchResponse) GetUsername() string {
 	if x != nil {
 		return x.Username
+	}
+	return ""
+}
+
+func (x *StreamSearchResponse) GetServerUuid() string {
+	if x != nil {
+		return x.ServerUuid
 	}
 	return ""
 }
@@ -4937,18 +4946,21 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\vserver_uuid\x18\x01 \x01(\tR\n" +
 	"serverUuid\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"\x14\n" +
-	"\x12IndexShareResponse\"z\n" +
-	"\x13StreamSearchRequest\x12\x1f\n" +
-	"\vserver_uuid\x18\x01 \x01(\tR\n" +
-	"serverUuid\x12\x1f\n" +
-	"\busername\x18\x02 \x01(\tH\x00R\busername\x88\x01\x01\x12\x14\n" +
-	"\x05query\x18\x03 \x01(\tR\x05queryB\v\n" +
-	"\t_username\"\xa2\x01\n" +
+	"\x12IndexShareResponse\"\x8f\x01\n" +
+	"\x13StreamSearchRequest\x12$\n" +
+	"\vserver_uuid\x18\x01 \x01(\tH\x00R\n" +
+	"serverUuid\x88\x01\x01\x12\x1f\n" +
+	"\busername\x18\x02 \x01(\tH\x01R\busername\x88\x01\x01\x12\x14\n" +
+	"\x05query\x18\x03 \x01(\tR\x05queryB\x0e\n" +
+	"\f_server_uuidB\v\n" +
+	"\t_username\"\xc3\x01\n" +
 	"\x14StreamSearchResponse\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\x12%\n" +
-	"\x0edirectory_path\x18\x02 \x01(\tR\rdirectoryPath\x12-\n" +
-	"\x04file\x18\x03 \x01(\v2\x19.pb.clientrpc.v1.FileMetaR\x04file\x12\x18\n" +
-	"\asnippet\x18\x04 \x01(\tR\asnippet\"\x16\n" +
+	"\busername\x18\x01 \x01(\tR\busername\x12\x1f\n" +
+	"\vserver_uuid\x18\x02 \x01(\tR\n" +
+	"serverUuid\x12%\n" +
+	"\x0edirectory_path\x18\x03 \x01(\tR\rdirectoryPath\x12-\n" +
+	"\x04file\x18\x04 \x01(\v2\x19.pb.clientrpc.v1.FileMetaR\x04file\x12\x18\n" +
+	"\asnippet\x18\x05 \x01(\tR\asnippet\"\x16\n" +
 	"\x14GetUpdateInfoRequest\"\xa1\x01\n" +
 	"\x15GetUpdateInfoResponse\x12>\n" +
 	"\fcurrent_info\x18\x01 \x01(\v2\x1b.pb.clientrpc.v1.UpdateInfoR\vcurrentInfo\x12;\n" +

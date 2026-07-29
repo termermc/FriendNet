@@ -735,12 +735,7 @@ func (s *RpcServer) StreamSearch(ctx context.Context, request *v1.StreamSearchRe
 		return errEmptySearchQuery
 	}
 
-	srv, has := s.client.GetByUuid(request.ServerUuid)
-	if !has {
-		return errServerNotFound
-	}
-
-	return srv.Do(ctx, func(ctx context.Context, c *room.Conn) error {
+	streamServerSearchResults := func(ctx context.Context, c *room.Conn, server *Server) error {
 		if request.Username == nil {
 			// Stream from server.
 			stream, err := c.Search(request.Query)
@@ -760,6 +755,7 @@ func (s *RpcServer) StreamSearch(ctx context.Context, request *v1.StreamSearchRe
 				}
 
 				err = conn.Send(&v1.StreamSearchResponse{
+					ServerUuid:    server.Uuid,
 					Username:      next.Username,
 					DirectoryPath: next.Result.DirectoryPath,
 					File:          s.metaToInfo(next.Result.File),
@@ -798,6 +794,7 @@ func (s *RpcServer) StreamSearch(ctx context.Context, request *v1.StreamSearchRe
 				}
 
 				err = conn.Send(&v1.StreamSearchResponse{
+					ServerUuid:    server.Uuid,
 					Username:      peer.Username.String(),
 					DirectoryPath: next.DirectoryPath,
 					File:          s.metaToInfo(next.File),
@@ -811,7 +808,27 @@ func (s *RpcServer) StreamSearch(ctx context.Context, request *v1.StreamSearchRe
 				}
 			}
 		}
-	})
+	}
+
+	// If server UUID is null, search all servers
+	// For aggregate searches, it does not wait on non-open server connections.
+	if request.ServerUuid == nil {
+		err := s.client.TryDoAllContext(ctx, streamServerSearchResults)
+		if err != nil {
+			return err
+		}
+	} else {
+		srv, has := s.client.GetByUuid(*request.ServerUuid)
+		if !has {
+			return errServerNotFound
+		}
+
+		srv.Do(ctx, func(sCtx context.Context, sConn *room.Conn) error {
+			return streamServerSearchResults(sCtx, sConn, srv)
+		})
+	}
+
+	return nil
 }
 
 func (s *RpcServer) updateToInfo(update *updater.UpdateInfo, updateErr error) *v1.UpdateInfo {

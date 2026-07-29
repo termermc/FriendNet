@@ -150,7 +150,11 @@ const Page: Component = () => {
 
 				const resolved = new URL(path, indexUrl).pathname
 				const profileRootPath = new URL(profileRoot).pathname
-				if (!resolved.startsWith(profileRootPath) && (!(elem instanceof HTMLAnchorElement) || elem.target !== '_blank')) {
+				if (
+					!resolved.startsWith(profileRootPath) &&
+					(!(elem instanceof HTMLAnchorElement) ||
+						elem.target !== '_blank')
+				) {
 					return (
 						<div>
 							<p>Profile contains invalid paths.</p>
