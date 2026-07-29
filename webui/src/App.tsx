@@ -11,10 +11,10 @@ import { makeBrowsePath } from './util'
 import { LogsPage } from './page/LogsPage'
 import { ChangeServerPasswordPage } from './page/ChangeServerPasswordPage'
 import { SettingsPage } from './page/SettingsPage'
-import { ServerSearchPage } from './page/ServerSearchPage'
 import { ServerProfilePage } from './page/ServerProfilePage'
 import { UpdatePage } from './page/UpdatePage'
 import { TransfersPage } from './page/TransfersPage'
+import { SearchPage } from './page/SearchPage'
 
 const App: Component = () => {
 	const routes: RouteDefinition[] = [
@@ -39,12 +39,14 @@ const App: Component = () => {
 			path: '/transfers',
 			component: TransfersPage,
 		},
-
+		{
+			path: '/search',
+			component: SearchPage,
+		},
 		{
 			path: '/createserver',
 			component: CreateServerPage,
 		},
-
 		{
 			path: '/server/:uuid/edit',
 			component: EditServerPage,
@@ -56,10 +58,6 @@ const App: Component = () => {
 		{
 			path: '/server/:uuid/changepassword',
 			component: ChangeServerPasswordPage,
-		},
-		{
-			path: '/server/:uuid/search',
-			component: ServerSearchPage,
 		},
 		{
 			path: '/server/:uuid/profile/:username',

@@ -11,6 +11,7 @@ require (
 	friendnet.org/rpcclient v0.0.0
 	friendnet.org/stun v0.0.0
 	friendnet.org/updater v0.0.0
+	github.com/anyascii/go v0.3.3
 	github.com/quic-go/quic-go v0.61.0
 	github.com/termermc/go-mcf-password v1.0.0
 	golang.org/x/term v0.45.0
@@ -19,7 +20,6 @@ require (
 )
 
 require (
-	github.com/anyascii/go v0.3.3 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
