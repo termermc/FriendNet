@@ -187,7 +187,7 @@ func (r *Room) MatchToBlacklists(haystack string) bool {
 	lower := common.ToLowerUnicode(haystack)
 	runes := []rune(lower)
 
-	return r.GlobalBlacklist.Match(runes) || r.Blacklist.Match(runes)
+	return r.GlobalBlacklist.Match(runes, lower) || r.Blacklist.Match(runes, lower)
 }
 
 // Broadcast broadcasts a message to all clients in the room.

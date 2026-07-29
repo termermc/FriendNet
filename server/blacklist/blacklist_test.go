@@ -2,8 +2,9 @@ package blacklist
 
 import (
 	"context"
-	pb "friendnet.org/protocol/pb/serverrpc/v1"
 	"testing"
+
+	pb "friendnet.org/protocol/pb/serverrpc/v1"
 )
 
 func mkBl() *Blacklist {
@@ -26,7 +27,7 @@ func TestSubstring(t *testing.T) {
 		panic(err)
 	}
 
-	if !bl.Match([]rune("thebluelight")) {
+	if !bl.Match([]rune("thebluelight"), "thebluelight") {
 		t.Fatal("didn't match substring")
 	}
 }
@@ -50,7 +51,7 @@ func TestWholeAscii(t *testing.T) {
 	}
 
 	for _, str := range strs {
-		if !bl.Match([]rune(str)) {
+		if !bl.Match([]rune(str), str) {
 			t.Fatal("didn't match whole word in " + str)
 		}
 	}
@@ -74,7 +75,7 @@ func TestWholeAsciiWithUnicode(t *testing.T) {
 	}
 
 	for _, str := range strs {
-		if !bl.Match([]rune(str)) {
+		if !bl.Match([]rune(str), str) {
 			t.Fatal("didn't match whole word in " + str)
 		}
 	}
@@ -99,12 +100,12 @@ func TestWholeUnicode(t *testing.T) {
 	}
 
 	for _, str := range strs {
-		if !bl.Match([]rune(str)) {
+		if !bl.Match([]rune(str), str) {
 			t.Fatal("didn't match whole word in " + str)
 		}
 	}
 
-	if bl.Match([]rune("котёл")) {
+	if bl.Match([]rune("котёл"), "котёл") {
 		t.Fatal("кот should not have matched substring of котёл")
 	}
 }
