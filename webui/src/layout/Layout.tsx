@@ -46,7 +46,13 @@ export const Layout: Component<LayoutProps> = (props) => {
 			<header>
 				<span class={styles.headerTitle}>{AppName}</span>
 
-				<div class={styles.options}>
+        <div class={styles.options}>
+          <A
+  					href="/search"
+  					class={styles.option}
+  				>
+  					🔎 Search
+  				</A>{' '}
 					<A
 						href="/transfers"
 						class={styles.option}

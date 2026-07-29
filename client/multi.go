@@ -153,30 +153,6 @@ func (c *MultiClient) GetAll() []*Server {
 	return c.snapshotServers()
 }
 
-// TryDoAllContext executes a closure on all server connections under management given a context
-func (c *MultiClient) TryDoAllContext(ctx context.Context, fn func(ctx context.Context, roomConn *room.Conn, s *Server) error) error {
-	all := c.GetAll()
-	if len(all) == 0 {
-		return nil
-	}
-
-	for _, srv := range all {
-		err := srv.TryDo(func(cConn *room.Conn) error {
-			return fn(ctx, cConn, srv)
-		})
-		if err != nil {
-			// We should not expect closed connections to return anything
-			if errors.Is(err, ErrConnNotOpen) {
-				continue
-			}
-
-			return err
-		}
-	}
-
-	return nil
-}
-
 // GetByUuid returns the server connection for the server with the specified UUID and true if found,
 // otherwise empty and false.
 // Returns empty and false if the MultiClient is closed.

@@ -655,9 +655,6 @@ message StreamSearchResponse {
 
     // The file that was found.
     FileMeta file = 4;
-
-    // A snippet of text highlighting matched terms.
-    string snippet = 5;
 }
 
 message GetUpdateInfoRequest {

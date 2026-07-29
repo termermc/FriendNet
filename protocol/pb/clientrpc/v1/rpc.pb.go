@@ -3593,9 +3593,7 @@ type StreamSearchResponse struct {
 	// The file's containing directory path.
 	DirectoryPath string `protobuf:"bytes,3,opt,name=directory_path,json=directoryPath,proto3" json:"directory_path,omitempty"`
 	// The file that was found.
-	File *FileMeta `protobuf:"bytes,4,opt,name=file,proto3" json:"file,omitempty"`
-	// A snippet of text highlighting matched terms.
-	Snippet       string `protobuf:"bytes,5,opt,name=snippet,proto3" json:"snippet,omitempty"`
+	File          *FileMeta `protobuf:"bytes,4,opt,name=file,proto3" json:"file,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3656,13 +3654,6 @@ func (x *StreamSearchResponse) GetFile() *FileMeta {
 		return x.File
 	}
 	return nil
-}
-
-func (x *StreamSearchResponse) GetSnippet() string {
-	if x != nil {
-		return x.Snippet
-	}
-	return ""
 }
 
 type GetUpdateInfoRequest struct {
@@ -4953,14 +4944,13 @@ const file_pb_clientrpc_v1_rpc_proto_rawDesc = "" +
 	"\busername\x18\x02 \x01(\tH\x01R\busername\x88\x01\x01\x12\x14\n" +
 	"\x05query\x18\x03 \x01(\tR\x05queryB\x0e\n" +
 	"\f_server_uuidB\v\n" +
-	"\t_username\"\xc3\x01\n" +
+	"\t_username\"\xa9\x01\n" +
 	"\x14StreamSearchResponse\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x1f\n" +
 	"\vserver_uuid\x18\x02 \x01(\tR\n" +
 	"serverUuid\x12%\n" +
 	"\x0edirectory_path\x18\x03 \x01(\tR\rdirectoryPath\x12-\n" +
-	"\x04file\x18\x04 \x01(\v2\x19.pb.clientrpc.v1.FileMetaR\x04file\x12\x18\n" +
-	"\asnippet\x18\x05 \x01(\tR\asnippet\"\x16\n" +
+	"\x04file\x18\x04 \x01(\v2\x19.pb.clientrpc.v1.FileMetaR\x04file\"\x16\n" +
 	"\x14GetUpdateInfoRequest\"\xa1\x01\n" +
 	"\x15GetUpdateInfoResponse\x12>\n" +
 	"\fcurrent_info\x18\x01 \x01(\v2\x1b.pb.clientrpc.v1.UpdateInfoR\vcurrentInfo\x12;\n" +

@@ -8,6 +8,7 @@ import {
 	onMount,
 	Show,
 	For,
+  JSX,
 } from 'solid-js'
 import { useFileServerUrl, useGlobalState, useRpcClient } from '../ctx'
 import { Code, ConnectError } from '@connectrpc/connect'
@@ -95,10 +96,12 @@ const Page: Component = () => {
 
 	let abortController: AbortController | undefined = undefined
 
+	const [lastSearch, setLastSearch] = createSignal(Date.now())
 	const submit = async function (event: SubmitEvent) {
 		event.preventDefault()
 
-		setSearchParams({ query: query().trim(), server: serverUuid() || null, username: username().trim() || null })
+    setSearchParams({ query: query().trim(), server: serverUuid() || null, username: username().trim() || null })
+		setLastSearch(Date.now())
 	}
 
 	async function doSearch(query: string, serverUuid: string | undefined, username: string) {
@@ -110,13 +113,14 @@ const Page: Component = () => {
 		setResults([])
 
     try {
-  		if (serverUuid != null && state.getServerByUuid(serverUuid) == null) {
+      // Check if the server actually exists if the UUID is set.
+  		if (serverUuid && state.getServerByUuid(serverUuid) == null) {
         setError(`No such server UUID "${serverUuid}"`)
         return
       }
 
 			const stream = client.streamSearch({
-				serverUuid: serverUuid,
+				serverUuid: serverUuid || undefined,
 				username: username || undefined,
 				query: query,
 			})
@@ -143,7 +147,10 @@ const Page: Component = () => {
 		}
 	}
 
-	createEffect(() => {
+  createEffect(() => {
+    // Re-run everytime we press the search button, even if params didn't change.
+    lastSearch()
+
     const q = searchParams.query?.trim() || ''
 		const s = searchParams.server?.trim() || ''
     const u = searchParams.username?.trim() || ''
@@ -218,14 +225,26 @@ const Page: Component = () => {
 						error={error()}
 						items={results()}
 						forItem={(item) => {
-						const serverUuid = item.data.serverUuid
+						const srvUuid = item.data.serverUuid
 							const filePath =
 								item.data.directoryPath + '/' + item.meta.name
-							const username = item.data.username
+              const username = item.data.username
 
-							const prefix = (
-								<div class={styles.username}>👤{username}</div>
-							)
+              let prefix: JSX.Element
+              if (serverUuid()) {
+                prefix = (
+                  <div class={styles.username}>👤{username}</div>
+                )
+              } else {
+                // termer 2026/07/29: This is inefficient since it does a server lookup for every result.
+                // If this becomes actually slow, I'll make a different forItem implementation based on
+                // whether this is a global or server search.
+                // Oh well.
+                const srv = state.getServerByUuid(srvUuid)
+                prefix = (
+                  <div class={styles.username}>👤{username} @ {srv?.name() ?? 'Unknown'}</div>
+                )
+              }
 
 							if (item.meta.isDir) {
 								return {
@@ -237,7 +256,7 @@ const Page: Component = () => {
 									),
 									actions: (
 										<QueueButton
-											serverUuid={serverUuid}
+											serverUuid={srvUuid}
 											peerUsername={username}
 											filePath={filePath}
 											title="Download Folder"
@@ -247,13 +266,13 @@ const Page: Component = () => {
 							} else {
 								const nonDlUrl = makeFileUrl(
 									fsUrl,
-									serverUuid,
+									srvUuid,
 									username,
 									filePath,
 								)
 
 								const dirBrowsePath = makeBrowsePath(
-									serverUuid,
+									srvUuid,
 									username,
 									item.data.directoryPath,
 								)
@@ -276,7 +295,7 @@ const Page: Component = () => {
 												🔗
 											</a>
 											<QueueButton
-												serverUuid={serverUuid}
+												serverUuid={srvUuid}
 												peerUsername={username}
 												filePath={filePath}
 												title="Download File"
@@ -285,7 +304,7 @@ const Page: Component = () => {
 									),
 									onClick: () => {
 										state.previewFile(
-											serverUuid,
+											srvUuid,
 											username,
 											filePath,
 										)
