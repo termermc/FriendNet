@@ -165,16 +165,19 @@ const Page: Component = () => {
 
 		fieldQueryElem?.focus()
 
-		if (!q) {
+		// This can change when clicking a server search link.
+		setServerUuid(s)
+
+    if (!q) {
+      setLoading(false)
 			setResults([])
 			setQuery('')
-			setUsername('')
+      setUsername('')
 			return
 		}
 
-		setQuery(q)
-		setUsername(u)
-		setServerUuid(s)
+    setQuery(q)
+    setUsername(u)
 
 		// noinspection JSIgnoredPromiseFromCall
 		doSearch(q, s, u)
