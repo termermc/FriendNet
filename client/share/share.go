@@ -1,19 +1,24 @@
 package share
 
 import (
+	"context"
 	"errors"
 	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"friendnet.org/common"
 	pb "friendnet.org/protocol/pb/v1"
+	"github.com/fsnotify/fsnotify"
 )
 
 // ErrShareClosed is returned by Share methods when the share is closed.
 var ErrShareClosed = errors.New("share closed")
+
+type ShareCallback func(path common.ProtoPath)
 
 // Share is a shared filesystem.
 // A share only has the concepts of files and directories.
@@ -60,26 +65,47 @@ type Share interface {
 	//
 	// May return ErrShareClosed if the share is closed, depending on the implementation.
 	GetFile(path common.ProtoPath, offset uint64, limit uint64) (*pb.MsgFileMeta, io.ReadCloser, error)
+
+	// SupportsWatching will return true if the Share implementation supports filesystem event watching
+	SupportsWatching() bool
+
+	// OnNeedIndex subscribes a callback to a filesystem event listener.
+	// The callbacks will fire, in order of subscription, when a new file in a watched directory is created or if an existing file has been modified.
+	OnNeedIndex(callback ShareCallback)
+
+	// OnDelete subscribes a callback to a filesystem event listener.
+	// The callbacks will fire, in order of subscription, when a file in a watched directory is deleted.
+	OnDelete(callback ShareCallback)
 }
 
 // DirShare is an implementation of Share backed by a directory.
 type DirShare struct {
+	ctx context.Context
+
 	name        string
 	dir         string
 	followLinks bool
 	fsys        fs.FS
+
+	// Watching related members
+	mu sync.RWMutex
+
+	watcher       *fsnotify.Watcher
+	onIndexHdlrs  []ShareCallback
+	onDeleteHdlrs []ShareCallback
 }
 
 var _ Share = (*DirShare)(nil)
 
-// Close is no-op because DirShare is stateless.
 func (s *DirShare) Close() error {
-	return nil
+	return s.watcher.Close()
 }
 
 // NewDirShare creates a new DirShare backed by the specified directory.
+// It will also initialize a filesystem watcher.
 // If followLinks is false, symlinks will be treated as if they do not exist.
 func NewDirShare(
+	ctx context.Context,
 	name string,
 	dir string,
 	followLinks bool,
@@ -89,12 +115,88 @@ func NewDirShare(
 		return nil, err
 	}
 
-	return &DirShare{
+	// Setup watcher
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return nil, err
+	}
+
+	share := &DirShare{
+		ctx:         ctx,
 		name:        name,
 		dir:         abs,
 		followLinks: followLinks,
 		fsys:        os.DirFS(abs),
-	}, nil
+		watcher:     watcher,
+	}
+
+	err = watcher.Add(abs)
+	if err != nil {
+		return nil, err
+	}
+
+	// Init watcher
+	// On errors, just kill the watcher
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event, ok := <-watcher.Events:
+				if !ok {
+					break
+				}
+
+				share.mu.RLock()
+
+				if len(event.Name) == 0 {
+					continue
+				}
+
+				// TODO Is this the best way to reject a directory
+				if event.Name[len(event.Name)-1] == '/' {
+					continue
+				}
+
+				path, err := common.NormalizePath(event.Name)
+				if err != nil {
+					break
+				}
+
+				if event.Has(fsnotify.Create) || event.Has(fsnotify.Write) || event.Has(fsnotify.Chmod) {
+					for _, cb := range share.onIndexHdlrs {
+						cb(path)
+					}
+				} else if event.Has(fsnotify.Remove) {
+					for _, cb := range share.onDeleteHdlrs {
+						cb(path)
+					}
+				}
+
+				share.mu.RUnlock()
+			}
+		}
+	}()
+
+	return share, nil
+}
+
+func (s *DirShare) SupportsWatching() bool {
+	return true
+}
+
+func (s *DirShare) OnNeedIndex(callback ShareCallback) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.onIndexHdlrs = append(s.onIndexHdlrs, callback)
+}
+
+func (s *DirShare) OnDelete(callback ShareCallback) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.onDeleteHdlrs = append(s.onDeleteHdlrs, callback)
 }
 
 func (s *DirShare) isInfoOk(info fs.FileInfo) bool {
