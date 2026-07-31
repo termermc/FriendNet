@@ -105,7 +105,7 @@ func NewManager(
 
 		if record.EnableIndexing && share.SupportsWatching() {
 			share.OnNeedIndex(m.buildIndexCallback(ctx, record.Name))
-			share.OnDelete(m.buildDeleteCallback(ctx))
+			share.OnDelete(m.buildDeleteCallback(ctx, record.Uuid, record.Path))
 		}
 
 		m.shareMap[record.Name] = &shareData{
@@ -284,10 +284,26 @@ func (m *Manager) buildIndexCallback(ctx context.Context, name string) func(path
 	}
 }
 
-// TODO What do we actually do on a delete?
-func (m *Manager) buildDeleteCallback(ctx context.Context) func(path common.ProtoPath) {
+func (m *Manager) buildDeleteCallback(ctx context.Context, uuid string, parent common.ProtoPath) func(path common.ProtoPath) {
 	return func(path common.ProtoPath) {
-		m.storage.OptimizeShareIndex(ctx)
+		if path.IsZero() || path.IsRoot() {
+			return
+		}
+
+		pathContains, pathIdx := common.PathContains(parent, path)
+		if !pathContains {
+			return
+		}
+
+		relPath, err := common.SegmentsToPath(path.ToSegments()[pathIdx:])
+		if err != nil {
+			return
+		}
+		if relPath.IsZero() || relPath.IsRoot() {
+			return
+		}
+
+		_ = m.storage.DeleteShareIndexByPath(ctx, uuid, relPath.String())
 	}
 }
 
@@ -585,7 +601,7 @@ func (m *Manager) Add(
 		// Add requisite callbacks for file watcher
 		if share.SupportsWatching() {
 			share.OnNeedIndex(m.buildIndexCallback(ctx, name))
-			share.OnDelete(m.buildDeleteCallback(ctx))
+			share.OnDelete(m.buildDeleteCallback(ctx, rec.Uuid, rec.Path))
 		}
 
 		go func() {
