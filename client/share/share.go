@@ -3,12 +3,15 @@ package share
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"io/fs"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"friendnet.org/common"
 	pb "friendnet.org/protocol/pb/v1"
@@ -66,7 +69,7 @@ type Share interface {
 	// May return ErrShareClosed if the share is closed, depending on the implementation.
 	GetFile(path common.ProtoPath, offset uint64, limit uint64) (*pb.MsgFileMeta, io.ReadCloser, error)
 
-	// SupportsWatching will return true if the Share implementation supports filesystem event watching
+	// SupportsWatching will return true if the Share implementation supports filesystem event watching.
 	SupportsWatching() bool
 
 	// OnNeedIndex subscribes a callback to a filesystem event listener.
@@ -138,6 +141,21 @@ func NewDirShare(
 	// Init watcher
 	// On errors, just kill the watcher
 	go func() {
+		var (
+			dedupDelay   = 100 * time.Millisecond
+			dedupTimerMu sync.Mutex
+			dedupTimers  = make(map[string]*time.Timer)
+		)
+
+		// Crawl for subdirectories to add to watcher
+		filepath.WalkDir(abs, func(path string, d fs.DirEntry, err error) error {
+			if d.IsDir() {
+				_ = watcher.Add(path)
+			}
+
+			return nil
+		})
+
 		for {
 			select {
 			case <-ctx.Done():
@@ -147,33 +165,64 @@ func NewDirShare(
 					break
 				}
 
+				if !event.Has(fsnotify.Create) && !event.Has(fsnotify.Write) && !event.Has(fsnotify.Chmod) {
+					continue
+				}
+
 				share.mu.RLock()
 
 				if len(event.Name) == 0 {
 					continue
 				}
 
-				// TODO Is this the best way to reject a directory
-				if event.Name[len(event.Name)-1] == '/' {
-					continue
+				dedupTimerMu.Lock()
+				t, ok := dedupTimers[event.Name]
+				dedupTimerMu.Unlock()
+
+				// If timer for item doesn't exist, create
+				if !ok {
+					t = time.AfterFunc(math.MaxInt64, func() {
+						evtPath := event.Name
+
+						// If this is a directory, add it to the watches.
+						stat, err := os.Stat(evtPath)
+						if err == nil && stat.IsDir() {
+							_ = watcher.Add(evtPath)
+						}
+
+						relPath, err := filepath.Rel(abs, evtPath)
+						if err != nil {
+							return
+						}
+
+						fmt.Printf("event: %s %s\n", event.Op.String(), relPath)
+
+						path, err := common.NormalizePath(relPath)
+						if err != nil {
+							return
+						}
+
+						if event.Has(fsnotify.Create) || event.Has(fsnotify.Write) || event.Has(fsnotify.Chmod) {
+							for _, cb := range share.onIndexHdlrs {
+								cb(path)
+							}
+						} else if event.Has(fsnotify.Remove) {
+							for _, cb := range share.onDeleteHdlrs {
+								cb(path)
+							}
+						}
+
+						share.mu.RUnlock()
+					})
+
+					t.Stop()
+
+					dedupTimerMu.Lock()
+					dedupTimers[event.Name] = t
+					dedupTimerMu.Unlock()
 				}
 
-				path, err := common.NormalizePath(event.Name)
-				if err != nil {
-					break
-				}
-
-				if event.Has(fsnotify.Create) || event.Has(fsnotify.Write) || event.Has(fsnotify.Chmod) {
-					for _, cb := range share.onIndexHdlrs {
-						cb(path)
-					}
-				} else if event.Has(fsnotify.Remove) {
-					for _, cb := range share.onDeleteHdlrs {
-						cb(path)
-					}
-				}
-
-				share.mu.RUnlock()
+				t.Reset(dedupDelay)
 			}
 		}
 	}()

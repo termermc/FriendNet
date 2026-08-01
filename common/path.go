@@ -262,30 +262,3 @@ func JoinPaths(paths ...ProtoPath) ProtoPath {
 	}
 	return UncheckedCreateProtoPath(sb.String())
 }
-
-// PathContains returns true when path is contained wholly in parent and the array index in the path array corresponding to the full parent path.
-func PathContains(parent ProtoPath, path ProtoPath) (bool, int) {
-	if parent.IsZero() || path.IsZero() {
-		return false, 0
-	}
-
-	if parent.IsRoot() {
-		return true, 0
-	}
-
-	parentDiv := parent.ToSegments()
-	pathDiv := path.ToSegments()
-
-	if len(parentDiv) > len(pathDiv) {
-		return false, 0
-	}
-
-	i := 0
-	for ; i < len(parentDiv); i++ {
-		if parentDiv[i] != pathDiv[i] {
-			return false, i
-		}
-	}
-
-	return true, i
-}
