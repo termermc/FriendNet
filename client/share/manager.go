@@ -103,7 +103,7 @@ func NewManager(
 
 		if record.EnableIndexing && share.SupportsWatching() {
 			share.OnNeedIndex(m.buildIndexCallback(ctx, record.Name))
-			share.OnDelete(m.buildDeleteCallback(ctx, record.Uuid, record.Path))
+			share.OnDelete(m.buildDeleteCallback(ctx, record.Uuid))
 		}
 
 		m.shareMap[record.Name] = &shareData{
@@ -606,7 +606,7 @@ func (m *Manager) Add(
 		// Add requisite callbacks for file watcher
 		if share.SupportsWatching() {
 			share.OnNeedIndex(m.buildIndexCallback(ctx, name))
-			share.OnDelete(m.buildDeleteCallback(ctx, rec.Uuid, rec.Path))
+			share.OnDelete(m.buildDeleteCallback(ctx, rec.Uuid))
 		}
 
 		go func() {
