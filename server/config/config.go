@@ -23,10 +23,61 @@ type ServerRpcConfig struct {
 	Interfaces []common.RpcServerConfig `json:"interfaces"`
 }
 
+// ServerHttpAuthConfig is configuration for an HTTP external authentication provider.
+type ServerHttpAuthConfig struct {
+	// The endpoint's URL.
+	// Supports HTTP, HTTPS and UNIX socket.
+	//
+	// If UNIX socket, the URL must be formatted like `unix:///path/to/auth.sock` (note the triple slashes), or just a
+	// double slash for a path relative to the server's current working directory, such as `unix://auth.sock`.
+	Url string `json:"url"`
+}
+
+// ServerCommandAuthConfig is configuration for a command or script external authentication provider.
+type ServerCommandAuthConfig struct {
+	// The script's name or path.
+	// For example: "/usr/local/bin/auth.sh".
+	//
+	// If not an absolute ("/") or relative ("./") path, it will look for a program with this name in the system's PATH.
+	// Relative paths are relative to the server's current working directory.
+	//
+	// Note that on UNIX-like operating systems (such as Linux or Mac), the script must be marked as executable.
+	Name string `json:"name"`
+
+	// Any arguments to pass to the script.
+	// Can be empty or omitted.
+	Args []string `json:"args,omitempty"`
+}
+
+// ServerAuthProviderConfig is the configuration for an external authentication provider.
+// At least "http" or "command" must be specified, but both cannot be specified at once.
+type ServerAuthProviderConfig struct {
+	// The timeout in seconds to wait on a response from the external authentication provider before giving up.
+	// If omitted or zero, defaults to 10 seconds.
+	TimeoutSeconds uint `json:"timeout_seconds,omitempty"`
+
+	// If set, uses an HTTP endpoint as the authentication provider.
+	Http *ServerHttpAuthConfig `json:"http,omitempty"`
+
+	// If set, uses a command or script as the authentication provider.
+	Command *ServerCommandAuthConfig `json:"command,omitempty"`
+}
+
+// ServerExternalAuthConfig is external authentication configuration.
+// See https://friendnet.org/docs/server/external-authentication
+type ServerExternalAuthConfig struct {
+	// Global authentication providers.
+	// Applies to all rooms.
+	Global []ServerAuthProviderConfig
+
+	// A mapping of room names to specific authentication providers for them.
+	Rooms map[string][]ServerAuthProviderConfig
+}
+
 // ServerConfig is the server configuration.
 type ServerConfig struct {
 	// JsonSchema is a placeholder field to hold the JSON schema URL for validation.
-	JsonSchema string `json:"$schema"`
+	JsonSchema string `json:"$schema,omitempty"`
 
 	// The addresses to listen on.
 	// Each entry should be HOST:PORT.
@@ -57,6 +108,10 @@ type ServerConfig struct {
 
 	// The configuration for the server's RPC service.
 	Rpc ServerRpcConfig `json:"rpc"`
+
+	// External authentication configuration.
+	// See https://friendnet.org/docs/server/external-authentication
+	ExternalAuth *ServerExternalAuthConfig `json:"external_auth,omitempty"`
 }
 
 // Default is the default server configuration.

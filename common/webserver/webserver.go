@@ -174,7 +174,7 @@ func (ws *WebServer) Mount(address string, path string, handler http.Handler) er
 				return fmt.Errorf(`HTTP/HTTPS addresses must use an IP:PORT hostname, got %q`, addr)
 			}
 		case "unix":
-			addr = u.Host + u.Path
+			addr = u.Opaque + u.Host + u.Path
 			if !strings.HasPrefix(addr, "/") {
 				addr, err = filepath.Abs(addr)
 				if err != nil {
