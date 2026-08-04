@@ -160,7 +160,7 @@ func validateAuthProvider(path string, p *ServerAuthProviderConfig) error {
 	if p.Http == nil && p.Command == nil {
 		return fmt.Errorf(`%s: external auth provider configs must specify at least "http" or "command"`, path)
 	}
-	if p.Http == nil && p.Command != nil {
+	if p.Http != nil && p.Command != nil {
 		return fmt.Errorf(`%s: external auth provider configs cannot specify both "http" and "command"`, path)
 	}
 
