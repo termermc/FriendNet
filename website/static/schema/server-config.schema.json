@@ -160,6 +160,25 @@
 				}
 			}
 		},
+		"ServerRoomExternalAuthConfig": {
+			"type": "object",
+			"additionalProperties": false,
+			"description": "External authentication configuration for a specific room.",
+			"required": ["providers"],
+			"properties": {
+				"providers": {
+					"type": "array",
+					"description": "Authentication providers to use for the room.",
+					"items": {
+						"$ref": "#/$defs/ServerAuthProviderConfig"
+					}
+				},
+				"before_global": {
+					"type": "boolean",
+					"description": "If true, the room's providers will be used before global providers."
+				}
+			}
+		},
 		"ServerExternalAuthConfig": {
 			"type": "object",
 			"additionalProperties": false,
@@ -167,7 +186,7 @@
 			"properties": {
 				"global": {
 					"type": "array",
-					"description": "Authentication providers.\nApplies to all rooms.",
+					"description": "Authentication providers to use for all rooms.",
 					"items": {
 						"$ref": "#/$defs/ServerAuthProviderConfig"
 					}
@@ -176,10 +195,7 @@
 					"type": "object",
 					"patternProperties": {
 						"^[a-z0-9_]{1,16}$": {
-							"type": "array",
-							"items": {
-								"$ref": "#/$defs/ServerAuthProviderConfig"
-							}
+							"$ref": "#/$defs/ServerRoomExternalAuthConfig"
 						}
 					},
 					"additionalProperties": false

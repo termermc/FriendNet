@@ -5,18 +5,26 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/netip"
 	"time"
 
 	"friendnet.org/common"
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
 	"friendnet.org/server/room"
-	"friendnet.org/server/storage"
-	mcfpassword "github.com/termermc/go-mcf-password"
 )
 
 // DefaultTimeout is the default timeout for connections in the lobby (unauthenticated).
 const DefaultTimeout = 10 * time.Second
+
+// AuthFunc is a function that returns whether room credentials are valid.
+type AuthFunc func(
+	ctx context.Context,
+	ip netip.Addr,
+	room common.NormalizedRoomName,
+	username common.NormalizedUsername,
+	password string,
+) (ok bool, reason string, err error)
 
 // Lobby is where clients go when they first connect.
 // It accepts new connections and handles authentication.
@@ -24,8 +32,8 @@ const DefaultTimeout = 10 * time.Second
 type Lobby struct {
 	logger *slog.Logger
 
-	storage *storage.Storage
-	roomMgr *room.Manager
+	authenticate AuthFunc
+	roomMgr      *room.Manager
 
 	timeout   time.Duration
 	serverVer *pb.ProtoVersion
@@ -36,7 +44,7 @@ type Lobby struct {
 func NewLobby(
 	logger *slog.Logger,
 
-	storage *storage.Storage,
+	authenticate AuthFunc,
 	roomMgr *room.Manager,
 
 	timeout time.Duration,
@@ -52,8 +60,8 @@ func NewLobby(
 	return &Lobby{
 		logger: logger,
 
-		storage: storage,
-		roomMgr: roomMgr,
+		authenticate: authenticate,
+		roomMgr:      roomMgr,
 
 		timeout:   timeout,
 		serverVer: serverVer,
@@ -153,9 +161,9 @@ func (l *Lobby) negotiateClientVersion(
 			}
 		}
 
-		// Check if versions are the same, or at least the major and minor parts are the same.
+		// Check if versions are the same, or at least the major parts are the same.
 		cmp := protocol.CompareProtoVersions(clientVer, l.serverVer)
-		if cmp == 0 || (clientVer.Major == l.serverVer.Major && clientVer.Minor == l.serverVer.Minor) {
+		if cmp == 0 || (clientVer.Major == l.serverVer.Major) {
 			return nil
 		}
 
@@ -191,6 +199,8 @@ func (l *Lobby) negotiateClientVersion(
 	return clientVer, bidi.Write(pb.MsgType_MSG_TYPE_VERSION_ACCEPTED, &pb.MsgVersionAccepted{})
 }
 
+var ipv4Zero = netip.AddrFrom4([4]byte{0, 0, 0, 0})
+
 // authenticateClient performs the authentication phase with the provided connection.
 // If the authentication succeeds, the client's room and username will be returned.
 // Authentication will fail with an error if the client provides invalid credentials.
@@ -224,10 +234,17 @@ func (l *Lobby) authenticateClient(
 		}
 		authMsg := msg.Payload
 
-		invalidCreds := func() error {
+		invalidCreds := func(reason string) error {
+			var rejMsg string
+			if reason == "" {
+				rejMsg = "invalid credentials"
+			} else {
+				rejMsg = reason
+			}
+
 			return protocol.AuthRejectedError{
 				Reason:  pb.AuthRejectionReason_AUTH_REJECTION_REASON_INVALID_CREDENTIALS,
-				Message: "invalid credentials",
+				Message: rejMsg,
 			}
 		}
 
@@ -235,59 +252,28 @@ func (l *Lobby) authenticateClient(
 		var isValid bool
 		room, isValid = common.NormalizeRoomName(authMsg.Room)
 		if !isValid {
-			return invalidCreds()
+			return invalidCreds("")
 		}
 		username, isValid = common.NormalizeUsername(authMsg.Username)
 		if !isValid {
-			return invalidCreds()
+			return invalidCreds("")
 		}
 
-		// Look up account and verify password.
-		var accountRec storage.AccountRecord
-		var hasAcc bool
-		accountRec, hasAcc, err = l.storage.GetAccountByRoomAndUsername(ctx, room, username)
+		var ip netip.Addr
+		addrPort, err := netip.ParseAddrPort(conn.RemoteAddr().String())
+		if err == nil {
+			ip = addrPort.Addr()
+		} else {
+			// Probably a non-IP connection, use `0.0.0.0`.
+			ip = ipv4Zero
+		}
+
+		ok, reason, err := l.authenticate(ctx, ip, room, username, authMsg.Password)
 		if err != nil {
-			return err
+			return fmt.Errorf(`authentication failed: %w`, err)
 		}
-		if !hasAcc {
-			return invalidCreds()
-		}
-
-		// Check password.
-		var matches bool
-		var needsRehash bool
-		matches, needsRehash, err = mcfpassword.VerifyPassword(authMsg.Password, accountRec.PasswordHash)
-		if err != nil {
-			return fmt.Errorf(`failed to verify password for account with room %q and username %q: %w`,
-				room.String(),
-				username.String(),
-				err,
-			)
-		}
-		if !matches {
-			return invalidCreds()
-		}
-
-		// Rehash password if necessary.
-		if needsRehash {
-			var newHash string
-			newHash, err = mcfpassword.HashPassword(authMsg.Password)
-			if err != nil {
-				return fmt.Errorf(`failed to rehash password for account with room %q and username %q: %w`,
-					room.String(),
-					username.String(),
-					err,
-				)
-			}
-
-			err = l.storage.UpdateAccountPasswordHash(ctx, room, username, newHash)
-			if err != nil {
-				return fmt.Errorf(`failed to update account with room %q and username %q with rehashed password: %w`,
-					room.String(),
-					username.String(),
-					err,
-				)
-			}
+		if !ok {
+			return invalidCreds(reason)
 		}
 
 		// Authenticate successful.

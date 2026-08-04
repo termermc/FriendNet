@@ -63,6 +63,15 @@ type ServerAuthProviderConfig struct {
 	Command *ServerCommandAuthConfig `json:"command,omitempty"`
 }
 
+// ServerRoomExternalAuthConfig is external authentication configuration for a specific room.
+type ServerRoomExternalAuthConfig struct {
+	// Authentication providers to use for the room.
+	Providers []ServerAuthProviderConfig `json:"providers"`
+
+	// If true, the room's providers will be used before global providers.
+	BeforeGlobal bool `json:"before_global"`
+}
+
 // ServerExternalAuthConfig is external authentication configuration.
 // See https://friendnet.org/docs/server/external-authentication
 type ServerExternalAuthConfig struct {
@@ -71,7 +80,7 @@ type ServerExternalAuthConfig struct {
 	Global []ServerAuthProviderConfig
 
 	// A mapping of room names to specific authentication providers for them.
-	Rooms map[string][]ServerAuthProviderConfig
+	Rooms map[string]ServerRoomExternalAuthConfig
 }
 
 // ServerConfig is the server configuration.
@@ -147,6 +156,40 @@ var Default = &ServerConfig{
 	},
 }
 
+func validateAuthProvider(path string, p *ServerAuthProviderConfig) error {
+	if p.Http == nil && p.Command == nil {
+		return fmt.Errorf(`%s: external auth provider configs must specify at least "http" or "command"`, path)
+	}
+	if p.Http == nil && p.Command != nil {
+		return fmt.Errorf(`%s: external auth provider configs cannot specify both "http" and "command"`, path)
+	}
+
+	if p.TimeoutSeconds < 1 {
+		p.TimeoutSeconds = 10
+	}
+
+	if p.Http != nil {
+		if p.Http.Url == "" {
+			return fmt.Errorf(`%s.http: missing HTTP auth provider URL`, path)
+		}
+
+		u, err := url.Parse(p.Http.Url)
+		if err != nil {
+			return fmt.Errorf(`%s.http.url: HTTP auth provider URL is invalid: %w`, path, err)
+		}
+
+		if u.Scheme != "http" && u.Scheme != "https" && u.Scheme != "unix" {
+			return fmt.Errorf(`%s.http.url: invalid HTTP auth provider scheme %q, must be "http", "https" or "unix"`, path, u.Scheme)
+		}
+	} else if p.Command != nil {
+		if p.Command.Name == "" {
+			return fmt.Errorf(`%s.command: missing command auth provider command/script name`, path)
+		}
+	}
+
+	return nil
+}
+
 // LoadOrCreate loads the server configuration at the specified path.
 // If the file does not exist, it will be created using values from Default.
 // Returns an error if the file is invalid.
@@ -196,6 +239,29 @@ func LoadOrCreate(path string) (*ServerConfig, error) {
 		_, _, err = net.SplitHostPort(server)
 		if err != nil {
 			return nil, fmt.Errorf(`STUN server address %q is not a valid HOST:PORT address: %w`, server, err)
+		}
+	}
+
+	// Validate external auth providers.
+	if cfg.ExternalAuth != nil {
+		ext := cfg.ExternalAuth
+
+		for _, prov := range ext.Global {
+			if err = validateAuthProvider("external_auth.global", &prov); err != nil {
+				return nil, err
+			}
+		}
+
+		for roomName, roomCfg := range ext.Rooms {
+			if _, ok := common.NormalizeRoomName(roomName); !ok {
+				return nil, fmt.Errorf(`external_auth.rooms: %q is not a valid room name`, roomName)
+			}
+
+			for _, prov := range roomCfg.Providers {
+				if err = validateAuthProvider("external_auth.rooms."+roomName, &prov); err != nil {
+					return nil, err
+				}
+			}
 		}
 	}
 

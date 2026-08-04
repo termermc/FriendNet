@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"friendnet.org/common"
+	"friendnet.org/server/config"
 	"friendnet.org/server/storage"
 	mcfpassword "github.com/termermc/go-mcf-password"
 )
@@ -381,4 +382,16 @@ func (p *CmdAuthProvider) Authenticate(
 	case cr := <-resChan:
 		return cr.res, cr.err
 	}
+}
+
+// ProviderFromConfig creates a new AuthProvider based on the specified provider config.
+func ProviderFromConfig(cfg config.ServerAuthProviderConfig) (AuthProvider, error) {
+	if cfg.Http != nil {
+		return NewHttpAuthProvider(cfg.Http.Url, time.Duration(cfg.TimeoutSeconds)*time.Second)
+	}
+	if cfg.Command != nil {
+		return NewCmdAuthProvider(cfg.Command.Name, cfg.Command.Args, time.Duration(cfg.TimeoutSeconds)*time.Second)
+	}
+
+	return nil, fmt.Errorf(`BUG: ProviderFromConfig was given an invalid auth provider config`)
 }
