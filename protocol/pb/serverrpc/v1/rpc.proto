@@ -197,11 +197,11 @@ message RemoveBlacklistPoliciesResponse {
 
 }
 
-message ListBlacklistPoliciesRequest {
+message GetBlacklistPoliciesRequest {
     // If null, it will return only global policies.
     optional string room = 1;
 }
-message ListBlacklistPoliciesResponse {
+message GetBlacklistPoliciesResponse {
     // The policies.
     repeated BlacklistPolicy policies = 1;
 }
@@ -271,8 +271,8 @@ service ServerRpcService {
     // If a room to enforce this policy is not specified then they are assumed to be serverwide.
     rpc RemoveBlacklistPolicies(RemoveBlacklistPoliciesRequest) returns (RemoveBlacklistPoliciesResponse) {}
 
-    // ListBlacklistPolicies returns a list of currently blacklisted keywords for a room.
+    // GetBlacklistPolicies returns a list of currently blacklisted keywords for a room.
     // If the room is not set, the list returned will contain only serverwide policies.
     // Returns status code NOT_FOUND if the room does not exist.
-    rpc ListBlacklistPolicies(ListBlacklistPoliciesRequest) returns (ListBlacklistPoliciesResponse) {}
+    rpc GetBlacklistPolicies(GetBlacklistPoliciesRequest) returns (GetBlacklistPoliciesResponse) {}
 }

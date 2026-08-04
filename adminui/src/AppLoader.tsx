@@ -49,7 +49,7 @@ const NoToken: Component = () => {
 	)
 }
 
-export const Loader: Component = () => {
+export const AppLoader: Component = () => {
 	const params = new URLSearchParams(window.location.search)
 	let rpcUrl = params.get('rpc')
 	if (rpcUrl) {

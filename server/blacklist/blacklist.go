@@ -25,9 +25,9 @@ type Blacklist struct {
 	storage PolicyStorage
 	machine *ahocorasick.Machine
 
-	wholeWords     map[string]struct{}
-	hasAnyKeywords bool
-	regexes        []*regexp.Regexp
+	wholeWords      map[string]struct{}
+	hasTrieKeywords bool
+	regexes         []*regexp.Regexp
 }
 
 // New creates a new blacklist.
@@ -43,8 +43,8 @@ func New(ctx context.Context, storage PolicyStorage) (*Blacklist, error) {
 		storage: storage,
 		machine: machine,
 
-		wholeWords:     make(map[string]struct{}),
-		hasAnyKeywords: false,
+		wholeWords:      make(map[string]struct{}),
+		hasTrieKeywords: false,
 	}
 
 	err := blacklist.UpdateFromDb()
@@ -65,27 +65,28 @@ func (b *Blacklist) UpdateFromDb() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	// Set it to false until we know the build succeeded.
-	b.hasAnyKeywords = false
+	// Set it to false until we know the trie build succeeded.
+	b.hasTrieKeywords = false
+
+	trieKeywords := make([][]rune, 0, len(policies))
+	clear(b.wholeWords)
+	b.regexes = b.regexes[0:0]
 
 	if len(policies) == 0 {
 		return nil
 	}
 
-	trieKeywords := make([][]rune, 0, len(policies))
-	clear(b.wholeWords)
-	clear(b.regexes)
-
 	for _, policy := range policies {
+		lower := common.ToLowerUnicode(policy.Keyword)
+
 		switch policy.Mode {
 		case pb.BlacklistMatchMode_BLACKLIST_MATCH_MODE_WHOLE:
-			kw := common.ToLowerUnicode(policy.Keyword)
-			trieKeywords = append(trieKeywords, []rune(kw))
-			b.wholeWords[kw] = struct{}{}
+			b.wholeWords[lower] = struct{}{}
+			fallthrough
 		case pb.BlacklistMatchMode_BLACKLIST_MATCH_MODE_SUBSTRING:
-			trieKeywords = append(trieKeywords, []rune(common.ToLowerUnicode(policy.Keyword)))
+			trieKeywords = append(trieKeywords, []rune(lower))
 		case pb.BlacklistMatchMode_BLACKLIST_MATCH_MODE_REGEX:
-			regex, err := regexp.Compile(policy.Keyword)
+			regex, err := regexp.Compile(lower)
 			if err != nil {
 				return fmt.Errorf(`encountered invalid regex %q when loading blacklist policies: %w`,
 					policy.Keyword,
@@ -99,12 +100,13 @@ func (b *Blacklist) UpdateFromDb() error {
 		}
 	}
 
-	err = b.machine.Build(trieKeywords)
-	if err != nil {
-		return err
+	if len(trieKeywords) > 0 {
+		err = b.machine.Build(trieKeywords)
+		if err != nil {
+			return err
+		}
+		b.hasTrieKeywords = true
 	}
-
-	b.hasAnyKeywords = true
 
 	return nil
 }
@@ -151,68 +153,66 @@ func (b *Blacklist) Match(haystackRunes []rune, haystackStr string) bool {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
-	if !b.hasAnyKeywords {
-		return false
-	}
-
 	// Try words first.
-	results := b.machine.MultiPatternSearch(haystackRunes, true)
+	if b.hasTrieKeywords {
+		results := b.machine.MultiPatternSearch(haystackRunes, true)
 
-	for _, result := range results {
-		wordStr := string(result.Word)
+		for _, result := range results {
+			wordStr := string(result.Word)
 
-		// Got a match.
-		// If this keyword should only match whole words, use that logic instead.
-		if _, has := b.wholeWords[wordStr]; has {
-			wordStart := result.Pos
-			wordEnd := wordStart + len(result.Word) - 1
+			// Got a match.
+			// If this keyword should only match whole words, use that logic instead.
+			if _, has := b.wholeWords[wordStr]; has {
+				wordStart := result.Pos
+				wordEnd := wordStart + len(result.Word) - 1
 
-			// termer 2026/07/27: It's not exactly foolproof, but the idea is this:
-			// If a char is ASCII and the next char is an ASCII word char, then it's a substring match.
-			// If a char is unicode and the next char is unicode, then it's a substring match.
-			// That would allow a string like "blue天" to match full word "blue".
-			// It would also allow 藍天 to NOT match full word "天".
-			// We also try to detect and convert unicode punctuation to their ASCII counterparts.
-			// Things still don't work great for languages without spaces like CJK; substring should be used for those.
+				// termer 2026/07/27: It's not exactly foolproof, but the idea is this:
+				// If a char is ASCII and the next char is an ASCII word char, then it's a substring match.
+				// If a char is unicode and the next char is unicode, then it's a substring match.
+				// That would allow a string like "blue天" to match full word "blue".
+				// It would also allow 藍天 to NOT match full word "天".
+				// We also try to detect and convert unicode punctuation to their ASCII counterparts.
+				// Things still don't work great for languages without spaces like CJK; substring should be used for those.
 
-			if wordStart > 0 {
-				startChar := haystackRunes[wordStart]
-				prevChar := haystackRunes[wordStart-1]
+				if wordStart > 0 {
+					startChar := haystackRunes[wordStart]
+					prevChar := haystackRunes[wordStart-1]
 
-				if startChar > 255 && prevChar > 255 {
-					// The previous unicode char could be punctuation; test if it is.
-					prevAscii := anyascii.TransliterateRune(prevChar)
-					if isCharAsciiWord(prevAscii[0]) {
-						// Matched a substring
+					if startChar > 255 && prevChar > 255 {
+						// The previous unicode char could be punctuation; test if it is.
+						prevAscii := anyascii.TransliterateRune(prevChar)
+						if isCharAsciiWord(prevAscii[0]) {
+							// Matched a substring
+							continue
+						}
+					} else if startChar <= 255 && isCharAsciiWord(prevChar) {
+						// Matched a substring.
 						continue
 					}
-				} else if startChar <= 255 && isCharAsciiWord(prevChar) {
-					// Matched a substring.
-					continue
 				}
-			}
 
-			if wordEnd < len(haystackRunes)-1 {
-				endChar := haystackRunes[wordEnd]
-				nextChar := haystackRunes[wordEnd+1]
+				if wordEnd < len(haystackRunes)-1 {
+					endChar := haystackRunes[wordEnd]
+					nextChar := haystackRunes[wordEnd+1]
 
-				if endChar > 255 && nextChar > 255 {
-					// The next unicode char could be punctuation; test if it is.
-					nextAscii := anyascii.TransliterateRune(nextChar)
-					if isCharAsciiWord(nextAscii[0]) {
-						// Matched a substring
+					if endChar > 255 && nextChar > 255 {
+						// The next unicode char could be punctuation; test if it is.
+						nextAscii := anyascii.TransliterateRune(nextChar)
+						if isCharAsciiWord(nextAscii[0]) {
+							// Matched a substring
+							continue
+						}
+					} else if endChar <= 255 && isCharAsciiWord(nextChar) {
+						// Matched a substring.
 						continue
 					}
-				} else if endChar <= 255 && isCharAsciiWord(nextChar) {
-					// Matched a substring.
-					continue
 				}
+
+				return true
 			}
 
 			return true
 		}
-
-		return true
 	}
 
 	// No words matched, try regex.

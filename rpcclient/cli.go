@@ -20,6 +20,7 @@ import (
 var matchModeToName = map[v1.BlacklistMatchMode]string{
 	v1.BlacklistMatchMode_BLACKLIST_MATCH_MODE_SUBSTRING: "substring",
 	v1.BlacklistMatchMode_BLACKLIST_MATCH_MODE_WHOLE:     "whole",
+	v1.BlacklistMatchMode_BLACKLIST_MATCH_MODE_REGEX:     "regex",
 }
 var nameToMatchMode = func() map[string]v1.BlacklistMatchMode {
 	res := make(map[string]v1.BlacklistMatchMode, len(matchModeToName))
@@ -170,9 +171,9 @@ func NewCli(client serverrpcv1connect.ServerRpcServiceClient, opts ...Opt) *Cli 
 			Handler: cli.cmdRemoveRoomBlacklistPolicies,
 		},
 		{
-			Name:    "listblacklistpolicies",
+			Name:    "getblacklistpolicies",
 			Usage:   "[room]",
-			Handler: cli.cmdListBlacklistPolicies,
+			Handler: cli.cmdGetBlacklistPolicies,
 		},
 	}
 	return cli
@@ -501,9 +502,6 @@ func (c *Cli) cmdUpdateAccountPassword(ctx context.Context, cmd Cmd, args []stri
 	return nil
 }
 
-const cmdBlacklistModeSubstring = "substring"
-const cmdBlacklistModeWhole = "whole"
-
 func (c *Cli) addBlacklistPolicies(ctx context.Context, room string, modeName string, keywords []string) error {
 	mode, ok := nameToMatchMode[modeName]
 	if !ok {
@@ -586,7 +584,7 @@ func (c *Cli) cmdRemoveRoomBlacklistPolicies(ctx context.Context, cmd Cmd, args 
 	return nil
 }
 
-func (c *Cli) cmdListBlacklistPolicies(ctx context.Context, cmd Cmd, args []string) error {
+func (c *Cli) cmdGetBlacklistPolicies(ctx context.Context, cmd Cmd, args []string) error {
 	if err := validateArgCount(args, 0, 1, cmd); err != nil {
 		return err
 	}
@@ -596,7 +594,7 @@ func (c *Cli) cmdListBlacklistPolicies(ctx context.Context, cmd Cmd, args []stri
 		room = &args[0]
 	}
 
-	resp, err := c.client.ListBlacklistPolicies(ctx, &v1.ListBlacklistPoliciesRequest{
+	resp, err := c.client.GetBlacklistPolicies(ctx, &v1.GetBlacklistPoliciesRequest{
 		Room: room,
 	})
 	if err != nil {

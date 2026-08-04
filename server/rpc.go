@@ -334,9 +334,7 @@ func (s *RpcServer) AddBlacklistPolicies(_ context.Context, req *v1.AddBlacklist
 
 		// For substring and whole word, lowercase the keyword.
 		for _, policy := range req.Policies {
-			if policy.Mode == v1.BlacklistMatchMode_BLACKLIST_MATCH_MODE_SUBSTRING || policy.Mode == v1.BlacklistMatchMode_BLACKLIST_MATCH_MODE_WHOLE {
-				policy.Keyword = common.ToLowerUnicode(policy.Keyword)
-			}
+			policy.Keyword = common.ToLowerUnicode(policy.Keyword)
 		}
 
 		err = r.Blacklist.AddPolicies(req.Policies)
@@ -381,7 +379,7 @@ func (s *RpcServer) RemoveBlacklistPolicies(_ context.Context, req *v1.RemoveBla
 	return &v1.RemoveBlacklistPoliciesResponse{}, nil
 }
 
-func (s *RpcServer) ListBlacklistPolicies(ctx context.Context, req *v1.ListBlacklistPoliciesRequest) (*v1.ListBlacklistPoliciesResponse, error) {
+func (s *RpcServer) GetBlacklistPolicies(ctx context.Context, req *v1.GetBlacklistPoliciesRequest) (*v1.GetBlacklistPoliciesResponse, error) {
 	r, _ := common.NormalizeRoomName(req.GetRoom())
 	if !r.IsZero() {
 		if _, err := s.getRoom(req.GetRoom()); err != nil {
@@ -394,7 +392,7 @@ func (s *RpcServer) ListBlacklistPolicies(ctx context.Context, req *v1.ListBlack
 		return nil, err
 	}
 
-	return &v1.ListBlacklistPoliciesResponse{
+	return &v1.GetBlacklistPoliciesResponse{
 		Policies: policies,
 	}, nil
 }

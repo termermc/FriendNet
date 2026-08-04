@@ -3,8 +3,7 @@
 Sometimes, for legal or ethical reasons, you may want to filter out certain search results serverside. It is possible
 to filter out search results for files whose filenames or paths contain blacklisted keywords.
 
-> NOTE: Search filtering only works for serverwide search; it cannot filter direct user searches because those are
-> peer-to-peer.
+> NOTE: Search filtering cannot filter direct user searches because those are peer-to-peer.
 
 Filters can be applied globally across the entire server, or on a per-room basis, or a mix of both.
 
@@ -25,14 +24,17 @@ Keywords can be matches using several modes:
 
    > Terms matching the specified [regular expression](https://github.com/google/re2/wiki/Syntax) will be matched.
    > For example, `c[a-z]t` will match to `cat`, `cut`, `cot`, etc.
-   > 
-   > Note that regular expressions are case-sensitive.
+
+Note that all match modes are case-insensitive.
 
 ## Adding From the Admin UI
 
 If you have the [admin UI](setup/management.md) set up, you can add keywords from there.
 
-TODO Screenshot and directions
+Click the `🚩 Global Search Filters` button to change global filters, or click on a room and then click
+`🚩 Search Filters` to change the room-specific filters.
+
+![Global search filters in the admin UI](./admin-ui-search-filtering.png)
 
 ## Adding From the RPC or CLI
 
@@ -42,8 +44,8 @@ Type `help` to see all the available blacklist commands.
 
 Currently, these are the commands that exist for managing blacklisted keywords:
 
- - addglobalblacklistpolicies <substring|whole|regex> <keywords... (one or more)>
- - addroomblacklistpolicies <room> <substring|whole|regex> <keywords>
- - removeglobalblacklistpolicies removeglobalblacklistpolicies <keywords>
- - removeroomblacklistpolicies <room> <keywords>
- - listblacklistpolicies [room]
+ - `addglobalblacklistpolicies <substring|whole|regex> <keywords... (one or more)>`
+ - `addroomblacklistpolicies <room> <substring|whole|regex> <keywords>`
+ - `removeglobalblacklistpolicies removeglobalblacklistpolicies <keywords>`
+ - `removeroomblacklistpolicies <room> <keywords>`
+ - `getblacklistpolicies [room]`
