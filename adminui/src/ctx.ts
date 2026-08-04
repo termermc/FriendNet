@@ -15,6 +15,7 @@ export const rpcUrlKey = 'friendnet.rpc'
 export const ServerInfoCtx = createContext<GetServerInfoResponse>()
 export const RpcClientCtx = createContext<RpcClient>()
 export const RoomsCtx = createContext(createSignal<RoomInfo[]>([]))
+export const PageRoomCtx = createContext<RoomInfo | undefined>()
 
 /**
  * Returns information about the server.
@@ -36,6 +37,13 @@ export function useRpcClient(): RpcClient {
 export function useRooms(): Accessor<RoomInfo[]> {
 	const [getRooms] = useContext(RoomsCtx)!
 	return getRooms
+}
+
+/**
+ * Returns the room associated with the current page, if any.
+ */
+export function usePageRoom(): RoomInfo | undefined {
+	return useContext(PageRoomCtx)
 }
 
 /**

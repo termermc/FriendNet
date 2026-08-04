@@ -22,6 +22,7 @@
 	run-rpcclient \
 	server-docker \
 	server-docker-publish \
+	website \
 	release-artifacts
 
 help:
@@ -102,6 +103,9 @@ server-docker:
 
 server-docker-publish:
 	make server-docker && docker push git.termer.net/termer/friendnet-server:latest
+
+website:
+	cd website && npm install && npm run build
 
 release-artifacts:
 	rm -rf /tmp/fn-release

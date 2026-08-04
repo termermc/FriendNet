@@ -5,11 +5,13 @@ go 1.26.5
 require (
 	connectrpc.com/connect v1.19.1
 	friendnet.org/adminui v0.0.0
+	friendnet.org/ahocorasick v0.0.0-00010101000000-000000000000
 	friendnet.org/common v0.0.0
 	friendnet.org/protocol v0.0.0
 	friendnet.org/rpcclient v0.0.0
 	friendnet.org/stun v0.0.0
 	friendnet.org/updater v0.0.0
+	github.com/anyascii/go v0.3.3
 	github.com/quic-go/quic-go v0.61.0
 	github.com/termermc/go-mcf-password v1.0.0
 	golang.org/x/term v0.45.0
@@ -36,6 +38,7 @@ require (
 
 replace (
 	friendnet.org/adminui => ../adminui
+	friendnet.org/ahocorasick => ../ahocorasick
 	friendnet.org/common => ../common
 	friendnet.org/protocol => ../protocol
 	friendnet.org/rpcclient => ../rpcclient

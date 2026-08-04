@@ -467,6 +467,14 @@ func (l LogicImpl) OnSearch(ctx context.Context, client *Client, bidi protocol.P
 						return
 					}
 
+					filterStr := next.DirectoryPath + "/" + next.File.Name
+					matches := c.Room.MatchToBlacklists(filterStr)
+
+					// This path+file matched the blacklist
+					if matches {
+						continue
+					}
+
 					select {
 					case <-timeoutCtx.Done():
 						return

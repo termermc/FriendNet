@@ -2,8 +2,8 @@
 import { render } from 'solid-js/web'
 import './styles.css'
 
-import { Loader } from './Loader'
+import { AppLoader } from './AppLoader'
 
 const root = document.getElementById('root')
 
-render(() => <Loader />, root!)
+render(() => <AppLoader />, root!)
