@@ -11,6 +11,7 @@ import (
 	"friendnet.org/common/password"
 	v1 "friendnet.org/protocol/pb/serverrpc/v1"
 	"friendnet.org/protocol/pb/serverrpc/v1/serverrpcv1connect"
+	"friendnet.org/server/blacklist"
 	"friendnet.org/server/room"
 	"friendnet.org/server/storage"
 	"friendnet.org/updater"
@@ -23,6 +24,7 @@ var errRoomExists = connect.NewError(connect.CodeAlreadyExists, errors.New("room
 var errAccountExists = connect.NewError(connect.CodeAlreadyExists, errors.New("account already exists"))
 var errInvalidRoomName = connect.NewError(connect.CodeInvalidArgument, errors.New("invalid room name"))
 var errInvalidUsername = connect.NewError(connect.CodeInvalidArgument, errors.New("invalid username"))
+var errEmptyPolicyKeyword = connect.NewError(connect.CodeInvalidArgument, blacklist.ErrEmptyKeyword)
 
 type RpcServer struct {
 	s     *Server
@@ -88,6 +90,7 @@ func (s *RpcServer) getClient(r *room.Room, username string) (*room.Client, erro
 
 	return client, nil
 }
+
 func (s *RpcServer) getOrGenPass(pass string) (string, bool) {
 	if pass == "" {
 		var buf [12]byte
@@ -318,5 +321,78 @@ func (s *RpcServer) GetServerInfo(_ context.Context, _ *v1.GetServerInfoRequest)
 			AllowedMethods:      s.iface.AllowedMethods,
 			RequiresBearerToken: s.iface.BearerToken != "",
 		},
+	}, nil
+}
+
+func (s *RpcServer) AddBlacklistPolicies(_ context.Context, req *v1.AddBlacklistPoliciesRequest) (*v1.AddBlacklistPoliciesResponse, error) {
+	// Room scoped policy
+	if req.Room != nil {
+		r, err := s.getRoom(req.GetRoom())
+		if err != nil {
+			return nil, errRoomNotFound
+		}
+
+		// For substring and whole word, lowercase the keyword.
+		for _, policy := range req.Policies {
+			policy.Keyword = common.ToLowerUnicode(policy.Keyword)
+		}
+
+		err = r.Blacklist.AddPolicies(req.Policies)
+		if err != nil {
+			if errors.Is(err, blacklist.ErrEmptyKeyword) {
+				return nil, errEmptyPolicyKeyword
+			}
+
+			return nil, err
+		}
+	} else {
+		// Serverwide policy
+		err := s.s.RoomManager.GlobalBlacklist.AddPolicies(req.Policies)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &v1.AddBlacklistPoliciesResponse{}, nil
+}
+
+func (s *RpcServer) RemoveBlacklistPolicies(_ context.Context, req *v1.RemoveBlacklistPoliciesRequest) (*v1.RemoveBlacklistPoliciesResponse, error) {
+	// Room scoped policy
+	if req.Room != nil {
+		room, err := s.getRoom(req.GetRoom())
+		if err != nil {
+			return nil, errRoomNotFound
+		}
+
+		err = room.Blacklist.Remove(req.Policies)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// Serverwide policy
+		err := s.s.RoomManager.GlobalBlacklist.Remove(req.Policies)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &v1.RemoveBlacklistPoliciesResponse{}, nil
+}
+
+func (s *RpcServer) GetBlacklistPolicies(ctx context.Context, req *v1.GetBlacklistPoliciesRequest) (*v1.GetBlacklistPoliciesResponse, error) {
+	r, _ := common.NormalizeRoomName(req.GetRoom())
+	if !r.IsZero() {
+		if _, err := s.getRoom(req.GetRoom()); err != nil {
+			return nil, errRoomNotFound
+		}
+	}
+
+	policies, err := s.s.storage.GetBlacklistPoliciesForRoom(ctx, r)
+	if err != nil {
+		return nil, err
+	}
+
+	return &v1.GetBlacklistPoliciesResponse{
+		Policies: policies,
 	}, nil
 }

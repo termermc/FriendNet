@@ -3,6 +3,8 @@ package common
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"strings"
+	"unicode"
 )
 
 // StrPtrOr dereferences a string pointer or returns a default value if it is nil.
@@ -27,4 +29,9 @@ func RandomB64UrlStr(byteLen int) string {
 	buf := make([]byte, byteLen)
 	_, _ = rand.Read(buf)
 	return base64.RawURLEncoding.EncodeToString(buf)
+}
+
+// ToLowerUnicode lowercases a string, handling some weird unicode alphabets as well.
+func ToLowerUnicode(str string) string {
+	return strings.ToLowerSpecial(unicode.TurkishCase, str)
 }
