@@ -1,7 +1,7 @@
 # External Authentication & Middleware
 
 By default, the FriendNet server uses its own account system to authenticate clients to rooms. However, it is also
-possible to integrate an external authentication systems and middleware.
+possible to integrate external authentication systems and middleware.
 
 External authentication can be useful if you want to integrate FriendNet with an existing community, such as a forum,
 IRC, etc.
