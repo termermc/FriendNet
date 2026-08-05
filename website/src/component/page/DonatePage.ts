@@ -37,6 +37,7 @@ export const DonatePage: Component<void, void> = () => {
 						<li><a href="https://arisuchan.xyz/">arisuchan.xyz</a></li>
 						<li><a href="https://symlinx.net/dacctal/">dacctal</a></li>
 						<li>8chan.moe/t/ anon</li>
+						<li><a href="https://github.com/vwxi">vwxi</a></li>
 					</ul>
 				</div>
 			</div>
