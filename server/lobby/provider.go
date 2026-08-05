@@ -210,12 +210,17 @@ func readExternalAuthRes(typ string, r io.Reader) (res AuthResponse, err error) 
 type HttpAuthProvider struct {
 	endpoint string
 	client   http.Client
+	headers  http.Header
 }
 
-// NewHttpAuthProvider creates a new HttpAuthProvider with the specified endpoint and request timeout.
+// NewHttpAuthProvider creates a new HttpAuthProvider with the specified endpoint, request timeout and headers.
 // Returns an error if the endpoint URL is invalid or has an unsupported scheme.
 // Supported schemes: "http", "https", "unix".
-func NewHttpAuthProvider(endpoint string, timeout time.Duration) (*HttpAuthProvider, error) {
+func NewHttpAuthProvider(
+	endpoint string,
+	headers http.Header,
+	timeout time.Duration,
+) (*HttpAuthProvider, error) {
 	u, err := url.Parse(endpoint)
 	if err != nil {
 		return nil, fmt.Errorf(`called NewHttpAuthProvider with invalid URL: %w`, err)
@@ -237,9 +242,14 @@ func NewHttpAuthProvider(endpoint string, timeout time.Duration) (*HttpAuthProvi
 		}
 	}
 
+	if headers == nil {
+		headers = make(http.Header)
+	}
+
 	return &HttpAuthProvider{
-		endpoint: endpoint,
 		client:   client,
+		endpoint: endpoint,
+		headers:  headers,
 	}, nil
 }
 
@@ -261,6 +271,7 @@ func (p *HttpAuthProvider) Authenticate(
 	if err != nil {
 		return res, fmt.Errorf(`failed to create HTTP external auth request: %w`, err)
 	}
+	req.Header = p.headers
 	req.Header.Add("Content-Type", "application/json")
 
 	httpRes, err := p.client.Do(req)
@@ -297,19 +308,36 @@ func (p *HttpAuthProvider) Authenticate(
 type CmdAuthProvider struct {
 	name    string
 	args    []string
+	env     []string
 	timeout time.Duration
 }
 
-// NewCmdAuthProvider creates a new CmdAuthProvider with the specified shell command and timeout.
-func NewCmdAuthProvider(name string, args []string, timeout time.Duration) (*CmdAuthProvider, error) {
+// NewCmdAuthProvider creates a new CmdAuthProvider with the specified shell command, environment variables and timeout.
+func NewCmdAuthProvider(
+	name string,
+	args []string,
+	env map[string]string,
+	timeout time.Duration,
+) (*CmdAuthProvider, error) {
 	if name == "" {
 		return nil, fmt.Errorf(`called NewCmdAuthProvider with an empty name`)
 	}
 
+	var envSlice []string
+	if env == nil {
+		envSlice = []string{}
+	} else {
+		envSlice = make([]string, 0, len(env))
+		for k, v := range env {
+			envSlice = append(envSlice, k+"="+v)
+		}
+	}
+
 	return &CmdAuthProvider{
-		timeout: timeout,
 		name:    name,
 		args:    args,
+		env:     envSlice,
+		timeout: timeout,
 	}, nil
 }
 
@@ -331,6 +359,7 @@ func (p *CmdAuthProvider) Authenticate(
 	defer timeoutCancel()
 
 	cmd := exec.CommandContext(timeoutCtx, p.name, p.args...)
+	cmd.Env = p.env
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -402,10 +431,24 @@ func (p *CmdAuthProvider) Authenticate(
 // ProviderFromConfig creates a new AuthProvider based on the specified provider config.
 func ProviderFromConfig(cfg config.ServerAuthProviderConfig) (AuthProvider, error) {
 	if cfg.Http != nil {
-		return NewHttpAuthProvider(cfg.Http.Url, time.Duration(cfg.TimeoutSeconds)*time.Second)
+		headers := make(http.Header, len(cfg.Http.Headers))
+		for k, v := range cfg.Http.Headers {
+			headers.Set(k, v)
+		}
+
+		return NewHttpAuthProvider(
+			cfg.Http.Url,
+			headers,
+			time.Duration(cfg.TimeoutSeconds)*time.Second,
+		)
 	}
 	if cfg.Command != nil {
-		return NewCmdAuthProvider(cfg.Command.Name, cfg.Command.Args, time.Duration(cfg.TimeoutSeconds)*time.Second)
+		return NewCmdAuthProvider(
+			cfg.Command.Name,
+			cfg.Command.Args,
+			cfg.Command.Environment,
+			time.Duration(cfg.TimeoutSeconds)*time.Second,
+		)
 	}
 
 	return nil, fmt.Errorf(`BUG: ProviderFromConfig was given an invalid auth provider config`)

@@ -119,6 +119,13 @@
 					"type": "string",
 					"description": "The endpoint's URL.\nSupports HTTP, HTTPS and UNIX socket.\n\nIf UNIX socket, the URL must be formatted like `unix:///path/to/auth.sock` (note the triple slashes), or just a double slash for a path relative to the server's current working directory, such as `unix://auth.sock`.",
 					"$ref": "#/$defs/HttpOrUnixUrl"
+				},
+				"headers": {
+					"type": "object",
+					"description": "Any headers to send with the request.\nThis can be used for sending an authorization token, for example.",
+					"additionalProperties": {
+						"type": "string"
+					}
 				}
 			}
 		},
@@ -137,6 +144,13 @@
 					"type": "array",
 					"description": "Any arguments to pass to the script.\nCan be empty or omitted.",
 					"items": {
+						"type": "string"
+					}
+				},
+				"environment": {
+					"type": "object",
+					"description": "Any environment variables to expose to the command process.\nOnly these variables are exposed; the server's environment variables are not inherited.",
+					"additionalProperties": {
 						"type": "string"
 					}
 				}

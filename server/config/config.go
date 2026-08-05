@@ -31,6 +31,10 @@ type ServerHttpAuthConfig struct {
 	// If UNIX socket, the URL must be formatted like `unix:///path/to/auth.sock` (note the triple slashes), or just a
 	// double slash for a path relative to the server's current working directory, such as `unix://auth.sock`.
 	Url string `json:"url"`
+
+	// Any headers to send with the request.
+	// This can be used for sending an authorization token, for example.
+	Headers map[string]string `json:"headers,omitempty"`
 }
 
 // ServerCommandAuthConfig is configuration for a command or script external authentication provider.
@@ -47,6 +51,10 @@ type ServerCommandAuthConfig struct {
 	// Any arguments to pass to the script.
 	// Can be empty or omitted.
 	Args []string `json:"args,omitempty"`
+
+	// Any environment variables to expose to the command process.
+	// Only these variables are exposed; the server's environment variables are not inherited.
+	Environment map[string]string `json:"environment,omitempty"`
 }
 
 // ServerAuthProviderConfig is the configuration for an external authentication provider.
