@@ -222,7 +222,19 @@ func NewServer(
 			for _, prov := range provs {
 				res, err := prov.Authenticate(ctx, ip, room, username, password)
 				if err != nil {
-					return false, "", err
+					if prov == accountAuth {
+						return false, "", err
+					}
+
+					// Log details for admin to read.
+					logger.Error(
+						"external auth failed",
+						"service", "server.Server",
+						"room", room.String(),
+						"username", username.String(),
+						"error", err,
+					)
+					return false, "", fmt.Errorf(`external auth failed`)
 				}
 
 				if res.Status == lobby.AuthStatusPass {
