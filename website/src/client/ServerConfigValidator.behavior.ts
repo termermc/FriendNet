@@ -4,12 +4,15 @@ export default {
 	behaviorModuleUrl: import.meta.url,
 	behavior: (_) => {
 		async function main() {
-			const editorCfg = /** @type {typeof import('../../config.ts').default} */ (
-				JSON.parse(document.getElementById('editor-config')!.innerText)
-			)
+			const editorCfg =
+				/** @type {typeof import('../../config.ts').default} */ JSON.parse(
+					document.getElementById('editor-config')!.innerText,
+				)
 			const editorSrcElem = document.getElementById('editor-src')!
 
-			const monaco = (window as unknown as { monaco: typeof import('monaco-editor') }).monaco
+			const monaco = (
+				window as unknown as { monaco: typeof import('monaco-editor') }
+			).monaco
 
 			const schemaRes = await fetch(editorCfg.serverConfigSchemaPath)
 			if (!schemaRes.ok) {
@@ -23,7 +26,9 @@ export default {
 				schemaValidation: 'error',
 				schemas: [
 					{
-						uri: editorCfg.prodRootUrl + editorCfg.serverConfigSchemaPath,
+						uri:
+							editorCfg.prodRootUrl +
+							editorCfg.serverConfigSchemaPath,
 						fileMatch: ['*'],
 						schema: schema,
 					},
@@ -43,6 +48,9 @@ export default {
 			editorSrcElem.style.display = 'none'
 		}
 
-		(require as unknown as (deps: string[], func: () => any) => void)(['vs/editor/editor.main'], main)
+		;(require as unknown as (deps: string[], func: () => any) => void)(
+			['vs/editor/editor.main'],
+			main,
+		)
 	},
 } satisfies BehaviorModule

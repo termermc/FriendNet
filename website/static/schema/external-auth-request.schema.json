@@ -4,13 +4,7 @@
 	"title": "ExternalAuthRequest",
 	"type": "object",
 	"additionalProperties": false,
-	"required": [
-		"type",
-		"ip",
-		"room",
-		"username",
-		"password"
-	],
+	"required": ["type", "ip", "room", "username", "password"],
 	"properties": {
 		"$schema": {
 			"type": "string"

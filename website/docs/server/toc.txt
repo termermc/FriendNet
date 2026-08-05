@@ -3,5 +3,6 @@ rooms
 widget
 configuring-stun
 search-filtering
+external-authentication
 troubleshooting
 config-validator
