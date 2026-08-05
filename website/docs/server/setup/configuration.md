@@ -94,6 +94,8 @@ To require an authorization token to access an endpoint, add a `bearer_token` pr
 }
 ```
 
+To configure external authentication, see [this page](../external-authentication.md).
+
 ---
 
 Next: [Management](management.md)

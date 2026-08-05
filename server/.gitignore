@@ -3,3 +3,6 @@ friendnet-server.sock
 server.json
 *.pem
 *.db*
+
+# Testing authentication scripts
+authscript

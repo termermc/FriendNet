@@ -126,6 +126,128 @@ func NewServer(
 		stunAddrs = cfg.StunServers
 	}
 
+	// Resolve authentication providers.
+	accountAuth := lobby.NewAccountAuthProvider(storage)
+	var authFunc lobby.AuthFunc
+	if cfg.ExternalAuth == nil {
+		// Just use built-in auth.
+		authFunc = func(
+			ctx context.Context,
+			ip netip.Addr,
+			room common.NormalizedRoomName,
+			username common.NormalizedUsername,
+			password string,
+		) (ok bool, reason string, err error) {
+			res, err := accountAuth.Authenticate(ctx, ip, room, username, password)
+			if err != nil {
+				return false, "", err
+			}
+
+			if res.Status == lobby.AuthStatusPass {
+				return false, "", fmt.Errorf(`BUG: AccountAuthProvider returned "pass" status`)
+			}
+
+			return res.Status == lobby.AuthStatusOk, res.Reason, nil
+		}
+	} else {
+		ext := cfg.ExternalAuth
+
+		// Resolve per-room.
+		// We add the global providers to the slice to avoid more lookup logic in the handler.
+		perRoomProvs := make(map[common.NormalizedRoomName][]lobby.AuthProvider, len(ext.Rooms))
+		for roomNameRaw, roomCfg := range ext.Rooms {
+			roomName := common.UncheckedCreateNormalizedRoomName(roomNameRaw)
+
+			provs := make([]lobby.AuthProvider, 0, len(ext.Global)+len(roomCfg.Providers)+1)
+			if roomCfg.BeforeGlobal {
+				for _, prov := range roomCfg.Providers {
+					inst, err := lobby.ProviderFromConfig(prov)
+					if err != nil {
+						return nil, err
+					}
+					provs = append(provs, inst)
+				}
+				for _, prov := range ext.Global {
+					inst, err := lobby.ProviderFromConfig(prov)
+					if err != nil {
+						return nil, err
+					}
+					provs = append(provs, inst)
+				}
+			} else {
+				for _, prov := range ext.Global {
+					inst, err := lobby.ProviderFromConfig(prov)
+					if err != nil {
+						return nil, err
+					}
+					provs = append(provs, inst)
+				}
+				for _, prov := range roomCfg.Providers {
+					inst, err := lobby.ProviderFromConfig(prov)
+					if err != nil {
+						return nil, err
+					}
+					provs = append(provs, inst)
+				}
+			}
+			provs = append(provs, accountAuth)
+
+			perRoomProvs[roomName] = provs
+		}
+
+		// Resolve global.
+		globalProvs := make([]lobby.AuthProvider, 0, len(ext.Global)+1)
+		for _, prov := range ext.Global {
+			inst, err := lobby.ProviderFromConfig(prov)
+			if err != nil {
+				return nil, err
+			}
+			globalProvs = append(globalProvs, inst)
+		}
+		globalProvs = append(globalProvs, accountAuth)
+
+		// Create auth function from these providers.
+		authFunc = func(
+			ctx context.Context,
+			ip netip.Addr,
+			room common.NormalizedRoomName,
+			username common.NormalizedUsername,
+			password string,
+		) (ok bool, reason string, err error) {
+			var provs []lobby.AuthProvider
+			if provs, ok = perRoomProvs[room]; !ok {
+				provs = globalProvs
+			}
+
+			for _, prov := range provs {
+				res, err := prov.Authenticate(ctx, ip, room, username, password)
+				if err != nil {
+					if prov == accountAuth {
+						return false, "", err
+					}
+
+					// Log details for admin to read.
+					logger.Error(
+						"external auth failed",
+						"service", "server.Server",
+						"room", room.String(),
+						"username", username.String(),
+						"error", err,
+					)
+					return false, "", fmt.Errorf(`external auth failed`)
+				}
+
+				if res.Status == lobby.AuthStatusPass {
+					continue
+				}
+
+				return res.Status == lobby.AuthStatusOk, res.Reason, nil
+			}
+
+			return false, "", fmt.Errorf(`BUG: all providers returned "pass", but built-in should have returned a concrete status`)
+		}
+	}
+
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
 	roomMgr, err := room.NewManager(
@@ -143,13 +265,13 @@ func NewServer(
 
 	l := lobby.NewLobby(
 		logger,
-		storage,
+		authFunc,
 		roomMgr,
 		lobby.DefaultTimeout,
 		protocol.CurrentProtocolVersion,
 	)
 
-	s := &Server{
+	return &Server{
 		ctx:       ctx,
 		ctxCancel: ctxCancel,
 
@@ -159,9 +281,7 @@ func NewServer(
 		stunAddrs: stunAddrs,
 
 		RoomManager: roomMgr,
-	}
-
-	return s, nil
+	}, nil
 }
 
 // Close closes the server.

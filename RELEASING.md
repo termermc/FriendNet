@@ -6,6 +6,7 @@ These are the steps to take for releasing a new version.
 
  - Check if the current protocol version needs to be bumped
  - Review changes since last release
+ - Make sure JSON schemas match actual structs and defaults (like `server.json`)
 
 # Publishing
 

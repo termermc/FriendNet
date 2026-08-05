@@ -13,8 +13,7 @@
 			"type": "array",
 			"description": "The addresses to listen on. Each entry should be HOST:PORT. IPv6 addresses should be enclosed in square brackets (like \"[::1]:20038\").",
 			"items": {
-				"type": "string",
-				"minLength": 1
+				"$ref": "#/$defs/AddrPort"
 			}
 		},
 		"db_path": {
@@ -33,14 +32,25 @@
 			"type": "array",
 			"description": "List of STUN servers to return to clients. In most cases, this should just contain the public address and port of your FriendNet server, because the server exposes a STUN server on the same port.\nEach entry should be HOST:PORT. IPv6 addresses should be enclosed in square brackets (like \"[::1]:20038\"). If empty, the server will try to guess the address of its built-in STUN server.\nExamples:\n - \"my.friendnet.server:20038\"\n - \"stun.l.google.com:19302\"",
 			"items": {
-				"type": "string"
+				"$ref": "#/$defs/AddrPort"
 			}
 		},
 		"rpc": {
 			"$ref": "#/$defs/ServerRpcConfig"
+		},
+		"external_auth": {
+			"$ref": "#/$defs/ServerExternalAuthConfig"
 		}
 	},
 	"$defs": {
+		"AddrPort": {
+			"type": "string",
+			"pattern": "^((\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})|(\\[[a-f0-9:]{2,}])|([a-z0-9][a-z0-9-]{0,62}(((\\.[a-z0-9-]{1,63})*\\.([a-z]){1,63})|(\\.[a-z]{1,63})))):[1-9]\\d{0,4}$"
+		},
+		"HttpOrUnixUrl": {
+			"type": "string",
+			"pattern": "^(http|https|unix)://.+$"
+		},
 		"ServerRpcConfig": {
 			"type": "object",
 			"additionalProperties": false,
@@ -66,7 +76,8 @@
 			"properties": {
 				"address": {
 					"type": "string",
-					"description": "The address to bind to. Must be in the format \"PROTOCOL://HOST:PORT\" (or without port for unix). Supported protocols: http, https, unix. Examples: \"http://127.0.0.1:8080\", \"unix:///var/run/friendnet-server.sock\", \"unix://friendnet-server.sock\"."
+					"description": "The address to bind to. Must be in the format \"PROTOCOL://HOST:PORT\" (or without port for unix). Supported protocols: http, https, unix. Examples: \"http://127.0.0.1:8080\", \"unix:///var/run/friendnet-server.sock\", \"unix://friendnet-server.sock\".",
+					"$ref": "#/$defs/HttpOrUnixUrl"
 				},
 				"allowed_methods": {
 					"type": "array",
@@ -95,6 +106,113 @@
 				"enable_admin_ui": {
 					"type": "boolean",
 					"description": "If true, the admin UI will be served on the interface. Only works in the server module, ignored everywhere else."
+				}
+			}
+		},
+		"ServerHttpAuthConfig": {
+			"type": "object",
+			"additionalProperties": false,
+			"description": "Configuration for an HTTP external authentication provider.",
+			"required": ["url"],
+			"properties": {
+				"url": {
+					"type": "string",
+					"description": "The endpoint's URL.\nSupports HTTP, HTTPS and UNIX socket.\n\nIf UNIX socket, the URL must be formatted like `unix:///path/to/auth.sock` (note the triple slashes), or just a double slash for a path relative to the server's current working directory, such as `unix://auth.sock`.",
+					"$ref": "#/$defs/HttpOrUnixUrl"
+				},
+				"headers": {
+					"type": "object",
+					"description": "Any headers to send with the request.\nThis can be used for sending an authorization token, for example.",
+					"additionalProperties": {
+						"type": "string"
+					}
+				}
+			}
+		},
+		"ServerCommandAuthConfig": {
+			"type": "object",
+			"additionalProperties": false,
+			"description": "Configuration for a command or script external authentication provider.",
+			"required": ["name"],
+			"properties": {
+				"name": {
+					"type": "string",
+					"description": "The script's name or path.\nFor example: \"/usr/local/bin/auth.sh\".\n\nIf not an absolute (\"/\") or relative (\"./\") path, it will look for a program with this name in the system's PATH.\nRelative paths are relative to the server's current working directory.\n\nNote that on UNIX-like operating systems (such as Linux or Mac), the script must be marked as executable.",
+					"minLength": 1
+				},
+				"args": {
+					"type": "array",
+					"description": "Any arguments to pass to the script.\nCan be empty or omitted.",
+					"items": {
+						"type": "string"
+					}
+				},
+				"environment": {
+					"type": "object",
+					"description": "Any environment variables to expose to the command process.\nOnly these variables are exposed; the server's environment variables are not inherited (except for PATH).",
+					"additionalProperties": {
+						"type": "string"
+					}
+				}
+			}
+		},
+		"ServerAuthProviderConfig": {
+			"type": "object",
+			"additionalProperties": false,
+			"description": "The configuration for an external authentication provider.\nAt least \"http\" or \"command\" must be specified, but both cannot be specified at once.",
+			"properties": {
+				"timeout_seconds": {
+					"type": "number",
+					"description": "The timeout in seconds to wait on a response from the external authentication provider before giving up.\nIf omitted or zero, defaults to 10 seconds.",
+					"minimum": 0
+				},
+				"http": {
+					"$ref": "#/$defs/ServerHttpAuthConfig"
+				},
+				"command": {
+					"$ref": "#/$defs/ServerCommandAuthConfig"
+				}
+			}
+		},
+		"ServerRoomExternalAuthConfig": {
+			"type": "object",
+			"additionalProperties": false,
+			"description": "External authentication configuration for a specific room.",
+			"required": ["providers"],
+			"properties": {
+				"providers": {
+					"type": "array",
+					"description": "Authentication providers to use for the room.",
+					"items": {
+						"$ref": "#/$defs/ServerAuthProviderConfig"
+					}
+				},
+				"before_global": {
+					"type": "boolean",
+					"description": "If true, the room's providers will be used before global providers."
+				}
+			}
+		},
+		"ServerExternalAuthConfig": {
+			"type": "object",
+			"additionalProperties": false,
+			"description": "External authentication configuration.",
+			"properties": {
+				"global": {
+					"type": "array",
+					"description": "Authentication providers to use for all rooms.",
+					"items": {
+						"$ref": "#/$defs/ServerAuthProviderConfig"
+					}
+				},
+				"rooms": {
+					"type": "object",
+					"patternProperties": {
+						"^[a-z0-9_]{1,16}$": {
+							"$ref": "#/$defs/ServerRoomExternalAuthConfig"
+						}
+					},
+					"additionalProperties": false
 				}
 			}
 		}
