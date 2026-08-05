@@ -40,7 +40,7 @@ const (
 type AuthResponse struct {
 	// The authentication status.
 	// See AuthStatus.
-	Status AuthStatus `json:"type"`
+	Status AuthStatus `json:"status"`
 
 	// Reason is the reason the authentication was rejected.
 	// Only valid for "bad" status.
@@ -139,7 +139,7 @@ func (p *AccountAuthProvider) Authenticate(
 // ExternalAuthRequest a request sent to an external authentication system.
 type ExternalAuthRequest struct {
 	// The request type.
-	// Should always be "authenticate".
+	// Should always be "auth".
 	// Other values are reserved for future use.
 	Type string `json:"type"`
 
@@ -163,6 +163,7 @@ func mkExternalAuthReq(
 	password string,
 ) ([]byte, error) {
 	body, err := json.Marshal(ExternalAuthRequest{
+		Type:     "auth",
 		Ip:       ip.Unmap().String(),
 		Room:     room.String(),
 		Username: username.String(),
@@ -190,7 +191,7 @@ func readExternalAuthRes(typ string, r io.Reader) (res AuthResponse, err error) 
 		fallthrough
 	case AuthStatusPass:
 		if res.Reason != "" {
-			return res, fmt.Errorf(`%s external auth returned %q status but included a "reason" value`, typ, res.Reason)
+			return res, fmt.Errorf(`%s external auth returned %q status but included a "reason" value`, typ, res.Status)
 		}
 	case AuthStatusBad:
 		// Nothing to validate for "bad".
@@ -326,7 +327,29 @@ func (p *CmdAuthProvider) Authenticate(
 		return res, err
 	}
 
-	cmd := exec.CommandContext(ctx, p.name, p.args...)
+	timeoutCtx, timeoutCancel := context.WithTimeout(ctx, p.timeout)
+	defer timeoutCancel()
+
+	cmd := exec.CommandContext(timeoutCtx, p.name, p.args...)
+
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return res, fmt.Errorf(`failed to get writer for command external auth stdin: %w`, err)
+	}
+	defer func() {
+		_ = stdin.Close()
+	}()
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return res, fmt.Errorf(`failed to get reader for command external auth stdout: %w`, err)
+	}
+	defer func() {
+		_ = stdout.Close()
+	}()
+
+	if err = cmd.Start(); err != nil {
+		return res, fmt.Errorf(`failed to start external auth command %q: %w`, p.name, err)
+	}
 	defer func() {
 		_ = cmd.Process.Kill()
 	}()
@@ -339,11 +362,6 @@ func (p *CmdAuthProvider) Authenticate(
 
 	go func() {
 		r, e := func() (res AuthResponse, err error) {
-			stdin, err := cmd.StdinPipe()
-			if err != nil {
-				return res, fmt.Errorf(`failed to get writer for command external auth stdin: %w`, err)
-			}
-
 			var writeIdx int
 			var n int
 			for writeIdx < len(body) {
@@ -353,19 +371,18 @@ func (p *CmdAuthProvider) Authenticate(
 				}
 				writeIdx += n
 			}
-			_, err = cmd.Stdout.Write([]byte{'\n'})
+			_, err = stdin.Write([]byte{'\n'})
 			if err != nil {
 				return res, fmt.Errorf(`failed to send request to command external auth: %w`, err)
-			}
-
-			stdout, err := cmd.StdoutPipe()
-			if err != nil {
-				return res, fmt.Errorf(`failed to get reader for command external auth stdout: %w`, err)
 			}
 
 			res, err = readExternalAuthRes("command", stdout)
 			if err != nil {
 				return res, err
+			}
+
+			if err = cmd.Wait(); err != nil {
+				return res, fmt.Errorf(`failed to execute external auth command %q: %w`, p.name, err)
 			}
 
 			return res, nil
@@ -374,8 +391,6 @@ func (p *CmdAuthProvider) Authenticate(
 	}()
 
 	// Respect ctx and timeout.
-	timeoutCtx, timeoutCancel := context.WithTimeout(ctx, p.timeout)
-	defer timeoutCancel()
 	select {
 	case <-timeoutCtx.Done():
 		return res, fmt.Errorf(`command external auth context done before response read: %w`, timeoutCtx.Err())
