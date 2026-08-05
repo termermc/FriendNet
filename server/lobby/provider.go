@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/netip"
 	"net/url"
+	"os"
 	"os/exec"
 	"time"
 
@@ -323,14 +324,13 @@ func NewCmdAuthProvider(
 		return nil, fmt.Errorf(`called NewCmdAuthProvider with an empty name`)
 	}
 
-	var envSlice []string
-	if env == nil {
-		envSlice = []string{}
-	} else {
-		envSlice = make([]string, 0, len(env))
-		for k, v := range env {
-			envSlice = append(envSlice, k+"="+v)
-		}
+	envSlice := make([]string, 0, len(env)+1)
+	path := os.Getenv("PATH")
+	if path != "" {
+		envSlice = append(envSlice, path)
+	}
+	for k, v := range env {
+		envSlice = append(envSlice, k+"="+v)
 	}
 
 	return &CmdAuthProvider{

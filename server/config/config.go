@@ -53,7 +53,7 @@ type ServerCommandAuthConfig struct {
 	Args []string `json:"args,omitempty"`
 
 	// Any environment variables to expose to the command process.
-	// Only these variables are exposed; the server's environment variables are not inherited.
+	// Only these variables are exposed; the server's environment variables are not inherited (except for PATH).
 	Environment map[string]string `json:"environment,omitempty"`
 }
 

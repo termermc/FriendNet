@@ -149,7 +149,7 @@
 				},
 				"environment": {
 					"type": "object",
-					"description": "Any environment variables to expose to the command process.\nOnly these variables are exposed; the server's environment variables are not inherited.",
+					"description": "Any environment variables to expose to the command process.\nOnly these variables are exposed; the server's environment variables are not inherited (except for PATH).",
 					"additionalProperties": {
 						"type": "string"
 					}
