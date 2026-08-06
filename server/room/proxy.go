@@ -27,8 +27,8 @@ type ClientProxy struct {
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 
-	originBidi protocol.ProtoBidi
-	targetBidi protocol.ProtoBidi
+	originBidi protocol.QuicProtoBidi
+	targetBidi protocol.QuicProtoBidi
 }
 
 // NewClientProxy creates a new ClientProxy from an existing origin bidi.
@@ -43,7 +43,7 @@ func NewClientProxy(
 	room *Room,
 	originUsername common.NormalizedUsername,
 	targetUsername common.NormalizedUsername,
-	originBidi protocol.ProtoBidi,
+	originBidi protocol.QuicProtoBidi,
 ) (*ClientProxy, error) {
 	targetClient, isOnline := room.GetClientByUsername(targetUsername)
 	if !isOnline {
@@ -99,7 +99,7 @@ func (p *ClientProxy) Close() error {
 	return fmt.Errorf("closing proxy bidi streams failed: %w", errors.Join(errs...))
 }
 
-func (p *ClientProxy) proxyThread(from protocol.ProtoBidi, to protocol.ProtoBidi) error {
+func (p *ClientProxy) proxyThread(from protocol.QuicProtoBidi, to protocol.QuicProtoBidi) error {
 	_, err := io.Copy(to.Stream, from.Stream)
 	return err
 }

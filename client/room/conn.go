@@ -541,7 +541,7 @@ func (c *Conn) openC2cBidiWithMsg(
 			_ = bidi.Close()
 			return protocol.ProtoBidi{}, err
 		}
-		ctmRes, err := protocol.ReadExpect[*pb.MsgDirectConnResult](bidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_DIRECT_CONN_RESULT)
+		ctmRes, err := protocol.ReadExpect[*pb.MsgDirectConnResult](bidi, pb.MsgType_MSG_TYPE_DIRECT_CONN_RESULT)
 		if err != nil {
 			if c.isErrProxyPeerUnreachable(err) {
 				return protocol.ProtoBidi{}, protocol.ErrPeerUnreachable

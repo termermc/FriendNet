@@ -63,7 +63,7 @@ func NewClient(
 // msgHandler handles a message from a client.
 // It must not close the bidi passed to it.
 // After returning, the bidi will be closed.
-func (c *Client) msgHandler(bidi protocol.ProtoBidi, firstMsg *protocol.UntypedProtoMsg) error {
+func (c *Client) msgHandler(bidi protocol.QuicProtoBidi, firstMsg *protocol.UntypedProtoMsg) error {
 	ctx := context.Background()
 
 	switch firstMsg.Type {
@@ -114,7 +114,7 @@ func (c *Client) msgHandler(bidi protocol.ProtoBidi, firstMsg *protocol.UntypedP
 // bidiHandler handles a new C2S bidi.
 // It must not close the bidi passed to it.
 // After returning, the bidi will be closed.
-func (c *Client) bidiHandler(bidi protocol.ProtoBidi) {
+func (c *Client) bidiHandler(bidi protocol.QuicProtoBidi) {
 	// Read first message.
 	firstMsg, firstErr := bidi.Read()
 	if firstErr != nil {

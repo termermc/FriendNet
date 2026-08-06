@@ -286,7 +286,7 @@ func (l *LogicImpl) OnGetFile(_ context.Context, _ *Conn, bidi C2cBidi, msg *pro
 		return nil
 	}
 
-	_, err = io.Copy(bidi.ProtoBidi.Stream, reader)
+	_, err = io.Copy(bidi.ProtoBidi.RawWriter(), reader)
 	if err != nil {
 		if _, is := errors.AsType[*quic.StreamError](err); is {
 			// If the other side closed, we can just quit.

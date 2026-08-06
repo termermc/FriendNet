@@ -59,6 +59,19 @@ func (c VirtualC2cConn) OpenBidiWithMsg(typ pb.MsgType, msg proto.Message) (bidi
 		return
 	}
 
+	// If C2C points to ourselves, return a loopback bidi stream.
+	if c.Username == c.ServerConn.Username {
+		bidi1, bidi2 := protocol.NewPipeProtoBidi()
+		c.ServerConn.incomingBidi <- C2cBidi{
+			ProtoBidi: bidi2,
+			RoomConn:  c.ServerConn,
+			Username:  c.Username,
+		}
+
+		return bidi1, bidi1.Write(typ, msg)
+	}
+
+	// Do a normal C2C message.
 	return c.ServerConn.openC2cBidiWithMsg(c.Username, typ, msg, c.ForceProxy)
 }
 
@@ -142,7 +155,7 @@ func (c VirtualC2cConn) GetFile(req *pb.MsgGetFile) (meta *pb.MsgFileMeta, reade
 	}
 
 	msg, err := protocol.ReadExpect[*pb.MsgFileMeta](
-		bidi.ProtoStreamReader,
+		bidi,
 		pb.MsgType_MSG_TYPE_FILE_META,
 	)
 	if err != nil {
@@ -151,7 +164,7 @@ func (c VirtualC2cConn) GetFile(req *pb.MsgGetFile) (meta *pb.MsgFileMeta, reade
 
 	// Now that we have the metadata, we can treat the bidi as a binary stream.
 	reader = common.NewLimitReadCloser(
-		protocol.NewReadCloserWithFunc(bidi.Stream, bidi.Close),
+		protocol.NewReadCloserWithFunc(bidi.RawReader(), bidi.Close),
 		int64(msg.Payload.Size),
 	)
 	return msg.Payload, reader, nil
