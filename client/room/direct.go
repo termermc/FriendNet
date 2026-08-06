@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"math"
 	"net"
 	"net/netip"
 	"slices"
@@ -36,11 +37,32 @@ func (c *Conn) directCacheGc() {
 	}
 }
 
-// GetDirectConns returns all direct connections to the specified peer.
+// SortDirectConnEntriesByRtt sorts direct connections based on ping RTT, lowest first.
+// Entries whose last ping time was longer ago than the ping interval will be ranked at the end of the list
+// because they're probably dying.
+func SortDirectConnEntriesByRtt(entries []*DirectConnEntry) {
+	slices.SortFunc(entries, func(a, b *DirectConnEntry) int {
+		// If last ping was longer than the ping interval, this connection is dying or congested.
+		now := time.Now()
+		aStats := a.GetPingStats()
+		bStats := b.GetPingStats()
+
+		if now.Sub(aStats.LastPing) > ServerPingInterval {
+			return math.MinInt
+		}
+		if now.Sub(bStats.LastPing) > ServerPingInterval {
+			return math.MinInt
+		}
+
+		return int(aStats.Rtt) - int(bStats.Rtt)
+	})
+}
+
+// GetDirectConns returns all direct connections to the specified peer, sorted by fastest round trip time.
 // It does not differentiate between connections that we initiated and ones that the peer initiated.
 // Note that this method creates a new slice each time it is called, and it RLocks the Conn mutex.
 // If the Conn is closed, returns empty.
-func (c *Conn) GetDirectConns(username common.NormalizedUsername) []protocol.ProtoConn {
+func (c *Conn) GetDirectConns(username common.NormalizedUsername) []*DirectConnEntry {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	if c.isClosed {
@@ -52,10 +74,13 @@ func (c *Conn) GetDirectConns(username common.NormalizedUsername) []protocol.Pro
 		return nil
 	}
 
-	res := make([]protocol.ProtoConn, 0, len(set))
-	for conn := range set {
+	res := make([]*DirectConnEntry, 0, len(set))
+	for _, conn := range set {
 		res = append(res, conn)
 	}
+
+	// Sort by lowest ping.
+	SortDirectConnEntriesByRtt(res)
 
 	return res
 }
@@ -68,18 +93,26 @@ func (c *Conn) GetDirectConns(username common.NormalizedUsername) []protocol.Pro
 func (c *Conn) AdoptDirectConn(conn protocol.ProtoConn, username common.NormalizedUsername) (alreadyOwned bool) {
 	c.mu.Lock()
 
-	set, has := c.directConns[username]
+	conns, has := c.directConns[username]
 	if !has {
-		set = make(map[protocol.ProtoConn]struct{})
-		c.directConns[username] = set
+		var conns []*DirectConnEntry
+		c.directConns[username] = conns
 	}
 
-	_, has = set[conn]
-	if has {
-		return true
+	for _, entry := range conns {
+		if entry.Conn == conn {
+			return
+		}
 	}
 
-	set[conn] = struct{}{}
+	connEntry := &DirectConnEntry{
+		Conn: conn,
+		stats: PingStats{
+			LastPing: time.Now(),
+			Rtt:      0,
+		},
+	}
+	conns = append(conns, connEntry)
 
 	c.mu.Unlock()
 
@@ -95,6 +128,8 @@ func (c *Conn) AdoptDirectConn(conn protocol.ProtoConn, username common.Normaliz
 				_ = conn.CloseWithReason("goodbye")
 				return
 			case <-ticker.C:
+				pingStart := time.Now()
+
 				_, pingErr := protocol.SendAndReceiveExpect[*pb.MsgPong](
 					conn,
 					pb.MsgType_MSG_TYPE_PING,
@@ -115,6 +150,14 @@ func (c *Conn) AdoptDirectConn(conn protocol.ProtoConn, username common.Normaliz
 					)
 					return
 				}
+
+				rtt := time.Now().Sub(pingStart)
+
+				// Update ping stats on entry.
+				connEntry.SetPingStats(PingStats{
+					LastPing: pingStart,
+					Rtt:      rtt,
+				})
 			}
 		}
 	}()
@@ -134,11 +177,20 @@ func (c *Conn) AdoptDirectConn(conn protocol.ProtoConn, username common.Normaliz
 
 		disown := func() {
 			c.mu.Lock()
-			set, has = c.directConns[username]
-			if has {
-				delete(set, conn)
+			defer c.mu.Unlock()
+
+			conns, has = c.directConns[username]
+			if !has {
+				return
 			}
-			c.mu.Unlock()
+
+			for i, entry := range conns {
+				if entry.Conn == conn {
+					// Remove from slice and shift elements back.
+					conns = append(conns[:i], conns[i+1:]...)
+					break
+				}
+			}
 		}
 		defer func() {
 			disown()

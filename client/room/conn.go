@@ -43,6 +43,35 @@ type Credentials struct {
 // Arbitrary size to prevent lockups on the incoming bidi channel.
 const incomingBidiChanSize = 64
 
+// PingStats are direct connection ping statistics.
+type PingStats struct {
+	LastPing time.Time
+	Rtt      time.Duration
+}
+
+// DirectConnEntry is a direct connection to a peer.
+// It stores the connection and the last ping round trip time.
+// It also stores the last ping timestamp. When sorting connections, we can downrank connections
+// whose last ping time is longer from the current time than the ping interval we use. That can
+// help avoid dying or congested connections.
+type DirectConnEntry struct {
+	Conn protocol.ProtoConn
+
+	statsMu sync.Mutex
+	stats   PingStats
+}
+
+func (e *DirectConnEntry) GetPingStats() PingStats {
+	e.statsMu.Lock()
+	defer e.statsMu.Unlock()
+	return e.stats
+}
+func (e *DirectConnEntry) SetPingStats(stats PingStats) {
+	e.statsMu.Lock()
+	defer e.statsMu.Unlock()
+	e.stats = stats
+}
+
 // Conn represents a room connection.
 // The room connection contains a connection to a central server, as well as potentially direct connections with peers in the room.
 // A Conn is always in an authenticated and usable state until it is closed, either by calling RoomConn.Close, or the connection being interrupted.
@@ -85,8 +114,9 @@ type Conn struct {
 	// Direct connections to room clients.
 	// The connections could have been outgoing or incoming,
 	// but they are treated the same once established.
-	// The key is the client username, the value is a set of connections.
-	directConns map[common.NormalizedUsername]map[protocol.ProtoConn]struct{}
+	// The key is the client username, the value is a list of connections.
+	// The connections can be sorted as needed when accessing.
+	directConns map[common.NormalizedUsername][]*DirectConnEntry
 
 	// A cache of direct connect methods for room clients.
 	// If no methods are available for a client, the slice will be empty.
@@ -229,7 +259,7 @@ func NewConn(
 
 		directMgr:                     directMgr,
 		directPart:                    directPart,
-		directConns:                   make(map[common.NormalizedUsername]map[protocol.ProtoConn]struct{}),
+		directConns:                   make(map[common.NormalizedUsername][]*DirectConnEntry),
 		directPeerMethods:             make(map[common.NormalizedUsername][]*pb.ConnMethod),
 		directSelfMethods:             make(map[string]*pb.ConnMethod),
 		directConnectOutgoingFailures: make(map[common.NormalizedUsername]struct{}),
@@ -325,8 +355,8 @@ func (c *Conn) Close() error {
 
 	directConns := make([]protocol.ProtoConn, 0, len(c.directConns)*3)
 	for _, set := range c.directConns {
-		for conn := range set {
-			directConns = append(directConns, conn)
+		for _, entry := range set {
+			directConns = append(directConns, entry.Conn)
 		}
 	}
 
@@ -427,7 +457,8 @@ func (c *Conn) openC2cBidiWithMsg(
 
 		// Are we already connected?
 		if len(existing) > 0 {
-			directConn = existing[0]
+			// TODO Sort before doing this
+			directConn = existing[0].Conn
 			goto openBidi
 		}
 
@@ -596,7 +627,8 @@ func (c *Conn) openC2cBidiWithMsg(
 		)
 
 		// The peer successfully connected to us!
-		directConn = existing[0]
+		// TODO Sort here (maybe move it to a function)
+		directConn = existing[0].Conn
 		goto openBidi
 	}
 
