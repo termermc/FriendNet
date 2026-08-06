@@ -15,6 +15,22 @@ import (
 // Channel that is never closed or written, to satisfy ProtoConn.OnDisconnect.
 var virtualC2cConnOnDiscChan = make(chan struct{})
 
+// VirtualC2cConnMode is a type of virtual C2C connection mode.
+type C2cConnMode int
+
+const (
+	// C2cConnModeDefault is the default mode for virtual C2C connections.
+	// It tries to direct connect if not already connected, and if it times out, it finally falls back to proxied.
+	C2cConnModeDefault C2cConnMode = iota
+
+	// C2cConnModeAlwaysProxy will always use the proxy in place of connecting directly.
+	C2cConnModeAlwaysProxy
+
+	// C2cConnModeQuickFallback will instantly fall back on the proxy if no existing connection exists.
+	// If none exists, it will try to kick off a direct connection in the background.
+	C2cConnModeQuickFallback
+)
+
 // VirtualC2cConn is a virtual connection to another client.
 // It is stateless and does not manage any direct or proxied connections.
 // It exists to implement protocol.ProtoConn.
@@ -25,9 +41,8 @@ type VirtualC2cConn struct {
 	// The client's username.
 	Username common.NormalizedUsername
 
-	// Whether to force proxying instead of using a direct connection.
-	// It may still fall back to proxying if no direct connection method is available.
-	ForceProxy bool
+	// The connection mode to use.
+	ConnMode C2cConnMode
 }
 
 // OnDisconnect returns a channel that never closes for VirtualC2cConn.
@@ -72,7 +87,7 @@ func (c VirtualC2cConn) OpenBidiWithMsg(typ pb.MsgType, msg proto.Message) (bidi
 	}
 
 	// Do a normal C2C message.
-	return c.ServerConn.openC2cBidiWithMsg(c.Username, typ, msg, c.ForceProxy)
+	return c.ServerConn.openC2cBidiWithMsg(c.Username, typ, msg, c.ConnMode)
 }
 
 func (c VirtualC2cConn) WaitForBidi(ctx context.Context) (protocol.ProtoBidi, error) {

@@ -226,7 +226,7 @@ func (r *Room) Broadcast(typ pb.MsgType, msg proto.Message) {
 // If there is an existing client with the username, returns ErrUsernameAlreadyConnected.
 // This method will not close the connection if it returns an error; it is the caller's responsibility to close it if an error is returned.
 func (r *Room) Onboard(
-	authBidi protocol.QuicProtoBidi,
+	authBidi protocol.ProtoBidi,
 	conn protocol.ProtoConn,
 	version *pb.ProtoVersion,
 	username common.NormalizedUsername,

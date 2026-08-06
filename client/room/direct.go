@@ -705,7 +705,7 @@ func (c *Conn) directConnect(ctx context.Context, peer common.NormalizedUsername
 		fmtAddr := fmt.Sprintf("%s:%d", ownAddr.Addr().String(), ownAddr.Port())
 
 		// Send punch offer to peer.
-		peerConn := c.GetVirtualC2cConn(peer, true)
+		peerConn := c.GetVirtualC2cConn(peer, C2cConnModeAlwaysProxy)
 		punchAccept, err := protocol.SendAndReceiveExpect[*pb.MsgPunchAccept](
 			peerConn,
 			pb.MsgType_MSG_TYPE_PUNCH_OFFER,

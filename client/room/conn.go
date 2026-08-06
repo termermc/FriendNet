@@ -111,6 +111,9 @@ type Conn struct {
 	// The direct connect server partition.
 	directPart *direct.Partition
 
+	// A set of usernames that we are currently attempting a direct connection on.
+	pendingDirectConns map[common.NormalizedUsername]struct{}
+
 	// Direct connections to room clients.
 	// The connections could have been outgoing or incoming,
 	// but they are treated the same once established.
@@ -259,6 +262,7 @@ func NewConn(
 
 		directMgr:                     directMgr,
 		directPart:                    directPart,
+		pendingDirectConns:            make(map[common.NormalizedUsername]struct{}),
 		directConns:                   make(map[common.NormalizedUsername][]*DirectConnEntry),
 		directPeerMethods:             make(map[common.NormalizedUsername][]*pb.ConnMethod),
 		directSelfMethods:             make(map[string]*pb.ConnMethod),
@@ -429,6 +433,190 @@ func (c *Conn) openProxiedC2cBidi(username common.NormalizedUsername) (protocol.
 	return bidi, nil
 }
 
+func (c *Conn) tryDirectConnect(
+	hasFailedOutgoing bool,
+	hasFailedConnectToMe bool,
+	username common.NormalizedUsername,
+	selfMethods []*pb.ConnMethod,
+) (protocol.ProtoConn, error) {
+	c.mu.Lock()
+	c.pendingDirectConns[username] = struct{}{}
+	c.mu.Unlock()
+	defer func() {
+		c.mu.Lock()
+		delete(c.pendingDirectConns, username)
+		c.mu.Unlock()
+	}()
+
+	timeoutCtx, ctxCancel := context.WithTimeout(c.Context, c.directOutgoingTimeout)
+	defer ctxCancel()
+
+	var directConn protocol.ProtoConn
+	var connErr error
+
+	// Have we already tried and failed to connect to this peer?
+	if hasFailedOutgoing {
+		goto tryConnectToMe
+	}
+
+	// Try to connect directly.
+	directConn, _, connErr = c.tryConnectToPeer(timeoutCtx, username)
+	if connErr != nil {
+		// Was the client not online?
+		if protoErr, ok := errors.AsType[protocol.ProtoMsgError](connErr); ok {
+			if protoErr.Msg.Type == pb.ErrType_ERR_TYPE_CLIENT_NOT_ONLINE {
+				// The client was offline.
+				// Just return the error as-is.
+				// Do not cache failure.
+				return nil, connErr
+			}
+		}
+
+		// Record this failure.
+		c.mu.Lock()
+		c.directConnectOutgoingFailures[username] = struct{}{}
+		c.mu.Unlock()
+
+		if errors.Is(connErr, errNoPeerMethods) {
+			// No peer methods.
+			// Try to have the peer connect to us.
+			goto tryConnectToMe
+		}
+
+		c.logger.Warn("all methods failed to connect to peer",
+			"service", "room.Conn",
+			"room", c.RoomName.String(),
+			"peer", username.String(),
+			"err", connErr,
+		)
+
+		// Oh well.
+		// Let's try to have the peer connect to us.
+		goto tryConnectToMe
+	}
+
+	// Successfully made direct connection!
+	return directConn, nil
+
+tryConnectToMe:
+
+	// The heuristic follows these steps in order:
+	//  - Do we have a cached CONNECT_TO_ME failure? If so, proxy.
+	//  - Do we have any verified IP methods? If so, CONNECT_TO_ME.
+	//  - Do we have any Yggdrasil methods? If so, CONNECT_TO_ME.
+	//  - If none of the above, proxy.
+
+	if hasFailedConnectToMe {
+		// The client tried and failed to connect to us before.
+		// Fall back to proxy.
+		return nil, nil
+	}
+
+	for _, method := range selfMethods {
+		if method.Type == pb.ConnMethodType_CONN_METHOD_TYPE_IP && method.IsServerVerified {
+			goto connectToMe
+		}
+		if method.Type == pb.ConnMethodType_CONN_METHOD_TYPE_YGGDRASIL {
+			goto connectToMe
+		}
+		if method.Type == pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH {
+			goto connectToMe
+		}
+	}
+
+	c.logger.Warn("no suitable self method found, will not ask peer to connect to us",
+		"service", "room.Conn",
+		"room", c.RoomName.String(),
+		"peer", username.String(),
+	)
+
+	// Record this failure.
+	c.mu.Lock()
+	c.directConnectToMeFailures[username] = struct{}{}
+	c.mu.Unlock()
+
+	// No suitable self method found, otherwise would have jumped to connectToMe.
+	// Fall back to proxy.
+	return nil, nil
+
+connectToMe:
+	c.logger.Info("asking client to connect to us",
+		"service", "room.Conn",
+		"room", c.RoomName.String(),
+		"peer", username.String(),
+	)
+
+	// Ask the peer to connect to us.
+	bidi, err := c.openProxiedC2cBidi(username)
+	if err != nil {
+		return nil, err
+	}
+	err = bidi.Write(pb.MsgType_MSG_TYPE_CONNECT_TO_ME, &pb.MsgConnectToMe{})
+	if err != nil {
+		if c.isErrProxyPeerUnreachable(err) {
+			return nil, protocol.ErrPeerUnreachable
+		}
+		_ = bidi.Close()
+		return nil, err
+	}
+	ctmRes, err := protocol.ReadExpect[*pb.MsgDirectConnResult](bidi, pb.MsgType_MSG_TYPE_DIRECT_CONN_RESULT)
+	if err != nil {
+		if c.isErrProxyPeerUnreachable(err) {
+			return nil, protocol.ErrPeerUnreachable
+		}
+		_ = bidi.Close()
+		return nil, err
+	}
+	if ctmRes.Payload.Result != pb.ConnResult_CONN_RESULT_OK {
+		_ = bidi.Close()
+
+		c.logger.Warn("peer said they could not connect to us",
+			"service", "room.Conn",
+			"room", c.RoomName.String(),
+			"peer", username.String(),
+			"result", ctmRes.Payload.Result.String(),
+		)
+
+		// The peer could not connect.
+		// Record this to save time later.
+		c.mu.Lock()
+		c.directConnectToMeFailures[username] = struct{}{}
+		c.mu.Unlock()
+		c.logger.Warn("we asked a peer to connect to us, but it could not",
+			"service", "room.Conn",
+			"room", c.RoomName.String(),
+			"peer", username.String(),
+			"result", ctmRes.Payload.Result.String(),
+		)
+
+		// Fall back to proxy.
+		return nil, nil
+	}
+
+	// The peer said they were able to connect to us.
+	// Check if the connection is active.
+	existing := c.GetDirectConns(username)
+	if len(existing) == 0 {
+		c.logger.Warn("a peer said they connected to us, but no connection was found",
+			"service", "room.Conn",
+			"room", c.RoomName.String(),
+			"peer", username.String(),
+		)
+
+		// Fall back to proxy.
+		return nil, nil
+	}
+
+	c.logger.Info("peer successfully connected to us",
+		"service", "room.Conn",
+		"room", c.RoomName.String(),
+		"peer", username.String(),
+	)
+
+	// The peer successfully connected to us!
+	return existing[0].Conn, nil
+}
+
 // openC2cBidiWithMsg opens a bidi to a destination peer.
 // If the peer is definitely unreachable, returns protocol.ErrPeerUnreachable.
 // It may not return an error if the peer is unreachable immediately, but read methods
@@ -440,10 +628,10 @@ func (c *Conn) openC2cBidiWithMsg(
 	username common.NormalizedUsername,
 	typ pb.MsgType,
 	msg proto.Message,
-	forceProxy bool,
+	connMode C2cConnMode,
 ) (protocol.ProtoBidi, error) {
 	var directConn protocol.ProtoConn
-	if !forceProxy && !c.directMgr.IsDisabled() {
+	if connMode != C2cConnModeAlwaysProxy && !c.directMgr.IsDisabled() {
 		// Collect information that will be useful for helping us connect.
 		existing := c.GetDirectConns(username)
 		c.mu.RLock()
@@ -453,182 +641,53 @@ func (c *Conn) openC2cBidiWithMsg(
 		}
 		_, hasFailedConnectToMe := c.directConnectToMeFailures[username]
 		_, hasFailedOutgoing := c.directConnectOutgoingFailures[username]
+		_, hasPendingConn := c.pendingDirectConns[username]
 		c.mu.RUnlock()
 
 		// Are we already connected?
 		if len(existing) > 0 {
-			// TODO Sort before doing this
 			directConn = existing[0].Conn
 			goto openBidi
 		}
 
-		timeoutCtx, ctxCancel := context.WithTimeout(c.Context, c.directOutgoingTimeout)
-		defer ctxCancel()
-
-		var connErr error
-
-		// Have we already tried and failed to connect to this peer?
-		if hasFailedOutgoing {
-			goto tryConnectToMe
-		}
-
-		// Try to connect directly.
-		directConn, _, connErr = c.tryConnectToPeer(timeoutCtx, username)
-		if connErr != nil {
-			// Was the client not online?
-			if protoErr, ok := errors.AsType[protocol.ProtoMsgError](connErr); ok {
-				if protoErr.Msg.Type == pb.ErrType_ERR_TYPE_CLIENT_NOT_ONLINE {
-					// The client was offline.
-					// Just return the error as-is.
-					// Do not cache failure.
-					return protocol.ProtoBidi{}, connErr
-				}
+		// If we are already pending a connection, just fallback on proxy immediately
+		if connMode == C2cConnModeQuickFallback {
+			if !hasPendingConn {
+				// Connection will get adopted automatically if successful.
+				go func() {
+					_, err := c.tryDirectConnect(
+						hasFailedOutgoing,
+						hasFailedConnectToMe,
+						username,
+						selfMethods,
+					)
+					if err != nil {
+						c.logger.Error("background direct connection failed",
+							"service", "room.Conn",
+							"room", c.RoomName.String(),
+							"peer", username.String(),
+							"err", err,
+						)
+					}
+				}()
 			}
 
-			// Record this failure.
-			c.mu.Lock()
-			c.directConnectOutgoingFailures[username] = struct{}{}
-			c.mu.Unlock()
-
-			if errors.Is(connErr, errNoPeerMethods) {
-				// No peer methods.
-				// Try to have the peer connect to us.
-				goto tryConnectToMe
-			}
-
-			c.logger.Warn("all methods failed to connect to peer",
-				"service", "room.Conn",
-				"room", c.RoomName.String(),
-				"peer", username.String(),
-				"err", connErr,
-			)
-
-			// Oh well.
-			// Let's try to have the peer connect to us.
-			goto tryConnectToMe
-		}
-
-		// Successfully made direct connection!
-		goto openBidi
-
-	tryConnectToMe:
-
-		// The heuristic follows these steps in order:
-		//  - Do we have a cached CONNECT_TO_ME failure? If so, proxy.
-		//  - Do we have any verified IP methods? If so, CONNECT_TO_ME.
-		//  - Do we have any Yggdrasil methods? If so, CONNECT_TO_ME.
-		//  - If none of the above, proxy.
-
-		if hasFailedConnectToMe {
-			// The client tried and failed to connect to us before.
-			// Fall back to proxy.
+			// Connection kicked off in the background, but fall back to proxied for this request.
 			goto openBidi
 		}
 
-		for _, method := range selfMethods {
-			if method.Type == pb.ConnMethodType_CONN_METHOD_TYPE_IP && method.IsServerVerified {
-				goto connectToMe
-			}
-			if method.Type == pb.ConnMethodType_CONN_METHOD_TYPE_YGGDRASIL {
-				goto connectToMe
-			}
-			if method.Type == pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH {
-				goto connectToMe
-			}
-		}
-
-		c.logger.Warn("no suitable self method found, will not ask peer to connect to us",
-			"service", "room.Conn",
-			"room", c.RoomName.String(),
-			"peer", username.String(),
+		// Try to connect blocking.
+		var err error
+		directConn, err = c.tryDirectConnect(
+			hasFailedOutgoing,
+			hasFailedConnectToMe,
+			username,
+			selfMethods,
 		)
-
-		// Record this failure.
-		c.mu.Lock()
-		c.directConnectToMeFailures[username] = struct{}{}
-		c.mu.Unlock()
-
-		// No suitable self method found, otherwise would have jumped to connectToMe.
-		// Fall back to proxy.
-		goto openBidi
-
-	connectToMe:
-		c.logger.Info("asking client to connect to us",
-			"service", "room.Conn",
-			"room", c.RoomName.String(),
-			"peer", username.String(),
-		)
-
-		// Ask the peer to connect to us.
-		bidi, err := c.openProxiedC2cBidi(username)
 		if err != nil {
 			return protocol.ProtoBidi{}, err
 		}
-		err = bidi.Write(pb.MsgType_MSG_TYPE_CONNECT_TO_ME, &pb.MsgConnectToMe{})
-		if err != nil {
-			if c.isErrProxyPeerUnreachable(err) {
-				return protocol.ProtoBidi{}, protocol.ErrPeerUnreachable
-			}
-			_ = bidi.Close()
-			return protocol.ProtoBidi{}, err
-		}
-		ctmRes, err := protocol.ReadExpect[*pb.MsgDirectConnResult](bidi, pb.MsgType_MSG_TYPE_DIRECT_CONN_RESULT)
-		if err != nil {
-			if c.isErrProxyPeerUnreachable(err) {
-				return protocol.ProtoBidi{}, protocol.ErrPeerUnreachable
-			}
-			_ = bidi.Close()
-			return protocol.ProtoBidi{}, err
-		}
-		if ctmRes.Payload.Result != pb.ConnResult_CONN_RESULT_OK {
-			_ = bidi.Close()
 
-			c.logger.Warn("peer said they could not connect to us",
-				"service", "room.Conn",
-				"room", c.RoomName.String(),
-				"peer", username.String(),
-				"result", ctmRes.Payload.Result.String(),
-			)
-
-			// The peer could not connect.
-			// Record this to save time later.
-			c.mu.Lock()
-			c.directConnectToMeFailures[username] = struct{}{}
-			c.mu.Unlock()
-			c.logger.Warn("we asked a peer to connect to us, but it could not",
-				"service", "room.Conn",
-				"room", c.RoomName.String(),
-				"peer", username.String(),
-				"result", ctmRes.Payload.Result.String(),
-			)
-
-			// Fall back to proxy.
-			goto openBidi
-		}
-
-		// The peer said they were able to connect to us.
-		// Check if the connection is active.
-		existing = c.GetDirectConns(username)
-		if len(existing) == 0 {
-			c.logger.Warn("a peer said they connected to us, but no connection was found",
-				"service", "room.Conn",
-				"room", c.RoomName.String(),
-				"peer", username.String(),
-			)
-
-			// Fall back to proxy.
-			goto openBidi
-		}
-
-		c.logger.Info("peer successfully connected to us",
-			"service", "room.Conn",
-			"room", c.RoomName.String(),
-			"peer", username.String(),
-		)
-
-		// The peer successfully connected to us!
-		// TODO Sort here (maybe move it to a function)
-		directConn = existing[0].Conn
 		goto openBidi
 	}
 
@@ -663,13 +722,12 @@ openBidi:
 // Methods on the returned VirtualC2cConn may return protocol.ErrPeerUnreachable if the
 // desired peer is unavailable.
 //
-// If forceProxy is true, it will always proxy to the peer instead of using a direct connection.
-// It may still fall back to proxying if no direct connection method is available.
-func (c *Conn) GetVirtualC2cConn(peer common.NormalizedUsername, forceProxy bool) VirtualC2cConn {
+// Bidis opened by the VirtualC2cConn will use the specified mode.
+func (c *Conn) GetVirtualC2cConn(peer common.NormalizedUsername, mode C2cConnMode) VirtualC2cConn {
 	return VirtualC2cConn{
 		ServerConn: c,
 		Username:   peer,
-		ForceProxy: forceProxy,
+		ConnMode:   mode,
 	}
 }
 

@@ -147,7 +147,7 @@ func (l *Lobby) negotiateClientVersion(
 	}()
 
 	finalErr = func() error {
-		msg, err := protocol.ReadExpect[*pb.MsgVersion](bidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_VERSION)
+		msg, err := protocol.ReadExpect[*pb.MsgVersion](bidi, pb.MsgType_MSG_TYPE_VERSION)
 		if err != nil {
 			return err
 		}
@@ -214,7 +214,7 @@ var ipv4Zero = netip.AddrFrom4([4]byte{0, 0, 0, 0})
 func (l *Lobby) authenticateClient(
 	ctx context.Context,
 	conn protocol.ProtoConn,
-) (authBidi protocol.QuicProtoBidi, room common.NormalizedRoomName, username common.NormalizedUsername, finalErr error) {
+) (authBidi protocol.ProtoBidi, room common.NormalizedRoomName, username common.NormalizedUsername, finalErr error) {
 	isSuccess := false
 	var bidiErr error
 	authBidi, bidiErr = conn.WaitForBidi(ctx)
@@ -228,7 +228,7 @@ func (l *Lobby) authenticateClient(
 	}()
 
 	finalErr = func() error {
-		msg, err := protocol.ReadExpect[*pb.MsgAuthenticate](authBidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_AUTHENTICATE)
+		msg, err := protocol.ReadExpect[*pb.MsgAuthenticate](authBidi, pb.MsgType_MSG_TYPE_AUTHENTICATE)
 		if err != nil {
 			return err
 		}
