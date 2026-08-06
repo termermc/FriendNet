@@ -584,11 +584,21 @@ func (bidi *ProtoStreamWriter) WriteUnimplementedError(msgType pb.MsgType) error
 // ProtoBidi is a bidirection protocol message stream.
 // It can also expose its raw byte reader and writer.
 type ProtoBidi struct {
-	close  func() error
-	reader io.Reader
-	writer io.Writer
+	close      func() error
+	cancelRead func(code uint64)
+	reader     io.Reader
+	writer     io.Writer
 	*ProtoStreamReader
 	*ProtoStreamWriter
+}
+
+// CancelRead calls a function to cancel a stream with an error code.
+// May be no-op, depending on the implementation.
+// This is a hacky fix for VirtualC2cConn proxied bidis. We'll figure out a generic side-channel later.
+func (bidi ProtoBidi) CancelRead(code uint64) {
+	if bidi.cancelRead != nil {
+		bidi.cancelRead(code)
+	}
 }
 
 // RawReader returns the bidi's raw byte reader.
@@ -610,9 +620,12 @@ func (bidi ProtoBidi) Close() error {
 func NewQuicProtoBidi(stream *quic.Stream) ProtoBidi {
 	return ProtoBidi{
 		close: func() error {
+			_ = stream.Close()
 			stream.CancelRead(0)
-			stream.CancelWrite(0)
-			return stream.Close()
+			return nil
+		},
+		cancelRead: func(code uint64) {
+			stream.CancelRead(quic.StreamErrorCode(code))
 		},
 		reader:            stream,
 		writer:            stream,

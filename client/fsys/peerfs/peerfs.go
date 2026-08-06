@@ -50,7 +50,7 @@ type PeerFs struct {
 func NewPeerFs(roomConn *room.Conn, username common.NormalizedUsername, opts ...Option) *PeerFs {
 	pfs := &PeerFs{
 		roomConn: roomConn,
-		peer:     roomConn.GetVirtualC2cConn(username, false),
+		peer:     roomConn.GetVirtualC2cConn(username, room.C2cConnModeDefault),
 		username: username,
 	}
 

@@ -369,7 +369,7 @@ func (dm *DownloadManager) updateDrainer() {
 
 						// Send updates to peers.
 						for username, upds := range byPeer {
-							peer := conn.GetVirtualC2cConn(username, false)
+							peer := conn.GetVirtualC2cConn(username, room.C2cConnModeQuickFallback)
 
 							go func() {
 								bidi, err := peer.OpenBidiWithMsg(pb.MsgType_MSG_TYPE_DOWNLOAD_STATUS_UPDATE, upds[0].ToProto())
@@ -680,7 +680,7 @@ func (dm *DownloadManager) startDownload(handle *DownloadHandle) error {
 
 	// Use TryDo because we want to fail fast if there is not an open connection.
 	finalErr := handle.server.TryDo(func(conn *room.Conn) error {
-		peer := conn.GetVirtualC2cConn(handle.peer, false)
+		peer := conn.GetVirtualC2cConn(handle.peer, room.C2cConnModeDefault)
 
 		initialDownloaded := handle.fileDownloadedBytes.Load()
 
