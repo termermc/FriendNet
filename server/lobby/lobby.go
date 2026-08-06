@@ -204,7 +204,7 @@ func (l *Lobby) negotiateClientVersion(
 func (l *Lobby) authenticateClient(
 	ctx context.Context,
 	conn protocol.ProtoConn,
-) (authBidi protocol.ProtoBidi, room common.NormalizedRoomName, username common.NormalizedUsername, finalErr error) {
+) (authBidi protocol.QuicProtoBidi, room common.NormalizedRoomName, username common.NormalizedUsername, finalErr error) {
 	isSuccess := false
 	var bidiErr error
 	authBidi, bidiErr = conn.WaitForBidi(ctx)

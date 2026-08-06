@@ -27,7 +27,7 @@ type Logic interface {
 	OnPing(
 		ctx context.Context,
 		client *Client,
-		bidi protocol.ProtoBidi,
+		bidi protocol.QuicProtoBidi,
 		msg *protocol.TypedProtoMsg[*pb.MsgPing],
 	) error
 
@@ -36,7 +36,7 @@ type Logic interface {
 	OnOpenOutboundProxy(
 		ctx context.Context,
 		client *Client,
-		bidi protocol.ProtoBidi,
+		bidi protocol.QuicProtoBidi,
 		msg *protocol.TypedProtoMsg[*pb.MsgOpenOutboundProxy],
 	) error
 
@@ -45,7 +45,7 @@ type Logic interface {
 	OnGetOnlineUsers(
 		ctx context.Context,
 		client *Client,
-		bidi protocol.ProtoBidi,
+		bidi protocol.QuicProtoBidi,
 		msg *protocol.TypedProtoMsg[*pb.MsgGetOnlineUsers],
 	) error
 
@@ -54,7 +54,7 @@ type Logic interface {
 	OnAdvertiseConnMethod(
 		ctx context.Context,
 		client *Client,
-		bidi protocol.ProtoBidi,
+		bidi protocol.QuicProtoBidi,
 		msg *protocol.TypedProtoMsg[*pb.MsgAdvertiseConnMethod],
 	) error
 
@@ -63,7 +63,7 @@ type Logic interface {
 	OnRemoveConnMethod(
 		ctx context.Context,
 		client *Client,
-		bidi protocol.ProtoBidi,
+		bidi protocol.QuicProtoBidi,
 		msg *protocol.TypedProtoMsg[*pb.MsgRemoveConnMethod],
 	) error
 
@@ -72,7 +72,7 @@ type Logic interface {
 	OnGetPublicIp(
 		ctx context.Context,
 		client *Client,
-		bidi protocol.ProtoBidi,
+		bidi protocol.QuicProtoBidi,
 		msg *protocol.TypedProtoMsg[*pb.MsgGetPublicIp],
 	) error
 
@@ -81,7 +81,7 @@ type Logic interface {
 	OnGetClientConnMethods(
 		ctx context.Context,
 		client *Client,
-		bidi protocol.ProtoBidi,
+		bidi protocol.QuicProtoBidi,
 		msg *protocol.TypedProtoMsg[*pb.MsgGetClientConnMethods],
 	) error
 
@@ -90,7 +90,7 @@ type Logic interface {
 	OnGetDirectConnHandshakeToken(
 		ctx context.Context,
 		client *Client,
-		bidi protocol.ProtoBidi,
+		bidi protocol.QuicProtoBidi,
 		msg *protocol.TypedProtoMsg[*pb.MsgGetDirectConnHandshakeToken],
 	) error
 
@@ -99,7 +99,7 @@ type Logic interface {
 	OnRedeemConnHandshakeToken(
 		ctx context.Context,
 		client *Client,
-		bidi protocol.ProtoBidi,
+		bidi protocol.QuicProtoBidi,
 		msg *protocol.TypedProtoMsg[*pb.MsgRedeemConnHandshakeToken],
 	) error
 
@@ -108,7 +108,7 @@ type Logic interface {
 	OnChangeAccountPassword(
 		ctx context.Context,
 		client *Client,
-		bidi protocol.ProtoBidi,
+		bidi protocol.QuicProtoBidi,
 		msg *protocol.TypedProtoMsg[*pb.MsgChangeAccountPassword],
 	) error
 
@@ -117,14 +117,14 @@ type Logic interface {
 	OnSearch(
 		ctx context.Context,
 		client *Client,
-		bidi protocol.ProtoBidi,
+		bidi protocol.QuicProtoBidi,
 		msg *protocol.TypedProtoMsg[*pb.MsgSearch],
 	) error
 
 	OnGetStunServers(
 		ctx context.Context,
 		client *Client,
-		bidi protocol.ProtoBidi,
+		bidi protocol.QuicProtoBidi,
 		msg *protocol.TypedProtoMsg[*pb.MsgGetStunServers],
 	) error
 }
@@ -155,13 +155,13 @@ func NewLogicImpl(
 	}
 }
 
-func (l LogicImpl) OnPing(_ context.Context, _ *Client, bidi protocol.ProtoBidi, _ *protocol.TypedProtoMsg[*pb.MsgPing]) error {
+func (l LogicImpl) OnPing(_ context.Context, _ *Client, bidi protocol.QuicProtoBidi, _ *protocol.TypedProtoMsg[*pb.MsgPing]) error {
 	return bidi.Write(pb.MsgType_MSG_TYPE_PONG, &pb.MsgPong{
 		SentTs: time.Now().Unix(),
 	})
 }
 
-func (l LogicImpl) OnOpenOutboundProxy(_ context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgOpenOutboundProxy]) error {
+func (l LogicImpl) OnOpenOutboundProxy(_ context.Context, client *Client, bidi protocol.QuicProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgOpenOutboundProxy]) error {
 	// Validate username.
 	targetUsername, usernameValid := common.NormalizeUsername(msg.Payload.TargetUsername)
 	if !usernameValid {
@@ -189,7 +189,7 @@ func (l LogicImpl) OnOpenOutboundProxy(_ context.Context, client *Client, bidi p
 	return proxy.Run()
 }
 
-func (l LogicImpl) OnGetOnlineUsers(_ context.Context, client *Client, bidi protocol.ProtoBidi, _ *protocol.TypedProtoMsg[*pb.MsgGetOnlineUsers]) error {
+func (l LogicImpl) OnGetOnlineUsers(_ context.Context, client *Client, bidi protocol.QuicProtoBidi, _ *protocol.TypedProtoMsg[*pb.MsgGetOnlineUsers]) error {
 	const pageSize = 50
 
 	// Snapshot clients and get their statuses.
@@ -223,7 +223,7 @@ func (l LogicImpl) OnGetOnlineUsers(_ context.Context, client *Client, bidi prot
 	return nil
 }
 
-func (l LogicImpl) OnAdvertiseConnMethod(ctx context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgAdvertiseConnMethod]) error {
+func (l LogicImpl) OnAdvertiseConnMethod(ctx context.Context, client *Client, bidi protocol.QuicProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgAdvertiseConnMethod]) error {
 	ad := msg.Payload
 
 	// Validate address.
@@ -321,7 +321,7 @@ func (l LogicImpl) OnAdvertiseConnMethod(ctx context.Context, client *Client, bi
 	return nil
 }
 
-func (l LogicImpl) OnRemoveConnMethod(_ context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgRemoveConnMethod]) error {
+func (l LogicImpl) OnRemoveConnMethod(_ context.Context, client *Client, bidi protocol.QuicProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgRemoveConnMethod]) error {
 	client.mu.Lock()
 	_, has := client.connMethods[msg.Payload.Id]
 	if !has {
@@ -334,7 +334,7 @@ func (l LogicImpl) OnRemoveConnMethod(_ context.Context, client *Client, bidi pr
 	return bidi.WriteAck()
 }
 
-func (l LogicImpl) OnGetPublicIp(_ context.Context, client *Client, bidi protocol.ProtoBidi, _ *protocol.TypedProtoMsg[*pb.MsgGetPublicIp]) error {
+func (l LogicImpl) OnGetPublicIp(_ context.Context, client *Client, bidi protocol.QuicProtoBidi, _ *protocol.TypedProtoMsg[*pb.MsgGetPublicIp]) error {
 	remote := client.RemoteAddr().String()
 
 	var addr string
@@ -349,7 +349,7 @@ func (l LogicImpl) OnGetPublicIp(_ context.Context, client *Client, bidi protoco
 	})
 }
 
-func (l LogicImpl) OnGetClientConnMethods(_ context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgGetClientConnMethods]) error {
+func (l LogicImpl) OnGetClientConnMethods(_ context.Context, client *Client, bidi protocol.QuicProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgGetClientConnMethods]) error {
 	username, usernameOk := common.NormalizeUsername(msg.Payload.Username)
 	if !usernameOk {
 		return bidi.WriteError(pb.ErrType_ERR_TYPE_INVALID_FIELDS, "invalid username")
@@ -365,7 +365,7 @@ func (l LogicImpl) OnGetClientConnMethods(_ context.Context, client *Client, bid
 	})
 }
 
-func (l LogicImpl) OnGetDirectConnHandshakeToken(_ context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgGetDirectConnHandshakeToken]) error {
+func (l LogicImpl) OnGetDirectConnHandshakeToken(_ context.Context, client *Client, bidi protocol.QuicProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgGetDirectConnHandshakeToken]) error {
 	target, usernameOk := common.NormalizeUsername(msg.Payload.Username)
 	if !usernameOk {
 		return bidi.WriteError(pb.ErrType_ERR_TYPE_INVALID_FIELDS, "invalid target username")
@@ -379,14 +379,14 @@ func (l LogicImpl) OnGetDirectConnHandshakeToken(_ context.Context, client *Clie
 	})
 }
 
-func (l LogicImpl) OnRedeemConnHandshakeToken(_ context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgRedeemConnHandshakeToken]) error {
+func (l LogicImpl) OnRedeemConnHandshakeToken(_ context.Context, client *Client, bidi protocol.QuicProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgRedeemConnHandshakeToken]) error {
 	return bidi.Write(
 		pb.MsgType_MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN_RESULT,
 		client.Room.TokenManager.Redeem(client.Username, msg.Payload.Token),
 	)
 }
 
-func (l LogicImpl) OnChangeAccountPassword(ctx context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgChangeAccountPassword]) error {
+func (l LogicImpl) OnChangeAccountPassword(ctx context.Context, client *Client, bidi protocol.QuicProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgChangeAccountPassword]) error {
 	curPass := msg.Payload.CurrentPassword
 	newPass := msg.Payload.NewPassword
 
@@ -410,7 +410,7 @@ func (l LogicImpl) OnChangeAccountPassword(ctx context.Context, client *Client, 
 	return bidi.WriteAck()
 }
 
-func (l LogicImpl) OnSearch(ctx context.Context, client *Client, bidi protocol.ProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgSearch]) error {
+func (l LogicImpl) OnSearch(ctx context.Context, client *Client, bidi protocol.QuicProtoBidi, msg *protocol.TypedProtoMsg[*pb.MsgSearch]) error {
 	if msg.Payload.Query == "" {
 		return bidi.WriteError(pb.ErrType_ERR_TYPE_INVALID_FIELDS, "query cannot be empty")
 	}
@@ -508,7 +508,7 @@ recvLoop:
 	return nil
 }
 
-func (l LogicImpl) OnGetStunServers(ctx context.Context, client *Client, bidi protocol.ProtoBidi, _ *protocol.TypedProtoMsg[*pb.MsgGetStunServers]) error {
+func (l LogicImpl) OnGetStunServers(ctx context.Context, client *Client, bidi protocol.QuicProtoBidi, _ *protocol.TypedProtoMsg[*pb.MsgGetStunServers]) error {
 	var m = &pb.MsgStunServers{
 		Addresses: l.stunAddrs,
 	}

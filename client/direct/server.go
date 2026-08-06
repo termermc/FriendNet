@@ -244,7 +244,7 @@ func (s *Server) connHandler(conn protocol.ProtoConn) {
 		)
 	}
 
-	msg, err := protocol.ReadExpect[*pb.MsgDirectConnHandshake](bidi.ProtoStreamReader, pb.MsgType_MSG_TYPE_DIRECT_CONN_HANDSHAKE)
+	msg, err := protocol.ReadExpect[*pb.MsgDirectConnHandshake](bidi, pb.MsgType_MSG_TYPE_DIRECT_CONN_HANDSHAKE)
 	if err != nil {
 		var streamErr *quic.StreamError
 		if protocol.IsErrorConnCloseOrCancel(err) ||

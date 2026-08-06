@@ -13,7 +13,7 @@ import (
 // C2cBidi is a client-to-client bidi stream
 type C2cBidi struct {
 	// The function to disown the connection.
-	// Should be nil if from a proxy.
+	// Should be nil if from a proxy or loopback.
 	disown func()
 
 	protocol.ProtoBidi
