@@ -5,10 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"os"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"friendnet.org/client/storage"
@@ -30,6 +28,9 @@ var ErrTooManyFiles = errors.New("too many files in share, indexing canceled")
 
 // ErrInvalidShareName is returned when trying to create a share with an invalid name.
 var ErrInvalidShareName = errors.New("invalid share name")
+
+// ErrWrongShare is returned when the wrong share is used in reference to an operation involving indices.
+var ErrWrongShare = errors.New("wrong share referenced in index operation")
 
 type shareData struct {
 	share       Share
@@ -75,20 +76,6 @@ func NewManager(
 		return nil, fmt.Errorf(`failed to get share records for server %q: %w`, serverUuid, err)
 	}
 
-	shareMap := make(map[string]*shareData, len(records))
-	for _, record := range records {
-		var share Share
-		share, err = NewDirShare(
-			record.Name,
-			record.Path.String(),
-			record.FollowLinks,
-		)
-		shareMap[record.Name] = &shareData{
-			share:  share,
-			record: record,
-		}
-	}
-
 	m := &Manager{
 		ctx:       ctx,
 		ctxCancel: ctxCancel,
@@ -98,12 +85,31 @@ func NewManager(
 		serverUuid: serverUuid,
 		storage:    storage,
 
-		shareMap: shareMap,
-
 		indexerInterval:         1 * time.Hour,
 		indexingShares:          make(map[string]struct{}),
 		indexerMaxFiles:         1_000_000,
 		orphanedIndexGcInterval: 10 * time.Minute,
+	}
+
+	m.shareMap = make(map[string]*shareData, len(records))
+	for _, record := range records {
+		var share Share
+		share, err = NewDirShare(
+			ctx,
+			record.Name,
+			record.Path.String(),
+			record.FollowLinks,
+		)
+
+		if record.EnableIndexing && share.SupportsWatching() {
+			share.OnNeedIndex(m.buildIndexCallback(ctx, record.Name))
+			share.OnDelete(m.buildDeleteCallback(ctx, record.Uuid))
+		}
+
+		m.shareMap[record.Name] = &shareData{
+			share:  share,
+			record: record,
+		}
 	}
 
 	go m.indexerDaemon()
@@ -204,22 +210,163 @@ func (m *Manager) orphanedIndexGc() {
 	}
 }
 
+// indexShareFromPath recursively indexes a share from a starting path.
+// If indexStartPath is true, it will also index startPath.
+// If indexStartPath is true and the start path points to a file, it just indexes that file and is done.
+// If replaceIndices is true, it will delete existing indices for files it finds and replace them with the new ones.
+// It will stop if it reaches maxFiles and return ErrTooManyFiles.
+func (m *Manager) indexShareFromPath(
+	ctx context.Context,
+	shareDat *shareData,
+	startPath common.ProtoPath,
+	indexStartPath bool,
+	replaceIndices bool,
+	maxFiles int,
+) (count int, err error) {
+	share := shareDat.share
+	shareUuid := shareDat.record.Uuid
+
+	if indexStartPath {
+		meta, err := share.GetFileMeta(startPath)
+		if err != nil {
+			return 0, fmt.Errorf(`failed to get metadata for start path %q in share %q: %w`, startPath.String(), shareUuid, err)
+		}
+
+		err = m.storage.InsertShareIndex(
+			ctx,
+			shareUuid,
+			shareDat.lastIndexId,
+			startPath.String(),
+			meta.IsDir,
+			int64(meta.Size),
+		)
+		if err != nil {
+			return 0, fmt.Errorf(`failed to insert share %q index for file %q: %w`, shareUuid, startPath.String(), err)
+		}
+
+		if replaceIndices {
+			err = m.storage.DeleteShareIndexByPath(ctx, shareUuid, startPath.String())
+			if err != nil {
+				return 1, fmt.Errorf(`failed to delete old share %q index for file %q: %w`, shareUuid, startPath.String(), err)
+			}
+		}
+
+		// If we know that this isn't a directory, just exit early.
+		if !meta.IsDir {
+			return 1, nil
+		}
+
+		count = 1
+	}
+
+	err = WalkShareDir(shareDat.share, startPath, func(path common.ProtoPath, meta *pb.MsgFileMeta) (bool, error) {
+		if count >= maxFiles {
+			return false, ErrTooManyFiles
+		}
+
+		count++
+
+		err = m.storage.InsertShareIndex(
+			ctx,
+			shareUuid,
+			shareDat.lastIndexId,
+			path.String(),
+			meta.IsDir,
+			int64(meta.Size),
+		)
+		if err != nil {
+			return false, fmt.Errorf(`failed to insert share %q index for file %q: %w`, shareUuid, path, err)
+		}
+
+		if replaceIndices {
+			err = m.storage.DeleteShareIndexByPath(ctx, shareUuid, path.String())
+			if err != nil {
+				return false, fmt.Errorf(`failed to delete old share %q index for file %q: %w`, shareUuid, startPath.String(), err)
+			}
+		}
+
+		return true, nil
+	})
+	if err != nil {
+		return count, err
+	}
+
+	return count, nil
+}
+
+// indexShareFile will index a single file in the share with the specified name.
+// This function is not optimized for bulk indexing. In that case, use indexShare.
+// This function should only be called from file watcher callbacks (see share.go).
+// This function expects the provided path to point to a file.
+// Refuses to index the file if it resides outside of the given share, returning ErrWrongShare.
+// Refuses to index the file if the share has indexing disabled, returning ErrIndexingDisabled.
+func (m *Manager) indexShareFile(ctx context.Context, shareName string, path common.ProtoPath) error {
+	if path.IsZero() || path.IsRoot() {
+		return nil
+	}
+
+	m.mu.RLock()
+	shareDat, has := m.shareMap[shareName]
+	m.mu.RUnlock()
+
+	if !has {
+		return nil
+	}
+
+	count, err := m.indexShareFromPath(ctx, shareDat, path, true, true, m.indexerMaxFiles)
+	if err != nil {
+		return fmt.Errorf(`failed to index share %q new directory %q: %w`, shareDat.record.Uuid, path.String(), err)
+	}
+
+	if count > 2 {
+		// It indexed more than just a couple of items, optimize the index.
+		err = m.storage.OptimizeShareIndex(ctx)
+		if err != nil {
+			optErr := m.storage.OptimizeShareIndex(ctx)
+			if optErr != nil {
+				m.logger.Warn("failed to optimize share index",
+					"service", "share.Manager",
+					"share_uuid", shareDat.record.Uuid,
+					"err", optErr,
+				)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (m *Manager) buildIndexCallback(ctx context.Context, name string) func(path common.ProtoPath) {
+	return func(path common.ProtoPath) {
+		_ = m.indexShareFile(ctx, name, path)
+	}
+}
+
+func (m *Manager) buildDeleteCallback(ctx context.Context, uuid string) func(path common.ProtoPath) {
+	return func(path common.ProtoPath) {
+		if path.IsZero() || path.IsRoot() {
+			return
+		}
+
+		_ = m.storage.DeleteShareIndexByPath(ctx, uuid, path.String())
+	}
+}
+
 // indexShare indexes all files in the share with the specified name.
 // It returns the number of files indexed, whether the share existed, and any error that occurred.
 // Refuses to index the share if it has indexing disabled, returning ErrIndexingDisabled.
 func (m *Manager) indexShare(ctx context.Context, name string) (count int, hasShare bool, err error) {
 	m.mu.Lock()
-	val, has := m.shareMap[name]
+	shareDat, has := m.shareMap[name]
 	if !has {
 		m.mu.Unlock()
 		return 0, false, nil
 	}
 	curIndexId := time.Now().UnixMilli()
-	val.lastIndexId = curIndexId
+	shareDat.lastIndexId = curIndexId
 	m.mu.Unlock()
 
-	share := val.share
-	rec := val.record
+	rec := shareDat.record
 
 	if !rec.EnableIndexing {
 		return 0, true, ErrIndexingDisabled
@@ -254,52 +401,13 @@ func (m *Manager) indexShare(ctx context.Context, name string) (count int, hasSh
 		}
 	}()
 
-	dirs := []string{"/"}
-
-	for len(dirs) > 0 {
-		dir := dirs[0]
-		dirs = dirs[1:]
-
-		var files []*pb.MsgFileMeta
-		files, err = share.DirFiles(common.UncheckedCreateProtoPath(dir))
-		if err != nil {
-			// Skip files that were removed or we do not have permission to access.
-			if os.IsNotExist(err) || os.IsPermission(err) || errors.Is(err, syscall.ESRCH) {
-				continue
-			}
-
-			return count, true, fmt.Errorf("failed to read directory %q: %w", dir, err)
+	count, err = m.indexShareFromPath(ctx, shareDat, common.RootProtoPath, false, false, m.indexerMaxFiles)
+	if err != nil {
+		if errors.Is(err, ErrTooManyFiles) {
+			shouldClearOld = true
 		}
-		for _, file := range files {
-			if count >= m.indexerMaxFiles {
-				shouldClearOld = true
-				return count, true, ErrTooManyFiles
-			}
 
-			count++
-
-			var path string
-			if dir == "/" {
-				path = "/" + file.Name
-			} else {
-				path = dir + "/" + file.Name
-			}
-
-			if file.IsDir {
-				dirs = append(dirs, path)
-			}
-
-			err = m.storage.InsertShareIndex(ctx,
-				rec.Uuid,
-				curIndexId,
-				path,
-				file.IsDir,
-				int64(file.Size),
-			)
-			if err != nil {
-				return count, true, fmt.Errorf(`failed to insert share %q index for file %q: %w`, rec.Uuid, path, err)
-			}
-		}
+		return count, true, err
 	}
 
 	shouldClearOld = true
@@ -478,6 +586,7 @@ func (m *Manager) Add(
 
 	// Create instance.
 	share, err := NewDirShare(
+		ctx,
 		name,
 		path,
 		followLinks,
@@ -494,6 +603,12 @@ func (m *Manager) Add(
 	m.mu.Unlock()
 
 	if rec.EnableIndexing {
+		// Add requisite callbacks for file watcher
+		if share.SupportsWatching() {
+			share.OnNeedIndex(m.buildIndexCallback(ctx, name))
+			share.OnDelete(m.buildDeleteCallback(ctx, rec.Uuid))
+		}
+
 		go func() {
 			m.indexShareWithLockAndLogging(rec)
 		}()
