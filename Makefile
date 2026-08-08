@@ -43,42 +43,42 @@ adminui:
 	cd adminui && go generate
 
 server:
-	make adminui && cd server && CGO_ENABLED=0 go build -o friendnet-server friendnet.org/server/cmd/server
+	make adminui && cd server && CGO_ENABLED=0 go build -trimpath -o friendnet-server friendnet.org/server/cmd/server
 
 server-noui:
 	mkdir -p adminui/dist/
-	cd server && CGO_ENABLED=0 go build -o friendnet-server friendnet.org/server/cmd/server
+	cd server && CGO_ENABLED=0 go build -trimpath -o friendnet-server friendnet.org/server/cmd/server
 
 server-linux-amd64-noui:
-	cd server && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o friendnet-server friendnet.org/server/cmd/server
+	cd server && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o friendnet-server friendnet.org/server/cmd/server
 
 server-linux-arm64-noui:
-	cd server && CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o friendnet-server friendnet.org/server/cmd/server
+	cd server && CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -o friendnet-server friendnet.org/server/cmd/server
 
 webui:
 	cd webui && go generate
 
 client:
-	make webui && cd client && CGO_ENABLED=0 go build -o friendnet-client friendnet.org/client/cmd/client
+	make webui && cd client && CGO_ENABLED=0 go build -trimpath -o friendnet-client friendnet.org/client/cmd/client
 
 client-noui:
 	mkdir -p webui/dist/
-	cd client && CGO_ENABLED=0 go build -o friendnet-client friendnet.org/client/cmd/client
+	cd client && CGO_ENABLED=0 go build -trimpath -o friendnet-client friendnet.org/client/cmd/client
 
 client-windows-amd64-noui:
-	cd client && CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-H windowsgui" -o friendnet-client.exe friendnet.org/client/cmd/client
+	cd client && CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags="-H windowsgui" -o friendnet-client.exe friendnet.org/client/cmd/client
 
 client-linux-amd64-noui:
-	cd client && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o friendnet-client friendnet.org/client/cmd/client
+	cd client && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o friendnet-client friendnet.org/client/cmd/client
 
 client-linux-arm64-noui:
-	cd client && CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o friendnet-client friendnet.org/client/cmd/client
+	cd client && CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -o friendnet-client friendnet.org/client/cmd/client
 
 client-darwin-arm64-noui:
-	cd client && CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o friendnet-client friendnet.org/client/cmd/client
+	cd client && CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -trimpath -o friendnet-client friendnet.org/client/cmd/client
 
 client-freebsd-amd64-noui:
-	cd client && CGO_ENABLED=0 GOOS=freebsd GOARCH=amd64 go build -o friendnet-client friendnet.org/client/cmd/client
+	cd client && CGO_ENABLED=0 GOOS=freebsd GOARCH=amd64 go build -trimpath -o friendnet-client friendnet.org/client/cmd/client
 
 client-debs:
 	cd packaging && node index.ts deb
@@ -86,14 +86,20 @@ client-debs:
 client-debs-noui:
 	cd packaging && node index.ts deb --no-ui
 
+client-appimages:
+	cd packaging && node index.ts appimage
+
+client-appimages-noui:
+	cd packaging && node index.ts appimage --no-ui
+
 rpcclient:
-	cd rpcclient && CGO_ENABLED=0 go build -o friendnet-rpcclient friendnet.org/rpcclient/cmd/cli
+	cd rpcclient && CGO_ENABLED=0 go build -trimpath -o friendnet-rpcclient friendnet.org/rpcclient/cmd/cli
 
 rpcclient-linux-amd64:
-	cd rpcclient && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o friendnet-rpcclient friendnet.org/rpcclient/cmd/cli
+	cd rpcclient && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o friendnet-rpcclient friendnet.org/rpcclient/cmd/cli
 
 rpcclient-linux-arm64:
-	cd rpcclient && CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o friendnet-rpcclient friendnet.org/rpcclient/cmd/cli
+	cd rpcclient && CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -o friendnet-rpcclient friendnet.org/rpcclient/cmd/cli
 
 run-rpcclient:
 	make rpcclient && cd server && ../rpcclient/friendnet-rpcclient
@@ -113,12 +119,11 @@ release-artifacts:
 
 	make webui
 
-	make client-linux-amd64-noui && mv client/friendnet-client /tmp/fn-release/friendnet-client-linux_amd64
-	make client-linux-arm64-noui && mv client/friendnet-client /tmp/fn-release/friendnet-client-linux_arm64
 	make client-windows-amd64-noui && mv client/friendnet-client.exe /tmp/fn-release/friendnet-client-windows_amd64.exe
 	#make client-darwin-arm64-noui && mv client/friendnet-client /tmp/fn-release/friendnet-client-macos_arm64
 
 	make client-debs-noui && mv client/*.deb /tmp/fn-release/
+	make client-appimages-noui && mv client/*.AppImage /tmp/fn-release/
 
 	make adminui
 

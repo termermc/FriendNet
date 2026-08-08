@@ -11,7 +11,7 @@
 		"fmt": "prettier --write .",
 		"check": "tsc --noEmit"
 	},
-	"license": "AGPL-3.0-only",
+	"license": "GPL-3.0-or-later",
 	"devDependencies": {
 		"@bufbuild/buf": "^1.65.0",
 		"@bufbuild/protoc-gen-es": "^2.11.0",
