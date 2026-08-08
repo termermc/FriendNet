@@ -95,8 +95,7 @@ func (c *Conn) AdoptDirectConn(conn protocol.ProtoConn, username common.Normaliz
 
 	conns, has := c.directConns[username]
 	if !has {
-		var conns []*DirectConnEntry
-		c.directConns[username] = conns
+		c.directConns[username] = []*DirectConnEntry{}
 	}
 
 	for _, entry := range conns {
