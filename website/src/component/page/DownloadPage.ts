@@ -83,7 +83,7 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 				icons: ['linux.svg'],
 			},
 			{
-				name: 'Linux Generic (ARM64)',
+				name: 'Linux AppImage (ARM64)',
 				url: baseUrl + linuxArm64Suffix,
 				isDirect: true,
 				subtitle: `Works on all distros. Use if there is no specific package for your distro. You may need to mark it as executable. Use this if your computer's CPU is ARM (unusual).`,
