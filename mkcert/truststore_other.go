@@ -35,12 +35,6 @@ func (m *MkCert) systemTrustFilename() string {
 	return fmt.Sprintf(SystemTrustFilename, strings.Replace(m.caUniqueName(), " ", "_", -1))
 }
 
-func (m *MkCert) installPlatform() bool {
-	println("Truststore not implemented for " + runtime.GOOS)
-
-	return true
-}
-
 func (m *MkCert) uninstallPlatform() bool {
 	println("Truststore not implemented for " + runtime.GOOS)
 

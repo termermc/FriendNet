@@ -106,6 +106,10 @@
 				"enable_admin_ui": {
 					"type": "boolean",
 					"description": "If true, the admin UI will be served on the interface. Only works in the server module, ignored everywhere else."
+				},
+				"enable_hows": {
+					"type": "boolean",
+					"description": "If true, enables HTTP-over-Websocket at the `/compat/hows` subpath.\nSee github.com/termermc/http-over-websocket for more information.\nYou likely don't need this."
 				}
 			}
 		},

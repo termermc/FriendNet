@@ -118,19 +118,17 @@ func main() {
 	var headless bool
 	var noBrowser bool
 	var noLock bool
-	var installCa bool
 	var uninstallCa bool
 	var resetToken bool
 	var pprofFile string
 	var rmCertHost string
 
 	flag.StringVar(&dataDir, "datadir", "", "path to the client's data directory")
-	flag.StringVar(&webAddr, "webaddr", "https://127.0.0.1:20042", "web UI and RPC address")
-	flag.StringVar(&davAddr, "davaddr", "https://127.0.0.1:20043", "WebDAV server address")
+	flag.StringVar(&webAddr, "webaddr", "http://127.0.0.1:20042", "web UI and RPC address")
+	flag.StringVar(&davAddr, "davaddr", "http://127.0.0.1:20043", "WebDAV server address")
 	flag.BoolVar(&noBrowser, "nobrowser", false, "do not open web UI in browser")
 	flag.BoolVar(&noLock, "nolock", false, "do not use a lock to prevent multiple instances of the client from running")
-	flag.BoolVar(&installCa, "installca", false, "if set, tries to install the client's root CA for HTTPS on the web UI")
-	flag.BoolVar(&uninstallCa, "uninstallca", false, "if set, tries to uninstall the client's root CA")
+	flag.BoolVar(&uninstallCa, "uninstallca", false, "if set, tries to uninstall the client's root CA that previous versions required (requires root, recommended if upgrading from a pre-1.2.1 version)")
 	flag.BoolVar(&resetToken, "resettoken", false, "if set, resets the bearer token for the RPC server")
 	flag.StringVar(&pprofFile, "pproffile", "", "write CPU profile data in the pprof format to this file, e.g. \"cpu.pprof\"")
 	flag.StringVar(&rmCertHost, "rmcerthost", "", "removes the specified host from the certificate store (like removing a host from SSH known_hosts)")
@@ -231,13 +229,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	if installCa {
-		if err = mc.Install(); err != nil {
-			logger.Error(`failed to install client root CA`, "err", err)
-			os.Exit(1)
-		}
-		return
-	}
 	if uninstallCa {
 		if err = mc.Uninstall(); err != nil {
 			logger.Error(`failed to uninstall client root CA`, "err", err)
@@ -291,15 +282,6 @@ func main() {
 		defer locker.Unlock()
 	}
 
-	if !headless && !mc.CheckPlatform() {
-		InfoBox("FriendNet Client", "It looks like this is your first time running the FriendNet client.\n\nThe web UI requires HTTPS and a custom certificate, so that will be installed now. If it is not installed, the web UI will not work in your browser.\n\nYou may be asked for your password a multiple times.\n\nYou may need to restart your browser afterward.")
-		if err = mc.Install(); err != nil {
-			logger.Error(`failed to install client root CA`, "err", err)
-			InfoBox("Error", "Failed to install FriendNet client root CA. Please try again or install it manually by running the client with the -installca option.\n\nError: "+err.Error())
-			os.Exit(1)
-		}
-	}
-
 	directCfg, err := direct.ConfigFromSettings(context.Background(), store)
 	if err != nil {
 		logger.Error(`failed to load direct configuration`, "err", err)
@@ -338,10 +320,14 @@ func main() {
 	httpsCertPem, httpsKeyPem, err := store.GetClientHttpsCert(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			httpsCertPem, httpsKeyPem, err = mc.GenCert([]string{webUrl.Hostname(), "localhost", "127.0.0.1"})
+			certPem, err := common.GenSelfSignedPem("localhost", true)
 			if err != nil {
 				panic(fmt.Errorf(`failed to generate HTTPS certificate: %w`, err))
 			}
+
+			httpsCertPem = certPem
+			httpsKeyPem = certPem
+
 			err = store.SetClientHttpsCert(ctx, httpsCertPem, httpsKeyPem)
 			if err != nil {
 				panic(fmt.Errorf(`failed to store HTTPS certificate: %w`, err))
@@ -425,6 +411,7 @@ func main() {
 			AllowedMethods:      []string{"*"},
 			BearerToken:         rpcBearerToken,
 			CorsAllowAllOrigins: true,
+			EnableHows:          true,
 		},
 		client.NewRpcServer(
 			logHandler,
