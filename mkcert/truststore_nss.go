@@ -6,14 +6,11 @@ package mkcert
 
 import (
 	"bytes"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
-
-	"friendnet.org/common"
 )
 
 var (
@@ -70,40 +67,6 @@ func initTruststoreNssGo() {
 			certutilPath, _ = exec.LookPath("certutil")
 		}
 	}
-}
-
-// CheckNSS returns whether the local CA is installed in the NSS trust store.
-func (m *MkCert) CheckNSS() bool {
-	if !hasCertutil {
-		return false
-	}
-	success := true
-	if m.forEachNSSProfile(func(profile string) {
-		err := exec.Command(certutilPath, "-V", "-d", profile, "-u", "L", "-n", m.caUniqueName()).Run()
-		if err != nil {
-			success = false
-		}
-	}) == 0 {
-		success = false
-	}
-	return success
-}
-
-func (m *MkCert) installNSS() bool {
-	if m.forEachNSSProfile(func(profile string) {
-		cmd := exec.Command(certutilPath, "-A", "-d", profile, "-t", "C,,", "-n", m.caUniqueName(), "-i", filepath.Join(m.CAROOT, rootName))
-		out, err := execCertutil(cmd)
-		fatalIfCmdErr(err, "certutil -A -d "+profile, out)
-	}) == 0 {
-		log.Printf("ERROR: no %s security databases found", NSSBrowsers)
-		return false
-	}
-	if !m.CheckNSS() {
-		log.Printf("Installing in %s failed. Please report the issue with details about your environment at "+common.NewIssueUrl+" 👎", NSSBrowsers)
-		log.Printf("Note that if you never started %s, you need to do that at least once.", NSSBrowsers)
-		return false
-	}
-	return true
 }
 
 func (m *MkCert) uninstallNSS() {

@@ -6,24 +6,15 @@
 package mkcert
 
 import (
-	"context"
 	"crypto"
 	"crypto/x509"
 	"fmt"
 	"log"
-	"net"
-	"net/mail"
-	"net/url"
 	"os"
 	"os/exec"
 	"os/user"
-	"regexp"
 	"runtime"
 	"sync"
-	"time"
-
-	"friendnet.org/common"
-	"golang.org/x/net/idna"
 )
 
 const rootName = "rootCA.pem"
@@ -82,75 +73,6 @@ func NewMkCert(caRootDir string) (*MkCert, error) {
 	return m, nil
 }
 
-func (m *MkCert) GenCert(hostnames []string) (certPem []byte, privKeyPem []byte, err error) {
-	hostnameRegexp := regexp.MustCompile(`(?i)^(\*\.)?[0-9a-z_-]([0-9a-z._-]*[0-9a-z_-])?$`)
-	for i, name := range hostnames {
-		if ip := net.ParseIP(name); ip != nil {
-			continue
-		}
-		if email, err := mail.ParseAddress(name); err == nil && email.Address == name {
-			continue
-		}
-		if uriName, err := url.Parse(name); err == nil && uriName.Scheme != "" && uriName.Host != "" {
-			continue
-		}
-		punycode, err := idna.ToASCII(name)
-		if err != nil {
-			log.Fatalf("ERROR: %q is not a valid hostname, IP, URL or email: %s", name, err)
-		}
-		hostnames[i] = punycode
-		if !hostnameRegexp.MatchString(punycode) {
-			log.Fatalf("ERROR: %q is not a valid hostname, IP, URL or email", name)
-		}
-	}
-
-	return m.makeCert(hostnames)
-}
-
-// Install installs the root CA to the system's trust store.
-// Should be run in a terminal on Linux and Darwin because it tries to use `sudo`.
-func (m *MkCert) Install() error {
-	var err error
-	func() {
-		defer func() {
-			if r := recover(); r != nil {
-				var ok bool
-				err, ok = r.(error)
-				if !ok {
-					err = fmt.Errorf("%v", r)
-				}
-			}
-		}()
-
-		if storeEnabled("system") {
-			if m.CheckPlatform() {
-				log.Print("The local CA is already installed in the system trust store!")
-			} else {
-				if m.installPlatform() {
-					log.Print("The local CA is now installed in the system trust store!️")
-				}
-				m.ignoreCheckFailure = true // TODO: replace with a check for a successful Install
-			}
-		}
-		if storeEnabled("nss") && hasNSS {
-			if m.CheckNSS() {
-				log.Printf("The local CA is already installed in the %s trust store!", NSSBrowsers)
-			} else {
-				if hasCertutil && m.installNSS() {
-					log.Printf("The local CA is now installed in the %s trust store (requires browser restart)!", NSSBrowsers)
-				} else if CertutilInstallHelp == "" {
-					log.Printf(`Note: %s support is not available on your platform.️`, NSSBrowsers)
-				} else if !hasCertutil {
-					log.Printf(`Warning: "certutil" is not available, so the CA can't be automatically installed in %s! `, NSSBrowsers)
-					log.Printf(`Install "certutil" with "%s" then re-run`, CertutilInstallHelp)
-				}
-			}
-		}
-	}()
-
-	return err
-}
-
 // Uninstall uninstalls the root CA to the system's trust store.
 // Should be run in a terminal on Linux and Darwin because it tries to use `sudo`.
 func (m *MkCert) Uninstall() error {
@@ -189,16 +111,6 @@ func (m *MkCert) Uninstall() error {
 	return err
 }
 
-// CheckPlatform returns whether the local CA is installed in the system trust store.
-func (m *MkCert) CheckPlatform() bool {
-	if m.ignoreCheckFailure {
-		return true
-	}
-
-	_, err := m.caCert.Verify(x509.VerifyOptions{})
-	return err == nil
-}
-
 func storeEnabled(name string) bool {
 	return true
 }
@@ -229,69 +141,14 @@ var sudoWarningOnce sync.Once
 
 func commandWithSudo(cmd ...string) *exec.Cmd {
 	if runtime.GOOS == "darwin" {
-		// We have to do some insane things to make a graphical prompt on MacOS.
-		// Running a command with elevated privileges without sudo is possible,
-		// but it fails because it has no user interaction, according to the OS.
-		//
-		// Our only other option is to open a terminal and run the command.
-		// Since opening the terminal and making it run a command is asynchronous,
-		// we are forced to make it touch a file in tmp to notify us when it is
-		// done.
-		//
-		// I didn't expect this to be so complicated, but here we are.
+		// Non-interactive sudo is impossible in MacOS.
+		// Prompt the user to run the process as root.
 
-		notifyPath := "/tmp/friendnet-rootca-notify-" + common.RandomB64UrlStr(4) + ".txt"
-
-		cmdStr := cmd[0]
-		for _, arg := range cmd[1:] {
-			cmdStr += " " + fmt.Sprintf("%q", arg)
-		}
-
-		terminalScript := "#!/bin/bash\nprintf \"\n\n\n\nEnter your account password:\n\n\"\nsudo " + cmdStr + "\ntouch " + notifyPath + "\nexit"
-		scriptPath := "/tmp/friendnet-rootca-script-" + common.RandomB64UrlStr(4) + ".sh"
-
-		_ = os.WriteFile(scriptPath, []byte(terminalScript), 0777)
-
-		defer func() {
-			_ = os.Remove(notifyPath)
-			_ = os.Remove(scriptPath)
-		}()
-
-		scriptCmd := exec.Command("open",
-			"-a", "Terminal.app", scriptPath,
-		)
-		if err := scriptCmd.Start(); err != nil {
-			panic(err)
-		}
-		if err := scriptCmd.Wait(); err != nil {
-			panic(err)
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-		defer cancel()
-		okChan := make(chan struct{})
-		go func() {
-			// Check for file every second.
-			ticker := time.NewTicker(1 * time.Second)
-			defer ticker.Stop()
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case <-ticker.C:
-					if pathExists(notifyPath) {
-						close(okChan)
-						return
-					}
-				}
-			}
-		}()
-		select {
-		case <-ctx.Done():
-			return exec.Command("bash", "-c", "exit 1")
-		case <-okChan:
-			return exec.Command("bash", "-c", "exit 0")
-		}
+		script := fmt.Sprintf(`display dialog %q with title %q buttons {"OK"} default button 1`, "Please run the uninstall command as root", "Requires Root Permission")
+		cmd := exec.Command("osascript", "-e", script)
+		_ = cmd.Run()
+		os.Exit(1)
+		return nil
 	}
 
 	if u, err := user.Current(); err == nil && u.Uid == "0" {

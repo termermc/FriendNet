@@ -6,12 +6,9 @@ package mkcert
 
 import (
 	"crypto/x509"
-	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"math/big"
 	"os"
-	"path/filepath"
 	"syscall"
 	"unsafe"
 )
@@ -23,35 +20,19 @@ var (
 )
 
 var (
-	modcrypt32                           = syscall.NewLazyDLL("crypt32.dll")
-	procCertAddEncodedCertificateToStore = modcrypt32.NewProc("CertAddEncodedCertificateToStore")
-	procCertCloseStore                   = modcrypt32.NewProc("CertCloseStore")
-	procCertDeleteCertificateFromStore   = modcrypt32.NewProc("CertDeleteCertificateFromStore")
-	procCertDuplicateCertificateContext  = modcrypt32.NewProc("CertDuplicateCertificateContext")
-	procCertEnumCertificatesInStore      = modcrypt32.NewProc("CertEnumCertificatesInStore")
-	procCertOpenSystemStoreW             = modcrypt32.NewProc("CertOpenSystemStoreW")
+	modcrypt32                          = syscall.NewLazyDLL("crypt32.dll")
+	procCertCloseStore                  = modcrypt32.NewProc("CertCloseStore")
+	procCertDeleteCertificateFromStore  = modcrypt32.NewProc("CertDeleteCertificateFromStore")
+	procCertDuplicateCertificateContext = modcrypt32.NewProc("CertDuplicateCertificateContext")
+	procCertEnumCertificatesInStore     = modcrypt32.NewProc("CertEnumCertificatesInStore")
+	procCertOpenSystemStoreW            = modcrypt32.NewProc("CertOpenSystemStoreW")
 )
 
-func (m *MkCert) installPlatform() bool {
-	// Load cert
-	cert, err := ioutil.ReadFile(filepath.Join(m.CAROOT, rootName))
-	fatalIfErr(err, "failed to read root certificate")
-	// Decode PEM
-	if certBlock, _ := pem.Decode(cert); certBlock == nil || certBlock.Type != "CERTIFICATE" {
-		fatalIfErr(fmt.Errorf("invalid PEM data"), "decode pem")
-	} else {
-		cert = certBlock.Bytes
-	}
-	// Open root store
-	store, err := openWindowsRootStore()
-	fatalIfErr(err, "open root store")
-	defer store.close()
-	// Add cert
-	fatalIfErr(store.addCert(cert), "add cert")
-	return true
-}
-
 func (m *MkCert) uninstallPlatform() bool {
+	if m.caCert == nil {
+		return false
+	}
+
 	// We'll just remove all certs with the same serial number
 	// Open root store
 	store, err := openWindowsRootStore()
@@ -86,22 +67,6 @@ func (w windowsRootStore) close() error {
 		return nil
 	}
 	return fmt.Errorf("failed to close windows root store: %v", err)
-}
-
-func (w windowsRootStore) addCert(cert []byte) error {
-	// TODO: ok to always overwrite?
-	ret, _, err := procCertAddEncodedCertificateToStore.Call(
-		uintptr(w), // HCERTSTORE hCertStore
-		uintptr(syscall.X509_ASN_ENCODING|syscall.PKCS_7_ASN_ENCODING), // DWORD dwCertEncodingType
-		uintptr(unsafe.Pointer(&cert[0])),                              // const BYTE *pbCertEncoded
-		uintptr(len(cert)),                                             // DWORD cbCertEncoded
-		3,                                                              // DWORD dwAddDisposition (CERT_STORE_ADD_REPLACE_EXISTING is 3)
-		0,                                                              // PCCERT_CONTEXT *ppCertContext
-	)
-	if ret != 0 {
-		return nil
-	}
-	return fmt.Errorf("failed adding cert: %v", err)
 }
 
 func (w windowsRootStore) deleteCertsWithSerial(serial *big.Int) (bool, error) {

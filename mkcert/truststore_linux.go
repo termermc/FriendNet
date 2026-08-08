@@ -5,12 +5,8 @@
 package mkcert
 
 import (
-	"bytes"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -59,28 +55,6 @@ func initTruststoreLinuxGo() {
 
 func (m *MkCert) systemTrustFilename() string {
 	return fmt.Sprintf(SystemTrustFilename, strings.Replace(m.caUniqueName(), " ", "_", -1))
-}
-
-func (m *MkCert) installPlatform() bool {
-	if SystemTrustCommand == nil {
-		log.Printf("Installing to the system store is not yet supported on this Linux 😣 but %s will still work.", NSSBrowsers)
-		log.Printf("You can also manually Install the root certificate at %q.", filepath.Join(m.CAROOT, rootName))
-		return false
-	}
-
-	cert, err := ioutil.ReadFile(filepath.Join(m.CAROOT, rootName))
-	fatalIfErr(err, "failed to read root certificate")
-
-	cmd := commandWithSudo("tee", m.systemTrustFilename())
-	cmd.Stdin = bytes.NewReader(cert)
-	out, err := cmd.CombinedOutput()
-	fatalIfCmdErr(err, "tee", out)
-
-	cmd = commandWithSudo(SystemTrustCommand...)
-	out, err = cmd.CombinedOutput()
-	fatalIfCmdErr(err, strings.Join(SystemTrustCommand, " "), out)
-
-	return true
 }
 
 func (m *MkCert) uninstallPlatform() bool {
