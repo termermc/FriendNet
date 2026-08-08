@@ -15,11 +15,11 @@ import (
 // Channel that is never closed or written, to satisfy ProtoConn.OnDisconnect.
 var virtualC2cConnOnDiscChan = make(chan struct{})
 
-// VirtualC2cConnMode is a type of virtual C2C connection mode.
+// C2cConnMode is a type of C2C connection mode.
 type C2cConnMode int
 
 const (
-	// C2cConnModeDefault is the default mode for virtual C2C connections.
+	// C2cConnModeDefault is the default mode for C2C connections.
 	// It tries to direct connect if not already connected, and if it times out, it finally falls back to proxied.
 	C2cConnModeDefault C2cConnMode = iota
 

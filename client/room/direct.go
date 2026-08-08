@@ -74,9 +74,9 @@ func (c *Conn) GetDirectConns(username common.NormalizedUsername) []*DirectConnE
 		return nil
 	}
 
-	res := make([]*DirectConnEntry, 0, len(set))
-	for _, conn := range set {
-		res = append(res, conn)
+	res := make([]*DirectConnEntry, len(set))
+	for i, conn := range set {
+		res[i] = conn
 	}
 
 	// Sort by lowest ping.
@@ -113,6 +113,7 @@ func (c *Conn) AdoptDirectConn(conn protocol.ProtoConn, username common.Normaliz
 		},
 	}
 	conns = append(conns, connEntry)
+	c.directConns[username] = conns
 
 	c.mu.Unlock()
 
