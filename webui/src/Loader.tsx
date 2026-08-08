@@ -16,6 +16,7 @@ import { createConnectTransport } from '@connectrpc/connect-web'
 import { createAsync } from '@solidjs/router'
 import { State } from './state'
 import { RpcTimeoutMs } from './constant'
+import { Hows } from 'http-over-websocket'
 
 const NoRpc: Component = () => {
 	return (
@@ -101,6 +102,7 @@ export const Loader: Component = () => {
 		window.history.replaceState({}, '', newUrl)
 	}
 
+	const hows = new Hows(rpcUrl + '/compat/hows')
 	const client = createClient(
 		ClientRpcService,
 		createConnectTransport({
@@ -127,7 +129,7 @@ export const Loader: Component = () => {
 					signal = abort.signal
 				}
 
-				return fetch(input, {
+				return hows.fetch(input, {
 					...init,
 					signal,
 				})

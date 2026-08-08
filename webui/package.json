@@ -27,6 +27,7 @@
 		"@solid-primitives/scheduled": "^1.5.3",
 		"@solidjs/router": "^0.16.2",
 		"fuse.js": "^7.5.0",
+		"http-over-websocket": "^0.0.3",
 		"solid-js": "^1.9.14"
 	},
 	"allowScripts": {

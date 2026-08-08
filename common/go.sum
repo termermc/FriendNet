@@ -1,9 +1,13 @@
 connectrpc.com/connect v1.19.1 h1:R5M57z05+90EfEvCY1b7hBxDVOUl45PrtXtAV2fOC14=
 connectrpc.com/connect v1.19.1/go.mod h1:tN20fjdGlewnSFeZxLKb0xwIZ6ozc3OQs2hTXy4du9w=
+github.com/coder/websocket v1.8.15 h1:6B2JPeOGlpff2Uz6vOEH1Vzpi0iUz20A+lPVhPHtNUA=
+github.com/coder/websocket v1.8.15/go.mod h1:NX3SzP+inril6yawo5CQXx8+fk145lPDC6pumgx0mVg=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
 github.com/termermc/go-mcf-password v1.0.0 h1:stNvRXBtiPLPSP+vN8PkADPn3aEsZEr/3MFhduCelLg=
 github.com/termermc/go-mcf-password v1.0.0/go.mod h1:ZiHbOUUTOdoc/EvCJxKmPqPlT5fC4qhlyvfCFLSMyng=
+github.com/termermc/http-over-websocket/hows-go v0.0.0-20260808144918-d30ba17155d3 h1:aHd5+Ejvj7qzQjqVf+zBmnz0Vpo1AeHGo83k8MjPC4g=
+github.com/termermc/http-over-websocket/hows-go v0.0.0-20260808144918-d30ba17155d3/go.mod h1:rm2l4C2ecvtg5h4ZIswfKmjDXRQgphMVJftBoa9b/E8=
 golang.org/x/crypto v0.48.0 h1:/VRzVqiRSggnhY7gNRxPauEQ5Drw9haKdM0jqfcCFts=
 golang.org/x/crypto v0.48.0/go.mod h1:r0kV5h3qnFPlQnBSrULhlsRfryS2pmewsg+XfMgkVos=
 golang.org/x/net v0.50.0 h1:ucWh9eiCGyDR3vtzso0WMQinm2Dnt8cFMuQa9K33J60=
