@@ -30,8 +30,8 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 	if (releaseTag) {
 		const baseUrl = `https://github.com/termermc/FriendNet/releases/download/${releaseTag}/friendnet-client`
 		const windowsAmd64Suffix = '-windows_amd64.exe'
-		const linuxAmd64Suffix = '-linux_amd64.AppImage'
-		const linuxArm64Suffix = '-linux_arm64.AppImage'
+		const appImageAmd64Suffix = '-linux_amd64.AppImage'
+		const appImageArm64Suffix = '-linux_arm64.AppImage'
 		const debAmd64Suffix = '-linux_amd64.deb'
 		const debArm64Suffix = '-linux_arm64.deb'
 		// const macosArm64Suffix = '-macos_arm64'
@@ -76,7 +76,7 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 			},
 			{
 				name: 'Linux AppImage (x64)',
-				url: baseUrl + linuxAmd64Suffix,
+				url: baseUrl + appImageAmd64Suffix,
 				isDirect: true,
 				subtitle:
 					'Works on all distros. Use if there is no specific package for your distro. You may need to mark it as executable.',
@@ -84,7 +84,7 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 			},
 			{
 				name: 'Linux AppImage (ARM64)',
-				url: baseUrl + linuxArm64Suffix,
+				url: baseUrl + appImageArm64Suffix,
 				isDirect: true,
 				subtitle: `Works on all distros. Use if there is no specific package for your distro. You may need to mark it as executable. Use this if your computer's CPU is ARM (unusual).`,
 				icons: ['linux.svg'],
