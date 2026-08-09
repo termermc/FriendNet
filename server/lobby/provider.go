@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"friendnet.org/common"
@@ -292,8 +293,12 @@ func (p *HttpAuthProvider) Authenticate(
 	if contentType == "" {
 		return res, fmt.Errorf(`HTTP external auth missing Content-Type header, should be set to %q`, expectedMime)
 	}
-	if contentType != "application/json" {
-		return res, fmt.Errorf(`HTTP external auth Content-Type header value was %q, expected %q`, contentType, expectedMime)
+	if contentType != expectedMime {
+		// Some servers force-add `; charset=utf-8` to the end of headers.
+		parts := strings.Split(contentType, ";")
+		if len(parts) == 1 || parts[0] != expectedMime {
+			return res, fmt.Errorf(`HTTP external auth Content-Type header value was %q, expected %q`, contentType, expectedMime)
+		}
 	}
 
 	// Response headers look good; decode and validate request.
