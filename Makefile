@@ -110,6 +110,12 @@ server-docker:
 server-docker-publish:
 	make server-docker && docker push git.termer.net/termer/friendnet-server:latest
 
+server-docker-dev:
+	docker build -t git.termer.net/termer/friendnet-server:dev -f server.Dockerfile .
+
+server-docker-dev-publish:
+	make server-docker && docker push git.termer.net/termer/friendnet-server:dev
+
 website:
 	cd website && npm install && npm run build
 
