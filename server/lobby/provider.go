@@ -245,8 +245,9 @@ func NewHttpAuthProvider(
 	}
 
 	if headers == nil {
-		headers = make(http.Header)
+		headers = make(http.Header, 1)
 	}
+	headers.Add("Content-Type", "application/json")
 
 	return &HttpAuthProvider{
 		client:   client,
@@ -274,7 +275,6 @@ func (p *HttpAuthProvider) Authenticate(
 		return res, fmt.Errorf(`failed to create HTTP external auth request: %w`, err)
 	}
 	req.Header = p.headers
-	req.Header.Add("Content-Type", "application/json")
 
 	httpRes, err := p.client.Do(req)
 	if err != nil {
