@@ -285,7 +285,16 @@ func (p *HttpAuthProvider) Authenticate(
 	}()
 
 	if httpRes.StatusCode != http.StatusOK {
-		return res, fmt.Errorf(`HTTP external auth returned status %d %s`, httpRes.StatusCode, httpRes.Status)
+		// Try to read response body.
+		const maxBodySize = 1024
+		resBody := make([]byte, maxBodySize)
+		n, _ := httpRes.Body.Read(resBody)
+		body = resBody[:n]
+		if n == 0 {
+			return res, fmt.Errorf(`HTTP external auth returned status %s`, httpRes.Status)
+		}
+
+		return res, fmt.Errorf(`HTTP external auth returned status %s and body %s`, httpRes.Status, body)
 	}
 
 	const expectedMime = "application/json"
