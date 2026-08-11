@@ -188,6 +188,7 @@ func (c *Conn) AdoptDirectConn(conn protocol.ProtoConn, username common.Normaliz
 				if entry.Conn == conn {
 					// Remove from slice and shift elements back.
 					conns = append(conns[:i], conns[i+1:]...)
+					c.directConns[username] = conns
 					break
 				}
 			}
