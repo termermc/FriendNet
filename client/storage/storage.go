@@ -298,6 +298,14 @@ func (s *Storage) DeleteShareByUuid(
 	return err
 }
 
+func (s *Storage) DeleteShareIndexByPath(ctx context.Context, uuid string, path string) error {
+	_, err := s.Exec(ctx, `delete from share_index_fts where share = ? and path = ?`, uuid, path)
+	if err != nil {
+		return fmt.Errorf("failed to delete index for %q in share %q: %w", path, uuid, err)
+	}
+	return nil
+}
+
 // ClearShareIndex clears the search index for the share with the specified UUID.
 // It excludes all indexes that have an index ID lower than curIndexId.
 func (s *Storage) ClearShareIndex(ctx context.Context, uuid string, curIndexId int64) error {

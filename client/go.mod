@@ -11,6 +11,7 @@ require (
 	friendnet.org/updater v0.0.0
 	friendnet.org/upnp v0.0.0
 	friendnet.org/webui v0.0.0
+	github.com/fsnotify/fsnotify v1.10.1
 	github.com/google/uuid v1.6.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/quic-go/quic-go v0.61.0
