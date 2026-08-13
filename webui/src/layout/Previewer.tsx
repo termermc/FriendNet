@@ -6,6 +6,7 @@ import { PreviewInfo } from '../state'
 import { guessFileCategory, makeFileUrl } from '../util'
 import { useFileServerUrl, useGlobalState } from '../ctx'
 import { QueueButton } from '../QueueButton'
+import { MaxTextPreviewSize } from '../constant'
 
 type PreviewerProps = {
 	info: PreviewInfo
@@ -17,6 +18,7 @@ type CatProps = {
 	cacheUrl: string
 	filename: string
 	dir: string
+	ext: string
 }
 
 const CatOther: Component<CatProps> = (props) => {
@@ -103,6 +105,16 @@ const CatText: Component<CatProps> = (props) => {
 				return
 			}
 
+			const contentLen = parseInt(res.headers.get('content-length') ?? '-1')
+			if (contentLen === -1) {
+				setError('Failed to get content length, cannot preview as text')
+				return
+			}
+			if (contentLen > MaxTextPreviewSize) {
+				setError('File is too large to preview as text')
+				return
+			}
+
 			setContent(await res.text())
 		} catch (err) {
 			console.error('failed to load text from URL:', props.url, err)
@@ -125,6 +137,13 @@ const CatText: Component<CatProps> = (props) => {
 		</div>
 	)
 }
+
+// termer 2026/08/12: I was originally going to use an iframe to embed PDFs, but I realized that I would need to add
+// `allow-scripts` to the iframe sandbox. Supposedly, PDF viewers like PDF.js cannot execute their own scripts or load
+// external resources, but I found at least one previous CVE that allowed an attacker to run JavaScript. Since the file
+// server is normally on the same origin as the RPC and web UI, I decided it would be safer to just not preview PDFs.
+// The CVE in question: https://nvd.nist.gov/vuln/detail/cve-2024-4367
+const CatRich = CatOther
 
 const CatAudio: Component<CatProps> = (props) => {
 	const fsUrl = useFileServerUrl()
@@ -214,13 +233,14 @@ export const Previewer: Component<PreviewerProps> = (props) => {
 		{ allowCache: true },
 	)
 
-	const cat = guessFileCategory(filename)
+	const [cat, ext] = guessFileCategory(filename)
 	const catProps: CatProps = {
 		info,
 		url,
 		cacheUrl,
 		filename,
 		dir,
+		ext,
 	}
 
 	return (
@@ -250,6 +270,9 @@ export const Previewer: Component<PreviewerProps> = (props) => {
 						</Match>
 						<Match when={cat === 'text'}>
 							<CatText {...catProps} />
+						</Match>
+						<Match when={cat === 'rich'}>
+							<CatRich {...catProps} />
 						</Match>
 					</Switch>
 				</div>

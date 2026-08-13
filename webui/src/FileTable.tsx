@@ -202,7 +202,7 @@ export const FileTable = (<T,>(props: FileTableProps<T>) => {
 							if (meta.isDir) {
 								emoji = '📁'
 							} else {
-								const cat = guessFileCategory(meta.name)
+								const [cat] = guessFileCategory(meta.name)
 								switch (cat) {
 									case 'text':
 										emoji = '📜'
@@ -215,6 +215,9 @@ export const FileTable = (<T,>(props: FileTableProps<T>) => {
 										break
 									case 'audio':
 										emoji = '🎵'
+										break
+									case 'rich':
+										emoji = '🖨️'
 										break
 									case 'other':
 										emoji = '📄'
