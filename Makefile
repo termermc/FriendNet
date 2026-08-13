@@ -146,5 +146,6 @@ release-artifacts:
 	rm /tmp/fn-release/server && rm /tmp/fn-release/rpcclient
 
 	make server-docker-publish
+	make server-docker-dev-publish
 
 	echo "Artifacts in /tmp/fn-release, and new server Docker image pushed"
