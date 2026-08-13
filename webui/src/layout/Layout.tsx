@@ -61,7 +61,7 @@ export const Layout: Component<LayoutProps> = (props) => {
 						🔧 Client Settings
 					</A>{' '}
 					<A href="/logs" class={styles.option}>
-						🔎 Log Viewer
+						📜 Log Viewer
 					</A>{' '}
 					<A href="/update" class={styles.option}>
 						<span>📌 v{state.currentUpdate().version}</span>
