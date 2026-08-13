@@ -328,7 +328,7 @@ func (m *Manager) indexShareWithLockAndLogging(rec storage.ShareRecord) {
 		"service", "share.Manager",
 		"uuid", rec.Uuid,
 		"name", rec.Name,
-		"path", rec.Path,
+		"path", rec.Path.String(),
 	)
 
 	count, _, idxErr := m.indexShare(m.ctx, rec.Name)
