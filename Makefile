@@ -47,13 +47,13 @@ server:
 
 server-noui:
 	mkdir -p adminui/dist/
-	cd server && CGO_ENABLED=0 go build -trimpath -o friendnet-server friendnet.org/server/cmd/server
+	cd server && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o friendnet-server friendnet.org/server/cmd/server
 
 server-linux-amd64-noui:
-	cd server && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o friendnet-server friendnet.org/server/cmd/server
+	cd server && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o friendnet-server friendnet.org/server/cmd/server
 
 server-linux-arm64-noui:
-	cd server && CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -o friendnet-server friendnet.org/server/cmd/server
+	cd server && CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags="-s -w" -o friendnet-server friendnet.org/server/cmd/server
 
 webui:
 	cd webui && go generate
@@ -93,13 +93,13 @@ client-appimages-noui:
 	cd packaging && node index.ts appimage --no-ui
 
 rpcclient:
-	cd rpcclient && CGO_ENABLED=0 go build -trimpath -o friendnet-rpcclient friendnet.org/rpcclient/cmd/cli
+	cd rpcclient && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o friendnet-rpcclient friendnet.org/rpcclient/cmd/cli
 
 rpcclient-linux-amd64:
-	cd rpcclient && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o friendnet-rpcclient friendnet.org/rpcclient/cmd/cli
+	cd rpcclient && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o friendnet-rpcclient friendnet.org/rpcclient/cmd/cli
 
 rpcclient-linux-arm64:
-	cd rpcclient && CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -o friendnet-rpcclient friendnet.org/rpcclient/cmd/cli
+	cd rpcclient && CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags="-s -w" -o friendnet-rpcclient friendnet.org/rpcclient/cmd/cli
 
 run-rpcclient:
 	make rpcclient && cd server && ../rpcclient/friendnet-rpcclient

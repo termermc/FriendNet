@@ -49,10 +49,12 @@ RUN apk add --no-cache ca-certificates
 
 FROM scratch
 
+ENV PATH="/usr/bin"
+
 COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /data/build/server/friendnet-server /usr/bin/server
 COPY --from=builder /data/build/rpcclient/friendnet-rpcclient /usr/bin/rpcclient
 
 WORKDIR /var/lib/friendnet
 
-CMD ["/usr/bin/server", "-config", "/etc/friendnet/server.json"]
+CMD ["server", "-config", "/etc/friendnet/server.json"]
