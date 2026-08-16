@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/ed25519"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -37,7 +38,20 @@ func doReq(ctx context.Context, url string) ([]byte, error) {
 	}
 	req = req.WithContext(ctx)
 
-	res, err := http.DefaultClient.Do(req)
+	// We disable TLS cert verification because updates are already signed.
+	// You can't tamper with the update info because it would break the signature.
+	// This allows the updater to work in environments where root CAs are not available or up to date, or if the
+	// FriendNet website's cert expires.
+	client := http.Client{
+		Timeout: 30 * time.Second,
+		Transport: &http.Transport{
+			DisableKeepAlives: true,
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
+	res, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("GET %q: %w", url, err)
 	}
