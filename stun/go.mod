@@ -9,6 +9,8 @@ require (
 
 require (
 	connectrpc.com/connect v1.19.1 // indirect
+	github.com/coder/websocket v1.8.15 // indirect
+	github.com/termermc/http-over-websocket/hows-go v0.0.0-20260808144918-d30ba17155d3 // indirect
 	golang.org/x/crypto v0.54.0 // indirect
 	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect

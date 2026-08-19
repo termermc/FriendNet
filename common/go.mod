@@ -8,13 +8,13 @@ require (
 	github.com/coder/websocket v1.8.15
 	github.com/termermc/go-mcf-password v1.0.0
 	github.com/termermc/http-over-websocket/hows-go v0.0.0-20260808144918-d30ba17155d3
-	golang.org/x/net v0.50.0
+	golang.org/x/net v0.56.0
 )
 
 require (
-	golang.org/x/crypto v0.48.0 // indirect
-	golang.org/x/sys v0.41.0 // indirect
-	golang.org/x/text v0.34.0 // indirect
+	golang.org/x/crypto v0.54.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/text v0.40.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 )
 

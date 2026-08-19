@@ -1,10 +1,10 @@
 version: v2
 
 plugins:
-    - local: protoc-gen-go
+    - local: ../tool/bin/protoc-gen-go
       out: .
       opt: paths=source_relative
-    - local: protoc-gen-connect-go
+    - local: ../tool/bin/protoc-gen-connect-go
       out: .
       opt:
           - paths=source_relative
