@@ -62,7 +62,7 @@ func (s *IGDService) AddPinhole(ctx context.Context, protocol Protocol, intAddr 
 		return nil, errors.New("no interface")
 	}
 
-	addrs, err := interfaceAddrsByInterface(s.Interface)
+	addrs, err := s.Interface.Addrs()
 	if err != nil {
 		return nil, err
 	}

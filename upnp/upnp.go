@@ -99,7 +99,7 @@ const (
 func Discover(ctx context.Context, _, timeout time.Duration) []Device {
 	var results []Device
 
-	interfaces, err := listInterfaces()
+	interfaces, err := net.Interfaces()
 	if err != nil {
 		logger.WarnContext(ctx, "Failed to list network interfaces", slog.Any("error", err))
 		return results
@@ -377,7 +377,7 @@ func parseResponse(ctx context.Context, deviceType string, addr *net.UDPAddr, re
 }
 
 func localIPv4(netInterface *net.Interface) (net.IP, error) {
-	addrs, err := interfaceAddrsByInterface(netInterface)
+	addrs, err := netInterface.Addrs()
 	if err != nil {
 		return nil, err
 	}
@@ -632,7 +632,7 @@ func soapRequestWithIP(ctx context.Context, url, service, function, message stri
 }
 
 func interfaceHasGUAIPv6(intf net.Interface) (bool, error) {
-	addrs, err := interfaceAddrsByInterface(&intf)
+	addrs, err := intf.Addrs()
 	if err != nil {
 		return false, err
 	}
