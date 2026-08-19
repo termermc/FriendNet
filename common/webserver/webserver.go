@@ -204,6 +204,7 @@ func (ws *WebServer) Mount(address string, path string, handler http.Handler) er
 		var protos http.Protocols
 		protos.SetHTTP2(true)
 		protos.SetHTTP1(true)
+		protos.SetUnencryptedHTTP2(true)
 
 		var listener net.Listener
 		var err error
