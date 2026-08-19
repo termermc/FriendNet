@@ -52,6 +52,10 @@ See the [protocol](protocol) directory.
 I would appreciate it if you considered [supporting the project](https://friendnet.org/donate/).
 If you would like, I'll add your name and link to the website.
 
+# Development
+
+See [DEVELOPMENT.md](DEVELOPMENT.md).
+
 # Contact
 
 If you have any questions or feedback, open an issue or email me at the email on my

@@ -2,6 +2,15 @@
 
 This document outlines development tools and practices used for FriendNet.
 
+## Environment Setup
+
+Install the following tools:
+ - The latest version of Go
+ - The latest LTS version of Node.js
+ - GNU Make
+
+Note that a POSIX system is expected. If you are on Windows, consider using WSL.
+
 ## Philosophy
 
 These are the philosophies that guide FriendNet development.
