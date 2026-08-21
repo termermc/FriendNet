@@ -554,6 +554,9 @@ func main() {
 			_ = multi.Close()
 		})
 		doWithTimeout(5*time.Second, func(_ context.Context) {
+			_ = downloadManager.Close()
+		})
+		doWithTimeout(5*time.Second, func(_ context.Context) {
 			_ = logHandler.Close()
 		})
 		doWithTimeout(5*time.Second, func(_ context.Context) {
