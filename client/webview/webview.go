@@ -191,7 +191,6 @@ func (w *WebView) Open() error {
 		initErr <- fmt.Errorf(`failed to wire up webview: %w`, err)
 		return err
 	}
-	println(w.urlWithToken(w.lastUrl).String())
 	w.handle.Navigate(w.urlWithToken(w.lastUrl).String())
 
 	w.isOpen = true
