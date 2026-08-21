@@ -102,9 +102,7 @@ func TestQuicMultiplex(t *testing.T) {
 		_ = qListener.Close()
 	}()
 
-	serverCtx, serverCancel := context.WithCancel(context.Background())
-
-	defer serverCancel()
+	serverCtx := t.Context()
 	go func() {
 		err := RunServer(
 			serverCtx,

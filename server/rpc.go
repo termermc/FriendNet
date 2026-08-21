@@ -138,10 +138,7 @@ func (s *RpcServer) GetOnlineUsers(_ context.Context, req *v1.GetOnlineUsersRequ
 	// Send pages of statuses.
 	sent := 0
 	for sent < len(clients) {
-		end := sent + pageSize
-		if end > len(clients) {
-			end = len(clients)
-		}
+		end := min(sent+pageSize, len(clients))
 
 		err = stream.Send(&v1.GetOnlineUsersResponse{
 			Users: infos[sent:end],

@@ -48,10 +48,7 @@ func ParseHttpRange(header string, fileSize int64) (offset int64, limit int64, v
 			return 0, 0, false
 		}
 
-		offset = fileSize - suffix
-		if offset < 0 {
-			offset = 0
-		}
+		offset = max(fileSize-suffix, 0)
 		return offset, fileSize - offset, true
 	}
 

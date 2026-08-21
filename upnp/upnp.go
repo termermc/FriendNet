@@ -260,8 +260,7 @@ loop:
 
 		igds, err := parseResponse(ctx, deviceType, udpAddr, resp[:n], intf)
 		if err != nil {
-			var unsupp *UnsupportedDeviceTypeError
-			if errors.As(err, &unsupp) {
+			if _, ok := errors.AsType[*UnsupportedDeviceTypeError](err); ok {
 				debugln(err.Error())
 			} else if !errors.Is(err, context.Canceled) {
 				logger.WarnContext(ctx, "Failed to parse UPnP response", slog.Any("error", err))
@@ -269,7 +268,6 @@ loop:
 			continue
 		}
 		for _, igd := range igds {
-			igd := igd // Copy before sending pointer to the channel.
 			select {
 			case results <- &igd:
 			case <-ctx.Done():

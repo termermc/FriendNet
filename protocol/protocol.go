@@ -107,8 +107,7 @@ func ReadProtoMessage(r io.Reader) (*UntypedProtoMsg, error) {
 			headerRead += n
 		}
 		if err != nil {
-			var streamErr *quic.StreamError
-			if errors.As(err, &streamErr) {
+			if streamErr, ok := errors.AsType[*quic.StreamError](err); ok {
 				if streamErr.ErrorCode == ProxyPeerUnreachableStreamErrorCode {
 					return nil, ErrPeerUnreachable
 				}
@@ -194,8 +193,7 @@ func WriteProtoMessage(w io.Writer, typ pb.MsgType, msg proto.Message) error {
 	for written < len(msgBuf) {
 		n, err := w.Write(msgBuf[written:])
 		if err != nil {
-			var streamErr *quic.StreamError
-			if errors.As(err, &streamErr) {
+			if streamErr, ok := errors.AsType[*quic.StreamError](err); ok {
 				if streamErr.ErrorCode == ProxyPeerUnreachableStreamErrorCode {
 					return ErrPeerUnreachable
 				}

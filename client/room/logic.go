@@ -113,10 +113,7 @@ func (l *LogicImpl) sendDirFiles(bidi C2cBidi, files []*pb.MsgFileMeta) error {
 	// Send paginated.
 	sent := 0
 	for sent < len(files) {
-		end := sent + pageSize
-		if end > len(files) {
-			end = len(files)
-		}
+		end := min(sent+pageSize, len(files))
 
 		err := bidi.Write(pb.MsgType_MSG_TYPE_DIR_FILES, &pb.MsgDirFiles{
 			Files: files[sent:end],

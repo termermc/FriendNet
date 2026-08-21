@@ -92,7 +92,7 @@ func decodeAddrXORMapped(response []byte) (ap netip.AddrPort, ok bool) {
 
 				// last 96 bits XOR with transaction-id (bytes 8..19 of STUN header)
 				tid := response[8:20] // must exist since len>=20
-				for i := 0; i < 12; i++ {
+				for i := range 12 {
 					addr[4+i] = xaddr[4+i] ^ tid[i]
 				}
 
@@ -171,7 +171,7 @@ func RaceStunServers(sock *net.UDPConn, stunServerAddrs []string) (addrPort neti
 	}
 
 	var errs []error
-	for i := 0; i < len(stunServerAddrs); i++ {
+	for range stunServerAddrs {
 		res := <-resAddrs
 		if res.Err != nil {
 			errs = append(errs, res.Err)

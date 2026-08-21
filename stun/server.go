@@ -73,7 +73,7 @@ func buildStunBindingResponseXORMapped(tid [12]byte, src netip.AddrPort) ([]byte
 	// XOR first 4 bytes with magic cookie
 	cookieBytes := [4]byte{}
 	binary.BigEndian.PutUint32(cookieBytes[:], stunMagicCookie)
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		xaddr[i] ^= cookieBytes[i]
 	}
 	// XOR last 12 bytes with transaction id

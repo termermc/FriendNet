@@ -204,10 +204,7 @@ func (l LogicImpl) OnGetOnlineUsers(_ context.Context, client *Client, bidi prot
 	// Send pages of statuses.
 	sent := 0
 	for sent < len(clients) {
-		end := sent + pageSize
-		if end > len(clients) {
-			end = len(clients)
-		}
+		end := min(sent+pageSize, len(clients))
 
 		err := bidi.Write(pb.MsgType_MSG_TYPE_ONLINE_USERS, &pb.MsgOnlineUsers{
 			Users: statuses[sent:end],

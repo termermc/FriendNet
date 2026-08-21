@@ -279,11 +279,11 @@ func (d *Darts) insert(siblings [](*LinkedListTrieNode)) (int, error) {
 	}
 	d.used[begin] = true
 
-	for i := 0; i < len(siblings); i++ {
+	for i := range siblings {
 		d.dat.Check[begin+int(siblings[i].Code)] = begin
 	}
 
-	for i := 0; i < len(siblings); i++ {
+	for i := range siblings {
 		newSiblings, err := d.fetch(siblings[i])
 		if err != nil {
 			return -1, err
@@ -329,11 +329,4 @@ func (dat *DoubleArrayTrie) ExactMatchSearch(content []rune, nodePos int) bool {
 	}
 
 	return false
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }

@@ -30,7 +30,6 @@ func TestParseGoOctalLiteral_OK(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.in, func(t *testing.T) {
 			t.Parallel()
 
@@ -65,7 +64,6 @@ func TestParseGoOctalLiteral_Errors(t *testing.T) {
 	}
 
 	for _, in := range tests {
-		in := in
 		t.Run(in, func(t *testing.T) {
 			t.Parallel()
 
