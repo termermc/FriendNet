@@ -76,8 +76,16 @@
 			"properties": {
 				"address": {
 					"type": "string",
-					"description": "The address to bind to. Must be in the format \"PROTOCOL://HOST:PORT\" (or without port for unix). Supported protocols: http, https, unix. Examples: \"http://127.0.0.1:8080\", \"unix:///var/run/friendnet-server.sock\", \"unix://friendnet-server.sock\".",
+					"description": "Single-address version of addresses.\nIf both address and addresses are specified, this field will be appended to the addresses field.\nDeprecated.",
+					"deprecated": true,
 					"$ref": "#/$defs/HttpOrUnixUrl"
+				},
+				"addresses": {
+					"type": "array",
+					"description": "The addresses to bind to.\nMust be in the format \"PROTOCOL://HOST:PORT\" (or without port for unix).\n\nSupported protocols:\n - http\n - https\n - unix\n\nExamples:\n - \"http://127.0.0.1:8080\"\n - \"unix:///var/run/friendnet-server.sock\" (/var/run/friendnet-server.sock, absolute path)\n - \"unix://friendnet-server.sock\" (friendnet-server.sock, relative path)\n\nThe unix protocol will create a file with 0600 permission by default.\nTo set the permission, set the \"file_permission\" field.\nWindows support for the unix protocol is not supported but may work.",
+					"items": {
+						"$ref": "#/$defs/HttpOrUnixUrl"
+					}
 				},
 				"allowed_methods": {
 					"type": "array",
