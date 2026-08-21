@@ -34,6 +34,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"uuid"
 
 	"friendnet.org/client/event"
 	"friendnet.org/client/fsys"
@@ -43,7 +44,6 @@ import (
 	"friendnet.org/protocol"
 	v1 "friendnet.org/protocol/pb/clientrpc/v1"
 	pb "friendnet.org/protocol/pb/v1"
-	"github.com/google/uuid"
 )
 
 // DmDirIncompleteSetting is the setting key for the download manager's incomplete download directory.
@@ -509,10 +509,7 @@ func (dm *DownloadManager) Queue(
 	}
 
 	if uid == "" {
-		uidRaw, err := uuid.NewV7()
-		if err != nil {
-			panic(err)
-		}
+		uidRaw := uuid.NewV7()
 		uid = uidRaw.String()
 	}
 

@@ -10,10 +10,10 @@ import (
 	"slices"
 	"sync"
 	"time"
+	"uuid"
 
 	"friendnet.org/client/storage"
 	"friendnet.org/common"
-	"github.com/google/uuid"
 )
 
 // The current serialization version of message metadata.
@@ -267,10 +267,7 @@ func (h Handler) slogAttrToAttrs(prefix string, attr slog.Attr) []Attr {
 
 func (h Handler) write(rec MessageRecord) error {
 	if rec.Uuid == "" {
-		uuidRaw, err := uuid.NewV7()
-		if err != nil {
-			return fmt.Errorf(`failed to generate UUIDv7 in Handler.write: %w`, err)
-		}
+		uuidRaw := uuid.NewV7()
 
 		rec.Uuid = uuidRaw.String()
 	}

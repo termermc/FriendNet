@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 	"strings"
 	"unicode"
+	"uuid"
 
 	"friendnet.org/client/storage/migration"
 	"friendnet.org/common"
 	pb "friendnet.org/protocol/pb/v1"
-	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
 )
 
@@ -137,14 +137,11 @@ func (s *Storage) CreateServer(
 	username common.NormalizedUsername,
 	password string,
 ) (string, error) {
-	uuidRaw, err := uuid.NewV7()
-	if err != nil {
-		return "", fmt.Errorf(`failed to generate UUIDv7: %w`, err)
-	}
+	uuidRaw := uuid.NewV7()
 
 	id := uuidRaw.String()
 
-	_, err = s.Exec(ctx, `
+	_, err := s.Exec(ctx, `
 insert into server
 (
 	uuid,
@@ -223,12 +220,9 @@ func (s *Storage) CreateShare(
 	path string,
 	followLinks bool,
 ) error {
-	uuidRaw, err := uuid.NewV7()
-	if err != nil {
-		return err
-	}
+	uuidRaw := uuid.NewV7()
 
-	_, err = s.Exec(ctx, `insert into share (server, name, path, uuid, follow_links) values (?, ?, ?, ?, ?)`,
+	_, err := s.Exec(ctx, `insert into share (server, name, path, uuid, follow_links) values (?, ?, ?, ?, ?)`,
 		serverUuid,
 		name,
 		path,

@@ -2,9 +2,9 @@ package migration
 
 import (
 	"database/sql"
+	"uuid"
 
 	"friendnet.org/common"
-	"github.com/google/uuid"
 )
 
 type M20260301AddSearchIndexes struct {
@@ -72,11 +72,7 @@ create unique index share_server_name_uindex
 			return err
 		}
 
-		var uuidRaw uuid.UUID
-		uuidRaw, err = uuid.NewV7()
-		if err != nil {
-			return err
-		}
+		uuidRaw := uuid.NewV7()
 		_, err = tx.Exec(`update share set uuid = ? where server = ? and name = ?`, uuidRaw.String(), serverUuid, name)
 		if err != nil {
 			return err
