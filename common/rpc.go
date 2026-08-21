@@ -278,53 +278,6 @@ func NewRpcServer[T io.Closer](
 		}),
 	)
 
-	//	addrs := make([]string, 0, len(cfg.Addresses)+1)
-	//	for _, addr := range cfg.Addresses {
-	//		addrs = append(addrs, addr)
-	//	}
-	//	if cfg.Address != "" {
-	//		addrs = append(addrs, cfg.Address)
-	//	}
-	//
-	//	for _, addr := range addrs {
-	//		err := webServer.Mount(
-	//			addr,
-	//			handlerPath,
-	//			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	//				defer func() {
-	//					if rec := recover(); rec != nil {
-	//						logger.Error("panic in RCP handler",
-	//							"service", "common.RpcServer",
-	//							"err", rec,
-	//							"stack", string(debug.Stack()),
-	//						)
-	//					}
-	//				}()
-	//
-	//				if s.corsAllowAllOrigins {
-	//					origin := r.Header.Get("Origin")
-	//					if origin == "" {
-	//						origin = "*"
-	//					}
-	//					w.Header().Set("Access-Control-Allow-Origin", origin)
-	//				}
-	//
-	//				if r.Method == http.MethodOptions {
-	//					w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-	//					w.Header().Add("Access-Control-Allow-Headers", "*")
-	//					w.Header().Add("Access-Control-Allow-Headers", "Authorization, Content-Type, connect-protocol-version")
-	//					w.WriteHeader(http.StatusNoContent)
-	//					return
-	//				}
-	//
-	//				handler.ServeHTTP(w, r)
-	//			}),
-	//		)
-	//		if err != nil {
-	//			return nil, fmt.Errorf(`failed to mount RPC handler on %q path %q: %w`, cfg.Address, handlerPath, err)
-	//		}
-	//	}
-
 	corsWrapper := func(inner http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if s.corsAllowAllOrigins {
@@ -361,30 +314,41 @@ func NewRpcServer[T io.Closer](
 		handler.ServeHTTP(w, r)
 	})
 
-	err := webServer.Mount(
-		cfg.Address,
-		handlerPath,
-		corsWrapper(rpcHandler),
-	)
-	if err != nil {
-		return nil, fmt.Errorf(`failed to mount RPC handler on %q path %q: %w`, cfg.Address, handlerPath, err)
+	addrs := make([]string, 0, len(cfg.Addresses)+1)
+	for _, addr := range cfg.Addresses {
+		addrs = append(addrs, addr)
+	}
+	if cfg.Address != "" {
+		addrs = append(addrs, cfg.Address)
 	}
 
-	if cfg.EnableHows {
-		acceptOpts := &websocket.AcceptOptions{}
-		if cfg.CorsAllowAllOrigins {
-			acceptOpts.OriginPatterns = []string{"*"}
-		}
-
-		howsHandler := hows.NewHowsWithOptions(rpcHandler, acceptOpts)
-
-		err = webServer.Mount(
-			cfg.Address,
-			"/compat/hows",
-			corsWrapper(howsHandler),
+	for _, addr := range addrs {
+		err := webServer.Mount(
+			addr,
+			handlerPath,
+			corsWrapper(rpcHandler),
 		)
 		if err != nil {
-			return nil, fmt.Errorf(`failed to mount HoWS handler on %q path %q: %w`, cfg.Address, "/compat/hows", err)
+			return nil, fmt.Errorf(`failed to mount RPC handler on %q path %q: %w`, cfg.Address, handlerPath, err)
+		}
+
+		if cfg.EnableHows {
+			acceptOpts := &websocket.AcceptOptions{}
+			if cfg.CorsAllowAllOrigins {
+				acceptOpts.OriginPatterns = []string{"*"}
+			}
+
+			howsHandler := hows.NewHowsWithOptions(rpcHandler, acceptOpts)
+
+			const howsPath = "/compat/hows"
+			err = webServer.Mount(
+				addr,
+				howsPath,
+				corsWrapper(howsHandler),
+			)
+			if err != nil {
+				return nil, fmt.Errorf(`failed to mount HoWS handler on %q path %q: %w`, addr, howsPath, err)
+			}
 		}
 	}
 
