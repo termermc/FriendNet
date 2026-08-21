@@ -18,7 +18,7 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 	curUpdate,
 }) => {
 	const url = curUpdate.url
-	const [, releaseTag] = url.match(releasesUrlRegex)
+	const [, releaseTag] = url.match(releasesUrlRegex)!
 
 	let items: {
 		name: string
@@ -30,8 +30,8 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 	if (releaseTag) {
 		const baseUrl = `https://github.com/termermc/FriendNet/releases/download/${releaseTag}/friendnet-client`
 		const windowsAmd64Suffix = '-windows_amd64.exe'
-		const linuxAmd64Suffix = '-linux_amd64'
-		const linuxArm64Suffix = '-linux_arm64'
+		const appImageAmd64Suffix = '-linux_amd64.AppImage'
+		const appImageArm64Suffix = '-linux_arm64.AppImage'
 		const debAmd64Suffix = '-linux_amd64.deb'
 		const debArm64Suffix = '-linux_arm64.deb'
 		// const macosArm64Suffix = '-macos_arm64'
@@ -75,19 +75,18 @@ export const DownloadPage: Component<DownloadPageProps, void> = ({
 				icons: ['archlinux.svg'],
 			},
 			{
-				name: 'Linux Generic (x64)',
-				url: baseUrl + linuxAmd64Suffix,
+				name: 'Linux AppImage (x64)',
+				url: baseUrl + appImageAmd64Suffix,
 				isDirect: true,
 				subtitle:
-					'Works on all distros. Use if there is no specific package for your distro. You will need to mark it as executable with "chmod +x" to work.',
+					'Works on all distros. Use if there is no specific package for your distro. You may need to mark it as executable.',
 				icons: ['linux.svg'],
 			},
 			{
-				name: 'Linux Generic (ARM64)',
-				url: baseUrl + linuxArm64Suffix,
+				name: 'Linux AppImage (ARM64)',
+				url: baseUrl + appImageArm64Suffix,
 				isDirect: true,
-				subtitle:
-					'Works on all distros. Use if there is no specific package for your distro. You will need to mark it as executable with "chmod +x" to work.',
+				subtitle: `Works on all distros. Use if there is no specific package for your distro. You may need to mark it as executable. Use this if your computer's CPU is ARM (unusual).`,
 				icons: ['linux.svg'],
 			},
 			{

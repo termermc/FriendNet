@@ -1,5 +1,8 @@
 setup
 rooms
 widget
-troubleshooting
 configuring-stun
+search-filtering
+external-authentication
+troubleshooting
+config-validator

@@ -81,6 +81,8 @@ func (c *Client) msgHandler(bidi protocol.ProtoBidi, firstMsg *protocol.UntypedP
 		return c.logic.OnGetOnlineUsers(ctx, c, bidi, protocol.ToTyped[*pb.MsgGetOnlineUsers](firstMsg))
 	case pb.MsgType_MSG_TYPE_ADVERTISE_CONN_METHOD:
 		return c.logic.OnAdvertiseConnMethod(ctx, c, bidi, protocol.ToTyped[*pb.MsgAdvertiseConnMethod](firstMsg))
+	case pb.MsgType_MSG_TYPE_REMOVE_CONN_METHOD:
+		return c.logic.OnRemoveConnMethod(ctx, c, bidi, protocol.ToTyped[*pb.MsgRemoveConnMethod](firstMsg))
 	case pb.MsgType_MSG_TYPE_GET_PUBLIC_IP:
 		return c.logic.OnGetPublicIp(ctx, c, bidi, protocol.ToTyped[*pb.MsgGetPublicIp](firstMsg))
 	case pb.MsgType_MSG_TYPE_GET_CLIENT_CONN_METHODS:
@@ -100,7 +102,7 @@ func (c *Client) msgHandler(bidi protocol.ProtoBidi, firstMsg *protocol.UntypedP
 			"service", "room.Client",
 			"room", c.Room.Name.String(),
 			"username", c.Username.String(),
-			"type", firstMsg.Type,
+			"type", firstMsg.Type.String(),
 		)
 
 		_ = bidi.WriteUnimplementedError(firstMsg.Type)

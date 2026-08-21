@@ -1,4 +1,4 @@
-import styles from './ServerSearchPage.module.css'
+import styles from './SearchPage.module.css'
 
 import {
 	Component,
@@ -7,10 +7,12 @@ import {
 	onCleanup,
 	onMount,
 	Show,
+	For,
+	JSX,
 } from 'solid-js'
 import { useFileServerUrl, useGlobalState, useRpcClient } from '../ctx'
 import { Code, ConnectError } from '@connectrpc/connect'
-import { A, useLocation, useParams, useSearchParams } from '@solidjs/router'
+import { A, useLocation, useSearchParams } from '@solidjs/router'
 import { FileTable, FileTableItem } from '../FileTable'
 import { StreamSearchResponse } from '../../pb/clientrpc/v1/rpc_pb'
 import Fuse from 'fuse.js'
@@ -18,27 +20,24 @@ import { makeBrowsePath, makeFileUrl } from '../util'
 import { QueueButton } from '../QueueButton'
 
 const Page: Component = () => {
-	const { uuid } = useParams<{ uuid: string }>()
 	const state = useGlobalState()
 	const client = useRpcClient()
 	const fsUrl = useFileServerUrl()
 
-	const server = state.getServerByUuid(uuid)
-	if (!server) {
-		return <h1>No such server "{uuid}"</h1>
-	}
-
-	let fieldQueryElem: HTMLInputElement | undefined
-	onMount(() => {
-		fieldQueryElem?.focus()
-	})
-
 	const [searchParams, setSearchParams] = useSearchParams<{
+		server?: string
 		query?: string
 		username?: string
 	}>()
 
+	onMount(() => {
+		fieldQueryElem?.focus()
+	})
+
+	let fieldQueryElem: HTMLInputElement | undefined
+
 	const [query, setQuery] = createSignal(searchParams.query ?? '')
+	const [serverUuid, setServerUuid] = createSignal(searchParams.server ?? '')
 	const [username, setUsername] = createSignal(searchParams.username ?? '')
 
 	const [error, setError] = createSignal('')
@@ -97,13 +96,23 @@ const Page: Component = () => {
 
 	let abortController: AbortController | undefined = undefined
 
+	const [lastSearch, setLastSearch] = createSignal(Date.now())
 	const submit = async function (event: SubmitEvent) {
 		event.preventDefault()
 
-		setSearchParams({ query: query().trim(), username: username().trim() })
+		setSearchParams({
+			query: query().trim(),
+			server: serverUuid() || null,
+			username: username().trim() || null,
+		})
+		setLastSearch(Date.now())
 	}
 
-	async function doSearch(query: string, username: string) {
+	async function doSearch(
+		query: string,
+		serverUuid: string | undefined,
+		username: string,
+	) {
 		abortController?.abort()
 		abortController = new AbortController()
 
@@ -112,8 +121,14 @@ const Page: Component = () => {
 		setResults([])
 
 		try {
+			// Check if the server actually exists if the UUID is set.
+			if (serverUuid && state.getServerByUuid(serverUuid) == null) {
+				setError(`No such server UUID "${serverUuid}"`)
+				return
+			}
+
 			const stream = client.streamSearch({
-				serverUuid: uuid,
+				serverUuid: serverUuid || undefined,
 				username: username || undefined,
 				query: query,
 			})
@@ -141,34 +156,59 @@ const Page: Component = () => {
 	}
 
 	createEffect(() => {
+		// Re-run everytime we press the search button, even if params didn't change.
+		lastSearch()
+
 		const q = searchParams.query?.trim() || ''
+		const s = searchParams.server?.trim() || ''
 		const u = searchParams.username?.trim() || ''
 
 		fieldQueryElem?.focus()
 
-		if (!q) {
+		// This can change when clicking a server search link.
+		setServerUuid(s)
+
+    if (!q) {
+      setLoading(false)
 			setResults([])
 			setQuery('')
-			setUsername('')
+      setUsername('')
 			return
 		}
 
-		setQuery(q)
-		setUsername(u)
+    setQuery(q)
+    setUsername(u)
 
 		// noinspection JSIgnoredPromiseFromCall
-		doSearch(q, u)
+		doSearch(q, s, u)
 	})
 
 	return (
 		<div class={styles.container}>
 			<form class={styles.form} onSubmit={submit}>
+				<select
+					value={serverUuid()}
+					onChange={(e) =>
+						setSearchParams({
+							server: e.currentTarget.value || '',
+						})
+					}
+				>
+					<option value="">All Servers</option>
+					<For each={state.servers()}>
+						{(srv) => (
+							<option value={srv.uuid}>{srv.name()}</option>
+						)}
+					</For>
+				</select>
+
 				<input
 					class={styles.fieldUsername}
 					type="text"
 					placeholder="Optional Username"
 					value={username()}
 					onChange={(e) => setUsername(e.currentTarget.value)}
+					disabled={!serverUuid()}
 				/>
 
 				<input
@@ -192,21 +232,38 @@ const Page: Component = () => {
 				error={error()}
 				items={results()}
 				forItem={(item) => {
+					const srvUuid = item.data.serverUuid
 					const filePath =
 						item.data.directoryPath + '/' + item.meta.name
 					const username = item.data.username
 
-					const prefix = (
-						<div class={styles.username}>👤{username}</div>
-					)
+					let prefix: JSX.Element
+					if (serverUuid()) {
+						prefix = <div class={styles.username}>👤{username}</div>
+					} else {
+						// termer 2026/07/29: This is inefficient since it does a server lookup for every result.
+						// If this becomes actually slow, I'll make a different forItem implementation based on
+						// whether this is a global or server search.
+						// Oh well.
+						const srv = state.getServerByUuid(srvUuid)
+						prefix = (
+							<div class={styles.username}>
+								👤{username} @ {srv?.name() ?? 'Unknown'}
+							</div>
+						)
+					}
 
 					if (item.meta.isDir) {
 						return {
 							prefix: prefix,
-							href: makeBrowsePath(uuid, username, filePath),
+							href: makeBrowsePath(
+								item.data.serverUuid,
+								username,
+								filePath,
+							),
 							actions: (
 								<QueueButton
-									serverUuid={uuid}
+									serverUuid={srvUuid}
 									peerUsername={username}
 									filePath={filePath}
 									title="Download Folder"
@@ -216,13 +273,13 @@ const Page: Component = () => {
 					} else {
 						const nonDlUrl = makeFileUrl(
 							fsUrl,
-							uuid,
+							srvUuid,
 							username,
 							filePath,
 						)
 
 						const dirBrowsePath = makeBrowsePath(
-							uuid,
+							srvUuid,
 							username,
 							item.data.directoryPath,
 						)
@@ -245,7 +302,7 @@ const Page: Component = () => {
 										🔗
 									</a>
 									<QueueButton
-										serverUuid={uuid}
+										serverUuid={srvUuid}
 										peerUsername={username}
 										filePath={filePath}
 										title="Download File"
@@ -253,7 +310,7 @@ const Page: Component = () => {
 								</>
 							),
 							onClick: () => {
-								state.previewFile(uuid, username, filePath)
+								state.previewFile(srvUuid, username, filePath)
 							},
 						}
 					}
@@ -263,7 +320,7 @@ const Page: Component = () => {
 	)
 }
 
-export const ServerSearchPage: Component = () => {
+export const SearchPage: Component = () => {
 	const loc = useLocation()
 
 	return (

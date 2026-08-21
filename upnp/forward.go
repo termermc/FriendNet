@@ -183,7 +183,7 @@ func ForwardUDPForPublicIPs(ctx context.Context, port uint16, description string
 }
 
 func publicIPv6Addrs(intf *net.Interface) ([]net.IP, error) {
-	addrs, err := interfaceAddrsByInterface(intf)
+	addrs, err := intf.Addrs()
 	if err != nil {
 		return nil, err
 	}

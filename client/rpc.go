@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net/netip"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"connectrpc.com/connect"
@@ -422,7 +423,7 @@ func (s *RpcServer) GetDirFiles(ctx context.Context, request *v1.GetDirFilesRequ
 	}
 
 	return srv.Do(ctx, func(ctx context.Context, c *room.Conn) error {
-		peer := c.GetVirtualC2cConn(username, false)
+		peer := c.GetVirtualC2cConn(username, room.C2cConnModeQuickFallback)
 		stream, err := peer.GetDirFiles(path)
 		if err != nil {
 			return err
@@ -485,7 +486,7 @@ func (s *RpcServer) GetFileMeta(ctx context.Context, request *v1.GetFileMetaRequ
 	}
 
 	return DoValue(srv.ConnNanny, ctx, func(ctx context.Context, c *room.Conn) (*v1.GetFileMetaResponse, error) {
-		peer := c.GetVirtualC2cConn(username, false)
+		peer := c.GetVirtualC2cConn(username, room.C2cConnModeQuickFallback)
 		meta, err := peer.GetFileMeta(path)
 		if err != nil {
 			if protoMsgErr, ok := errors.AsType[protocol.ProtoMsgError](err); ok {
@@ -735,83 +736,128 @@ func (s *RpcServer) StreamSearch(ctx context.Context, request *v1.StreamSearchRe
 		return errEmptySearchQuery
 	}
 
-	srv, has := s.client.GetByUuid(request.ServerUuid)
-	if !has {
-		return errServerNotFound
+	streamServerSearchResults := func(c *room.Conn, server *Server, useChan chan *v1.StreamSearchResponse) error {
+		stream, err := c.Search(request.Query)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			_ = stream.Close()
+		}()
+
+		for {
+			next, nextErr := stream.ReadNext()
+			if nextErr != nil {
+				if protocol.IsErrorConnCloseOrCancel(nextErr) {
+					return nil
+				}
+			}
+
+			res := &v1.StreamSearchResponse{
+				ServerUuid:    server.Uuid,
+				Username:      next.Username,
+				DirectoryPath: next.Result.DirectoryPath,
+				File:          s.metaToInfo(next.Result.File),
+			}
+			if useChan == nil {
+				_ = conn.Send(res)
+			} else {
+				useChan <- res
+			}
+		}
+	}
+	streamPeerSearchResults := func(c *room.Conn, server *Server, username common.NormalizedUsername) error {
+		peer := c.GetVirtualC2cConn(username, room.C2cConnModeQuickFallback)
+
+		stream, err := peer.Search(request.Query)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			_ = stream.Close()
+		}()
+
+		for {
+			next, nextErr := stream.ReadNext()
+			if nextErr != nil {
+				if protocol.IsErrorConnCloseOrCancel(nextErr) {
+					return nil
+				}
+			}
+
+			_ = conn.Send(&v1.StreamSearchResponse{
+				ServerUuid:    server.Uuid,
+				Username:      peer.Username.String(),
+				DirectoryPath: next.DirectoryPath,
+				File:          s.metaToInfo(next.File),
+			})
+		}
 	}
 
-	return srv.Do(ctx, func(ctx context.Context, c *room.Conn) error {
-		if request.Username == nil {
-			// Stream from server.
-			stream, err := c.Search(request.Query)
-			if err != nil {
-				return err
-			}
-			defer func() {
-				_ = stream.Close()
-			}()
+	// If server UUID is null, search all servers
+	// For aggregate searches, it does not wait on non-open server connections to become open, it just skips them.
+	if request.ServerUuid == nil {
+		all := s.client.GetAll()
+		if len(all) == 0 {
+			return nil
+		}
 
-			for {
-				next, nextErr := stream.ReadNext()
-				if nextErr != nil {
-					if protocol.IsErrorConnCloseOrCancel(nextErr) {
-						return nil
+		writeChan := make(chan *v1.StreamSearchResponse, 100)
+
+		go func() {
+			var wg sync.WaitGroup
+
+			for _, srv := range all {
+				wg.Go(func() {
+					err := srv.TryDo(func(cConn *room.Conn) error {
+						return streamServerSearchResults(cConn, srv, writeChan)
+					})
+					if err != nil {
+						s.client.logger.Warn("StreamSearch error",
+							"service", "client.RpcServer",
+							"err", err,
+						)
 					}
-				}
-
-				err = conn.Send(&v1.StreamSearchResponse{
-					Username:      next.Username,
-					DirectoryPath: next.Result.DirectoryPath,
-					File:          s.metaToInfo(next.Result.File),
-					Snippet:       next.Result.Snippet,
 				})
-				if err != nil {
-					if protocol.IsErrorConnCloseOrCancel(err) {
-						return nil
-					}
-					return err
-				}
 			}
-		} else {
-			// Stream from client.
+
+			wg.Wait()
+			close(writeChan)
+		}()
+
+		for {
+			select {
+			case m := <-writeChan:
+				if m == nil {
+					// No more results.
+					return nil
+				}
+
+				_ = conn.Send(m)
+			case <-ctx.Done():
+				return nil
+			}
+		}
+	} else {
+		// Single server search
+		srv, has := s.client.GetByUuid(*request.ServerUuid)
+		if !has {
+			return errServerNotFound
+		}
+
+		return srv.Do(ctx, func(sCtx context.Context, sConn *room.Conn) error {
+			if request.Username == nil {
+				return streamServerSearchResults(sConn, srv, nil)
+			}
+
 			username, usernameOk := common.NormalizeUsername(*request.Username)
 			if !usernameOk {
 				return errInvalidUsername
 			}
 
-			peer := c.GetVirtualC2cConn(username, false)
-
-			stream, err := peer.Search(request.Query)
-			if err != nil {
-				return err
-			}
-			defer func() {
-				_ = stream.Close()
-			}()
-
-			for {
-				next, nextErr := stream.ReadNext()
-				if nextErr != nil {
-					if protocol.IsErrorConnCloseOrCancel(nextErr) {
-						return nil
-					}
-				}
-
-				err = conn.Send(&v1.StreamSearchResponse{
-					Username:      peer.Username.String(),
-					DirectoryPath: next.DirectoryPath,
-					File:          s.metaToInfo(next.File),
-					Snippet:       next.Snippet,
-				})
-				if err != nil {
-					if protocol.IsErrorConnCloseOrCancel(err) {
-						return nil
-					}
-					return err
-				}
-			}
-		}
-	})
+			return streamPeerSearchResults(sConn, srv, username)
+		})
+	}
 }
 
 func (s *RpcServer) updateToInfo(update *updater.UpdateInfo, updateErr error) *v1.UpdateInfo {

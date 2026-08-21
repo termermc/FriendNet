@@ -1,0 +1,54 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://friendnet.org/schema/external-auth-response.schema.json",
+	"title": "ExternalAuthResponse",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["status"],
+	"properties": {
+		"$schema": {
+			"type": "string"
+		},
+		"status": {},
+		"reason": {}
+	},
+	"oneOf": [
+		{
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["status"],
+			"properties": {
+				"status": {
+					"description": "\"ok\" means that the credentials were accepted and the client can join the room.",
+					"const": "ok"
+				}
+			}
+		},
+		{
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["status"],
+			"properties": {
+				"status": {
+					"description": "\"bad\" means that the credentials were not accepted.\nIf so, the reason field may contain a specific reason message, or empty/omitted to return a generic message.",
+					"const": "bad"
+				},
+				"reason": {
+					"description": "The reason the authentication was rejected.",
+					"type": "string"
+				}
+			}
+		},
+		{
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["status"],
+			"properties": {
+				"status": {
+					"description": "\"pass\" means that the provider is satisfied with the credentials, but to pass it to the next provider for actual authentication.\nUsed for middleware.",
+					"const": "pass"
+				}
+			}
+		}
+	]
+}

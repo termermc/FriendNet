@@ -4,7 +4,7 @@ STUN (Session Traversal Utilities for NAT) is a protocol used to discover a comp
 used for NAT hole punching, a technique supported by FriendNet to establish direct connections between peers, even when
 they have firewalls and are behind NATs.
 
-FriendNet servers (version 1.1.4 and later) have a built-in STUN server that runs on the same addresses that the server
+FriendNet servers (version 1.2.0 and later) have a built-in STUN server that runs on the same addresses that the server
 is configured to listen on. By default, it will try to guess its own public listening IP and port to send to clients
 who query the server for STUN servers to use. However, this guess can sometimes be incorrect, leaving clients without a
 working STUN server to use for NAT hole punching.

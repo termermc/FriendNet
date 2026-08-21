@@ -36,7 +36,7 @@ func NewTypedMsgStream[T proto.Message](reader ProtoBidi, typ pb.MsgType) TypedM
 // ReadNext reads the next message from the stream.
 // If the stream has ended, returns io.EOF.
 func (s TypedMsgStream[T]) ReadNext() (*TypedProtoMsg[T], error) {
-	msg, err := ReadExpect[T](s.bidi.ProtoStreamReader, s.typ)
+	msg, err := ReadExpect[T](s.bidi, s.typ)
 	if err != nil {
 		var streamErr *quic.StreamError
 		if errors.As(err, &streamErr) ||

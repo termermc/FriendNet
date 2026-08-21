@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"friendnet.org/browser"
 	"friendnet.org/client"
 	"friendnet.org/client/cert"
 	"friendnet.org/client/clog"
@@ -37,11 +38,11 @@ import (
 	"friendnet.org/common"
 	"friendnet.org/common/machine"
 	"friendnet.org/common/webserver"
+	"friendnet.org/mkcert"
 	v1 "friendnet.org/protocol/pb/clientrpc/v1"
 	"friendnet.org/protocol/pb/clientrpc/v1/clientrpcv1connect"
 	"friendnet.org/updater"
 	"friendnet.org/webui"
-	"github.com/pkg/browser"
 	"golang.org/x/net/webdav"
 )
 
@@ -124,16 +125,20 @@ func main() {
 	var noWebView bool
 	var openBrowser bool
 	var noLock bool
+	var uninstallCa bool
 	var resetToken bool
 	var pprofFile string
 	var rmCertHost string
 
 	flag.StringVar(&dataDir, "datadir", "", "path to the client's data directory")
+	flag.StringVar(&webAddr, "webaddr", "http://127.0.0.1:20042", "web UI and RPC address")
+	flag.StringVar(&davAddr, "davaddr", "http://127.0.0.1:20043", "WebDAV server address")
 	flag.StringVar(&webAddr, "webaddr", "https://127.0.0.1:20042", "web UI and RPC address")
 	flag.StringVar(&davAddr, "davaddr", "https://127.0.0.1:20043", "WebDAV server address")
 	flag.BoolVar(&noWebView, "nowebview", false, "do not open a webview window")
 	flag.BoolVar(&openBrowser, "openbrowser", false, "opens the web UI in the browser at startup")
 	flag.BoolVar(&noLock, "nolock", false, "do not use a lock to prevent multiple instances of the client from running")
+	flag.BoolVar(&uninstallCa, "uninstallca", false, "if set, tries to uninstall the client's root CA that previous versions required (requires root, recommended if upgrading from a pre-1.2.1 version)")
 	flag.BoolVar(&resetToken, "resettoken", false, "if set, resets the bearer token for the RPC server")
 	flag.StringVar(&pprofFile, "pproffile", "", "write CPU profile data in the pprof format to this file, e.g. \"cpu.pprof\"")
 	flag.StringVar(&rmCertHost, "rmcerthost", "", "removes the specified host from the certificate store (like removing a host from SSH known_hosts)")
@@ -228,6 +233,20 @@ func main() {
 		}),
 	)
 	logger := slog.New(logHandler)
+
+	mc, err := mkcert.NewMkCert(dataDir)
+	if err != nil {
+		logger.Error(`failed to initialize mkcert`, "err", err)
+		os.Exit(1)
+	}
+
+	if uninstallCa {
+		if err = mc.Uninstall(); err != nil {
+			logger.Error(`failed to uninstall client root CA`, "err", err)
+			os.Exit(1)
+		}
+		return
+	}
 
 	// Get or set bearer token.
 	var rpcBearerToken string
@@ -341,9 +360,13 @@ func main() {
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			httpsCert, err := common.GenSelfSignedPem(webUrl.Hostname(), true)
+			certPem, err := common.GenSelfSignedPem("localhost", true)
 			if err != nil {
 				panic(fmt.Errorf(`failed to generate HTTPS certificate: %w`, err))
 			}
+
+			httpsCertPem = certPem
+			httpsKeyPem = certPem
 
 			privkeyPrefix := []byte("-----BEGIN PRIVATE KEY-----")
 			privKeyIdx := bytes.Index(httpsCert, privkeyPrefix)
@@ -446,6 +469,7 @@ func main() {
 			AllowedMethods:      []string{"*"},
 			BearerToken:         rpcBearerToken,
 			CorsAllowAllOrigins: true,
+			EnableHows:          true,
 		},
 		client.NewRpcServer(
 			logHandler,

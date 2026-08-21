@@ -28,6 +28,11 @@ Head over to the [download](https://friendnet.org/download/) page on the website
 
 Documentation can be found on the [website](https://friendnet.org/docs/).
 
+# License
+
+All code in this repository is under a FOSS license, but some components use different FOSS licenses than others; see
+[LICENSE.md](LICENSE.md).
+
 # Protocol
 
 See the [protocol](protocol) directory.
@@ -46,6 +51,10 @@ See the [protocol](protocol) directory.
 
 I would appreciate it if you considered [supporting the project](https://friendnet.org/donate/).
 If you would like, I'll add your name and link to the website.
+
+# Development
+
+See [DEVELOPMENT.md](DEVELOPMENT.md).
 
 # Contact
 

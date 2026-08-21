@@ -1,10 +1,11 @@
 import styles from './FileTable.module.css'
 import stylesCommon from './common.module.css'
 
-import { Component, For, JSX, Show } from 'solid-js'
-import { A } from '@solidjs/router'
-import { guessFileCategory, trimStrEllipsis } from './util'
+import { Component, createMemo, For, JSX, Show } from 'solid-js'
+import { A, useSearchParams } from '@solidjs/router'
+import { formatSize, guessFileCategory, trimStrEllipsis } from './util'
 import { FileMeta } from '../pb/clientrpc/v1/rpc_pb'
+import { FileTableMinPageSize } from './constant'
 
 /**
  * A file to display in {@link FileTable}.
@@ -77,12 +78,89 @@ export type FileTableProps<T> = {
  * FileTable displays a list of files in a table.
  */
 export const FileTable = (<T,>(props: FileTableProps<T>) => {
+	const [search, setSearch] = useSearchParams<{
+		page: string | undefined
+		pageSize: string | undefined
+	}>()
+
+	const pageSize = createMemo(() =>
+		Math.max(parseInt(search.pageSize ?? '0', 10), FileTableMinPageSize),
+	)
+	const totalPages = createMemo(() =>
+		Math.ceil(props.items.length / pageSize()),
+	)
+	const page = createMemo(() =>
+		Math.min(Math.max(parseInt(search.page ?? '0', 10), 0), totalPages()),
+	)
+	const visibleItems = createMemo(() =>
+		props.items.slice(page() * pageSize(), (page() + 1) * pageSize()),
+	)
+
+	const pageSizes = [250, 500, 750, 1000]
+
 	return (
 		<div class={styles.files}>
+			<Show when={props.items.length > FileTableMinPageSize}>
+				<div class={styles.pagination}>
+					<button
+						onClick={() =>
+							setSearch({ page: (page() - 1).toString() })
+						}
+						disabled={page() === 0}
+					>
+						⤶
+					</button>
+					<span class={styles.paginationPage}>
+						Page{' '}
+						<input
+							type="number"
+							value={page() + 1}
+							onInput={(e) => {
+								const value = parseInt(
+									e.currentTarget.value,
+									10,
+								)
+								if (
+									!isNaN(value) &&
+									value >= 1 &&
+									value <= totalPages()
+								) {
+									setSearch({ page: (value - 1).toString() })
+								}
+							}}
+						/>{' '}
+						of {totalPages()}
+					</span>
+					<button
+						onClick={() =>
+							setSearch({ page: (page() + 1).toString() })
+						}
+						disabled={page() === totalPages() - 1}
+					>
+						⤷
+					</button>{' '}
+					<select
+						onChange={(e) =>
+							setSearch({
+								page: 0,
+								pageSize: e.currentTarget.value,
+							})
+						}
+						value={pageSize()}
+					>
+						{pageSizes.map((size) => (
+							<option value={size}>Show {size} files</option>
+						))}
+					</select>
+				</div>
+
+				<div class={styles.paginationSpacer} />
+			</Show>
 			<table>
 				<thead>
 					<tr>
 						<th>File</th>
+						<th>Size</th>
 						<th>Actions</th>
 					</tr>
 				</thead>
@@ -116,7 +194,7 @@ export const FileTable = (<T,>(props: FileTableProps<T>) => {
 							</td>
 						</tr>
 					</Show>
-					<For each={props.items}>
+					<For each={visibleItems()}>
 						{(item) => {
 							const meta = item.meta
 
@@ -124,7 +202,7 @@ export const FileTable = (<T,>(props: FileTableProps<T>) => {
 							if (meta.isDir) {
 								emoji = '📁'
 							} else {
-								const cat = guessFileCategory(meta.name)
+								const [cat] = guessFileCategory(meta.name)
 								switch (cat) {
 									case 'text':
 										emoji = '📜'
@@ -137,6 +215,9 @@ export const FileTable = (<T,>(props: FileTableProps<T>) => {
 										break
 									case 'audio':
 										emoji = '🎵'
+										break
+									case 'rich':
+										emoji = '🖨️'
 										break
 									case 'other':
 										emoji = '📄'
@@ -175,6 +256,14 @@ export const FileTable = (<T,>(props: FileTableProps<T>) => {
 											</span>
 										</td>
 									)}
+									<td class={styles.sizeTd}>
+										{item.meta.isDir
+											? ''
+											: formatSize(
+													Number(item.meta.size),
+													2,
+												)}
+									</td>
 									<td class={styles.actionsTd}>
 										<div class={styles.actions}>
 											{options.actions}

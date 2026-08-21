@@ -46,18 +46,18 @@ export function makeFileUrl(
 /**
  * Broad file categories.
  */
-export type FileCategory = 'image' | 'video' | 'audio' | 'text' | 'other'
+export type FileCategory = 'image' | 'video' | 'audio' | 'text' | 'rich' | 'other'
 
 /**
  * Guesses a file's category based on its filename.
  * @param filename The file's name.
- * @returns The guessed category.
+ * @returns The guessed category and extension.
  */
-export function guessFileCategory(filename: string): FileCategory {
+export function guessFileCategory(filename: string): [FileCategory, string] {
 	const dotIdx = filename.lastIndexOf('.')
 	let ext: string
 	if (dotIdx === -1) {
-		return 'other'
+		return ['other', '']
 	} else {
 		ext = filename.substring(dotIdx + 1).toLowerCase()
 	}
@@ -77,7 +77,7 @@ export function guessFileCategory(filename: string): FileCategory {
 		case 'ico':
 		case 'tiff':
 		case 'psd':
-			return 'image'
+			return ['image', ext]
 		case 'mp4':
 		case 'webm':
 		case 'mkv':
@@ -92,7 +92,7 @@ export function guessFileCategory(filename: string): FileCategory {
 		case 'm2ts':
 		case 'vob':
 		case 'f4v':
-			return 'video'
+			return ['video', ext]
 		case 'mp3':
 		case 'wav':
 		case 'flac':
@@ -104,13 +104,8 @@ export function guessFileCategory(filename: string): FileCategory {
 		case 'alac':
 		case 'ape':
 		case 'opus':
-			return 'audio'
+			return ['audio', ext]
 		case 'txt':
-		case 'pdf':
-		case 'doc':
-		case 'docx':
-		case 'rtf':
-		case 'odt':
 		case 'md':
 		case 'tex':
 		case 'json':
@@ -142,9 +137,15 @@ export function guessFileCategory(filename: string): FileCategory {
 		case 'conf':
 		case 'css':
 		case 'scss':
-			return 'text'
+			return ['text', ext]
+		case 'pdf':
+		case 'doc':
+		case 'docx':
+		case 'odt':
+		case 'rtf':
+			return ['rich', ext]
 		default:
-			return 'other'
+			return ['other', ext]
 	}
 }
 

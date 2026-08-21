@@ -23,6 +23,9 @@ export const Layout: Component<LayoutProps> = (props) => {
 					<A href="/createroom" class={styles.option}>
 						🚪 Create Room
 					</A>{' '}
+					<A href="/filters" class={styles.option}>
+						🚩 Global Search Filters
+					</A>{' '}
 					<Show when={!serverInfo.rpc!.allowedMethods.includes('*')}>
 						<span
 							title="Click for information"

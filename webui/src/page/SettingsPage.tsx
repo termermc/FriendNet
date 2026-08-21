@@ -20,7 +20,8 @@ const P2pSettings: Component = () => {
 		createSignal(false)
 	const [disableUpnp, setDisableUpnp] = createSignal(false)
 	const [upnpTimeoutMs, setUpnpTimeoutMs] = createSignal(10_000)
-	const [disableNatHolePunching, setDisableNatHolePunching] = createSignal(false)
+	const [disableNatHolePunching, setDisableNatHolePunching] =
+		createSignal(false)
 
 	const [error, setError] = createSignal('')
 	const [isSaving, setSaving] = createSignal(false)
@@ -266,7 +267,8 @@ const P2pSettings: Component = () => {
 												for="setting-advertise-private"
 												title="If checked, private IPs (like 192.168.x.x or 10.x.x.x) will be advertised for peers to connect to. This only makes sense to enable if you and other peers are on the same LAN or VPN."
 											>
-												Advertise private IPs?<sup>🛈</sup>
+												Advertise private IPs?
+												<sup>🛈</sup>
 											</label>
 										</td>
 										<td>
@@ -291,7 +293,8 @@ const P2pSettings: Component = () => {
 												title="If checked, the client will not query the server for the client's public IP. Does not apply to NAT hole punching."
 												for="setting-disable-public-ip-discovery"
 											>
-												Disable public IP discovery?<sup>🛈</sup>
+												Disable public IP discovery?
+												<sup>🛈</sup>
 											</label>
 										</td>
 										<td>
@@ -361,7 +364,8 @@ const P2pSettings: Component = () => {
 												title="If checked, the client will not attempt NAT hole punching. NAT hole punching involves discovering and exchanging your public IP address with peers you are connecting to, then mutually attempting a connection to each other."
 												for="setting-disable-nat-hole-punching"
 											>
-												Disable NAT hole punching?<sup>🛈</sup>
+												Disable NAT hole punching?
+												<sup>🛈</sup>
 											</label>
 										</td>
 										<td>

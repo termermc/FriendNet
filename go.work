@@ -1,13 +1,17 @@
-go 1.26.5
+go 1.27.0
 
 use (
 	./adminui
+	./ahocorasick
+	./browser
 	./client
 	./common
+	./mkcert
 	./protocol
 	./rpcclient
 	./server
 	./stun
+	./tool
 	./updater
 	./upnp
 	./webui

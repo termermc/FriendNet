@@ -11,21 +11,26 @@
 		"fmt": "prettier --write .",
 		"check": "tsc --noEmit"
 	},
-	"license": "AGPL-3.0-only",
+	"license": "GPL-3.0-or-later",
 	"devDependencies": {
 		"@bufbuild/buf": "^1.65.0",
 		"@bufbuild/protoc-gen-es": "^2.11.0",
-		"prettier": "^3.8.1",
-		"typescript": "^5.7.2",
-		"vite": "^7.1.4",
-		"vite-plugin-solid": "^2.11.8"
+		"prettier": "^3.9.6",
+		"typescript": "^7.0.2",
+		"vite": "^8.1.5",
+		"vite-plugin-solid": "^2.11.13"
 	},
 	"dependencies": {
 		"@bufbuild/protobuf": "^2.11.0",
 		"@connectrpc/connect": "^2.1.1",
 		"@connectrpc/connect-web": "^2.1.1",
-		"@solidjs/router": "^0.15.4",
-		"fuse.js": "^7.1.0",
-		"solid-js": "^1.9.5"
+		"@solid-primitives/scheduled": "^1.5.3",
+		"@solidjs/router": "^0.16.2",
+		"fuse.js": "^7.5.0",
+		"http-over-websocket": "^0.0.4",
+		"solid-js": "^1.9.14"
+	},
+	"allowScripts": {
+		"@bufbuild/buf@1.65.0": true
 	}
 }

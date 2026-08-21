@@ -55,6 +55,9 @@ export const Layout: Component<LayoutProps> = (props) => {
 				<span class={styles.headerTitle}>{AppName}</span>
 
 				<div class={styles.options}>
+					<A href="/search" class={styles.option}>
+						🔎 Search
+					</A>{' '}
 					<A
 						href="/transfers"
 						class={styles.option}
@@ -66,7 +69,7 @@ export const Layout: Component<LayoutProps> = (props) => {
 						🔧 Client Settings
 					</A>{' '}
 					<A href="/logs" class={styles.option}>
-						🔎 Log Viewer
+						📜 Log Viewer
 					</A>{' '}
 					<A href="/update" class={styles.option}>
 						<span>📌 v{state.currentUpdate().version}</span>

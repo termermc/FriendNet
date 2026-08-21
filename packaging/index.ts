@@ -1,5 +1,6 @@
 import { argv, platform } from 'node:process'
 import { debMain } from './deb.ts'
+import { appImageMain } from './appimage.ts'
 
 switch (platform) {
 	case 'darwin':
@@ -9,7 +10,9 @@ switch (platform) {
 	case 'openbsd':
 		break
 	default:
-		console.warn(`your current platform (${platform}) is not supported by this script, it may not work!`)
+		console.warn(
+			`your current platform (${platform}) is not supported by this script, it may not work!`,
+		)
 }
 
 async function main(): Promise<number> {
@@ -24,6 +27,8 @@ async function main(): Promise<number> {
 		switch (cmd) {
 			case 'deb':
 				return debMain(args)
+			case 'appimage':
+				return appImageMain(args)
 			default:
 				console.error(`unknown command: ${cmd}`)
 				return 1

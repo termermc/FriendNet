@@ -1,0 +1,16 @@
+// Project-local debug tasks
+//
+// For more documentation on how to configure debug tasks,
+// see: https://zed.dev/docs/debugger
+[
+  {
+      "label": "Run server",
+      "adapter": "Delve",
+      "request": "launch",
+      "mode": "debug",
+      // For Delve, the program can be a package name
+      "program": "./server/cmd/server"
+      // "args": [],
+      // "buildFlags": [],
+  }
+]

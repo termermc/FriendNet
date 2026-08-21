@@ -15,19 +15,21 @@ import {
 } from 'solid-js'
 
 import {
+	A,
 	createAsync,
 	useLocation,
 	useNavigate,
 	useParams,
 } from '@solidjs/router'
 import { Code, ConnectError } from '@connectrpc/connect'
-import { useRemoveRoom, useRpcClient } from '../ctx'
+import { usePageRoom, useRemoveRoom, useRpcClient } from '../ctx'
 import {
 	AccountInfo,
 	OnlineUserInfo,
 	RoomInfo,
 } from '../../pb/serverrpc/v1/rpc_pb'
 import stylesCommon from '../common.module.css'
+import { RoomLoader } from '../RoomLoader'
 
 const PasswordField: Component<{
 	id: string
@@ -327,7 +329,7 @@ const Account: Component<AccountsProps & { account: AccountInfo }> = (
 					<summary>🔑 Change Password</summary>
 
 					<div>
-						<br/>
+						<br />
 
 						<Show when={changePassError()}>
 							<div class={stylesCommon.errorMessage}>
@@ -459,8 +461,8 @@ const ManageAccounts: Component<AccountsProps> = (props) => {
 	)
 }
 
-const Page: Component<{ room: RoomInfo }> = (props) => {
-	const room = props.room
+const Page: Component = () => {
+	const room = usePageRoom()!
 
 	const client = useRpcClient()
 	const navigate = useNavigate()
@@ -552,9 +554,14 @@ const Page: Component<{ room: RoomInfo }> = (props) => {
 					<br />
 				</Show>
 
-				<button onClick={remove} disabled={isRemoving()}>
-					🗑️ Delete Room
-				</button>
+				<div class={styles.roomOptions}>
+					<button onClick={remove} disabled={isRemoving()}>
+						🗑️ Delete Room
+					</button>
+					<A href={`/room/${room.name}/filters`}>
+						<button>🚩 Search Filters</button>
+					</A>
+				</div>
 
 				<h2>Manage Accounts</h2>
 				<ManageAccounts room={room} accountsSignal={accountsSignal} />
@@ -613,60 +620,15 @@ const Page: Component<{ room: RoomInfo }> = (props) => {
 	)
 }
 
-export const Loader: Component = () => {
-	const { name } = useParams<{ name: string }>()
-	const client = useRpcClient()
-
-	const room = createAsync(async () => {
-		const { room } = await client.getRoomInfo({ name })
-		return room!
-	})
-
-	return (
-		<ErrorBoundary
-			fallback={(err) => {
-				if (err instanceof ConnectError) {
-					if (err.code === Code.PermissionDenied) {
-						return (
-							<div class={stylesCommon.errorMessage}>
-								The RPC method required to get room info is not
-								available.
-							</div>
-						)
-					}
-					if (err.code === Code.NotFound) {
-						return (
-							<div class={stylesCommon.errorMessage}>
-								Room not found.
-							</div>
-						)
-					}
-				}
-
-				console.error('failed to load room:', err)
-
-				return (
-					<div class={stylesCommon.errorMessage}>
-						Failed to load room, see console for details.
-					</div>
-				)
-			}}
-		>
-			<Suspense fallback={<i>Loading...</i>}>
-				<Show when={room()}>
-					<Page room={room()!} />
-				</Show>
-			</Suspense>
-		</ErrorBoundary>
-	)
-}
-
 export const RoomPage: Component = () => {
 	const loc = useLocation()
+	const params = useParams<{ name: string }>()
 
 	return (
 		<Show when={loc.pathname} keyed>
-			<Loader />
+			<RoomLoader room={params.name}>
+				<Page />
+			</RoomLoader>
 		</Show>
 	)
 }

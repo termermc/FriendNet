@@ -33,7 +33,7 @@ You do not need to use LetsEncrypt or any other certificate authority to generat
 The `server.db` file is the SQLite database used by the server to store its data. It stores rooms, accounts and other
 important data for the server. If the file is removed or replaced, existing rooms and accounts will be lost.
 
-## `server.json`
+## `server.json` ([validator helper](../config-validator.md))
 
 The `server.json` file contains the server configuration that you can edit. It specifies the host+ports to listen on,
 the paths to the certificate and database files, and RPC settings.
@@ -93,6 +93,8 @@ To require an authorization token to access an endpoint, add a `bearer_token` pr
 	"bearer_token": "some-secure-random-token"
 }
 ```
+
+To configure external authentication, see [this page](../external-authentication.md).
 
 ---
 

@@ -31,8 +31,6 @@ type ClientProxy struct {
 	targetBidi protocol.ProtoBidi
 }
 
-const proxyBufSize = 1024
-
 // NewClientProxy creates a new ClientProxy from an existing origin bidi.
 // It assumes that the origin bidi has already had the open request message read from it, meaning the
 // only data that will be sent on it will be proxied data.
@@ -102,7 +100,7 @@ func (p *ClientProxy) Close() error {
 }
 
 func (p *ClientProxy) proxyThread(from protocol.ProtoBidi, to protocol.ProtoBidi) error {
-	_, err := io.Copy(to.Stream, from.Stream)
+	_, err := io.Copy(to.RawWriter(), from.RawReader())
 	return err
 }
 

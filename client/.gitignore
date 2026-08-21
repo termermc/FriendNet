@@ -1,6 +1,10 @@
 friendnet-client
 friendnet-client.exe
 *.deb
+*.AppImage
 client.db*
 client-lock.json
 rootCA*
+
+deb/
+appimage/

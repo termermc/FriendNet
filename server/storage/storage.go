@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"friendnet.org/common"
+	serverrpcv1 "friendnet.org/protocol/pb/serverrpc/v1"
 	"friendnet.org/server/storage/migration"
 	_ "modernc.org/sqlite"
 )
@@ -55,6 +56,7 @@ func NewStorage(path string) (*Storage, error) {
 
 	err = common.DoMigrations(db, []common.Migration{
 		&migration.M20260208InitialSchema{},
+		&migration.M20260723SearchBlacklist{},
 	})
 	if err != nil {
 		return nil, fmt.Errorf(`failed to apply server database migrations: %w`, err)
@@ -252,4 +254,125 @@ func (s *Storage) DeleteAccountByRoomAndUsername(
 		)
 	}
 	return nil
+}
+
+// AddPoliciesToBlacklist adds blacklist policies for keywords to the persistent blacklist.
+// Assumes the room is either zero or exists (must be verified by the caller).
+// If the room is not specified, the policy is added to the global blacklist.
+func (s *Storage) AddPoliciesToBlacklist(ctx context.Context, room common.NormalizedRoomName, policies []*serverrpcv1.BlacklistPolicy) error {
+	if len(policies) == 0 {
+		return nil
+	}
+
+	tx, err := s.Db.Begin()
+	if err != nil {
+		return err
+	}
+
+	var stmt *sql.Stmt
+	if room.IsZero() {
+		stmt, err = tx.PrepareContext(ctx, `insert into search_blacklist (match_mode, word) values (?, ?)`)
+		defer func() {
+			_ = stmt.Close()
+		}()
+
+		for _, policy := range policies {
+			if _, err := stmt.ExecContext(ctx, policy.GetMode(), policy.Keyword); err != nil {
+				return err
+			}
+		}
+	} else {
+		stmt, err = tx.PrepareContext(ctx, `insert into search_blacklist (room, match_mode, word) values (?, ?, ?)`)
+		defer func() {
+			_ = stmt.Close()
+		}()
+
+		for _, policy := range policies {
+			if _, err := stmt.ExecContext(ctx, room.String(), policy.GetMode(), policy.Keyword); err != nil {
+				return err
+			}
+		}
+	}
+
+	return tx.Commit()
+}
+
+// RemovePoliciesFromBlacklist removes keywords from the persistent blacklist.
+// If room is zero, the keywords are removed from the global blacklist.
+func (s *Storage) RemovePoliciesFromBlacklist(ctx context.Context, room common.NormalizedRoomName, keywords []string) error {
+	if len(keywords) == 0 {
+		return nil
+	}
+
+	tx, err := s.Db.Begin()
+	if err != nil {
+		return err
+	}
+
+	var stmt *sql.Stmt
+	if room.IsZero() {
+		stmt, err = tx.PrepareContext(ctx, `delete from search_blacklist where word = ?`)
+		defer func() {
+			_ = stmt.Close()
+		}()
+
+		for _, keyword := range keywords {
+			if _, err := stmt.ExecContext(ctx, keyword); err != nil {
+				return err
+			}
+		}
+	} else {
+		stmt, err = tx.PrepareContext(ctx, `delete from search_blacklist where room = ? and word = ?`)
+		defer func() {
+			_ = stmt.Close()
+		}()
+
+		for _, keyword := range keywords {
+			if _, err := stmt.ExecContext(ctx, room.String(), keyword); err != nil {
+				return err
+			}
+		}
+	}
+
+	return tx.Commit()
+}
+
+// GetBlacklistPoliciesForRoom will return a list of currently enforced blacklist policies for a given room.
+// If room is zero, it will return the global blacklist.
+// The string searching library necessitates returning a list of rune arrays.
+func (s *Storage) GetBlacklistPoliciesForRoom(ctx context.Context, room common.NormalizedRoomName) ([]*serverrpcv1.BlacklistPolicy, error) {
+	var policies []*serverrpcv1.BlacklistPolicy
+	var rows *sql.Rows
+	var err error
+
+	if room.IsZero() {
+		rows, err = s.Db.QueryContext(ctx, `select match_mode, word from search_blacklist where room is null order by created_ts`)
+	} else {
+		rows, err = s.Db.QueryContext(ctx, `select match_mode, word from search_blacklist where room = ? order by created_ts`, room.String())
+	}
+	if err != nil {
+		return nil, fmt.Errorf(`failed to query rooms: %w`, err)
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	var matchMode serverrpcv1.BlacklistMatchMode
+	var word string
+	for rows.Next() {
+		if err := rows.Scan(&matchMode, &word); err != nil {
+			return nil, err
+		}
+
+		policies = append(policies, &serverrpcv1.BlacklistPolicy{
+			Keyword: word,
+			Mode:    matchMode,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return policies, err
+	}
+
+	return policies, nil
 }

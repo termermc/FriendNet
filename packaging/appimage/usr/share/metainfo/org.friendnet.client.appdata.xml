@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+    <id>org.friendnet.client.desktop</id>
+    <metadata_license>MIT</metadata_license>
+    <project_license>GPL-3.0+</project_license>
+    <name>friendnet-client</name>
+    <summary>FriendNet Client</summary>
+    <description>
+    	<p>File sharing for friends, like a mini-Soulseek. No port forwarding needed!</p>
+    	<p>Oldschool file sharing systems like Soulseek use a central server to facilitate file search and peer discovery, making search across the entire network convenient, while keeping file downloads strictly peer-to-peer. It's a great system, and works really well for public networks.</p>
+    	<p>FriendNet aims to provide a similar system, but with a self-hostable server and optional proxied downloads. Providing proxied downloads allows users without the ability to open ports on their router, or those behind VPNs and restrictive firewalls to share files and participate in the network.</p>
+    	<p>The intention is not to replace public networks like Soulseek, but to provide an easy-to-use p2p-style file sharing system for small groups of people without the hassle that normally comes with such systems.</p>
+    </description>
+    <url type="homepage">https://friendnet.org/</url>
+    <project_group>org.friendnet</project_group>
+    <provides>
+        <binary>friendnet-client</binary>
+    </provides>
+</component>

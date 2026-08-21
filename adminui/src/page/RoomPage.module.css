@@ -39,6 +39,13 @@
 	margin-right: 0.5rem;
 }
 
+.roomOptions {
+	display: flex;
+}
+.roomOptions button:not(:last-child) {
+	margin-right: 0.5rem;
+}
+
 .accounts {
 	width: 30rem;
 	display: flex;

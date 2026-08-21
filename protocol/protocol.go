@@ -90,6 +90,130 @@ func ToTyped[T proto.Message](msg *UntypedProtoMsg) *TypedProtoMsg[T] {
 	return NewTypedProtoMsg(msg.Type, casted)
 }
 
+// ReadProtoMessage reads a protocol message from an io.Reader.
+func ReadProtoMessage(r io.Reader) (*UntypedProtoMsg, error) {
+	var (
+		n   int
+		err error
+	)
+
+	// Read header.
+	// A tiny read like this is fine because QUIC streams are buffered.
+	var header [msgHeaderSize]byte
+	headerRead := 0
+	for headerRead < len(header) {
+		n, err = r.Read(header[headerRead:])
+		if n > 0 {
+			headerRead += n
+		}
+		if err != nil {
+			var streamErr *quic.StreamError
+			if errors.As(err, &streamErr) {
+				if streamErr.ErrorCode == ProxyPeerUnreachableStreamErrorCode {
+					return nil, ErrPeerUnreachable
+				}
+			}
+
+			if errors.Is(err, io.EOF) && headerRead == len(header) {
+				break
+			}
+			return nil, fmt.Errorf(`failed to read protocol message header: %w`, err)
+		}
+	}
+
+	typ := pb.MsgType(binary.LittleEndian.Uint32(header[:4]))
+	payloadLen := binary.LittleEndian.Uint32(header[4:])
+
+	if payloadLen > MaxPayloadSize {
+		return nil, fmt.Errorf(`got protocol message header with type %s and length %d, but payload size exceeds maximum allowed %d`, typ.String(), payloadLen, MaxPayloadSize)
+	}
+
+	// Read payload.
+	readSize := 0
+	payload := make([]byte, payloadLen)
+	for readSize < len(payload) {
+		n, err = r.Read(payload[readSize:])
+		if n > 0 {
+			readSize += n
+		}
+		if err != nil {
+			if err == io.EOF && readSize == len(payload) {
+				break
+			}
+			return nil, fmt.Errorf(`got protocol message header with type %s and length %d, but failed reading payload at %d bytes: %w`,
+				typ.String(),
+				payloadLen,
+				readSize,
+				err,
+			)
+		}
+	}
+
+	// Decode message.
+	msg := MsgTypeToEmptyMsg(typ)
+	if msg == nil {
+		return nil, fmt.Errorf(`BUG: got message type %s but there was no message mapping for it`, typ.String())
+	}
+
+	err = proto.Unmarshal(payload, msg)
+	if err != nil {
+		return nil, fmt.Errorf(`failed to decode protocol message payload with supposed type %s and length %d: %w`,
+			typ.String(),
+			payloadLen,
+			err,
+		)
+	}
+
+	return &UntypedProtoMsg{
+		Type:    typ,
+		Payload: msg,
+	}, nil
+}
+
+// WriteProtoMessage writes a protocol message to an io.Writer.
+func WriteProtoMessage(w io.Writer, typ pb.MsgType, msg proto.Message) error {
+	msgSize := proto.Size(msg)
+	msgBuf := make([]byte, msgHeaderSize, msgHeaderSize+msgSize)
+
+	// Write header.
+	binary.LittleEndian.PutUint32(msgBuf[:4], uint32(typ))
+	binary.LittleEndian.PutUint32(msgBuf[4:8], uint32(msgSize))
+
+	// Marshal and append payload.
+	var err error
+	msgBuf, err = proto.MarshalOptions{}.MarshalAppend(msgBuf, msg)
+	if err != nil {
+		return fmt.Errorf(`failed to marshal payload for message with type %s: %w`,
+			typ.String(),
+			err,
+		)
+	}
+
+	// Write message.
+	written := 0
+	for written < len(msgBuf) {
+		n, err := w.Write(msgBuf[written:])
+		if err != nil {
+			var streamErr *quic.StreamError
+			if errors.As(err, &streamErr) {
+				if streamErr.ErrorCode == ProxyPeerUnreachableStreamErrorCode {
+					return ErrPeerUnreachable
+				}
+			}
+
+			return fmt.Errorf(`failed to write payload for message type %s while %d bytes in: %w`,
+				typ.String(),
+				written,
+				err,
+			)
+		}
+
+		written += n
+	}
+
+	return nil
+}
+
 // ProtoDialer is a dialer that can return protocol connections.
 type ProtoDialer interface {
 	io.Closer
@@ -232,7 +356,7 @@ func (conn *ProtoConnImpl) OpenBidiWithMsg(typ pb.MsgType, msg proto.Message) (b
 		return ProtoBidi{}, fmt.Errorf(`failed to open bidi before writing message of type %s: %w`, typ.String(), err)
 	}
 
-	bidi = wrapBidi(stream)
+	bidi = NewQuicProtoBidi(stream)
 
 	err = bidi.Write(typ, msg)
 	if err != nil {
@@ -251,7 +375,7 @@ func (conn *ProtoConnImpl) WaitForBidi(ctx context.Context) (ProtoBidi, error) {
 		return ProtoBidi{}, fmt.Errorf(`failed to accept stream in WaitForBidi: %w`, err)
 	}
 
-	return wrapBidi(stream), nil
+	return NewQuicProtoBidi(stream), nil
 }
 
 func (conn *ProtoConnImpl) SendAndReceive(typ pb.MsgType, msg proto.Message) (*UntypedProtoMsg, error) {
@@ -296,36 +420,13 @@ func SendAndReceiveExpect[T proto.Message](
 	msg proto.Message,
 	expectType pb.MsgType,
 ) (*TypedProtoMsg[T], error) {
-	reply, err := conn.SendAndReceive(typ, msg)
+	bidi, err := conn.OpenBidiWithMsg(typ, msg)
 	if err != nil {
 		return nil, err
 	}
+	defer func() { _ = bidi.Close() }()
 
-	if reply.Type != expectType {
-		return nil, NewUnexpectedMsgTypeError(
-			expectType,
-			reply.Type,
-			reply.Payload,
-		)
-	}
-
-	casted, ok := reply.Payload.(T)
-	if !ok {
-		wantType := reflect.TypeFor[T]()
-		gotType := reflect.TypeOf(msg)
-
-		panic(fmt.Sprintf(`BUG: got message of type %s (struct %s) as reply to new bidi with message type %s but tried to cast it to struct %s`,
-			reply.Type.String(),
-			gotType.String(),
-			typ.String(),
-			wantType.String(),
-		))
-	}
-
-	return &TypedProtoMsg[T]{
-		Type:    reply.Type,
-		Payload: casted,
-	}, nil
+	return ReadExpect[T](bidi, expectType)
 }
 
 type BidiHandler func(conn *quic.Conn, bidi ProtoBidi, msg *UntypedProtoMsg) error
@@ -347,82 +448,7 @@ func NewProtoStreamReader(stream io.Reader) *ProtoStreamReader {
 // It does not do any special handling for error types.
 // If the bidi was closed because a remote peer was unreachable, returns ErrPeerUnreachable.
 func (r *ProtoStreamReader) ReadRaw() (*UntypedProtoMsg, error) {
-	var (
-		n   int
-		err error
-	)
-
-	// Read header.
-	// A tiny read like this is fine because QUIC streams are buffered.
-	var header [msgHeaderSize]byte
-	headerRead := 0
-	for headerRead < len(header) {
-		n, err = r.stream.Read(header[headerRead:])
-		if n > 0 {
-			headerRead += n
-		}
-		if err != nil {
-			var streamErr *quic.StreamError
-			if errors.As(err, &streamErr) {
-				if streamErr.ErrorCode == ProxyPeerUnreachableStreamErrorCode {
-					return nil, ErrPeerUnreachable
-				}
-			}
-
-			if errors.Is(err, io.EOF) && headerRead == len(header) {
-				break
-			}
-			return nil, fmt.Errorf(`failed to read protocol message header: %w`, err)
-		}
-	}
-
-	typ := pb.MsgType(binary.LittleEndian.Uint32(header[:4]))
-	payloadLen := binary.LittleEndian.Uint32(header[4:])
-
-	if payloadLen > MaxPayloadSize {
-		return nil, fmt.Errorf(`got protocol message header with type %s and length %d, but payload size exceeds maximum allowed %d`, typ.String(), payloadLen, MaxPayloadSize)
-	}
-
-	// Read payload.
-	readSize := 0
-	payload := make([]byte, payloadLen)
-	for readSize < len(payload) {
-		n, err = r.stream.Read(payload[readSize:])
-		if n > 0 {
-			readSize += n
-		}
-		if err != nil {
-			if err == io.EOF && readSize == len(payload) {
-				break
-			}
-			return nil, fmt.Errorf(`got protocol message header with type %s and length %d, but failed reading payload at %d bytes: %w`,
-				typ.String(),
-				payloadLen,
-				readSize,
-				err,
-			)
-		}
-	}
-
-	// Decode message.
-	msg := MsgTypeToEmptyMsg(typ)
-	if msg == nil {
-		return nil, fmt.Errorf(`BUG: got message type %s but there was no message mapping for it`, typ.String())
-	}
-
-	err = proto.Unmarshal(payload, msg)
-	if err != nil {
-		return nil, fmt.Errorf(`failed to decode protocol message payload with supposed type %s and length %d: %w`,
-			typ.String(),
-			payloadLen,
-			err,
-		)
-	}
-
-	return &UntypedProtoMsg{
-		Type:    typ,
-		Payload: msg,
-	}, nil
+	return ReadProtoMessage(r.stream)
 }
 
 // ReadRaw tries to read a protocol message from the stream.
@@ -450,7 +476,7 @@ func (r *ProtoStreamReader) Read() (*UntypedProtoMsg, error) {
 //
 // It is extremely important that the generic type on this function is appropriate for the expected type.
 // If the generic type does not correspond to the expected type, the function will panic.
-func ReadExpect[T proto.Message](r *ProtoStreamReader, expectedType pb.MsgType) (*TypedProtoMsg[T], error) {
+func ReadExpect[T proto.Message](r ProtoBidi, expectedType pb.MsgType) (*TypedProtoMsg[T], error) {
 	msg, err := r.Read()
 	if err != nil {
 		return nil, err
@@ -494,78 +520,17 @@ func NewProtoStreamWriter(stream io.Writer) *ProtoStreamWriter {
 
 // Write tries to write a protocol message to the stream.
 func (w *ProtoStreamWriter) Write(typ pb.MsgType, msg proto.Message) error {
-	msgSize := proto.Size(msg)
-	msgBuf := make([]byte, msgHeaderSize, msgHeaderSize+msgSize)
-
-	// Write header.
-	binary.LittleEndian.PutUint32(msgBuf[:4], uint32(typ))
-	binary.LittleEndian.PutUint32(msgBuf[4:8], uint32(msgSize))
-
-	// Marshal and append payload.
-	var err error
-	msgBuf, err = proto.MarshalOptions{}.MarshalAppend(msgBuf, msg)
-	if err != nil {
-		return fmt.Errorf(`failed to marshal payload for message with type %s: %w`,
-			typ.String(),
-			err,
-		)
-	}
-
-	// Write message.
-	written := 0
-	for written < len(msgBuf) {
-		n, err := w.stream.Write(msgBuf[written:])
-		if err != nil {
-			var streamErr *quic.StreamError
-			if errors.As(err, &streamErr) {
-				if streamErr.ErrorCode == ProxyPeerUnreachableStreamErrorCode {
-					return ErrPeerUnreachable
-				}
-			}
-
-			return fmt.Errorf(`failed to write payload for message type %s while %d bytes in: %w`,
-				typ.String(),
-				written,
-				err,
-			)
-		}
-
-		written += n
-	}
-
-	return nil
-}
-
-// ProtoBidi is a wrapper around a QUIC bidirectional stream with a protocol reader and writer.
-type ProtoBidi struct {
-	Stream *quic.Stream
-	*ProtoStreamReader
-	*ProtoStreamWriter
-}
-
-// Close closes the send side and cancels the read side to fully release the stream.
-func (bidi ProtoBidi) Close() error {
-	_ = bidi.Stream.Close()
-	bidi.Stream.CancelRead(0)
-	return nil
-}
-
-func wrapBidi(stream *quic.Stream) ProtoBidi {
-	return ProtoBidi{
-		Stream:            stream,
-		ProtoStreamReader: NewProtoStreamReader(stream),
-		ProtoStreamWriter: NewProtoStreamWriter(stream),
-	}
+	return WriteProtoMessage(w.stream, typ, msg)
 }
 
 // WriteAck writes an acknowledgement message to the bidi stream.
-func (bidi ProtoBidi) WriteAck() error {
+func (bidi *ProtoStreamWriter) WriteAck() error {
 	return bidi.Write(pb.MsgType_MSG_TYPE_ACKNOWLEDGED, &pb.MsgAcknowledged{})
 }
 
 // WriteError writes an error message to the bidi stream.
 // If the message is empty, it will be sent as nil.
-func (bidi ProtoBidi) WriteError(typ pb.ErrType, msg string) error {
+func (bidi *ProtoStreamWriter) WriteError(typ pb.ErrType, msg string) error {
 	return bidi.Write(pb.MsgType_MSG_TYPE_ERROR, &pb.MsgError{
 		Type:    typ,
 		Message: common.StrOrNil(msg),
@@ -574,7 +539,7 @@ func (bidi ProtoBidi) WriteError(typ pb.ErrType, msg string) error {
 
 // WriteClientNotOnlineError writes an ERR_TYPE_CLIENT_NOT_ONLINE error to the bidi stream,
 // based on the specified username.
-func (bidi ProtoBidi) WriteClientNotOnlineError(username common.NormalizedUsername) error {
+func (bidi *ProtoStreamWriter) WriteClientNotOnlineError(username common.NormalizedUsername) error {
 	return bidi.WriteError(pb.ErrType_ERR_TYPE_CLIENT_NOT_ONLINE,
 		"client "+username.String()+" is not online",
 	)
@@ -582,13 +547,13 @@ func (bidi ProtoBidi) WriteClientNotOnlineError(username common.NormalizedUserna
 
 // WriteFileNotExistError writes an ERR_TYPE_FILE_NOT_EXIST error to the bidi stream,
 // based on the specified path.
-func (bidi ProtoBidi) WriteFileNotExistError(path string) error {
+func (bidi *ProtoStreamWriter) WriteFileNotExistError(path string) error {
 	return bidi.WriteError(pb.ErrType_ERR_TYPE_FILE_NOT_EXIST, fmt.Sprintf("no such path %q", path))
 }
 
 // WriteUnexpectedMsgTypeError writes an ERR_TYPE_UNEXPECTED_MSG_TYPE error to the bidi stream,
 // based on the specified expected and actual message types.
-func (bidi ProtoBidi) WriteUnexpectedMsgTypeError(expected pb.MsgType, actual pb.MsgType) error {
+func (bidi *ProtoStreamWriter) WriteUnexpectedMsgTypeError(expected pb.MsgType, actual pb.MsgType) error {
 	return bidi.WriteError(
 		pb.ErrType_ERR_TYPE_UNEXPECTED_MSG_TYPE,
 		fmt.Sprintf("expected %s but got %s", expected.String(), actual.String()),
@@ -597,7 +562,7 @@ func (bidi ProtoBidi) WriteUnexpectedMsgTypeError(expected pb.MsgType, actual pb
 
 // WriteInternalError writes an ERR_TYPE_INTERNAL error to the bidi stream.
 // Uses the error message from the specified error, or a placeholder if it is nil.
-func (bidi ProtoBidi) WriteInternalError(errOrNil error) error {
+func (bidi *ProtoStreamWriter) WriteInternalError(errOrNil error) error {
 	var message string
 	if errOrNil == nil {
 		message = "internal error"
@@ -609,11 +574,92 @@ func (bidi ProtoBidi) WriteInternalError(errOrNil error) error {
 
 // WriteUnimplementedError writes an ERR_TYPE_UNIMPLEMENTED error to the bidi stream,
 // based on the specified message type.
-func (bidi ProtoBidi) WriteUnimplementedError(msgType pb.MsgType) error {
+func (bidi *ProtoStreamWriter) WriteUnimplementedError(msgType pb.MsgType) error {
 	return bidi.WriteError(
 		pb.ErrType_ERR_TYPE_UNIMPLEMENTED,
 		fmt.Sprintf("handler for %q is unimplemented", msgType.String()),
 	)
+}
+
+// ProtoBidi is a bidirection protocol message stream.
+// It can also expose its raw byte reader and writer.
+type ProtoBidi struct {
+	close      func() error
+	cancelRead func(code uint64)
+	reader     io.Reader
+	writer     io.Writer
+	*ProtoStreamReader
+	*ProtoStreamWriter
+}
+
+// CancelRead calls a function to cancel a stream with an error code.
+// May be no-op, depending on the implementation.
+// This is a hacky fix for VirtualC2cConn proxied bidis. We'll figure out a generic side-channel later.
+func (bidi ProtoBidi) CancelRead(code uint64) {
+	if bidi.cancelRead != nil {
+		bidi.cancelRead(code)
+	}
+}
+
+// RawReader returns the bidi's raw byte reader.
+func (bidi ProtoBidi) RawReader() io.Reader {
+	return bidi.reader
+}
+
+// RawWriter returns the bidi's raw byte writer.
+func (bidi ProtoBidi) RawWriter() io.Writer {
+	return bidi.writer
+}
+
+// Close closes the send side and cancels the read side to fully release the stream.
+func (bidi ProtoBidi) Close() error {
+	return bidi.close()
+}
+
+// NewQuicProtoBidi creates a new ProtoBidi from a QUIC bidirectional stream.
+func NewQuicProtoBidi(stream *quic.Stream) ProtoBidi {
+	return ProtoBidi{
+		close: func() error {
+			_ = stream.Close()
+			stream.CancelRead(0)
+			return nil
+		},
+		cancelRead: func(code uint64) {
+			stream.CancelRead(quic.StreamErrorCode(code))
+		},
+		reader:            stream,
+		writer:            stream,
+		ProtoStreamReader: NewProtoStreamReader(stream),
+		ProtoStreamWriter: NewProtoStreamWriter(stream),
+	}
+}
+
+// NewPipeProtoBidi creates two new ProtoBidi objects with swapped reader/writers to emulate loopback messaging
+func NewPipeProtoBidi() (ProtoBidi, ProtoBidi) {
+	r1, w1 := io.Pipe()
+	r2, w2 := io.Pipe()
+
+	return ProtoBidi{
+		close: func() error {
+			_ = r1.Close()
+			_ = w2.Close()
+			return nil
+		},
+		reader:            r1,
+		writer:            w2,
+		ProtoStreamReader: NewProtoStreamReader(r1),
+		ProtoStreamWriter: NewProtoStreamWriter(w2),
+	}, ProtoBidi{
+		close: func() error {
+			_ = r2.Close()
+			_ = w1.Close()
+			return nil
+		},
+		reader:            r2,
+		writer:            w1,
+		ProtoStreamReader: NewProtoStreamReader(r2),
+		ProtoStreamWriter: NewProtoStreamWriter(w1),
+	}
 }
 
 // CompareProtoVersions compares two protocol versions.

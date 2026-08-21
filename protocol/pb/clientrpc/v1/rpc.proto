@@ -401,7 +401,7 @@ message GetClientInfoRequest {
 
 }
 message GetClientInfoResponse {
-    
+
 }
 
 message GetServersRequest {
@@ -634,8 +634,8 @@ message IndexShareResponse {
 }
 
 message StreamSearchRequest {
-    // The associated server's UUID.
-    string server_uuid = 1;
+    // The associated server's UUID, or none to search all connected servers.
+    optional string server_uuid = 1;
 
     // The username of the client to search, or omit to search all clients.
     optional string username = 2;
@@ -647,14 +647,14 @@ message StreamSearchResponse {
     // The username of the client the result came from.
     string username = 1;
 
+    // Server of origin's UUID.
+    string server_uuid = 2;
+
     // The file's containing directory path.
-    string directory_path = 2;
+    string directory_path = 3;
 
     // The file that was found.
-    FileMeta file = 3;
-
-    // A snippet of text highlighting matched terms.
-    string snippet = 4;
+    FileMeta file = 4;
 }
 
 message GetUpdateInfoRequest {
@@ -704,7 +704,7 @@ message CancelFileDownloadRequest {
     string uuid = 1;
 }
 message CancelFileDownloadResponse {
-    
+
 }
 
 message RemoveDownloadManagerItemRequest {

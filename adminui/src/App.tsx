@@ -5,6 +5,10 @@ import { DashboardPage } from './page/DashboardPage'
 import { NotFoundPage } from './page/NotFoundPage'
 import { CreateRoomPage } from './page/CreateRoomPage'
 import { RoomPage } from './page/RoomPage'
+import {
+	GlobalSearchFiltersPage,
+	RoomSearchFiltersPage,
+} from './page/SearchFiltersPage'
 
 const App: Component = () => {
 	const routes: RouteDefinition[] = [
@@ -19,6 +23,14 @@ const App: Component = () => {
 		{
 			path: '/room/:name',
 			component: RoomPage,
+		},
+		{
+			path: '/room/:name/filters',
+			component: RoomSearchFiltersPage,
+		},
+		{
+			path: '/filters',
+			component: GlobalSearchFiltersPage,
 		},
 
 		{

@@ -88,6 +88,10 @@ export const DocPage: Component<DocPageProps, void> = (props) => {
 		`
 	}
 
+	if (page == null) {
+		throw new Error('page is undefined or null')
+	}
+
 	return DocsLayout(
 		{
 			...props,

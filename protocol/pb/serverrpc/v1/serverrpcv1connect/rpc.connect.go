@@ -66,6 +66,15 @@ const (
 	// ServerRpcServiceUpdateAccountPasswordProcedure is the fully-qualified name of the
 	// ServerRpcService's UpdateAccountPassword RPC.
 	ServerRpcServiceUpdateAccountPasswordProcedure = "/pb.serverrpc.v1.ServerRpcService/UpdateAccountPassword"
+	// ServerRpcServiceAddBlacklistPoliciesProcedure is the fully-qualified name of the
+	// ServerRpcService's AddBlacklistPolicies RPC.
+	ServerRpcServiceAddBlacklistPoliciesProcedure = "/pb.serverrpc.v1.ServerRpcService/AddBlacklistPolicies"
+	// ServerRpcServiceRemoveBlacklistPoliciesProcedure is the fully-qualified name of the
+	// ServerRpcService's RemoveBlacklistPolicies RPC.
+	ServerRpcServiceRemoveBlacklistPoliciesProcedure = "/pb.serverrpc.v1.ServerRpcService/RemoveBlacklistPolicies"
+	// ServerRpcServiceGetBlacklistPoliciesProcedure is the fully-qualified name of the
+	// ServerRpcService's GetBlacklistPolicies RPC.
+	ServerRpcServiceGetBlacklistPoliciesProcedure = "/pb.serverrpc.v1.ServerRpcService/GetBlacklistPolicies"
 )
 
 // ServerRpcServiceClient is a client for the pb.serverrpc.v1.ServerRpcService service.
@@ -109,6 +118,17 @@ type ServerRpcServiceClient interface {
 	// Returns status code NOT_FOUND if no such room exists.
 	// Returns status code NOT_FOUND if no such account exists.
 	UpdateAccountPassword(context.Context, *v1.UpdateAccountPasswordRequest) (*v1.UpdateAccountPasswordResponse, error)
+	// AddBlacklistPolicies adds one or more keywords that will be blacklisted from search queries and filenames.
+	// If a room to enforce this policy is not specified then they are assumed to be serverwide.
+	// Returns status code INVALID_ARGUMENT if the keyword is empty or invalid for the specified match mode.
+	AddBlacklistPolicies(context.Context, *v1.AddBlacklistPoliciesRequest) (*v1.AddBlacklistPoliciesResponse, error)
+	// RemoveBlacklistPolicies removes one or more keyword policies from the blacklists.
+	// If a room to enforce this policy is not specified then they are assumed to be serverwide.
+	RemoveBlacklistPolicies(context.Context, *v1.RemoveBlacklistPoliciesRequest) (*v1.RemoveBlacklistPoliciesResponse, error)
+	// GetBlacklistPolicies returns a list of currently blacklisted keywords for a room.
+	// If the room is not set, the list returned will contain only serverwide policies.
+	// Returns status code NOT_FOUND if the room does not exist.
+	GetBlacklistPolicies(context.Context, *v1.GetBlacklistPoliciesRequest) (*v1.GetBlacklistPoliciesResponse, error)
 }
 
 // NewServerRpcServiceClient constructs a client for the pb.serverrpc.v1.ServerRpcService service.
@@ -188,22 +208,43 @@ func NewServerRpcServiceClient(httpClient connect.HTTPClient, baseURL string, op
 			connect.WithSchema(serverRpcServiceMethods.ByName("UpdateAccountPassword")),
 			connect.WithClientOptions(opts...),
 		),
+		addBlacklistPolicies: connect.NewClient[v1.AddBlacklistPoliciesRequest, v1.AddBlacklistPoliciesResponse](
+			httpClient,
+			baseURL+ServerRpcServiceAddBlacklistPoliciesProcedure,
+			connect.WithSchema(serverRpcServiceMethods.ByName("AddBlacklistPolicies")),
+			connect.WithClientOptions(opts...),
+		),
+		removeBlacklistPolicies: connect.NewClient[v1.RemoveBlacklistPoliciesRequest, v1.RemoveBlacklistPoliciesResponse](
+			httpClient,
+			baseURL+ServerRpcServiceRemoveBlacklistPoliciesProcedure,
+			connect.WithSchema(serverRpcServiceMethods.ByName("RemoveBlacklistPolicies")),
+			connect.WithClientOptions(opts...),
+		),
+		getBlacklistPolicies: connect.NewClient[v1.GetBlacklistPoliciesRequest, v1.GetBlacklistPoliciesResponse](
+			httpClient,
+			baseURL+ServerRpcServiceGetBlacklistPoliciesProcedure,
+			connect.WithSchema(serverRpcServiceMethods.ByName("GetBlacklistPolicies")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // serverRpcServiceClient implements ServerRpcServiceClient.
 type serverRpcServiceClient struct {
-	getServerInfo         *connect.Client[v1.GetServerInfoRequest, v1.GetServerInfoResponse]
-	getRooms              *connect.Client[v1.GetRoomsRequest, v1.GetRoomsResponse]
-	getRoomInfo           *connect.Client[v1.GetRoomInfoRequest, v1.GetRoomInfoResponse]
-	getOnlineUsers        *connect.Client[v1.GetOnlineUsersRequest, v1.GetOnlineUsersResponse]
-	getOnlineUserInfo     *connect.Client[v1.GetOnlineUserInfoRequest, v1.GetOnlineUserInfoResponse]
-	getAccounts           *connect.Client[v1.GetAccountsRequest, v1.GetAccountsResponse]
-	createRoom            *connect.Client[v1.CreateRoomRequest, v1.CreateRoomResponse]
-	deleteRoom            *connect.Client[v1.DeleteRoomRequest, v1.DeleteRoomResponse]
-	createAccount         *connect.Client[v1.CreateAccountRequest, v1.CreateAccountResponse]
-	deleteAccount         *connect.Client[v1.DeleteAccountRequest, v1.DeleteAccountResponse]
-	updateAccountPassword *connect.Client[v1.UpdateAccountPasswordRequest, v1.UpdateAccountPasswordResponse]
+	getServerInfo           *connect.Client[v1.GetServerInfoRequest, v1.GetServerInfoResponse]
+	getRooms                *connect.Client[v1.GetRoomsRequest, v1.GetRoomsResponse]
+	getRoomInfo             *connect.Client[v1.GetRoomInfoRequest, v1.GetRoomInfoResponse]
+	getOnlineUsers          *connect.Client[v1.GetOnlineUsersRequest, v1.GetOnlineUsersResponse]
+	getOnlineUserInfo       *connect.Client[v1.GetOnlineUserInfoRequest, v1.GetOnlineUserInfoResponse]
+	getAccounts             *connect.Client[v1.GetAccountsRequest, v1.GetAccountsResponse]
+	createRoom              *connect.Client[v1.CreateRoomRequest, v1.CreateRoomResponse]
+	deleteRoom              *connect.Client[v1.DeleteRoomRequest, v1.DeleteRoomResponse]
+	createAccount           *connect.Client[v1.CreateAccountRequest, v1.CreateAccountResponse]
+	deleteAccount           *connect.Client[v1.DeleteAccountRequest, v1.DeleteAccountResponse]
+	updateAccountPassword   *connect.Client[v1.UpdateAccountPasswordRequest, v1.UpdateAccountPasswordResponse]
+	addBlacklistPolicies    *connect.Client[v1.AddBlacklistPoliciesRequest, v1.AddBlacklistPoliciesResponse]
+	removeBlacklistPolicies *connect.Client[v1.RemoveBlacklistPoliciesRequest, v1.RemoveBlacklistPoliciesResponse]
+	getBlacklistPolicies    *connect.Client[v1.GetBlacklistPoliciesRequest, v1.GetBlacklistPoliciesResponse]
 }
 
 // GetServerInfo calls pb.serverrpc.v1.ServerRpcService.GetServerInfo.
@@ -301,6 +342,33 @@ func (c *serverRpcServiceClient) UpdateAccountPassword(ctx context.Context, req 
 	return nil, err
 }
 
+// AddBlacklistPolicies calls pb.serverrpc.v1.ServerRpcService.AddBlacklistPolicies.
+func (c *serverRpcServiceClient) AddBlacklistPolicies(ctx context.Context, req *v1.AddBlacklistPoliciesRequest) (*v1.AddBlacklistPoliciesResponse, error) {
+	response, err := c.addBlacklistPolicies.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// RemoveBlacklistPolicies calls pb.serverrpc.v1.ServerRpcService.RemoveBlacklistPolicies.
+func (c *serverRpcServiceClient) RemoveBlacklistPolicies(ctx context.Context, req *v1.RemoveBlacklistPoliciesRequest) (*v1.RemoveBlacklistPoliciesResponse, error) {
+	response, err := c.removeBlacklistPolicies.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// GetBlacklistPolicies calls pb.serverrpc.v1.ServerRpcService.GetBlacklistPolicies.
+func (c *serverRpcServiceClient) GetBlacklistPolicies(ctx context.Context, req *v1.GetBlacklistPoliciesRequest) (*v1.GetBlacklistPoliciesResponse, error) {
+	response, err := c.getBlacklistPolicies.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // ServerRpcServiceHandler is an implementation of the pb.serverrpc.v1.ServerRpcService service.
 type ServerRpcServiceHandler interface {
 	// GetServerInfo returns information about the server.
@@ -342,6 +410,17 @@ type ServerRpcServiceHandler interface {
 	// Returns status code NOT_FOUND if no such room exists.
 	// Returns status code NOT_FOUND if no such account exists.
 	UpdateAccountPassword(context.Context, *v1.UpdateAccountPasswordRequest) (*v1.UpdateAccountPasswordResponse, error)
+	// AddBlacklistPolicies adds one or more keywords that will be blacklisted from search queries and filenames.
+	// If a room to enforce this policy is not specified then they are assumed to be serverwide.
+	// Returns status code INVALID_ARGUMENT if the keyword is empty or invalid for the specified match mode.
+	AddBlacklistPolicies(context.Context, *v1.AddBlacklistPoliciesRequest) (*v1.AddBlacklistPoliciesResponse, error)
+	// RemoveBlacklistPolicies removes one or more keyword policies from the blacklists.
+	// If a room to enforce this policy is not specified then they are assumed to be serverwide.
+	RemoveBlacklistPolicies(context.Context, *v1.RemoveBlacklistPoliciesRequest) (*v1.RemoveBlacklistPoliciesResponse, error)
+	// GetBlacklistPolicies returns a list of currently blacklisted keywords for a room.
+	// If the room is not set, the list returned will contain only serverwide policies.
+	// Returns status code NOT_FOUND if the room does not exist.
+	GetBlacklistPolicies(context.Context, *v1.GetBlacklistPoliciesRequest) (*v1.GetBlacklistPoliciesResponse, error)
 }
 
 // NewServerRpcServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -417,6 +496,24 @@ func NewServerRpcServiceHandler(svc ServerRpcServiceHandler, opts ...connect.Han
 		connect.WithSchema(serverRpcServiceMethods.ByName("UpdateAccountPassword")),
 		connect.WithHandlerOptions(opts...),
 	)
+	serverRpcServiceAddBlacklistPoliciesHandler := connect.NewUnaryHandlerSimple(
+		ServerRpcServiceAddBlacklistPoliciesProcedure,
+		svc.AddBlacklistPolicies,
+		connect.WithSchema(serverRpcServiceMethods.ByName("AddBlacklistPolicies")),
+		connect.WithHandlerOptions(opts...),
+	)
+	serverRpcServiceRemoveBlacklistPoliciesHandler := connect.NewUnaryHandlerSimple(
+		ServerRpcServiceRemoveBlacklistPoliciesProcedure,
+		svc.RemoveBlacklistPolicies,
+		connect.WithSchema(serverRpcServiceMethods.ByName("RemoveBlacklistPolicies")),
+		connect.WithHandlerOptions(opts...),
+	)
+	serverRpcServiceGetBlacklistPoliciesHandler := connect.NewUnaryHandlerSimple(
+		ServerRpcServiceGetBlacklistPoliciesProcedure,
+		svc.GetBlacklistPolicies,
+		connect.WithSchema(serverRpcServiceMethods.ByName("GetBlacklistPolicies")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/pb.serverrpc.v1.ServerRpcService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ServerRpcServiceGetServerInfoProcedure:
@@ -441,6 +538,12 @@ func NewServerRpcServiceHandler(svc ServerRpcServiceHandler, opts ...connect.Han
 			serverRpcServiceDeleteAccountHandler.ServeHTTP(w, r)
 		case ServerRpcServiceUpdateAccountPasswordProcedure:
 			serverRpcServiceUpdateAccountPasswordHandler.ServeHTTP(w, r)
+		case ServerRpcServiceAddBlacklistPoliciesProcedure:
+			serverRpcServiceAddBlacklistPoliciesHandler.ServeHTTP(w, r)
+		case ServerRpcServiceRemoveBlacklistPoliciesProcedure:
+			serverRpcServiceRemoveBlacklistPoliciesHandler.ServeHTTP(w, r)
+		case ServerRpcServiceGetBlacklistPoliciesProcedure:
+			serverRpcServiceGetBlacklistPoliciesHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -492,4 +595,16 @@ func (UnimplementedServerRpcServiceHandler) DeleteAccount(context.Context, *v1.D
 
 func (UnimplementedServerRpcServiceHandler) UpdateAccountPassword(context.Context, *v1.UpdateAccountPasswordRequest) (*v1.UpdateAccountPasswordResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.serverrpc.v1.ServerRpcService.UpdateAccountPassword is not implemented"))
+}
+
+func (UnimplementedServerRpcServiceHandler) AddBlacklistPolicies(context.Context, *v1.AddBlacklistPoliciesRequest) (*v1.AddBlacklistPoliciesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.serverrpc.v1.ServerRpcService.AddBlacklistPolicies is not implemented"))
+}
+
+func (UnimplementedServerRpcServiceHandler) RemoveBlacklistPolicies(context.Context, *v1.RemoveBlacklistPoliciesRequest) (*v1.RemoveBlacklistPoliciesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.serverrpc.v1.ServerRpcService.RemoveBlacklistPolicies is not implemented"))
+}
+
+func (UnimplementedServerRpcServiceHandler) GetBlacklistPolicies(context.Context, *v1.GetBlacklistPoliciesRequest) (*v1.GetBlacklistPoliciesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("pb.serverrpc.v1.ServerRpcService.GetBlacklistPolicies is not implemented"))
 }

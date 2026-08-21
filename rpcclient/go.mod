@@ -1,16 +1,24 @@
 module friendnet.org/rpcclient
 
-go 1.26.2
+go 1.27.0
 
 require (
-	connectrpc.com/connect v1.19.1
+	connectrpc.com/connect v1.20.0
+	friendnet.org/common v0.0.0
 	friendnet.org/protocol v0.0.0
 	github.com/chzyer/readline v1.5.1
 )
 
 require (
-	golang.org/x/sys v0.41.0 // indirect
-	google.golang.org/protobuf v1.36.11 // indirect
+	github.com/coder/websocket v1.8.15 // indirect
+	github.com/termermc/http-over-websocket/hows-go v0.0.0-20260813014833-63a4accd83e6 // indirect
+	golang.org/x/net v0.58.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/text v0.41.0 // indirect
+	google.golang.org/protobuf v1.36.12 // indirect
 )
 
-replace friendnet.org/protocol => ../protocol
+replace (
+	friendnet.org/common => ../common
+	friendnet.org/protocol => ../protocol
+)

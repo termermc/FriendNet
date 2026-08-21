@@ -21,7 +21,9 @@ export const clientExportRoot = path.join(repoRoot, 'client')
 export async function ensureInPath(exes: string[]) {
 	for (const exe of exes) {
 		if (!(await isExecutableInPath(exe))) {
-			throw new Error(`executable ${exe} not found in PATH, please install it`)
+			throw new Error(
+				`executable ${exe} not found in PATH, please install it`,
+			)
 		}
 	}
 }
@@ -61,7 +63,12 @@ export async function isExecutableInPath(exe: string): Promise<boolean> {
 	return false
 }
 
-async function isExecutable(filePath: string): Promise<boolean> {
+/**
+ * Returns whether the file at the specified path is executable.
+ * @param filePath The path to the file to check.
+ * @returns Whether the file is executable.
+ */
+export async function isExecutable(filePath: string): Promise<boolean> {
 	try {
 		await access(filePath, fsConstants.X_OK)
 		return true

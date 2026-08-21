@@ -34,6 +34,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"uuid"
 
 	"friendnet.org/client/event"
 	"friendnet.org/client/fsys"
@@ -43,7 +44,6 @@ import (
 	"friendnet.org/protocol"
 	v1 "friendnet.org/protocol/pb/clientrpc/v1"
 	pb "friendnet.org/protocol/pb/v1"
-	"github.com/google/uuid"
 )
 
 // DmDirIncompleteSetting is the setting key for the download manager's incomplete download directory.
@@ -369,7 +369,7 @@ func (dm *DownloadManager) updateDrainer() {
 
 						// Send updates to peers.
 						for username, upds := range byPeer {
-							peer := conn.GetVirtualC2cConn(username, false)
+							peer := conn.GetVirtualC2cConn(username, room.C2cConnModeQuickFallback)
 
 							go func() {
 								bidi, err := peer.OpenBidiWithMsg(pb.MsgType_MSG_TYPE_DOWNLOAD_STATUS_UPDATE, upds[0].ToProto())
@@ -509,10 +509,7 @@ func (dm *DownloadManager) Queue(
 	}
 
 	if uid == "" {
-		uidRaw, err := uuid.NewV7()
-		if err != nil {
-			panic(err)
-		}
+		uidRaw := uuid.NewV7()
 		uid = uidRaw.String()
 	}
 
@@ -680,7 +677,7 @@ func (dm *DownloadManager) startDownload(handle *DownloadHandle) error {
 
 	// Use TryDo because we want to fail fast if there is not an open connection.
 	finalErr := handle.server.TryDo(func(conn *room.Conn) error {
-		peer := conn.GetVirtualC2cConn(handle.peer, false)
+		peer := conn.GetVirtualC2cConn(handle.peer, room.C2cConnModeDefault)
 
 		initialDownloaded := handle.fileDownloadedBytes.Load()
 

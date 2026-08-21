@@ -14,6 +14,7 @@ import (
 	pass "friendnet.org/common/password"
 	"friendnet.org/protocol"
 	pb "friendnet.org/protocol/pb/v1"
+	"friendnet.org/server/blacklist"
 	"friendnet.org/server/storage"
 	"github.com/quic-go/quic-go"
 	mcfpassword "github.com/termermc/go-mcf-password"
@@ -42,6 +43,10 @@ type Room struct {
 	// The room's token manager.
 	TokenManager *TokenManager
 
+	// Keyword blacklists
+	GlobalBlacklist *blacklist.Blacklist
+	Blacklist       *blacklist.Blacklist
+
 	// The room's context.
 	// Canceled when it is closed.
 	Context   context.Context
@@ -62,8 +67,15 @@ func NewRoom(
 	passReqs pass.Requirements,
 	name common.NormalizedRoomName,
 	logic Logic,
-) *Room {
+	globalBlacklist *blacklist.Blacklist,
+) (*Room, error) {
 	ctx, ctxCancel := context.WithCancel(context.Background())
+
+	bl, err := blacklist.New(ctx, blacklist.NewRoomStorage(storage, name))
+	if err != nil {
+		ctxCancel()
+		return nil, err
+	}
 
 	return &Room{
 		logger: logger,
@@ -76,13 +88,16 @@ func NewRoom(
 
 		TokenManager: NewTokenManager(ctx, DefaultTokenValidDuration, DefaultTokenExpiredGcInterval),
 
+		Blacklist:       bl,
+		GlobalBlacklist: globalBlacklist,
+
 		Context:   ctx,
 		ctxCancel: ctxCancel,
 
 		logic: logic,
 
 		clients: make(map[string]*Client),
-	}
+	}, nil
 }
 
 func (r *Room) snapshotClientsNoLock() []*Client {
@@ -164,6 +179,15 @@ func (r *Room) GetAllClients() []*Client {
 	}
 
 	return r.snapshotClientsNoLock()
+}
+
+// MatchToBlacklists will match a string against room-local and global keyword blacklists.
+// It processes the string in multiple ways to improve matching.
+func (r *Room) MatchToBlacklists(haystack string) bool {
+	lower := common.ToLowerUnicode(haystack)
+	runes := []rune(lower)
+
+	return r.GlobalBlacklist.Match(runes, lower) || r.Blacklist.Match(runes, lower)
 }
 
 // Broadcast broadcasts a message to all clients in the room.

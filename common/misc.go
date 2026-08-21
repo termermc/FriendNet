@@ -4,7 +4,9 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"net"
+	"strings"
 	"time"
+	"unicode"
 )
 
 // StrPtrOr dereferences a string pointer or returns a default value if it is nil.
@@ -41,4 +43,9 @@ func TryTcpHost(host string, timeout time.Duration) bool {
 		}
 	}()
 	return err == nil
+}
+
+// ToLowerUnicode lowercases a string, handling some weird unicode alphabets as well.
+func ToLowerUnicode(str string) string {
+	return strings.ToLowerSpecial(unicode.TurkishCase, str)
 }

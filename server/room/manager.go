@@ -3,6 +3,7 @@ package room
 import (
 	"context"
 	"fmt"
+	"friendnet.org/server/blacklist"
 	"log/slog"
 	"sync"
 
@@ -23,6 +24,7 @@ type Manager struct {
 	mu       sync.RWMutex
 	isClosed bool
 
+	GlobalBlacklist   *blacklist.Blacklist
 	storage           *storage.Storage
 	connMethodSupport machine.ConnMethodSupport
 	passReqs          password.Requirements
@@ -43,9 +45,15 @@ func NewManager(
 	passReqs password.Requirements,
 	logic Logic,
 ) (*Manager, error) {
+	bl, err := blacklist.New(ctx, blacklist.NewGlobalStorage(storage))
+	if err != nil {
+		return nil, fmt.Errorf("failed to init global keyword blacklist while creating room manager: %w", err)
+	}
+
 	m := &Manager{
 		logger: logger,
 
+		GlobalBlacklist:   bl,
 		storage:           storage,
 		connMethodSupport: connMethodSupport,
 		passReqs:          passReqs,
@@ -61,14 +69,20 @@ func NewManager(
 		return nil, fmt.Errorf(`failed to get all rooms while creating new room manager: %w`, err)
 	}
 	for _, room := range rooms {
-		m.rooms[room.Name.String()] = NewRoom(
+		newRoom, err := NewRoom(
 			logger,
 			storage,
 			connMethodSupport,
 			passReqs,
 			room.Name,
 			logic,
+			m.GlobalBlacklist,
 		)
+		if err != nil {
+			return nil, err
+		}
+
+		m.rooms[room.Name.String()] = newRoom
 	}
 
 	return m, nil
@@ -147,14 +161,18 @@ func (m *Manager) CreateRoom(ctx context.Context, name common.NormalizedRoomName
 	}
 
 	// Create room instance and add it to manager.
-	room := NewRoom(
+	room, err := NewRoom(
 		m.logger,
 		m.storage,
 		m.connMethodSupport,
 		m.passReqs,
 		name,
 		m.logic,
+		m.GlobalBlacklist,
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	m.mu.Lock()
 	m.rooms[name.String()] = room

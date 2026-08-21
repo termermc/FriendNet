@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"net/netip"
 	"strings"
 	"sync"
 	"time"
@@ -164,7 +165,7 @@ func (l LogicImpl) OnOpenOutboundProxy(_ context.Context, client *Client, bidi p
 	// Validate username.
 	targetUsername, usernameValid := common.NormalizeUsername(msg.Payload.TargetUsername)
 	if !usernameValid {
-		bidi.Stream.CancelRead(protocol.ProxyPeerUnreachableStreamErrorCode)
+		bidi.CancelRead(uint64(protocol.ProxyPeerUnreachableStreamErrorCode))
 		return nil
 	}
 
@@ -230,10 +231,6 @@ func (l LogicImpl) OnAdvertiseConnMethod(ctx context.Context, client *Client, bi
 		return bidi.WriteError(pb.ErrType_ERR_TYPE_INVALID_FIELDS, err.Error())
 	}
 
-	// TODO Return DID_NOT_TRY if it's a private address or loopback.
-	// TODO Make clients refuse to make direct connections to LAN addresses unless LAN connections are enabled in
-	// direct connection settings. Change the name to make it clear.
-
 	// Try to connect.
 	connRes := func() pb.ConnResult {
 		if !client.Room.connMethodSupport.IsSupported(ad.Type) {
@@ -244,6 +241,21 @@ func (l LogicImpl) OnAdvertiseConnMethod(ctx context.Context, client *Client, bi
 		// Theoretically, the protocol could be changed to support serverside holepunch testing, but that would require
 		// running a dummy direct server and NAT traversal from the server itself. The juice isn't worth the squeeze.
 		if ad.Type == pb.ConnMethodType_CONN_METHOD_TYPE_NAT_HOLEPUNCH {
+			return pb.ConnResult_CONN_RESULT_DID_NOT_TRY
+		}
+
+		addrPort, err := netip.ParseAddrPort(ad.Address)
+		if err != nil {
+			// Malformed address.
+			return pb.ConnResult_CONN_RESULT_INTERNAL_ERROR
+		}
+		addrPort = netip.AddrPortFrom(addrPort.Addr().Unmap(), addrPort.Port())
+
+		addr := addrPort.Addr()
+
+		if addr.IsPrivate() || addr.IsLoopback() || addr.IsMulticast() {
+			// Testing private and local addresses is a security concern because it would allow clients to enumerate
+			// services on the server's local network.
 			return pb.ConnResult_CONN_RESULT_DID_NOT_TRY
 		}
 
@@ -453,6 +465,14 @@ func (l LogicImpl) OnSearch(ctx context.Context, client *Client, bidi protocol.P
 							"error", nextErr,
 						)
 						return
+					}
+
+					filterStr := next.DirectoryPath + "/" + next.File.Name
+					matches := c.Room.MatchToBlacklists(filterStr)
+
+					// This path+file matched the blacklist
+					if matches {
+						continue
 					}
 
 					select {

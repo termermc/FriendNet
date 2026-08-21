@@ -15,6 +15,22 @@ import (
 // Channel that is never closed or written, to satisfy ProtoConn.OnDisconnect.
 var virtualC2cConnOnDiscChan = make(chan struct{})
 
+// C2cConnMode is a type of C2C connection mode.
+type C2cConnMode int
+
+const (
+	// C2cConnModeDefault is the default mode for C2C connections.
+	// It tries to direct connect if not already connected, and if it times out, it finally falls back to proxied.
+	C2cConnModeDefault C2cConnMode = iota
+
+	// C2cConnModeAlwaysProxy will always use the proxy in place of connecting directly.
+	C2cConnModeAlwaysProxy
+
+	// C2cConnModeQuickFallback will instantly fall back on the proxy if no existing connection exists.
+	// If none exists, it will try to kick off a direct connection in the background.
+	C2cConnModeQuickFallback
+)
+
 // VirtualC2cConn is a virtual connection to another client.
 // It is stateless and does not manage any direct or proxied connections.
 // It exists to implement protocol.ProtoConn.
@@ -25,9 +41,8 @@ type VirtualC2cConn struct {
 	// The client's username.
 	Username common.NormalizedUsername
 
-	// Whether to force proxying instead of using a direct connection.
-	// It may still fall back to proxying if no direct connection method is available.
-	ForceProxy bool
+	// The connection mode to use.
+	ConnMode C2cConnMode
 }
 
 // OnDisconnect returns a channel that never closes for VirtualC2cConn.
@@ -59,7 +74,20 @@ func (c VirtualC2cConn) OpenBidiWithMsg(typ pb.MsgType, msg proto.Message) (bidi
 		return
 	}
 
-	return c.ServerConn.openC2cBidiWithMsg(c.Username, typ, msg, c.ForceProxy)
+	// If C2C points to ourselves, return a loopback bidi stream.
+	if c.Username == c.ServerConn.Username {
+		bidi1, bidi2 := protocol.NewPipeProtoBidi()
+		c.ServerConn.incomingBidi <- C2cBidi{
+			ProtoBidi: bidi2,
+			RoomConn:  c.ServerConn,
+			Username:  c.Username,
+		}
+
+		return bidi1, bidi1.Write(typ, msg)
+	}
+
+	// Do a normal C2C message.
+	return c.ServerConn.openC2cBidiWithMsg(c.Username, typ, msg, c.ConnMode)
 }
 
 func (c VirtualC2cConn) WaitForBidi(ctx context.Context) (protocol.ProtoBidi, error) {
@@ -142,7 +170,7 @@ func (c VirtualC2cConn) GetFile(req *pb.MsgGetFile) (meta *pb.MsgFileMeta, reade
 	}
 
 	msg, err := protocol.ReadExpect[*pb.MsgFileMeta](
-		bidi.ProtoStreamReader,
+		bidi,
 		pb.MsgType_MSG_TYPE_FILE_META,
 	)
 	if err != nil {
@@ -151,7 +179,7 @@ func (c VirtualC2cConn) GetFile(req *pb.MsgGetFile) (meta *pb.MsgFileMeta, reade
 
 	// Now that we have the metadata, we can treat the bidi as a binary stream.
 	reader = common.NewLimitReadCloser(
-		protocol.NewReadCloserWithFunc(bidi.Stream, bidi.Close),
+		protocol.NewReadCloserWithFunc(bidi.RawReader(), bidi.Close),
 		int64(msg.Payload.Size),
 	)
 	return msg.Payload, reader, nil
