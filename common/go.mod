@@ -7,7 +7,7 @@ require (
 	friendnet.org/protocol v0.0.0
 	github.com/coder/websocket v1.8.15
 	github.com/termermc/go-mcf-password v1.0.0
-	github.com/termermc/http-over-websocket/hows-go v0.0.0-20260808144918-d30ba17155d3
+	github.com/termermc/http-over-websocket/hows-go v0.0.0-20260813014833-63a4accd83e6
 	golang.org/x/net v0.58.0
 )
 
