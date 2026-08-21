@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"friendnet.org/browser"
 	"friendnet.org/client"
 	"friendnet.org/client/cert"
 	"friendnet.org/client/clog"
@@ -39,7 +40,6 @@ import (
 	"friendnet.org/protocol/pb/clientrpc/v1/clientrpcv1connect"
 	"friendnet.org/updater"
 	"friendnet.org/webui"
-	"github.com/pkg/browser"
 	"golang.org/x/net/webdav"
 )
 
