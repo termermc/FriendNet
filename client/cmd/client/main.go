@@ -133,8 +133,6 @@ func main() {
 	flag.StringVar(&dataDir, "datadir", "", "path to the client's data directory")
 	flag.StringVar(&webAddr, "webaddr", "http://127.0.0.1:20042", "web UI and RPC address")
 	flag.StringVar(&davAddr, "davaddr", "http://127.0.0.1:20043", "WebDAV server address")
-	flag.StringVar(&webAddr, "webaddr", "https://127.0.0.1:20042", "web UI and RPC address")
-	flag.StringVar(&davAddr, "davaddr", "https://127.0.0.1:20043", "WebDAV server address")
 	flag.BoolVar(&noWebView, "nowebview", false, "do not open a webview window")
 	flag.BoolVar(&openBrowser, "openbrowser", false, "opens the web UI in the browser at startup")
 	flag.BoolVar(&noLock, "nolock", false, "do not use a lock to prevent multiple instances of the client from running")
