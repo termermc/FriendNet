@@ -57,7 +57,7 @@ client:
 
 client-noui:
 	mkdir -p webui/dist/
-	CGO_ENABLED=0 go build -trimpath -o friendnet-client friendnet.org/client/cmd/client
+	CGO_ENABLED=0 go build -trimpath -o client/friendnet-client friendnet.org/client/cmd/client
 
 client-windows-amd64-noui:
 	cd client && CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags="-H windowsgui" -o friendnet-client.exe friendnet.org/client/cmd/client
