@@ -1,4 +1,4 @@
-FROM docker.io/golang:1.26.5-alpine3.24 AS builder
+FROM docker.io/golang:1.27.0-alpine3.24 AS builder
 
 RUN apk add make nodejs npm
 
