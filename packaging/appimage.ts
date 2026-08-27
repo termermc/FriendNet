@@ -1,5 +1,5 @@
 import {
-	clientExportRoot,
+	clientExportRoot, ensureInPath,
 	isExecutable,
 	isExecutableInPath,
 	packagingRoot,
@@ -11,10 +11,7 @@ import {
 	chmod,
 	cp,
 	mkdir,
-	mkdtempDisposable,
-	readFile,
 	rm,
-	writeFile,
 } from 'node:fs/promises'
 import { arch } from 'node:os'
 import { createWriteStream } from 'node:fs'
@@ -27,6 +24,8 @@ const appImageToolUrl: Partial<Record<NodeJS.Architecture, string>> = {
 } as const
 
 export async function appImageMain(args: string[]): Promise<number> {
+	await ensureInPath(['go'])
+
 	let appImageToolPath = 'appimagetool'
 	if (!(await isExecutableInPath(appImageToolPath))) {
 		const toolDir = join(packagingRoot, 'tool')
@@ -66,14 +65,14 @@ export async function appImageMain(args: string[]): Promise<number> {
 
 	if (!args.includes('--no-ui')) {
 		console.log('Building web UI...')
-		await runCmd('make', ['webui'], repoRoot)
+		await runCmd('go', ['tool', 'task', 'webui'], repoRoot)
 	}
 
 	const arches = ['amd64', 'arm64']
 	for (const arch of arches) {
 		// Build the client.
 		console.log(`Building client for ${arch}...`)
-		await runCmd('make', [`client-linux-${arch}-noui`], repoRoot)
+		await runCmd('go', ['tool', 'task', `client-linux-${arch}-noui`], repoRoot)
 
 		console.log(`Building AppImage for ${arch}...`)
 

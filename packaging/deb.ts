@@ -16,18 +16,18 @@ import {
 } from 'node:fs/promises'
 
 export async function debMain(args: string[]): Promise<number> {
-	await ensureInPath(['go', 'node', 'make', 'tar', 'ar', 'fakeroot'])
+	await ensureInPath(['go', 'node', 'tar', 'ar', 'fakeroot'])
 
 	if (!args.includes('--no-ui')) {
 		console.log('Building web UI...')
-		await runCmd('make', ['webui'], repoRoot)
+		await runCmd('go', ['tool', 'task', 'webui'], repoRoot)
 	}
 
 	const arches = ['amd64', 'arm64']
 	for (const arch of arches) {
 		// Build the client.
 		console.log(`Building client for ${arch}...`)
-		await runCmd('make', [`client-linux-${arch}-noui`], repoRoot)
+		await runCmd('go', ['tool', 'task', `client-linux-${arch}-noui`], repoRoot)
 
 		console.log(`Building deb for ${arch}...`)
 

@@ -1,6 +1,3 @@
-//go:generate npm ci
-//go:generate npm run build
-
 package webui
 
 import (
