@@ -116,6 +116,8 @@ func (l *Locker) Unlock() {
 }
 
 func main() {
+	runtime.LockOSThread()
+
 	runId := time.Now().UnixMilli()
 
 	var dataDir string
