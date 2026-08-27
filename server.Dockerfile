@@ -13,15 +13,19 @@ RUN apk add busybox-static
 RUN ln -s /bin/busybox.static ./sh
 RUN ln -s /bin/busybox.static ./ln
 
-FROM docker.io/node:26-alpine3.24 AS adminui-builder
+FROM go AS adminui-builder
 
-RUN apk add make
+RUN apk add nodejs npm
 
 WORKDIR /data/build
 
+# Dummy workspace file that lets us use tools.
+RUN printf "go 1.27.0\n\nuse (\n./adminui\n./tool\n)\n" > go.work
+COPY Taskfile.yml .
+COPY tool tool
 COPY adminui adminui
 
-RUN make adminui
+RUN go tool task adminui
 
 #FROM docker.io/golang:1.27.0-alpine3.24 AS builder
 FROM scratch AS builder
@@ -43,23 +47,18 @@ WORKDIR /data/build
 
 COPY Taskfile.yml .
 
-COPY go.work .
-COPY go.work.sum .
+# Dummy workspace file that lets us use tools.
+RUN printf "go 1.27.0\n\nuse (\n./ahocorasick\n./common\n./protocol\n./rpcclient\n./server\n./stun\n./tool\n./updater\n)\n" > go.work
 
 RUN mkdir -p adminui
 RUN mkdir -p ahocorasick
-RUN mkdir -p browser
-RUN mkdir -p client
 RUN mkdir -p common
-RUN mkdir -p mkcert
 RUN mkdir -p protocol
 RUN mkdir -p rpcclient
 RUN mkdir -p server
 RUN mkdir -p stun
 RUN mkdir -p tool
 RUN mkdir -p updater
-RUN mkdir -p upnp
-RUN mkdir -p webui
 
 RUN mkdir -p adminui/dist
 
@@ -67,14 +66,8 @@ COPY adminui/go.mod adminui
 COPY adminui/go.sum adminui
 COPY ahocorasick/go.mod ahocorasick
 COPY ahocorasick/go.sum ahocorasick
-COPY browser/go.mod browser
-COPY browser/go.sum browser
-COPY client/go.mod client
-COPY client/go.sum client
 COPY common/go.mod common
 COPY common/go.sum common
-COPY mkcert/go.mod mkcert
-COPY mkcert/go.sum mkcert
 COPY protocol/go.mod protocol
 COPY protocol/go.sum protocol
 COPY rpcclient/go.mod rpcclient
@@ -87,10 +80,6 @@ COPY tool/go.mod tool
 COPY tool/go.sum tool
 COPY updater/go.mod updater
 COPY updater/go.sum updater
-COPY upnp/go.mod upnp
-COPY upnp/go.sum upnp
-COPY webui/go.mod webui
-COPY webui/go.sum webui
 
 RUN cd server && go mod download
 RUN cd rpcclient && go mod download

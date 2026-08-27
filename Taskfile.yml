@@ -44,7 +44,7 @@ tasks:
     adminui:
         desc: Builds the server admin UI
         cmd:
-            cd adminui && npm ci && npm run build
+            cd adminui && go generate
 
     server:
         desc: Builds the server
@@ -74,7 +74,7 @@ tasks:
         desc:
             Builds the client web UI
         cmd:
-            cd webui && npm ci && npm run build
+            cd webui && go generate
 
     client:
         desc:

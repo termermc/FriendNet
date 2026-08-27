@@ -1,3 +1,5 @@
+//go:generate npm ci && npm run build
+
 package adminui
 
 import (
