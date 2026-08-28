@@ -7,6 +7,8 @@ To compile the FriendNet client, you need the following prerequisites:
 - [Git](https://git-scm.com/)
 - [make](https://www.gnu.org/software/make/) (If you are on Linux, you probably have it already)
 
+On Windows, substitute `./build` with `build.bat`.
+
 First, clone the repository:
 
 ```shell
@@ -16,7 +18,7 @@ git clone https://github.com/termermc/FriendNet.git
 Then, compile the client:
 
 ```shell
-make client
+./build client
 ```
 
 The compiled client will be in the `client` directory, named something like `friendnet-client` or
@@ -25,7 +27,7 @@ The compiled client will be in the `client` directory, named something like `fri
 If you do not intend to use the web UI (such as for an embedded client with a different frontend), you can run:
 
 ```shell
-make client-noui
+./build client-noui
 ```
 
 This will build the client only without building the web UI.
