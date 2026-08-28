@@ -5,7 +5,6 @@ To compile the FriendNet client, you need the following prerequisites:
 - The latest [Go compiler](https://go.dev)
 - [Node.js](https://nodejs.org/en) 24.0 or higher (unless you skip the web UI)
 - [Git](https://git-scm.com/)
-- [make](https://www.gnu.org/software/make/) (If you are on Linux, you probably have it already)
 
 On Windows, substitute `./build` with `build.bat`.
 
