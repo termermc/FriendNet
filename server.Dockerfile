@@ -19,13 +19,10 @@ RUN apk add nodejs npm
 
 WORKDIR /data/build
 
-# Dummy workspace file that lets us use tools.
-RUN printf "go 1.27.0\n\nuse (\n./adminui\n./tool\n)\n" > go.work
-COPY Taskfile.yml .
-COPY tool tool
+COPY ./build* .
 COPY adminui adminui
 
-RUN go tool task adminui
+RUN ./build adminui
 
 #FROM docker.io/golang:1.27.0-alpine3.24 AS builder
 FROM scratch AS builder
@@ -34,6 +31,7 @@ COPY --from=go /bin/busybox.static /bin/busybox.static
 COPY --from=go /data/sh /bin/sh
 COPY --from=go /data/ln /bin/ln
 RUN ln -s /bin/busybox.static /bin/mkdir
+RUN ln -s /bin/busybox.static /bin/dirname
 RUN mkdir /tmp
 RUN mkdir -p /usr/local/go
 
@@ -45,11 +43,6 @@ ENV GOROOT=/usr/local/go
 
 WORKDIR /data/build
 
-COPY Taskfile.yml .
-
-# Dummy workspace file that lets us use tools.
-RUN printf "go 1.27.0\n\nuse (\n./ahocorasick\n./common\n./protocol\n./rpcclient\n./server\n./stun\n./tool\n./updater\n)\n" > go.work
-
 RUN mkdir -p adminui
 RUN mkdir -p ahocorasick
 RUN mkdir -p common
@@ -57,7 +50,6 @@ RUN mkdir -p protocol
 RUN mkdir -p rpcclient
 RUN mkdir -p server
 RUN mkdir -p stun
-RUN mkdir -p tool
 RUN mkdir -p updater
 
 RUN mkdir -p adminui/dist
@@ -76,15 +68,12 @@ COPY server/go.mod server
 COPY server/go.sum server
 COPY stun/go.mod stun
 COPY stun/go.sum stun
-COPY tool/go.mod tool
-COPY tool/go.sum tool
 COPY updater/go.mod updater
 COPY updater/go.sum updater
 
 RUN cd server && go mod download
 RUN cd rpcclient && go mod download
 
-COPY tool tool
 COPY common common
 COPY updater updater
 COPY protocol protocol
@@ -96,8 +85,10 @@ COPY server server
 
 COPY --from=adminui-builder /data/build/adminui/dist/ adminui/dist
 
-RUN go tool task rpcclient
-RUN go tool task server-noui
+COPY ./build* .
+
+RUN ./build rpcclient
+RUN ./build server-noui
 
 FROM scratch
 

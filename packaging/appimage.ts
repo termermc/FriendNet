@@ -65,14 +65,14 @@ export async function appImageMain(args: string[]): Promise<number> {
 
 	if (!args.includes('--no-ui')) {
 		console.log('Building web UI...')
-		await runCmd('go', ['tool', 'task', 'webui'], repoRoot)
+		await runCmd('./build', ['webui'], repoRoot)
 	}
 
 	const arches = ['amd64', 'arm64']
 	for (const arch of arches) {
 		// Build the client.
 		console.log(`Building client for ${arch}...`)
-		await runCmd('go', ['tool', 'task', `client-linux-${arch}-noui`], repoRoot)
+		await runCmd('./build', ['client-noui', 'linux', arch], repoRoot)
 
 		console.log(`Building AppImage for ${arch}...`)
 
