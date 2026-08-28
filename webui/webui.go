@@ -1,5 +1,4 @@
-//go:generate npm ci
-//go:generate npm run build
+//go:generate npm ci && npm run build
 
 package webui
 
