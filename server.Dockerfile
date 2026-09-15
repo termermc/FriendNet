@@ -6,16 +6,15 @@ RUN apk add --no-cache ca-certificates
 # Used to copy the Go toolchain.
 FROM docker.io/golang:1.27.0-alpine3.24 AS go
 
-WORKDIR /data/
+FROM docker.io/node:26.8.2-alpine3.24 AS adminui-builder
 
-RUN apk add busybox-static
-
-RUN ln -s /bin/busybox.static ./sh
-RUN ln -s /bin/busybox.static ./ln
-
-FROM go AS adminui-builder
-
-RUN apk add nodejs npm
+# Copy from Go image.
+# We do this so that we can use a Node distribution from Docker Hub instead of doing `apk add`.
+# I expect that the Node image will exist longer than the repo `apk add node` depends on.
+RUN mkdir -p /usr/local/go
+COPY --from=go /usr/local/go /usr/local/go
+ENV PATH="$PATH:/usr/local/go/bin"
+ENV GOROOT=/usr/local/go
 
 WORKDIR /data/build
 
@@ -24,22 +23,7 @@ COPY adminui adminui
 
 RUN ./build adminui
 
-#FROM docker.io/golang:1.27.0-alpine3.24 AS builder
-FROM scratch AS builder
-
-COPY --from=go /bin/busybox.static /bin/busybox.static
-COPY --from=go /data/sh /bin/sh
-COPY --from=go /data/ln /bin/ln
-RUN ln -s /bin/busybox.static /bin/mkdir
-RUN ln -s /bin/busybox.static /bin/dirname
-RUN mkdir /tmp
-RUN mkdir -p /usr/local/go
-
-COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY --from=go /usr/local/go /usr/local/go
-
-ENV PATH=/bin/:/usr/local/go/bin
-ENV GOROOT=/usr/local/go
+FROM go AS builder
 
 WORKDIR /data/build
 
