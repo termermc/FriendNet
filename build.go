@@ -281,6 +281,27 @@ func init() {
 		},
 
 		{
+			Name: "client-docker",
+			Desc: "Builds the client Docker image." +
+				"Optionally specify a tag to build it under.",
+			Cmd: func(args []string) error {
+				var tag string
+				if len(args) > 0 {
+					tag = args[0]
+				} else {
+					tag = "latest"
+				}
+
+				return cmd(
+					"docker", "build",
+					"-t", "git.termer.net/termer/friendnet-client:"+tag,
+					"-f", "client.Dockerfile",
+					".",
+				)(args)
+			},
+		},
+
+		{
 			Name: "website",
 			Desc: "Builds the website.",
 			Cmd: cd("website",
