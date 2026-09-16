@@ -10,6 +10,13 @@ Install the following tools:
 
 Note that a POSIX system is expected. If you are on Windows, consider using WSL.
 
+Alternatively if you have the nix package manager with flakes enabled you can enter a development environment with Go
+and NodeJS:
+
+```sh
+nix develop
+```
+
 ## Philosophy
 
 These are the philosophies that guide FriendNet development.
