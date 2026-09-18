@@ -231,6 +231,56 @@ func init() {
 		},
 
 		{
+			Name: "client-docker",
+			Desc: "Builds the client Docker image." +
+				"Optionally specify a tag to build it under.",
+			Cmd: func(args []string) error {
+				var tag string
+				if len(args) > 0 {
+					tag = args[0]
+				} else {
+					tag = "latest"
+				}
+
+				return cmd(
+					"docker", "build",
+					"-t", "git.termer.net/termer/friendnet-client:"+tag,
+					"-f", "client.Dockerfile",
+					".",
+				)(args)
+			},
+		},
+		{
+			Name: "client-docker-publish",
+			Desc: "Builds and publishes the client Docker image." +
+				"Optionally specify a tag to publish it under.",
+			Cmd: func(args []string) error {
+				var tag string
+				if len(args) > 0 {
+					tag = args[0]
+				} else {
+					tag = "latest"
+				}
+
+				return cmd(
+					"docker", "push",
+					"git.termer.net/termer/friendnet-client:"+tag,
+				)(args)
+			},
+		},
+
+		{
+			Name: "client-docker-dev",
+			Desc: "Builds the client Docker image (dev tag).",
+			Cmd:  task("client-docker", "dev"),
+		},
+		{
+			Name: "client-docker-dev-publish",
+			Desc: "Builds and publishes the client Docker image (dev tag).",
+			Cmd:  task("client-docker-publish", "dev"),
+		},
+
+		{
 			Name: "server-docker",
 			Desc: "Builds the server Docker image." +
 				"Optionally specify a tag to build it under.",
@@ -348,6 +398,9 @@ func init() {
 					cmd("tar", "-czf", "friendnet-server-linux_arm64.tar.gz", "server", "rpcclient"),
 					rmrf("server", "rpcclient"),
 				),
+
+				task("client-docker-publish"),
+				task("client-docker-dev-publish"),
 
 				task("server-docker-publish"),
 				task("server-docker-dev-publish"),
