@@ -64,6 +64,10 @@
               ) ++ [ ./webui/webui.go ./webui/go.mod ]);
             };
             modRoot = "client";
+            # Tie the module set to go.sum so that changing dependencies without
+            # updating vendorHash fails loudly, instead of silently reusing the
+            # previously realised (and now stale) module set.
+            goSum = ./client/go.sum;
             env = {
               CGO_ENABLED = "0";
               GOWORK = "off";
@@ -130,6 +134,7 @@
               ) ++ [ ./adminui/adminui.go ./adminui/go.mod ]);
             };
             modRoot = "server";
+            goSum = ./server/go.sum;
             env = {
               CGO_ENABLED = "0";
               GOWORK = "off";
@@ -169,6 +174,7 @@
                 [ ./common ./protocol ./rpcclient ]);
             };
             modRoot = "rpcclient";
+            goSum = ./rpcclient/go.sum;
             env = {
               CGO_ENABLED = "0";
               GOWORK = "off";
