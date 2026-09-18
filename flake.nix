@@ -7,16 +7,30 @@
     let
       systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
       forAllSystems = nixpkgs.lib.genAttrs systems;
+
+      # The application version lives in Go source, where it is also what the client
+      # and server report at runtime (see server/rpc.go and client/rpc.go). Read it
+      # from there so this flake cannot drift out of sync with the built binaries.
+      version =
+        let
+          inherit (nixpkgs) lib;
+          matches = map
+            (builtins.match ''[[:space:]]*Version:[[:space:]]*"([^"]+)",[[:space:]]*'')
+            (lib.splitString "\n" (builtins.readFile ./updater/update.go));
+        in
+        builtins.head (lib.findFirst (m: m != null)
+          (throw "could not extract CurrentUpdate.Version from updater/update.go")
+          matches);
     in
     {
       packages = forAllSystems (system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
-          inherit (pkgs) lib buildGo127Module buildNpmPackage nodejs_24 makeWrapper stdenv xdg-utils;
+          inherit (pkgs) lib buildGo127Module buildNpmPackage importNpmLock nodejs_24 makeWrapper stdenv xdg-utils;
           client = let
             webui = buildNpmPackage {
               pname = "friendnet-webui";
-              version = "unstable";
+              inherit version;
               src = lib.cleanSourceWith {
                 src = ./webui;
                 filter = path: type:
@@ -24,7 +38,11 @@
                   && lib.cleanSourceFilter path type;
               };
               nodejs = nodejs_24;
-              npmDepsHash = "sha256-1e/UzxtXcmbDTXl+0xDrbj5LylboflmGcyovXo/ahsk=";
+              # Fetch each dependency using the integrity hash already recorded in
+              # package-lock.json, rather than one aggregate hash that would have to be
+              # updated by hand whenever a dependency changes.
+              npmDeps = importNpmLock { npmRoot = ./webui; };
+              npmConfigHook = importNpmLock.npmConfigHook;
               installPhase = ''
                 runHook preInstall
                 mkdir -p "$out"
@@ -35,7 +53,7 @@
           in
           buildGo127Module {
             pname = "friendnet-client";
-            version = "unstable";
+            inherit version;
             src = lib.fileset.toSource {
               root = ./.;
               fileset = lib.fileset.unions ((map
@@ -80,7 +98,7 @@
           server = let
             adminui = buildNpmPackage {
               pname = "friendnet-adminui";
-              version = "unstable";
+              inherit version;
               src = lib.cleanSourceWith {
                 src = ./adminui;
                 filter = path: type:
@@ -88,7 +106,9 @@
                   && lib.cleanSourceFilter path type;
               };
               nodejs = nodejs_24;
-              npmDepsHash = "sha256-hrzheA7HOX1aYQK7YNRi4Vr08rkRInb3wYtDRejb1/w=";
+              # Derived from package-lock.json, as for the client web UI.
+              npmDeps = importNpmLock { npmRoot = ./adminui; };
+              npmConfigHook = importNpmLock.npmConfigHook;
               installPhase = ''
                 runHook preInstall
                 mkdir -p "$out"
@@ -99,7 +119,7 @@
           in
           buildGo127Module {
             pname = "friendnet-server";
-            version = "unstable";
+            inherit version;
             src = lib.fileset.toSource {
               root = ./.;
               fileset = lib.fileset.unions ((map
@@ -139,7 +159,7 @@
           };
           rpcclient = buildGo127Module {
             pname = "friendnet-rpcclient";
-            version = "unstable";
+            inherit version;
             src = lib.fileset.toSource {
               root = ./.;
               fileset = lib.fileset.unions (map
