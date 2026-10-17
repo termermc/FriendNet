@@ -11,12 +11,10 @@
 	"dependencies": {
 		"marked": "^17.0.4",
 		"monaco-editor": "^0.56.0",
-		"wunphile": "^1.1.4"
+		"wunphile": "^1.2.0"
 	},
 	"devDependencies": {
 		"@types/node": "^25.3.3",
-		"chokidar": "^5.0.0",
-		"mime-db": "^1.54.0",
 		"prettier": "^3.8.1"
 	}
 }
