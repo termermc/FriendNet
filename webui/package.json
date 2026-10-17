@@ -31,6 +31,7 @@
 		"solid-js": "^1.9.14"
 	},
 	"allowScripts": {
-		"@bufbuild/buf@1.65.0": true
+		"@bufbuild/buf@1.65.0": true,
+		"esbuild@0.27.3": true
 	}
 }

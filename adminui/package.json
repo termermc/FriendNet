@@ -26,5 +26,9 @@
 		"@connectrpc/connect-web": "^2.1.1",
 		"@solidjs/router": "^0.15.4",
 		"solid-js": "^1.9.5"
+	},
+	"allowScripts": {
+		"@bufbuild/buf@1.65.0": true,
+		"esbuild@0.27.3": true
 	}
 }
