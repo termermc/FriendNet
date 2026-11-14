@@ -50,7 +50,21 @@ func WalkPeerPath(conn room.VirtualC2cConn, path common.ProtoPath, fn func(path 
 				}
 
 				for _, file := range next.Files {
-					filePath := common.JoinPaths(dirPath, common.UncheckedCreateProtoPath("/"+file.Name))
+					// The file name is supplied by the peer and is untrusted.
+					// Validate the resulting path so a crafted name (for example
+					// one containing "/" or ".." segments) cannot escape the
+					// directory being crawled.
+					var childPath string
+					if dirPath.IsRoot() {
+						childPath = "/" + file.Name
+					} else {
+						childPath = dirPath.String() + "/" + file.Name
+					}
+					filePath, pathErr := common.ValidatePath(childPath)
+					if pathErr != nil {
+						// Skip entries with unsafe names.
+						continue
+					}
 					if file.IsDir {
 						toCrawl = append(toCrawl, filePath)
 					}
