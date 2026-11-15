@@ -262,9 +262,12 @@ func init() {
 					tag = "latest"
 				}
 
-				return cmd(
-					"docker", "push",
-					"git.termer.net/termer/friendnet-client:"+tag,
+				return and(
+					task("client-docker", args...),
+					cmd(
+						"docker", "push",
+						"git.termer.net/termer/friendnet-client:"+tag,
+					),
 				)(args)
 			},
 		},
@@ -312,9 +315,12 @@ func init() {
 					tag = "latest"
 				}
 
-				return cmd(
-					"docker", "push",
-					"git.termer.net/termer/friendnet-server:"+tag,
+				return and(
+					task("server-docker", args...),
+					cmd(
+						"docker", "push",
+						"git.termer.net/termer/friendnet-server:"+tag,
+					),
 				)(args)
 			},
 		},
