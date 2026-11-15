@@ -4,6 +4,14 @@ option go_package = "friendnet.org/protocol";
 
 package pb.v1;
 
+// IMPORTANT NOTE ABOUT VALIDATION:
+// Because FriendNet strives to be fully backwards-compatible, protovalidate annotations that would break old clients
+// are not allowed. Only use annotations to codify original behavior for fields, or when creating new fields.
+// Adding new annotations to existing fields that would conflict with old clients must never be done. For cases where
+// new clients will have stricter behavior, do the validation only when you know it's safe and with fallbacks.
+//
+// These rules do not apply as strictly to the client frontend gRPC protobuf, but care should still be taken there to
+// avoid breaking 3rd-party frontends.
 import "buf/validate/validate.proto";
 
 // Types of protocol messages
