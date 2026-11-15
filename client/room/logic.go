@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"net"
+	"sync/atomic"
 	"time"
 
 	"friendnet.org/client/share"
@@ -461,7 +462,13 @@ func (l *LogicImpl) OnPunchOffer(ctx context.Context, room *Conn, bidi C2cBidi, 
 	}()
 
 	hasConnChan := make(chan struct{})
+	var gotConn atomic.Bool
 	server.OnConnection(func(conn protocol.ProtoConn) {
+		if !gotConn.CompareAndSwap(false, true) {
+			_ = conn.CloseWithReason("already got connection")
+			return
+		}
+
 		close(hasConnChan)
 
 		// Since this is a temporary server meant for just a single connection, close the server when the direct
