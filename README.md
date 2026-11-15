@@ -56,6 +56,15 @@ If you would like, I'll add your name and link to the website.
 
 See [DEVELOPMENT.md](DEVELOPMENT.md).
 
+# AI Usage
+
+Regular contributors are forbidden from using AI to write any code or documentation in this project.
+This is an ideological choice.
+
+See [DEVELOPMENT.md](DEVELOPMENT.md#ai-usage)
+
+[![0rwx R - read-only](./0rwx_r_dark.png)](https://0rwx.com/)
+
 # Contact
 
 If you have any questions or feedback, open an issue or email me at the email on my

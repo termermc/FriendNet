@@ -89,3 +89,23 @@ client startup. Your final URL should look something like this:
 
 This specifies the RPC URL and token required to communicate with the client daemon. You can now enjoy hot reloading
 and all the other benefits of Solid.js and Vite's development tools.
+
+### AI Usage
+
+Regular contributors are strictly forbidden from using AI to write code or documentation in FriendNet. This is an
+ideological decision, rather than a pragmatic one. There are some pragmatic disadvantages to AI use, but they are mostly
+about understanding the codebase and quality drift, which are mostly solvable problems even when using AI.
+
+This choice was made because FriendNet is a noncommercial project that promotes engineering excellence and the human
+aspect of engineering, and opposes the negative consequences caused by AI for the world at large.
+
+**For people who are not regular contributors**, sending an AI-generated PR is fine as long as:
+ - The PR description is written by you (not copied or paraphrased from an LLM)
+ - The scope of the PR is appropriate
+ - You fully understand it and can explain it
+
+Of course, we would prefer that you didn't use AI, but trying to constantly guess whether something is AI-generated or
+not leads to unnecessary paranoia and suspicion. We would just rather receive good quality contributions without
+constantly worrying if PRs are made by the robot.
+
+Using AI tools to scan for bugs is permissible as long as you validate that the issues found are real.
