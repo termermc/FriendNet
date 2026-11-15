@@ -90,7 +90,7 @@ client startup. Your final URL should look something like this:
 This specifies the RPC URL and token required to communicate with the client daemon. You can now enjoy hot reloading
 and all the other benefits of Solid.js and Vite's development tools.
 
-### AI Usage
+## AI Usage
 
 Regular contributors are strictly forbidden from using AI to write code or documentation in FriendNet. This is an
 ideological decision, rather than a pragmatic one. There are some pragmatic disadvantages to AI use, but they are mostly
