@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"time"
 
+	"buf.build/go/protovalidate"
 	"friendnet.org/common"
 	pb "friendnet.org/protocol/pb/v1"
 	"github.com/quic-go/quic-go"
@@ -162,6 +163,10 @@ func ReadProtoMessage(r io.Reader) (*UntypedProtoMsg, error) {
 			payloadLen,
 			err,
 		)
+	}
+
+	if err = protovalidate.Validate(msg); err != nil {
+		return nil, fmt.Errorf(`message failed validation: %w`, err)
 	}
 
 	return &UntypedProtoMsg{
@@ -640,26 +645,26 @@ func NewPipeProtoBidi() (ProtoBidi, ProtoBidi) {
 	r2, w2 := io.Pipe()
 
 	return ProtoBidi{
-			close: func() error {
-				_ = r1.Close()
-				_ = w2.Close()
-				return nil
-			},
-			reader:            r1,
-			writer:            w2,
-			ProtoStreamReader: NewProtoStreamReader(r1),
-			ProtoStreamWriter: NewProtoStreamWriter(w2),
-		}, ProtoBidi{
-			close: func() error {
-				_ = r2.Close()
-				_ = w1.Close()
-				return nil
-			},
-			reader:            r2,
-			writer:            w1,
-			ProtoStreamReader: NewProtoStreamReader(r2),
-			ProtoStreamWriter: NewProtoStreamWriter(w1),
-		}
+		close: func() error {
+			_ = r1.Close()
+			_ = w2.Close()
+			return nil
+		},
+		reader:            r1,
+		writer:            w2,
+		ProtoStreamReader: NewProtoStreamReader(r1),
+		ProtoStreamWriter: NewProtoStreamWriter(w2),
+	}, ProtoBidi{
+		close: func() error {
+			_ = r2.Close()
+			_ = w1.Close()
+			return nil
+		},
+		reader:            r2,
+		writer:            w1,
+		ProtoStreamReader: NewProtoStreamReader(r2),
+		ProtoStreamWriter: NewProtoStreamWriter(w1),
+	}
 }
 
 // CompareProtoVersions compares two protocol versions.

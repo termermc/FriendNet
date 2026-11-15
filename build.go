@@ -387,6 +387,37 @@ func init() {
 				echo("Artifacts in ./release-artifacts, and new server Docker image pushed"),
 			},
 		},
+
+		{
+			Name: "tidy",
+			Desc: "Runs `go mod tidy` on every workspace package",
+			Cmd: func(_ []string) error {
+				workBytes, err := os.ReadFile("go.work")
+				if err != nil {
+					return err
+				}
+
+				cwd, err := os.Getwd()
+				if err != nil {
+					return err
+				}
+
+				var cmds []cmdFn
+				for ln := range strings.Lines(string(workBytes)) {
+					trim := strings.TrimSpace(ln)
+					if strings.HasPrefix(trim, "./") {
+						pkg := trim[2:]
+						cmds = append(cmds,
+							cd(filepath.Join(cwd, pkg),
+								cmd("go", "mod", "tidy"),
+							),
+						)
+					}
+				}
+
+				return and(cmds...)(nil)
+			},
+		},
 	}
 }
 

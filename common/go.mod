@@ -3,7 +3,7 @@ module friendnet.org/common
 go 1.27.0
 
 require (
-	connectrpc.com/connect v1.20.0
+	connectrpc.com/connect v1.21.1
 	friendnet.org/protocol v0.0.0
 	github.com/coder/websocket v1.8.15
 	github.com/termermc/go-mcf-password v1.1.0
@@ -12,6 +12,7 @@ require (
 )
 
 require (
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-20260825204119-511051f7f437.1 // indirect
 	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/sys v0.50.0 // indirect
 	golang.org/x/text v0.43.0 // indirect

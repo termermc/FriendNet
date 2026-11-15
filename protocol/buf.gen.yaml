@@ -12,6 +12,9 @@ plugins:
 
 managed:
     enabled: true
+    disable:
+        - file_option: go_package
+          path: buf/validate
     override:
         - file_option: go_package_prefix
           value: friendnet.org/protocol
