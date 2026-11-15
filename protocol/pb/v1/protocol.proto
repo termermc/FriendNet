@@ -4,6 +4,8 @@ option go_package = "friendnet.org/protocol";
 
 package pb.v1;
 
+import "buf/validate/validate.proto";
+
 // Types of protocol messages
 enum MsgType {
     // Do not use.
@@ -217,14 +219,14 @@ enum MsgType {
 message MsgPing {
     // The epoch millisecond timestamp when the message was sent.
     // Used to measure latency.
-    int64 sent_ts = 1;
+    int64 sent_ts = 1 [(buf.validate.field).required = true];
 }
 
 // Pong message.
 message MsgPong {
     // The epoch millisecond timestamp when the message was sent.
     // Used to measure latency.
-    int64 sent_ts = 1;
+    int64 sent_ts = 1 [(buf.validate.field).required = true];
 }
 
 // Acknowledgement message.
@@ -277,7 +279,7 @@ enum ErrType {
 // An error, usually sent by the server.
 message MsgError {
     // The error type.
-    ErrType type = 1;
+    ErrType type = 1 [(buf.validate.field).required = true];
 
     // The error message (optional).
     optional string message = 2;
@@ -301,14 +303,14 @@ message ProtoVersion {
 // Client protocol negotiation.
 message MsgVersion {
     // The client's protocol version.
-    ProtoVersion version = 1;
+    ProtoVersion version = 1 [(buf.validate.field).required = true];
 }
 
 // Message sent by the server as a reply to PROTO_VERSION.
 // If a client receives this message, it may continue the handshake process.
 message MsgVersionAccepted {
     // The server's protocol version.
-    ProtoVersion version = 1;
+    ProtoVersion version = 1 [(buf.validate.field).required = true];
 }
 
 // Reasons for a client's version being rejected
@@ -328,7 +330,7 @@ enum VersionRejectionReason {
 // If a client receives this message, it will be disconnected and must connect with a suitable version.
 message MsgVersionRejected {
     // The server's protocol version.
-    ProtoVersion version = 1;
+    ProtoVersion version = 1 [(buf.validate.field).required = true];
 
     // The reason the client's version was rejected.
     VersionRejectionReason reason = 2;
@@ -342,13 +344,13 @@ message MsgVersionRejected {
 // It will be replied to with either PROTO_AUTH_ACCEPTED or PROTO_AUTH_REJECTED.
 message MsgAuthenticate {
     // The room the user is trying to authenticate with.
-    string room = 1;
+    string room = 1 [(buf.validate.field).required = true];
 
     // The user's username.
-    string username = 2;
+    string username = 2 [(buf.validate.field).required = true];
 
     // The user's password.
-    string password = 3;
+    string password = 3 [(buf.validate.field).required = true];
 }
 
 // Message sent by the server as a reply to PROTO_AUTHENTICATE.
@@ -385,20 +387,20 @@ message MsgAuthRejected {
 // See MSG_TYPE_OPEN_OUTBOUND_PROXY.
 message MsgOpenOutboundProxy {
     // The target peer's username.
-    string target_username = 1;
+    string target_username = 1 [(buf.validate.field).required = true];
 }
 
 // See MSG_TYPE_INBOUND_PROXY.
 message MsgInboundProxy {
     // The origin peer's username.
-    string origin_username = 1;
+    string origin_username = 1 [(buf.validate.field).required = true];
 }
 
 // See MSG_TYPE_GET_DIR_FILES.
 message MsgGetDirFiles {
     // The path of the directory within the share.
     // The path must begin with a `/`.
-    string path = 1;
+    string path = 1 [(buf.validate.field).required = true];
 }
 
 // See MSG_TYPE_DIR_FILES.
@@ -410,13 +412,13 @@ message MsgDirFiles {
 // See MSG_TYPE_GET_FILE_META.
 message MsgGetFileMeta {
     // The path to the file.
-    string path = 1;
+    string path = 1 [(buf.validate.field).required = true];
 }
 
 // See MSG_TYPE_FILE_META.
 message MsgFileMeta {
     // The file's name.
-    string name = 1;
+    string name = 1 [(buf.validate.field).required = true];
 
     // Whether the file is a directory.
     bool is_dir = 2;
@@ -429,7 +431,7 @@ message MsgFileMeta {
 // See MSG_TYPE_GET_FILE.
 message MsgGetFile {
     // The path to the file.
-    string path = 1;
+    string path = 1 [(buf.validate.field).required = true];
 
     // The offset into the file to read, in bytes.
     // Values above the file size will just result in no data being returned.
@@ -447,7 +449,7 @@ message MsgGetOnlineUsers {
 // OnlineUserInfo is information about an online user.
 message OnlineUserInfo {
     // The user's username.
-    string username = 1;
+    string username = 1 [(buf.validate.field).required = true];
 
     // TODO Include a map of arbitrary attributes.
     // Allow these to be updated at any time.
@@ -487,10 +489,10 @@ enum ConnMethodType {
 message MsgAdvertiseConnMethod {
     // The method ID.
     // This can be any arbitrary string, as long as it is unique for the connection.
-    string id = 1;
+    string id = 1 [(buf.validate.field).required = true];
 
     // The method type.
-    ConnMethodType type = 2;
+    ConnMethodType type = 2 [(buf.validate.field).required = true];
 
     // The method address.
     // The format is defined by the type.
@@ -537,13 +539,13 @@ message MsgAdvertiseConnMethodResult {
     bool already_exists = 1;
 
     // The connection test result.
-    ConnResult test_result = 2;
+    ConnResult test_result = 2 [(buf.validate.field).required = true];
 }
 
 // See MSG_TYPE_REMOVE_CONN_METHOD.
 message MsgRemoveConnMethod {
     // The method ID.
-    string id = 1;
+    string id = 1 [(buf.validate.field).required = true];
 }
 
 // See MSG_TYPE_CONNECT_TO_ME.
@@ -553,7 +555,7 @@ message MsgConnectToMe {
 // See MSG_TYPE_DIRECT_CONN_RESULT.
 message MsgDirectConnResult {
     // The result.
-    ConnResult result = 1;
+    ConnResult result = 1 [(buf.validate.field).required = true];
 }
 
 // See MSG_TYPE_GET_PUBLIC_IP.
@@ -563,22 +565,22 @@ message MsgGetPublicIp {
 // See MSG_TYPE_PUBLIC_IP.
 message MsgPublicIp {
     // The client's public IP address, according to the server.
-    string public_ip = 1;
+    string public_ip = 1 [(buf.validate.field).required = true];
 }
 
 // See MSG_TYPE_GET_CLIENT_CONN_METHODS.
 message MsgGetClientConnMethods {
     // The client's username.
-    string username = 1;
+    string username = 1 [(buf.validate.field).required = true];
 }
 
 // ConnMethod is a direct connect method.
 message ConnMethod {
     // The method ID.
-    string id = 1;
+    string id = 1 [(buf.validate.field).required = true];
 
     // The method type.
-    ConnMethodType type = 2;
+    ConnMethodType type = 2 [(buf.validate.field).required = true];
 
     // The method address.
     // The format is defined by the type.
@@ -602,19 +604,19 @@ message MsgClientConnMethods {
 // See MSG_TYPE_GET_DIRECT_CONN_HANDSHAKE_TOKEN.
 message MsgGetDirectConnHandshakeToken {
     // The username of the client to connect to.
-    string username = 1;
+    string username = 1 [(buf.validate.field).required = true];
 }
 
 // See MSG_TYPE_DIRECT_CONN_HANDSHAKE_TOKEN.
 message MsgDirectConnHandshakeToken {
     // The token.
-    string token = 1;
+    string token = 1 [(buf.validate.field).required = true];
 }
 
 // See MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN.
 message MsgRedeemConnHandshakeToken {
     // The token to redeem.
-    string token = 1;
+    string token = 1 [(buf.validate.field).required = true];
 }
 
 // See MSG_TYPE_REDEEM_CONN_HANDSHAKE_TOKEN_RESULT.
@@ -629,10 +631,10 @@ message MsgRedeemConnHandshakeTokenResult {
     bool is_server = 2;
 
     // The token sender's username.
-    string username = 3;
+    string username = 3 [(buf.validate.field).required = true];
 
     // The token sender's room.
-    string room = 4;
+    string room = 4 [(buf.validate.field).required = true];
 }
 
 // See MSG_TYPE_DIRECT_CONN_HANDSHAKE.
@@ -640,10 +642,10 @@ message MsgDirectConnHandshake {
     // The connection method the sender is using.
     // This can be used to let the direct connect server
     // know where the connection is coming from.
-    string method_id = 1;
+    string method_id = 1 [(buf.validate.field).required = true];
 
     // The token to authenticate the sender.
-    string token = 2;
+    string token = 2 [(buf.validate.field).required = true];
 }
 
 enum DirectConnHandshakeResult {
@@ -677,19 +679,19 @@ message MsgChangeAccountPassword {
 
     // The new password.
     // Must not be empty.
-    string new_password = 2;
+    string new_password = 2 [(buf.validate.field).required = true];
 }
 
 // See MSG_TYPE_CLIENT_ONLINE.
 message MsgClientOnline {
     // The online client's info.
-    OnlineUserInfo info = 1;
+    OnlineUserInfo info = 1 [(buf.validate.field).required = true];
 }
 
 // See MSG_TYPE_CLIENT_OFFLINE.
 message MsgClientOffline {
     // The client's username.
-    string username = 1;
+    string username = 1 [(buf.validate.field).required = true];
 }
 
 // See MSG_TYPE_SEARCH.
@@ -701,10 +703,10 @@ message MsgSearch {
 // See MSG_TYPE_SEARCH_RESULT.
 message MsgSearchResult {
     // The file's containing directory path.
-    string directory_path = 1;
+    string directory_path = 1 [(buf.validate.field).required = true];
 
     // The file that was found.
-    MsgFileMeta file = 2;
+    MsgFileMeta file = 2 [(buf.validate.field).required = true];
 
     // A snippet of text highlighting matched terms.
     string snippet = 3;
@@ -713,10 +715,10 @@ message MsgSearchResult {
 // See MSG_TYPE_SEARCH_ROOM_RESULT.
 message MsgSearchRoomResult {
     // The username of the client where the search result originated from.
-    string username = 1;
+    string username = 1 [(buf.validate.field).required = true];
 
     // The search result.
-    MsgSearchResult result = 2;
+    MsgSearchResult result = 2 [(buf.validate.field).required = true];
 }
 
 // DownloadStatus is the status of a file download.
@@ -743,10 +745,10 @@ enum DownloadStatus {
 // See MSG_TYPE_DOWNLOAD_STATUS_UPDATE.
 message MsgDownloadStatusUpdate {
     // The file's path.
-    string path = 1;
+    string path = 1 [(buf.validate.field).required = true];
 
     // The file's download status.
-    DownloadStatus status = 2;
+    DownloadStatus status = 2 [(buf.validate.field).required = true];
 
     // The total number of bytes downloaded.
     // The number does not imply that the download was fully sequential.
@@ -764,12 +766,12 @@ message MsgStunServers {
 
 // See MSG_TYPE_PUNCH_OFFER
 message MsgPunchOffer {
-    string address = 1;
+    string address = 1 [(buf.validate.field).required = true];
 }
 
 // See MSG_TYPE_PUNCH_ACCEPT
 message MsgPunchAccept {
-    string address = 1;
+    string address = 1 [(buf.validate.field).required = true];
 }
 
 // See MSG_TYPE_PUNCH_REJECT

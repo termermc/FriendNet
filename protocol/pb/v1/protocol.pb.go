@@ -7,6 +7,7 @@
 package pbv1
 
 import (
+	_ "friendnet.org/protocol/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -3320,138 +3321,138 @@ var File_pb_v1_protocol_proto protoreflect.FileDescriptor
 
 const file_pb_v1_protocol_proto_rawDesc = "" +
 	"\n" +
-	"\x14pb/v1/protocol.proto\x12\x05pb.v1\"\"\n" +
-	"\aMsgPing\x12\x17\n" +
-	"\asent_ts\x18\x01 \x01(\x03R\x06sentTs\"\"\n" +
-	"\aMsgPong\x12\x17\n" +
-	"\asent_ts\x18\x01 \x01(\x03R\x06sentTs\"\x11\n" +
-	"\x0fMsgAcknowledged\"Y\n" +
-	"\bMsgError\x12\"\n" +
-	"\x04type\x18\x01 \x01(\x0e2\x0e.pb.v1.ErrTypeR\x04type\x12\x1d\n" +
+	"\x14pb/v1/protocol.proto\x12\x05pb.v1\x1a\x1bbuf/validate/validate.proto\"*\n" +
+	"\aMsgPing\x12\x1f\n" +
+	"\asent_ts\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x06sentTs\"*\n" +
+	"\aMsgPong\x12\x1f\n" +
+	"\asent_ts\x18\x01 \x01(\x03B\x06\xbaH\x03\xc8\x01\x01R\x06sentTs\"\x11\n" +
+	"\x0fMsgAcknowledged\"a\n" +
+	"\bMsgError\x12*\n" +
+	"\x04type\x18\x01 \x01(\x0e2\x0e.pb.v1.ErrTypeB\x06\xbaH\x03\xc8\x01\x01R\x04type\x12\x1d\n" +
 	"\amessage\x18\x02 \x01(\tH\x00R\amessage\x88\x01\x01B\n" +
 	"\n" +
 	"\b_message\"P\n" +
 	"\fProtoVersion\x12\x14\n" +
 	"\x05major\x18\x01 \x01(\rR\x05major\x12\x14\n" +
 	"\x05minor\x18\x02 \x01(\rR\x05minor\x12\x14\n" +
-	"\x05patch\x18\x03 \x01(\rR\x05patch\";\n" +
+	"\x05patch\x18\x03 \x01(\rR\x05patch\"C\n" +
 	"\n" +
-	"MsgVersion\x12-\n" +
-	"\aversion\x18\x01 \x01(\v2\x13.pb.v1.ProtoVersionR\aversion\"C\n" +
-	"\x12MsgVersionAccepted\x12-\n" +
-	"\aversion\x18\x01 \x01(\v2\x13.pb.v1.ProtoVersionR\aversion\"\xa5\x01\n" +
-	"\x12MsgVersionRejected\x12-\n" +
-	"\aversion\x18\x01 \x01(\v2\x13.pb.v1.ProtoVersionR\aversion\x125\n" +
+	"MsgVersion\x125\n" +
+	"\aversion\x18\x01 \x01(\v2\x13.pb.v1.ProtoVersionB\x06\xbaH\x03\xc8\x01\x01R\aversion\"K\n" +
+	"\x12MsgVersionAccepted\x125\n" +
+	"\aversion\x18\x01 \x01(\v2\x13.pb.v1.ProtoVersionB\x06\xbaH\x03\xc8\x01\x01R\aversion\"\xad\x01\n" +
+	"\x12MsgVersionRejected\x125\n" +
+	"\aversion\x18\x01 \x01(\v2\x13.pb.v1.ProtoVersionB\x06\xbaH\x03\xc8\x01\x01R\aversion\x125\n" +
 	"\x06reason\x18\x02 \x01(\x0e2\x1d.pb.v1.VersionRejectionReasonR\x06reason\x12\x1d\n" +
 	"\amessage\x18\x03 \x01(\tH\x00R\amessage\x88\x01\x01B\n" +
 	"\n" +
-	"\b_message\"]\n" +
-	"\x0fMsgAuthenticate\x12\x12\n" +
-	"\x04room\x18\x01 \x01(\tR\x04room\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\x12\x1a\n" +
-	"\bpassword\x18\x03 \x01(\tR\bpassword\"\x11\n" +
+	"\b_message\"u\n" +
+	"\x0fMsgAuthenticate\x12\x1a\n" +
+	"\x04room\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04room\x12\"\n" +
+	"\busername\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\busername\x12\"\n" +
+	"\bpassword\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bpassword\"\x11\n" +
 	"\x0fMsgAuthAccepted\"p\n" +
 	"\x0fMsgAuthRejected\x122\n" +
 	"\x06reason\x18\x01 \x01(\x0e2\x1a.pb.v1.AuthRejectionReasonR\x06reason\x12\x1d\n" +
 	"\amessage\x18\x02 \x01(\tH\x00R\amessage\x88\x01\x01B\n" +
 	"\n" +
-	"\b_message\"?\n" +
-	"\x14MsgOpenOutboundProxy\x12'\n" +
-	"\x0ftarget_username\x18\x01 \x01(\tR\x0etargetUsername\":\n" +
-	"\x0fMsgInboundProxy\x12'\n" +
-	"\x0forigin_username\x18\x01 \x01(\tR\x0eoriginUsername\"$\n" +
-	"\x0eMsgGetDirFiles\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04path\"7\n" +
+	"\b_message\"G\n" +
+	"\x14MsgOpenOutboundProxy\x12/\n" +
+	"\x0ftarget_username\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0etargetUsername\"B\n" +
+	"\x0fMsgInboundProxy\x12/\n" +
+	"\x0forigin_username\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x0eoriginUsername\",\n" +
+	"\x0eMsgGetDirFiles\x12\x1a\n" +
+	"\x04path\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04path\"7\n" +
 	"\vMsgDirFiles\x12(\n" +
-	"\x05files\x18\x01 \x03(\v2\x12.pb.v1.MsgFileMetaR\x05files\"$\n" +
-	"\x0eMsgGetFileMeta\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04path\"L\n" +
-	"\vMsgFileMeta\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x15\n" +
+	"\x05files\x18\x01 \x03(\v2\x12.pb.v1.MsgFileMetaR\x05files\",\n" +
+	"\x0eMsgGetFileMeta\x12\x1a\n" +
+	"\x04path\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04path\"T\n" +
+	"\vMsgFileMeta\x12\x1a\n" +
+	"\x04name\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12\x15\n" +
 	"\x06is_dir\x18\x02 \x01(\bR\x05isDir\x12\x12\n" +
-	"\x04size\x18\x03 \x01(\x04R\x04size\"N\n" +
+	"\x04size\x18\x03 \x01(\x04R\x04size\"V\n" +
 	"\n" +
-	"MsgGetFile\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04path\x12\x16\n" +
+	"MsgGetFile\x12\x1a\n" +
+	"\x04path\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04path\x12\x16\n" +
 	"\x06offset\x18\x02 \x01(\x04R\x06offset\x12\x14\n" +
 	"\x05limit\x18\x03 \x01(\x04R\x05limit\"\x13\n" +
-	"\x11MsgGetOnlineUsers\",\n" +
-	"\x0eOnlineUserInfo\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\"=\n" +
+	"\x11MsgGetOnlineUsers\"4\n" +
+	"\x0eOnlineUserInfo\x12\"\n" +
+	"\busername\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\busername\"=\n" +
 	"\x0eMsgOnlineUsers\x12+\n" +
 	"\x05users\x18\x01 \x03(\v2\x15.pb.v1.OnlineUserInfoR\x05users\"\b\n" +
-	"\x06MsgBye\"\x89\x01\n" +
-	"\x16MsgAdvertiseConnMethod\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12)\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x15.pb.v1.ConnMethodTypeR\x04type\x12\x18\n" +
+	"\x06MsgBye\"\x99\x01\n" +
+	"\x16MsgAdvertiseConnMethod\x12\x16\n" +
+	"\x02id\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x02id\x121\n" +
+	"\x04type\x18\x02 \x01(\x0e2\x15.pb.v1.ConnMethodTypeB\x06\xbaH\x03\xc8\x01\x01R\x04type\x12\x18\n" +
 	"\aaddress\x18\x03 \x01(\tR\aaddress\x12\x1a\n" +
-	"\bpriority\x18\x04 \x01(\x05R\bpriority\"y\n" +
+	"\bpriority\x18\x04 \x01(\x05R\bpriority\"\x81\x01\n" +
 	"\x1cMsgAdvertiseConnMethodResult\x12%\n" +
-	"\x0ealready_exists\x18\x01 \x01(\bR\ralreadyExists\x122\n" +
-	"\vtest_result\x18\x02 \x01(\x0e2\x11.pb.v1.ConnResultR\n" +
-	"testResult\"%\n" +
-	"\x13MsgRemoveConnMethod\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x10\n" +
-	"\x0eMsgConnectToMe\"@\n" +
-	"\x13MsgDirectConnResult\x12)\n" +
-	"\x06result\x18\x01 \x01(\x0e2\x11.pb.v1.ConnResultR\x06result\"\x10\n" +
-	"\x0eMsgGetPublicIp\"*\n" +
-	"\vMsgPublicIp\x12\x1b\n" +
-	"\tpublic_ip\x18\x01 \x01(\tR\bpublicIp\"5\n" +
-	"\x17MsgGetClientConnMethods\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\"\xab\x01\n" +
+	"\x0ealready_exists\x18\x01 \x01(\bR\ralreadyExists\x12:\n" +
+	"\vtest_result\x18\x02 \x01(\x0e2\x11.pb.v1.ConnResultB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"testResult\"-\n" +
+	"\x13MsgRemoveConnMethod\x12\x16\n" +
+	"\x02id\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x02id\"\x10\n" +
+	"\x0eMsgConnectToMe\"H\n" +
+	"\x13MsgDirectConnResult\x121\n" +
+	"\x06result\x18\x01 \x01(\x0e2\x11.pb.v1.ConnResultB\x06\xbaH\x03\xc8\x01\x01R\x06result\"\x10\n" +
+	"\x0eMsgGetPublicIp\"2\n" +
+	"\vMsgPublicIp\x12#\n" +
+	"\tpublic_ip\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bpublicIp\"=\n" +
+	"\x17MsgGetClientConnMethods\x12\"\n" +
+	"\busername\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\busername\"\xbb\x01\n" +
 	"\n" +
-	"ConnMethod\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12)\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x15.pb.v1.ConnMethodTypeR\x04type\x12\x18\n" +
+	"ConnMethod\x12\x16\n" +
+	"\x02id\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x02id\x121\n" +
+	"\x04type\x18\x02 \x01(\x0e2\x15.pb.v1.ConnMethodTypeB\x06\xbaH\x03\xc8\x01\x01R\x04type\x12\x18\n" +
 	"\aaddress\x18\x03 \x01(\tR\aaddress\x12\x1a\n" +
 	"\bpriority\x18\x04 \x01(\x05R\bpriority\x12,\n" +
 	"\x12is_server_verified\x18\x05 \x01(\bR\x10isServerVerified\"C\n" +
 	"\x14MsgClientConnMethods\x12+\n" +
-	"\amethods\x18\x01 \x03(\v2\x11.pb.v1.ConnMethodR\amethods\"<\n" +
-	"\x1eMsgGetDirectConnHandshakeToken\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\"3\n" +
-	"\x1bMsgDirectConnHandshakeToken\x12\x14\n" +
-	"\x05token\x18\x01 \x01(\tR\x05token\"3\n" +
-	"\x1bMsgRedeemConnHandshakeToken\x12\x14\n" +
-	"\x05token\x18\x01 \x01(\tR\x05token\"\x8b\x01\n" +
+	"\amethods\x18\x01 \x03(\v2\x11.pb.v1.ConnMethodR\amethods\"D\n" +
+	"\x1eMsgGetDirectConnHandshakeToken\x12\"\n" +
+	"\busername\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\busername\";\n" +
+	"\x1bMsgDirectConnHandshakeToken\x12\x1c\n" +
+	"\x05token\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05token\";\n" +
+	"\x1bMsgRedeemConnHandshakeToken\x12\x1c\n" +
+	"\x05token\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05token\"\x9b\x01\n" +
 	"!MsgRedeemConnHandshakeTokenResult\x12\x19\n" +
 	"\bis_valid\x18\x01 \x01(\bR\aisValid\x12\x1b\n" +
-	"\tis_server\x18\x02 \x01(\bR\bisServer\x12\x1a\n" +
-	"\busername\x18\x03 \x01(\tR\busername\x12\x12\n" +
-	"\x04room\x18\x04 \x01(\tR\x04room\"K\n" +
-	"\x16MsgDirectConnHandshake\x12\x1b\n" +
-	"\tmethod_id\x18\x01 \x01(\tR\bmethodId\x12\x14\n" +
-	"\x05token\x18\x02 \x01(\tR\x05token\"X\n" +
+	"\tis_server\x18\x02 \x01(\bR\bisServer\x12\"\n" +
+	"\busername\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\busername\x12\x1a\n" +
+	"\x04room\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04room\"[\n" +
+	"\x16MsgDirectConnHandshake\x12#\n" +
+	"\tmethod_id\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\bmethodId\x12\x1c\n" +
+	"\x05token\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05token\"X\n" +
 	"\x1cMsgDirectConnHandshakeResult\x128\n" +
-	"\x06result\x18\x01 \x01(\x0e2 .pb.v1.DirectConnHandshakeResultR\x06result\"h\n" +
+	"\x06result\x18\x01 \x01(\x0e2 .pb.v1.DirectConnHandshakeResultR\x06result\"p\n" +
 	"\x18MsgChangeAccountPassword\x12)\n" +
-	"\x10current_password\x18\x01 \x01(\tR\x0fcurrentPassword\x12!\n" +
-	"\fnew_password\x18\x02 \x01(\tR\vnewPassword\"<\n" +
-	"\x0fMsgClientOnline\x12)\n" +
-	"\x04info\x18\x01 \x01(\v2\x15.pb.v1.OnlineUserInfoR\x04info\".\n" +
-	"\x10MsgClientOffline\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\"!\n" +
+	"\x10current_password\x18\x01 \x01(\tR\x0fcurrentPassword\x12)\n" +
+	"\fnew_password\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vnewPassword\"D\n" +
+	"\x0fMsgClientOnline\x121\n" +
+	"\x04info\x18\x01 \x01(\v2\x15.pb.v1.OnlineUserInfoB\x06\xbaH\x03\xc8\x01\x01R\x04info\"6\n" +
+	"\x10MsgClientOffline\x12\"\n" +
+	"\busername\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\busername\"!\n" +
 	"\tMsgSearch\x12\x14\n" +
-	"\x05query\x18\x01 \x01(\tR\x05query\"z\n" +
-	"\x0fMsgSearchResult\x12%\n" +
-	"\x0edirectory_path\x18\x01 \x01(\tR\rdirectoryPath\x12&\n" +
-	"\x04file\x18\x02 \x01(\v2\x12.pb.v1.MsgFileMetaR\x04file\x12\x18\n" +
-	"\asnippet\x18\x03 \x01(\tR\asnippet\"a\n" +
-	"\x13MsgSearchRoomResult\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\x12.\n" +
-	"\x06result\x18\x02 \x01(\v2\x16.pb.v1.MsgSearchResultR\x06result\"\x87\x01\n" +
-	"\x17MsgDownloadStatusUpdate\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04path\x12-\n" +
-	"\x06status\x18\x02 \x01(\x0e2\x15.pb.v1.DownloadStatusR\x06status\x12)\n" +
+	"\x05query\x18\x01 \x01(\tR\x05query\"\x8a\x01\n" +
+	"\x0fMsgSearchResult\x12-\n" +
+	"\x0edirectory_path\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\rdirectoryPath\x12.\n" +
+	"\x04file\x18\x02 \x01(\v2\x12.pb.v1.MsgFileMetaB\x06\xbaH\x03\xc8\x01\x01R\x04file\x12\x18\n" +
+	"\asnippet\x18\x03 \x01(\tR\asnippet\"q\n" +
+	"\x13MsgSearchRoomResult\x12\"\n" +
+	"\busername\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\busername\x126\n" +
+	"\x06result\x18\x02 \x01(\v2\x16.pb.v1.MsgSearchResultB\x06\xbaH\x03\xc8\x01\x01R\x06result\"\x97\x01\n" +
+	"\x17MsgDownloadStatusUpdate\x12\x1a\n" +
+	"\x04path\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04path\x125\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x15.pb.v1.DownloadStatusB\x06\xbaH\x03\xc8\x01\x01R\x06status\x12)\n" +
 	"\x10bytes_downloaded\x18\x03 \x01(\x04R\x0fbytesDownloaded\"\x13\n" +
 	"\x11MsgGetStunServers\".\n" +
 	"\x0eMsgStunServers\x12\x1c\n" +
-	"\taddresses\x18\x01 \x03(\tR\taddresses\")\n" +
-	"\rMsgPunchOffer\x12\x18\n" +
-	"\aaddress\x18\x01 \x01(\tR\aaddress\"*\n" +
-	"\x0eMsgPunchAccept\x12\x18\n" +
-	"\aaddress\x18\x01 \x01(\tR\aaddress\"*\n" +
+	"\taddresses\x18\x01 \x03(\tR\taddresses\"1\n" +
+	"\rMsgPunchOffer\x12 \n" +
+	"\aaddress\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\aaddress\"2\n" +
+	"\x0eMsgPunchAccept\x12 \n" +
+	"\aaddress\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\aaddress\"*\n" +
 	"\x0eMsgPunchReject\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage*\xb3\v\n" +
 	"\aMsgType\x12\x18\n" +
